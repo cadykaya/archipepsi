@@ -1,0 +1,13 @@
+{
+ "about": "Inventory, resting: RMB's own item selected on the rail. Scripted input, a still.",
+ "steps": [
+  {
+   "at": 0.3,
+   "key": "Right"
+  },
+  {
+   "after": 1.2,
+   "quit": true
+  }
+ ]
+}

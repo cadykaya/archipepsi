@@ -1,0 +1,370 @@
+{
+  "artillery": {
+    "anchors_declared": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
+    "centre_y": 0.775000000000000022,
+    "degenerate_triangles": 0,
+    "envelope": [
+      1.25,
+      1.54999995231628418,
+      1.25
+    ],
+    "faces": "-Z",
+    "floor_gap": 0.0,
+    "flying": false,
+    "hover_height": 0.0,
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "enemy_role_artillery",
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
+    "size": [
+      1.17500000000000004,
+      1.502,
+      1.25
+    ],
+    "surfaces": 8,
+    "surfaces_with_material": 8,
+    "tintable_by_production_rule": 0,
+    "triangles": 408
+  },
+  "beacon": {
+    "anchors_declared": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "centre_y": 1.10000000000000009,
+    "degenerate_triangles": 0,
+    "envelope": [
+      0.620000004768371582,
+      2.20000004768371582,
+      0.620000004768371582
+    ],
+    "floor_gap": 0.0,
+    "flying": false,
+    "hover_height": 0.0,
+    "min_y": 0.0,
+    "nodes": 4,
+    "parts": [
+      "enemy_role_beacon",
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "size": [
+      0.550000000000000044,
+      2.20000000000000018,
+      0.550000000000000044
+    ],
+    "surfaces": 7,
+    "surfaces_with_material": 7,
+    "tintable_by_production_rule": 0,
+    "triangles": 460
+  },
+  "brute": {
+    "anchors_declared": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
+    "centre_y": 1.30000000000000004,
+    "degenerate_triangles": 0,
+    "envelope": [
+      1.79999995231628418,
+      2.59999990463256836,
+      1.79999995231628418
+    ],
+    "faces": "-Z",
+    "floor_gap": 0.0,
+    "flying": false,
+    "hover_height": 0.0,
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "enemy_role_brute",
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
+    "size": [
+      1.80000000000000004,
+      2.40500000000000025,
+      1.65600000000000014
+    ],
+    "surfaces": 7,
+    "surfaces_with_material": 7,
+    "tintable_by_production_rule": 0,
+    "triangles": 344
+  },
+  "bulwark": {
+    "anchors_declared": [
+      "anchor_shield",
+      "anchor_weak",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "centre_y": 1.02499999999999991,
+    "degenerate_triangles": 0,
+    "envelope": [
+      1.45000004768371582,
+      2.04999995231628418,
+      0.85000002384185791
+    ],
+    "faces": "-Z",
+    "floor_gap": 0.0,
+    "flying": false,
+    "hover_height": 0.0,
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "enemy_role_bulwark",
+      "anchor_shield",
+      "anchor_weak",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "size": [
+      1.44999999999999996,
+      1.96799999999999997,
+      0.816000000000000059
+    ],
+    "surfaces": 8,
+    "surfaces_with_material": 8,
+    "tintable_by_production_rule": 0,
+    "triangles": 464
+  },
+  "charger": {
+    "anchors_declared": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
+    "centre_y": 0.525000000000000022,
+    "degenerate_triangles": 0,
+    "envelope": [
+      0.89999997615814209,
+      1.04999995231628418,
+      1.89999997615814209
+    ],
+    "faces": "-Z",
+    "floor_gap": 0.0,
+    "flying": false,
+    "hover_height": 0.0,
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "enemy_role_charger",
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
+    "size": [
+      0.900000000000000022,
+      0.839999999999999969,
+      1.88100000000000001
+    ],
+    "surfaces": 8,
+    "surfaces_with_material": 8,
+    "tintable_by_production_rule": 0,
+    "triangles": 460
+  },
+  "diver": {
+    "anchors_declared": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "centre_y": 1.89999999999999991,
+    "degenerate_triangles": 0,
+    "envelope": [
+      0.699999988079071045,
+      0.5,
+      1.20000004768371582
+    ],
+    "faces": "-Z",
+    "floor_gap": 0.0,
+    "flying": true,
+    "hover_height": 1.89999999999999991,
+    "min_y": 0.0,
+    "nodes": 4,
+    "parts": [
+      "enemy_role_diver",
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "size": [
+      0.700000000000000067,
+      0.400000000000000022,
+      1.13000000000000012
+    ],
+    "surfaces": 7,
+    "surfaces_with_material": 7,
+    "tintable_by_production_rule": 0,
+    "triangles": 264
+  },
+  "drifter": {
+    "anchors_declared": [
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "centre_y": 2.54999999999999982,
+    "degenerate_triangles": 0,
+    "envelope": [
+      1.35000002384185791,
+      0.949999988079071045,
+      1.35000002384185791
+    ],
+    "floor_gap": 0.0,
+    "flying": true,
+    "hover_height": 2.54999999999999982,
+    "min_y": 0.0,
+    "nodes": 3,
+    "parts": [
+      "enemy_role_drifter",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "size": [
+      1.24700000000000011,
+      0.81700000000000006,
+      1.24700000000000011
+    ],
+    "surfaces": 6,
+    "surfaces_with_material": 6,
+    "tintable_by_production_rule": 0,
+    "triangles": 476
+  },
+  "envelope_source": "Constants.ENEMY_ENVELOPES, read-only",
+  "melee": {
+    "anchors_declared": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "centre_y": 0.800000000000000044,
+    "degenerate_triangles": 0,
+    "envelope": [
+      0.800000011920928955,
+      1.60000002384185791,
+      0.800000011920928955
+    ],
+    "faces": "-Z",
+    "floor_gap": 0.0,
+    "flying": false,
+    "hover_height": 0.0,
+    "min_y": 0.0,
+    "nodes": 4,
+    "parts": [
+      "enemy_role_melee",
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "size": [
+      0.78400000000000003,
+      1.55200000000000005,
+      0.688000000000000056
+    ],
+    "surfaces": 7,
+    "surfaces_with_material": 7,
+    "tintable_by_production_rule": 0,
+    "triangles": 400
+  },
+  "notes": [
+    "artillery would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces.",
+    "beacon would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces.",
+    "brute would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces.",
+    "bulwark would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces.",
+    "charger would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces.",
+    "diver would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces.",
+    "drifter would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces.",
+    "melee would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces.",
+    "ranged would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces.",
+    "scuttler would take NO damage tint: Enemy._collect_tint_parts only unshares meshes whose material_override is a StandardMaterial3D, and a glTF import puts its materials on the surfaces."
+  ],
+  "problems": [],
+  "ranged": {
+    "anchors_declared": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "centre_y": 0.699999999999999956,
+    "degenerate_triangles": 0,
+    "envelope": [
+      0.699999988079071045,
+      1.39999997615814209,
+      0.699999988079071045
+    ],
+    "faces": "-Z",
+    "floor_gap": 0.0,
+    "flying": false,
+    "hover_height": 0.0,
+    "min_y": 0.0,
+    "nodes": 4,
+    "parts": [
+      "enemy_role_ranged",
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "size": [
+      0.615999999999999992,
+      1.36099999999999999,
+      0.546000000000000041
+    ],
+    "surfaces": 7,
+    "surfaces_with_material": 7,
+    "tintable_by_production_rule": 0,
+    "triangles": 328
+  },
+  "scuttler": {
+    "anchors_declared": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "centre_y": 0.309999999999999998,
+    "degenerate_triangles": 0,
+    "envelope": [
+      1.29999995231628418,
+      0.620000004768371582,
+      1.20000004768371582
+    ],
+    "faces": "-Z",
+    "floor_gap": 0.0,
+    "flying": false,
+    "hover_height": 0.0,
+    "min_y": 0.0,
+    "nodes": 4,
+    "parts": [
+      "enemy_role_scuttler",
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "size": [
+      1.2370000000000001,
+      0.341000000000000025,
+      1.16300000000000003
+    ],
+    "surfaces": 7,
+    "surfaces_with_material": 7,
+    "tintable_by_production_rule": 0,
+    "triangles": 476
+  }
+}

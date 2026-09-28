@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://content/projectiles/enemy_projectile_lobbed.glb" id="1_vvkvo"]
+
+[node name="projectile_lobbed" type="Node3D"]
+
+[node name="Mesh" type="Node3D" parent="." instance=ExtResource("1_vvkvo")]

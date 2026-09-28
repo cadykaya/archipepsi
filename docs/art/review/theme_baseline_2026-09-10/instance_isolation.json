@@ -1,0 +1,768 @@
+{
+  "distinct_materials_built": 12,
+  "mesh_resource_path": "res://content/shells/shell_corner_left.glb::ArrayMesh_n6pqu",
+  "overrides_A_after_A": [
+    "concrete_facility/floor",
+    "concrete_facility/ceiling",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim"
+  ],
+  "overrides_A_after_B": [
+    "concrete_facility/floor",
+    "concrete_facility/ceiling",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/wall",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim",
+    "concrete_facility/trim"
+  ],
+  "overrides_A_after_rebind": [
+    "temple_ruin/floor",
+    "temple_ruin/ceiling",
+    "temple_ruin/wall",
+    "temple_ruin/wall",
+    "temple_ruin/wall",
+    "temple_ruin/wall",
+    "temple_ruin/wall",
+    "temple_ruin/wall",
+    "temple_ruin/wall",
+    "temple_ruin/wall",
+    "temple_ruin/trim",
+    "temple_ruin/trim",
+    "temple_ruin/trim",
+    "temple_ruin/trim",
+    "temple_ruin/trim",
+    "temple_ruin/trim",
+    "temple_ruin/trim",
+    "temple_ruin/trim"
+  ],
+  "overrides_B_after_A": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "overrides_B_after_B": [
+    "rusted_industrial/floor",
+    "rusted_industrial/ceiling",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim"
+  ],
+  "overrides_B_after_rebind": [
+    "rusted_industrial/floor",
+    "rusted_industrial/ceiling",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/wall",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim",
+    "rusted_industrial/trim"
+  ],
+  "shared_after_A": [
+    {
+      "albedo": "<CompressedTexture2D#-9223372009927342702>",
+      "material_id": "<StandardMaterial3D#-9223372008736160349>",
+      "name": "cl_floor"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009608575596>",
+      "material_id": "<StandardMaterial3D#-9223372008719383136>",
+      "name": "cl_ceiling"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008702605933>",
+      "name": "cl_wall"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008685828702>",
+      "name": "cl_wall.001"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008669051499>",
+      "name": "cl_wall.002"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008652274282>",
+      "name": "cl_wall.003"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008635497065>",
+      "name": "cl_wall.004"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008618719848>",
+      "name": "cl_wall.005"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008601942631>",
+      "name": "cl_wall.006"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008585165414>",
+      "name": "cl_wall.007"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008568388197>",
+      "name": "cl_trim"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008551610972>",
+      "name": "cl_trim.001"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008534833755>",
+      "name": "cl_trim.002"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008518056538>",
+      "name": "cl_trim.003"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008501279321>",
+      "name": "cl_trim.004"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008484502104>",
+      "name": "cl_trim.005"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008467724887>",
+      "name": "cl_trim.006"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008450947670>",
+      "name": "cl_trim.007"
+    }
+  ],
+  "shared_after_B": [
+    {
+      "albedo": "<CompressedTexture2D#-9223372009927342702>",
+      "material_id": "<StandardMaterial3D#-9223372008736160349>",
+      "name": "cl_floor"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009608575596>",
+      "material_id": "<StandardMaterial3D#-9223372008719383136>",
+      "name": "cl_ceiling"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008702605933>",
+      "name": "cl_wall"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008685828702>",
+      "name": "cl_wall.001"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008669051499>",
+      "name": "cl_wall.002"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008652274282>",
+      "name": "cl_wall.003"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008635497065>",
+      "name": "cl_wall.004"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008618719848>",
+      "name": "cl_wall.005"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008601942631>",
+      "name": "cl_wall.006"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008585165414>",
+      "name": "cl_wall.007"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008568388197>",
+      "name": "cl_trim"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008551610972>",
+      "name": "cl_trim.001"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008534833755>",
+      "name": "cl_trim.002"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008518056538>",
+      "name": "cl_trim.003"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008501279321>",
+      "name": "cl_trim.004"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008484502104>",
+      "name": "cl_trim.005"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008467724887>",
+      "name": "cl_trim.006"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008450947670>",
+      "name": "cl_trim.007"
+    }
+  ],
+  "shared_after_rebind": [
+    {
+      "albedo": "<CompressedTexture2D#-9223372009927342702>",
+      "material_id": "<StandardMaterial3D#-9223372008736160349>",
+      "name": "cl_floor"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009608575596>",
+      "material_id": "<StandardMaterial3D#-9223372008719383136>",
+      "name": "cl_ceiling"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008702605933>",
+      "name": "cl_wall"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008685828702>",
+      "name": "cl_wall.001"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008669051499>",
+      "name": "cl_wall.002"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008652274282>",
+      "name": "cl_wall.003"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008635497065>",
+      "name": "cl_wall.004"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008618719848>",
+      "name": "cl_wall.005"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008601942631>",
+      "name": "cl_wall.006"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008585165414>",
+      "name": "cl_wall.007"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008568388197>",
+      "name": "cl_trim"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008551610972>",
+      "name": "cl_trim.001"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008534833755>",
+      "name": "cl_trim.002"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008518056538>",
+      "name": "cl_trim.003"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008501279321>",
+      "name": "cl_trim.004"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008484502104>",
+      "name": "cl_trim.005"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008467724887>",
+      "name": "cl_trim.006"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008450947670>",
+      "name": "cl_trim.007"
+    }
+  ],
+  "shared_before": [
+    {
+      "albedo": "<CompressedTexture2D#-9223372009927342702>",
+      "material_id": "<StandardMaterial3D#-9223372008736160349>",
+      "name": "cl_floor"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009608575596>",
+      "material_id": "<StandardMaterial3D#-9223372008719383136>",
+      "name": "cl_ceiling"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008702605933>",
+      "name": "cl_wall"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008685828702>",
+      "name": "cl_wall.001"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008669051499>",
+      "name": "cl_wall.002"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008652274282>",
+      "name": "cl_wall.003"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008635497065>",
+      "name": "cl_wall.004"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008618719848>",
+      "name": "cl_wall.005"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008601942631>",
+      "name": "cl_wall.006"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372009289808484>",
+      "material_id": "<StandardMaterial3D#-9223372008585165414>",
+      "name": "cl_wall.007"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008568388197>",
+      "name": "cl_trim"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008551610972>",
+      "name": "cl_trim.001"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008534833755>",
+      "name": "cl_trim.002"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008518056538>",
+      "name": "cl_trim.003"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008501279321>",
+      "name": "cl_trim.004"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008484502104>",
+      "name": "cl_trim.005"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008467724887>",
+      "name": "cl_trim.006"
+    },
+    {
+      "albedo": "<CompressedTexture2D#-9223372008971041378>",
+      "material_id": "<StandardMaterial3D#-9223372008450947670>",
+      "name": "cl_trim.007"
+    }
+  ],
+  "shared_mesh_is_one_resource": true,
+  "structure_A_after": {
+    "collision_shapes": 10,
+    "nodes": 22,
+    "shapes": [
+      {
+        "path": "Mesh/cl_floor/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_ceil/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_-1/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_1/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_lintel/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_back/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_a/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_b/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_lintel/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_solid/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      }
+    ],
+    "static_bodies": 10
+  },
+  "structure_A_before": {
+    "collision_shapes": 10,
+    "nodes": 22,
+    "shapes": [
+      {
+        "path": "Mesh/cl_floor/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_ceil/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_-1/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_1/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_lintel/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_back/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_a/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_b/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_lintel/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_solid/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      }
+    ],
+    "static_bodies": 10
+  },
+  "structure_A_equals_B": true,
+  "structure_A_unchanged": true,
+  "structure_B_after": {
+    "collision_shapes": 10,
+    "nodes": 22,
+    "shapes": [
+      {
+        "path": "Mesh/cl_floor/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_ceil/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_-1/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_1/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_lintel/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_back/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_a/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_b/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_lintel/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_solid/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      }
+    ],
+    "static_bodies": 10
+  },
+  "structure_B_before": {
+    "collision_shapes": 10,
+    "nodes": 22,
+    "shapes": [
+      {
+        "path": "Mesh/cl_floor/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_ceil/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_-1/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_1/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_in_lintel/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_back/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_a/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_b/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_exit_lintel/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      },
+      {
+        "path": "Mesh/cl_solid/CollisionShape3D",
+        "points": 8,
+        "shape": "ConvexPolygonShape3D",
+        "xform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+      }
+    ],
+    "static_bodies": 10
+  },
+  "structure_B_unchanged": true,
+  "surfaces": 18,
+  "unresolved_A": [],
+  "unresolved_A2": [],
+  "unresolved_B": []
+}

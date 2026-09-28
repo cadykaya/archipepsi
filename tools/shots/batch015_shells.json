@@ -1,0 +1,151 @@
+{
+  "_comment": [
+    "Batch 015 -- the corridor shell family.",
+    "",
+    "Every shell is shot from its own ENTRANCE at eye height on the",
+    "engine's lens, because a corridor's whole design is what you can see",
+    "when you step into it. The four are one family only if those four",
+    "frames are four different problems.",
+    "",
+    "The runner yaws models 180 degrees, so a shell built to run along",
+    "Godot +Z runs toward -Z here: the camera stands at +Z looking back.",
+    "",
+    "",
+    "CAMERA FRAME: the runner yaws the MODEL 180 degrees and leaves the camera in world space, so any `eye` meant to stand INSIDE a shell must negate the manifest anchor's x and z. The first pass did not, and the two 'from high' shots were taken from out in the void, looking at the corridor through its own entrance -- with captions claiming otherwise.",
+    "S_bays_approach is shot from the LANE, not from inside a bay: 1.6 m deep by 2.8 wide means the view OUT of a bay is a slot, which is true of the shape and useless as evidence. The pocket reads as a pocket on approach."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "lens": 35,
+    "ambient": 0.16,
+    "backdrop": "none"
+  },
+  "shots": [
+    {
+      "name": "S_narrow_entry",
+      "scene": "model:batch015/shells/shell_corridor_narrow.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        1.6
+      ],
+      "yaw": 180,
+      "game_lens": true,
+      "caption": "NARROW - 4.0 M, CORRIDOR_WIDTH_MIN. TOTAL SIGHTLINE, NO COVER",
+      "note": "BRUTE_LANE IS 2.6, SO A BRUTE LEAVES 0.7 M EITHER SIDE"
+    },
+    {
+      "name": "S_bays_entry",
+      "scene": "model:batch015/shells/shell_corridor_bays.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        1.6
+      ],
+      "yaw": 180,
+      "game_lens": true,
+      "caption": "BAYS - RECESSES EVERY 4 M, ALTERNATING SIDES",
+      "note": "THE LANE STAYS OPEN 16 M. WHAT CHANGES IS WHERE YOU CAN STAND"
+    },
+    {
+      "name": "S_bays_approach",
+      "scene": "model:batch015/shells/shell_corridor_bays.glb",
+      "size": [
+        1600,
+        900
+      ],
+      "eye": [
+        1.5,
+        0.0,
+        -2.5
+      ],
+      "yaw": 227.7,
+      "pitch": 0,
+      "game_lens": true,
+      "caption": "APPROACHING A BAY FROM THE LANE",
+      "note": "1.6 M DEEP AND 2.8 WIDE - COVER, A FLANK, OR WHERE A CHECK STANDS"
+    },
+    {
+      "name": "S_stepped_entry",
+      "scene": "model:batch015/shells/shell_corridor_stepped.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        1.6
+      ],
+      "yaw": 180,
+      "game_lens": true,
+      "caption": "STEPPED - A 1.00 M STEP MID-RUN, EXACTLY MAX_VERTICAL_STEP",
+      "note": "WALKABLE, AND IT HIDES THE FAR FLOOR. THE LEDGE IS AT 2.60"
+    },
+    {
+      "name": "S_gallery_entry",
+      "scene": "model:batch015/shells/shell_corridor_gallery.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        1.6
+      ],
+      "yaw": 180,
+      "game_lens": true,
+      "caption": "GALLERY - A WALKWAY AT 2.60 M, OUT OF JUMP REACH",
+      "note": "TWO ROUTES, AND THE ONLY ONE WHERE SOMETHING HOLDS ABOVE YOU"
+    },
+    {
+      "name": "S_gallery_high",
+      "scene": "model:batch015/shells/shell_corridor_gallery.glb",
+      "size": [
+        1600,
+        900
+      ],
+      "eye": [
+        -2.7,
+        2.75,
+        -8.0
+      ],
+      "yaw": 180,
+      "pitch": -8,
+      "game_lens": true,
+      "caption": "ON THE GALLERY, LOOKING DOWN THE RUN",
+      "note": "THE HIGH GROUND A RANGED ENEMY HOLDS - OR YOU DO"
+    },
+    {
+      "name": "S_stepped_from_high",
+      "scene": "model:batch015/shells/shell_corridor_stepped.glb",
+      "size": [
+        1600,
+        900
+      ],
+      "eye": [
+        0.0,
+        1.0,
+        -13.0
+      ],
+      "yaw": 0,
+      "pitch": -6,
+      "game_lens": true,
+      "backdrop": "none",
+      "caption": "STEPPED, FROM THE HIGH HALF LOOKING BACK",
+      "note": "THE STEP HIDES THE FAR FLOOR ONE WAY AND NOTHING THE OTHER"
+    }
+  ]
+}

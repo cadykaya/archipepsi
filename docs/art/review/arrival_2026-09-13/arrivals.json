@@ -1,0 +1,180 @@
+{
+  "problems": [],
+  "shell_bay_terminus": {
+    "colliders": 43,
+    "doorways": [
+      "entry",
+      "branch_east",
+      "branch_west"
+    ],
+    "regions": {
+      "branch_east": {
+        "floor_y": 0.0,
+        "ok": true
+      },
+      "branch_west": {
+        "floor_y": 0.0,
+        "ok": true
+      },
+      "entry": {
+        "floor_y": -0.0599999999999999978,
+        "ok": true
+      }
+    },
+    "walk": {
+      "branch_east": {
+        "ended_at": [
+          0.5,
+          0.0,
+          15.1000000000000014
+        ],
+        "jumps": 0,
+        "lowest_y": 0.0,
+        "walked_in": true
+      },
+      "branch_west": {
+        "ended_at": [
+          -0.5,
+          0.0,
+          15.1000000000000014
+        ],
+        "jumps": 0,
+        "lowest_y": 0.0,
+        "walked_in": true
+      },
+      "entry": {
+        "ended_at": [
+          0.0,
+          -0.100000000000000006,
+          13.5
+        ],
+        "jumps": 0,
+        "lowest_y": -0.0599999999999999978,
+        "walked_in": true
+      }
+    }
+  },
+  "shell_junction_cross": {
+    "colliders": 78,
+    "doorways": [
+      "entry",
+      "exit",
+      "branch_east",
+      "branch_west"
+    ],
+    "regions": {
+      "branch_east": {
+        "floor_y": -0.0599999999999999978,
+        "ok": true
+      },
+      "branch_west": {
+        "floor_y": -0.0599999999999999978,
+        "ok": true
+      },
+      "entry": {
+        "floor_y": -0.0599999999999999978,
+        "ok": true
+      },
+      "exit": {
+        "floor_y": -0.0599999999999999978,
+        "ok": true
+      }
+    },
+    "walk": {
+      "branch_east": {
+        "ended_at": [
+          8.0,
+          0.0,
+          18.6000000000000014
+        ],
+        "jumps": 0,
+        "lowest_y": -0.0599999999999999978,
+        "walked_in": true
+      },
+      "branch_west": {
+        "ended_at": [
+          -5.5,
+          0.0,
+          12.3000000000000007
+        ],
+        "jumps": 0,
+        "lowest_y": -0.0599999999999999978,
+        "walked_in": true
+      },
+      "entry": {
+        "ended_at": [
+          -4.60000000000000053,
+          0.0,
+          11.7000000000000011
+        ],
+        "jumps": 0,
+        "lowest_y": -0.0599999999999999978,
+        "walked_in": true
+      },
+      "exit": {
+        "ended_at": [
+          -4.60000000000000053,
+          0.0,
+          22.4000000000000021
+        ],
+        "jumps": 0,
+        "lowest_y": -0.0599999999999999978,
+        "walked_in": true
+      }
+    }
+  },
+  "shell_junction_triad": {
+    "colliders": 56,
+    "doorways": [
+      "entry",
+      "exit",
+      "branch_east"
+    ],
+    "regions": {
+      "branch_east": {
+        "floor_y": 0.0,
+        "ok": true
+      },
+      "entry": {
+        "floor_y": -0.0599999999999999978,
+        "ok": true
+      },
+      "exit": {
+        "floor_y": -0.0599999999999999978,
+        "ok": true
+      }
+    },
+    "walk": {
+      "branch_east": {
+        "ended_at": [
+          7.5,
+          0.0,
+          13.0
+        ],
+        "jumps": 0,
+        "lowest_y": 0.0,
+        "walked_in": true
+      },
+      "entry": {
+        "ended_at": [
+          0.0,
+          -0.100000000000000006,
+          7.40000000000000036
+        ],
+        "jumps": 0,
+        "lowest_y": -0.0599999999999999978,
+        "walked_in": true
+      },
+      "exit": {
+        "ended_at": [
+          0.0,
+          -0.100000000000000006,
+          14.6000000000000014
+        ],
+        "jumps": 0,
+        "lowest_y": -0.0599999999999999978,
+        "walked_in": true
+      }
+    }
+  }
+}

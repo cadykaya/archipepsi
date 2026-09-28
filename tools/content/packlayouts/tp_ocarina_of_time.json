@@ -1,0 +1,49 @@
+{
+  "pack": "tp_ocarina_of_time",
+  "models": "batch054/forest_temple",
+  "prefix": "FT",
+  "caption_note": "Material treatment MISSING: painted in temple_ruin, which is not the pack's own.",
+  "surround": "tp_ft_door_surround",
+  "light": {
+    "ambient": [0.58, 0.66, 0.70],
+    "ambient_energy": 0.30,
+    "fog": 0.016,
+    "fog_color": [0.20, 0.26, 0.24],
+    "lamps": [
+      {"at": [4.2, 1.9, -1.0], "range": 7.0, "energy": 3.4,
+       "color": [1.0, 0.76, 0.46],
+       "why": "the torch pool -- warm, short, one-sided. A temple lit warm everywhere has no torch in it, only an orange filter."},
+      {"at": [0.0, 3.0, -7.0], "range": 16.0, "energy": 2.2,
+       "color": [0.74, 0.86, 0.80],
+       "why": "daylight down the shaft the opening leads to, cool and opposite"}
+    ]
+  },
+  "place": [
+    {"id": "tp_ft_door_surround", "at": [0.0, 0.0, -4.78], "yaw": 0,
+     "why": "on the opening, chamber side"},
+    {"id": "tp_ft_column", "at": [-2.7, 0.0, -3.4], "yaw": 0,
+     "why": "clear of the approach: the pack dresses the room, it does not narrow the route"},
+    {"id": "tp_ft_column", "at": [2.7, 0.0, -3.4], "yaw": 0},
+    {"id": "tp_ft_wall_relief", "at": [-4.72, 0.0, -1.2], "yaw": 90,
+     "why": "a wall piece goes on a wall, facing in"},
+    {"id": "tp_ft_alcove_torch", "at": [4.72, 1.5, -1.0], "yaw": -90,
+     "why": "reading height on the opposite wall, which is what makes the room lit from one side"},
+    {"id": "tp_ft_switch_housing", "at": [1.82, 1.15, -4.74], "yaw": 0,
+     "why": "batch043's wall-switch contract: beside the door, at hand height"},
+    {"id": "tp_ft_root_mass", "at": [-3.5, 0.0, 0.6], "yaw": 23},
+    {"id": "tp_ft_root_mass", "at": [3.6, 0.0, 1.8], "yaw": -52},
+    {"id": "tp_ft_root_mass", "at": [-1.4, 0.0, 2.9], "yaw": 126,
+     "why": "roots have won the floor away from the walked line, not across it"}
+  ],
+  "shots": [
+    {"name": "FT_approach", "eye": [0.0, 1.7, 4.4], "look": [0.0, 1.6, -5.0],
+     "check_opening": true,
+     "caption": "Approach -- grey is Production's; the pack is what sits on it"},
+    {"name": "FT_relief", "eye": [1.6, 1.7, 1.4], "look": [-4.7, 1.5, -1.6],
+     "caption": "The split panel and a rooted column, seen in passing"},
+    {"name": "FT_threshold", "eye": [0.0, 1.7, -9.6], "look": [0.0, 1.6, -2.0],
+     "caption": "Through the 2.4 x 3.2 opening -- dressing clear of both jambs"},
+    {"name": "FT_chamber", "eye": [3.9, 3.1, 4.4], "look": [-0.7, 0.7, -2.2],
+     "caption": "The chamber -- six pieces, one place, routes unchanged"}
+  ]
+}

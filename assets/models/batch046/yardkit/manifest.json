@@ -1,0 +1,650 @@
+{
+  "yk_branch_conduit": {
+    "anchor": "floor",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "conduit_cable_-1",
+      "conduit_cable_1",
+      "conduit_strap",
+      "conduit_marking"
+    ],
+    "path": "batch046/yardkit/yk_branch_conduit.glb",
+    "sight_corridor_there": [
+      2.876,
+      3.697,
+      -7.484,
+      1.871
+    ],
+    "size": [
+      0.46,
+      2.0,
+      0.3
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "stands_at_along": -3.0,
+    "stands_at_lateral": 20.0,
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "yk_branch_mast": {
+    "anchor": "floor",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "mast_collar",
+      "mast_column",
+      "mast_blade_out",
+      "mast_chevron_out",
+      "mast_blade_back",
+      "mast_chevron_back",
+      "mast_cap"
+    ],
+    "path": "batch046/yardkit/yk_branch_mast.glb",
+    "sight_corridor_there": [
+      2.8040000000000003,
+      4.6850000000000005,
+      -7.619,
+      1.905
+    ],
+    "size": [
+      0.9,
+      1.3,
+      1.62
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "stands_at_along": -4.6,
+    "stands_at_lateral": 15.5,
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 96
+  },
+  "yk_dock_buffer": {
+    "anchor": "floor",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "buffer_post",
+      "buffer_head",
+      "buffer_band"
+    ],
+    "path": "batch046/yardkit/yk_dock_buffer.glb",
+    "size": [
+      0.46,
+      0.46,
+      0.86
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 48
+  },
+  "yk_dock_edge": {
+    "anchor": "centre",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "dock_lip",
+      "board_mark_0",
+      "board_mark_1",
+      "board_mark_2",
+      "dock_band"
+    ],
+    "path": "batch046/yardkit/yk_dock_edge.glb",
+    "size": [
+      1.1,
+      7.0,
+      0.09
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "yk_dock_locker": {
+    "anchor": "floor",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "locker_top",
+      "locker_door",
+      "locker_reel",
+      "locker_plinth"
+    ],
+    "path": "batch046/yardkit/yk_dock_locker.glb",
+    "size": [
+      0.78,
+      1.5,
+      0.86
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 76
+  },
+  "yk_gantry_anchor": {
+    "anchor": "centre",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "anchor_arm",
+      "anchor_stay",
+      "anchor_collar_-1",
+      "anchor_collar_1",
+      "anchor_lamp"
+    ],
+    "path": "batch046/yardkit/yk_gantry_anchor.glb",
+    "sight_corridor_there": null,
+    "size": [
+      3.3,
+      1.8,
+      1.53
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "stands_at_along": 0.0,
+    "stands_at_lateral": 5.5,
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "yk_gantry_head": {
+    "anchor": "centre",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "gantry_bracket_-1-1",
+      "gantry_bracket_-11",
+      "gantry_bracket_1-1",
+      "gantry_bracket_11",
+      "gantry_conduit"
+    ],
+    "path": "batch046/yardkit/yk_gantry_head.glb",
+    "sight_corridor_there": [
+      6.065,
+      6.441,
+      -1.524,
+      0.381
+    ],
+    "size": [
+      3.0,
+      1.38,
+      0.7
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "stands_at_along": 0.0,
+    "stands_at_lateral": 7.5,
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "yk_gantry_winch": {
+    "anchor": "floor",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "winch_cap",
+      "winch_drum",
+      "winch_fairlead",
+      "winch_plinth"
+    ],
+    "path": "batch046/yardkit/yk_gantry_winch.glb",
+    "sight_corridor_there": [
+      5.6366,
+      6.211,
+      -2.3241000000000005,
+      0.5806000000000002
+    ],
+    "size": [
+      1.35,
+      1.1,
+      1.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "stands_at_along": 0.0,
+    "stands_at_lateral": 8.55,
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 76
+  },
+  "yk_lever_housing": {
+    "anchor": "floor",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "lever_quadrant",
+      "lever_arm",
+      "lever_lamp",
+      "service_panel",
+      "service_hinge",
+      "lever_linkage"
+    ],
+    "path": "batch046/yardkit/yk_lever_housing.glb",
+    "sight_corridor_there": [
+      6.065,
+      6.441,
+      -1.524,
+      0.381
+    ],
+    "size": [
+      0.9,
+      0.9,
+      0.73
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "stands_at_along": 0.0,
+    "stands_at_lateral": 7.5,
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "yk_span_beam": {
+    "anchor": "centre",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "span_web_-1",
+      "span_web_1",
+      "span_brace_0",
+      "span_brace_1",
+      "span_brace_2",
+      "span_brace_3",
+      "span_brace_4",
+      "span_brace_5",
+      "span_brace_6",
+      "span_brace_7",
+      "span_heel",
+      "span_toe",
+      "span_lamp"
+    ],
+    "path": "batch046/yardkit/yk_span_beam.glb",
+    "size": [
+      0.57,
+      14.048,
+      0.66
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 168
+  },
+  "yk_switch_stand": {
+    "anchor": "floor",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "switch_box",
+      "switch_tongue",
+      "switch_indicator",
+      "switch_rod"
+    ],
+    "path": "batch046/yardkit/yk_switch_stand.glb",
+    "size": [
+      0.5,
+      1.37,
+      0.77
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "yk_track_end": {
+    "anchor": "centre",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "end_chair_-1",
+      "end_rail_-1",
+      "end_chair_1",
+      "end_rail_1",
+      "end_stop",
+      "end_stop_band"
+    ],
+    "path": "batch046/yardkit/yk_track_end.glb",
+    "size": [
+      0.54,
+      0.6,
+      0.48
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "yk_track_module": {
+    "anchor": "centre",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "track_chair_-1",
+      "track_rail_-1",
+      "track_chair_1",
+      "track_rail_1",
+      "track_web"
+    ],
+    "path": "batch046/yardkit/yk_track_module.glb",
+    "size": [
+      0.5,
+      1.0,
+      0.3
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "yk_track_pier": {
+    "anchor": "floor",
+    "batch": "046",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck_top_y": 1.0000000059604646,
+      "dock_lateral_inner": 2.0,
+      "gantry_column_top_y": 3.1,
+      "gantry_deck_y": 3.7,
+      "measured_by": "tools/content/run_yard_measure.sh",
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "receiver_lateral": 2.6,
+      "span_gap": 14.047954559326172
+    },
+    "kind": "yard_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "pier_stem",
+      "pier_cap"
+    ],
+    "path": "batch046/yardkit/yk_track_pier.glb",
+    "size": [
+      0.8,
+      0.8,
+      0.425
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 36
+  }
+}

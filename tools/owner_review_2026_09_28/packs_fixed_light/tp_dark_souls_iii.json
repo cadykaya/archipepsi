@@ -1,0 +1,166 @@
+{
+ "pack": "tp_dark_souls_iii",
+ "models": "batch061/lothric",
+ "prefix": "DS",
+ "caption_note": "Material treatment MISSING: painted in gothic_stone -- the LAST house family with nobody in it. Every pack after this shares pixels or waits.",
+ "surround": "tp_ds_iron_door_arch",
+ "light": {
+  "ambient": [
+   0.62,
+   0.64,
+   0.68
+  ],
+  "ambient_energy": 0.32,
+  "fog": 0.018,
+  "fog_color": [
+   0.22,
+   0.24,
+   0.26
+  ],
+  "lamps": [
+   {
+    "at": [
+     3.6,
+     2.4,
+     -1.0
+    ],
+    "range": 8.0,
+    "energy": 2.6,
+    "color": [
+     1.0,
+     0.93,
+     0.84
+    ],
+    "why": "fixed review key, the same for every pack"
+   },
+   {
+    "at": [
+     -3.6,
+     2.4,
+     -3.0
+    ],
+    "range": 8.0,
+    "energy": 2.0,
+    "color": [
+     0.88,
+     0.93,
+     1.0
+    ],
+    "why": "fixed review fill"
+   },
+   {
+    "at": [
+     0.0,
+     2.8,
+     2.5
+    ],
+    "range": 9.0,
+    "energy": 0.9,
+    "color": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "why": "fixed front fill"
+   }
+  ]
+ },
+ "place": [
+  {
+   "id": "tp_ds_iron_door_arch",
+   "at": [
+    0.0,
+    0.0,
+    -4.8
+   ],
+   "yaw": 0,
+   "why": "on the opening; the pointed springers sit ABOVE the square head, which is how a real wall carries one under the other"
+  },
+  {
+   "id": "tp_ds_buttress_pier",
+   "at": [
+    -2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 0,
+   "why": "clear of the approach; the half-arch springs into the room"
+  },
+  {
+   "id": "tp_ds_buttress_pier",
+   "at": [
+    2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 0,
+   "why": "and the opposite pier springs the same way, because two buttresses leaning at each other carry nothing"
+  },
+  {
+   "id": "tp_ds_aqueduct_wall",
+   "at": [
+    -4.8,
+    0.0,
+    -1.2
+   ],
+   "yaw": 90,
+   "why": "the channel runs along the wall and stops; the corbels carry on past where it ended"
+  },
+  {
+   "id": "tp_ds_lever_stone",
+   "at": [
+    1.82,
+    1.15,
+    -4.74
+   ],
+   "yaw": 0,
+   "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01-T06's"
+  },
+  {
+   "id": "tp_ds_brazier",
+   "at": [
+    3.1,
+    0.0,
+    1.1
+   ],
+   "yaw": 24,
+   "why": "standing in the room, walkable-around. No other pack's light can be."
+  },
+  {
+   "id": "tp_ds_fallen_voussoir",
+   "at": [
+    -3.1,
+    0.0,
+    0.6
+   ],
+   "yaw": -14,
+   "why": "under the break in the channel, which is where an arch that fell would land"
+  },
+  {
+   "id": "tp_ds_fallen_voussoir",
+   "at": [
+    1.2,
+    0.0,
+    2.8
+   ],
+   "yaw": 132
+  }
+ ],
+ "shots": [
+  {
+   "name": "E2_T07_dark_souls_iii_fixed_light",
+   "eye": [
+    0.0,
+    1.7,
+    4.4
+   ],
+   "look": [
+    0.0,
+    1.6,
+    -5.0
+   ],
+   "check_opening": true,
+   "caption": "T07 -- same shell, camera and light as the house baseline"
+  }
+ ]
+}

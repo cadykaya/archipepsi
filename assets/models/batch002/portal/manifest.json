@@ -1,0 +1,14 @@
+{
+  "portal_b2_wound": {
+    "anchor": "floor",
+    "path": "batch002/portal/portal_b2_wound.glb",
+    "size": [
+      3.591,
+      1.287,
+      4.45
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 512
+  }
+}

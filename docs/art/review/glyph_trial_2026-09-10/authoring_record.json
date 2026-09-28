@@ -1,0 +1,201 @@
+{
+  "path": "archipepsi_concrete.glyph",
+  "owner": "act_owner_skyiah",
+  "artist": "act_agent_arty",
+  "surface": {
+    "metres": 4,
+    "density": 32,
+    "size": 128
+  },
+  "structure": {
+    "course_pitch": 38,
+    "joint_pitch": 64,
+    "bolt_pitch": 16,
+    "base_course": 27,
+    "base_top": 101,
+    "seams": [
+      0,
+      38,
+      76,
+      114
+    ]
+  },
+  "views": [
+    {
+      "image": "concrete_facility_wall.png",
+      "scale": 1,
+      "native_size": [
+        128,
+        128
+      ],
+      "render_created": {
+        "revision": "rev_RS0CRC8JGQP3PQ615T59K9",
+        "variant": "var_8CWHRBZ5K51YBDY6ESXJ5M",
+        "frame": "frm_07824CYQYM398G3HHKJDMV",
+        "native_size": [
+          128,
+          128
+        ],
+        "scale": 1,
+        "sha256": "04abdc5a2a0bc1a93ae1ed7901fb1f2ae7e87258d6fe386090d4ba22046a55c8",
+        "proves": "a file exists at this revision with these dimensions and these bytes"
+      },
+      "pixels_read": {
+        "probes": [
+          [
+            0,
+            0
+          ],
+          [
+            42,
+            21
+          ],
+          [
+            84,
+            42
+          ],
+          [
+            126,
+            63
+          ],
+          [
+            40,
+            85
+          ],
+          [
+            82,
+            106
+          ]
+        ],
+        "answers": null,
+        "proves": "when answered correctly, that the bytes were read — NOT that a vision-capable tool received the image, which nothing inside Glyph can observe"
+      },
+      "visual_assessment": null,
+      "check": {
+        "render_created": true,
+        "problems": [],
+        "pixels_read": null,
+        "visual_assessment": "absent"
+      }
+    },
+    {
+      "image": "concrete_facility_wall_8x.png",
+      "scale": 8,
+      "native_size": [
+        128,
+        128
+      ],
+      "render_created": {
+        "revision": "rev_RS0CRC8JGQP3PQ615T59K9",
+        "variant": "var_8CWHRBZ5K51YBDY6ESXJ5M",
+        "frame": "frm_07824CYQYM398G3HHKJDMV",
+        "native_size": [
+          128,
+          128
+        ],
+        "scale": 8,
+        "sha256": "6508962a57aeb2d8a05fb88151dbfe5e05de56760a0eef60c971896793db161d",
+        "proves": "a file exists at this revision with these dimensions and these bytes"
+      },
+      "pixels_read": {
+        "probes": [
+          [
+            0,
+            0
+          ],
+          [
+            42,
+            21
+          ],
+          [
+            84,
+            42
+          ],
+          [
+            126,
+            63
+          ],
+          [
+            40,
+            85
+          ],
+          [
+            82,
+            106
+          ]
+        ],
+        "answers": null,
+        "proves": "when answered correctly, that the bytes were read — NOT that a vision-capable tool received the image, which nothing inside Glyph can observe"
+      },
+      "visual_assessment": null,
+      "check": {
+        "render_created": true,
+        "problems": [],
+        "pixels_read": null,
+        "visual_assessment": "absent"
+      }
+    },
+    {
+      "image": "concrete_facility_wall_8x_coords.png",
+      "scale": 8,
+      "native_size": [
+        128,
+        128
+      ],
+      "render_created": {
+        "revision": "rev_RS0CRC8JGQP3PQ615T59K9",
+        "variant": "var_8CWHRBZ5K51YBDY6ESXJ5M",
+        "frame": "frm_07824CYQYM398G3HHKJDMV",
+        "native_size": [
+          128,
+          128
+        ],
+        "scale": 8,
+        "coordinate_interval": 8,
+        "overlays": [
+          "coordinate_grid"
+        ],
+        "sha256": "f566cdbaf618fbaf6fda3680c83aff46750950845929e066395a929add1ed834",
+        "proves": "a file exists at this revision with these dimensions and these bytes"
+      },
+      "pixels_read": {
+        "probes": [
+          [
+            0,
+            0
+          ],
+          [
+            42,
+            21
+          ],
+          [
+            84,
+            42
+          ],
+          [
+            126,
+            63
+          ],
+          [
+            40,
+            85
+          ],
+          [
+            82,
+            106
+          ]
+        ],
+        "answers": null,
+        "proves": "when answered correctly, that the bytes were read — NOT that a vision-capable tool received the image, which nothing inside Glyph can observe"
+      },
+      "visual_assessment": null,
+      "check": {
+        "render_created": true,
+        "problems": [],
+        "pixels_read": null,
+        "visual_assessment": "absent"
+      }
+    }
+  ],
+  "elapsed_ms": 936
+}

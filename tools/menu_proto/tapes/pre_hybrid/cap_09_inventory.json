@@ -1,0 +1,137 @@
+{
+ "about": "The inventory's art direction in motion: ROUTE AND ECHO. Scripted input for a capture, not hands-on.",
+ "steps": [
+  {
+   "at": 0.0,
+   "say": "EQUIPMENT, ROUTE AND ECHO -- THE ROUTE RUNS FROM THE KEY, THROUGH WHAT IS ON IT, TO THE NAME"
+  },
+  {
+   "at": 1.8,
+   "mark": "at rest: RMB, what is on it, and its two echoes (MK II)"
+  },
+  {
+   "at": 2.0,
+   "say": "RIGHT, THEN DOWN ONE AT A TIME -- THE ROUTE GLIDES, THE ECHOES STEP OUT; THE WORDS ARE WHOLE AT ONCE"
+  },
+  {
+   "at": 2.4,
+   "key": "Right"
+  },
+  {
+   "at": 3.1,
+   "key": "Down"
+  },
+  {
+   "at": 3.9,
+   "key": "Down"
+  },
+  {
+   "at": 4.0,
+   "mark": "0.1 s after a press: the words already whole, the route still gliding"
+  },
+  {
+   "at": 4.7,
+   "mark": "one at a time: HUNTER'S DRAW against what is on RMB"
+  },
+  {
+   "at": 4.9,
+   "say": "SEVEN RAPID DOWNS -- NO WORD SQUASHES, NOTHING OVERLAPS; THE ROUTE CATCHES UP"
+  },
+  {
+   "at": 5.2,
+   "key": "Down"
+  },
+  {
+   "at": 5.28,
+   "key": "Down"
+  },
+  {
+   "at": 5.36,
+   "key": "Down"
+  },
+  {
+   "at": 5.44,
+   "key": "Down"
+  },
+  {
+   "at": 5.52,
+   "key": "Down"
+  },
+  {
+   "at": 5.6,
+   "key": "Down"
+  },
+  {
+   "at": 5.68,
+   "key": "Down"
+  },
+  {
+   "at": 5.45,
+   "mark": "mid-flight in rapid selection"
+  },
+  {
+   "at": 6.8,
+   "mark": "landed: SILVER VOLLEY, MK III -- three echoes"
+  },
+  {
+   "at": 7.0,
+   "say": "SILVER VOLLEY IS MK III: THREE ITEMS WENT INTO IT, SO THREE ECHOES STAND BEHIND ITS NAME"
+  },
+  {
+   "at": 9.2,
+   "say": "UP -- THE LONGEST NAME, WITH A LONG DESCRIPTION: THE PLATE WRAPS; NOTHING IS CUT OR SHRUNK"
+  },
+  {
+   "at": 9.5,
+   "key": "Up"
+  },
+  {
+   "at": 11.0,
+   "mark": "the longest name, with a long description"
+  },
+  {
+   "at": 11.2,
+   "say": "ENTER -- A LOCAL PREVIEW ON RMB, NOT SENT: THE KEY NOW CARRIES IT"
+  },
+  {
+   "at": 11.5,
+   "key": "Enter"
+  },
+  {
+   "at": 13.0,
+   "mark": "previewed, not sent"
+  },
+  {
+   "at": 13.2,
+   "say": "LEFT, DOWN x4 -- ANOTHER KEY: THE ROUTE RE-RUNS FROM Q"
+  },
+  {
+   "at": 13.5,
+   "key": "Left"
+  },
+  {
+   "at": 13.9,
+   "key": "Down"
+  },
+  {
+   "at": 14.1,
+   "key": "Down"
+  },
+  {
+   "at": 14.3,
+   "key": "Down"
+  },
+  {
+   "at": 14.5,
+   "key": "Down"
+  },
+  {
+   "at": 15.8,
+   "mark": "another key: Q, and what is on it"
+  },
+  {
+   "at": 16.2,
+   "quit": true
+  }
+ ]
+}

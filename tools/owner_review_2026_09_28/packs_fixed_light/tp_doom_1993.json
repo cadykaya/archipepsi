@@ -1,0 +1,165 @@
+{
+ "pack": "tp_doom_1993",
+ "models": "batch060/foundry",
+ "prefix": "DM",
+ "caption_note": "Material treatment MISSING: painted in concrete_facility -- the last unused-but-one house family. Two packs of runway left.",
+ "surround": "tp_dm_blast_frame",
+ "light": {
+  "ambient": [
+   0.62,
+   0.64,
+   0.68
+  ],
+  "ambient_energy": 0.32,
+  "fog": 0.018,
+  "fog_color": [
+   0.22,
+   0.24,
+   0.26
+  ],
+  "lamps": [
+   {
+    "at": [
+     3.6,
+     2.4,
+     -1.0
+    ],
+    "range": 8.0,
+    "energy": 2.6,
+    "color": [
+     1.0,
+     0.93,
+     0.84
+    ],
+    "why": "fixed review key, the same for every pack"
+   },
+   {
+    "at": [
+     -3.6,
+     2.4,
+     -3.0
+    ],
+    "range": 8.0,
+    "energy": 2.0,
+    "color": [
+     0.88,
+     0.93,
+     1.0
+    ],
+    "why": "fixed review fill"
+   },
+   {
+    "at": [
+     0.0,
+     2.8,
+     2.5
+    ],
+    "range": 9.0,
+    "energy": 0.9,
+    "color": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "why": "fixed front fill"
+   }
+  ]
+ },
+ "place": [
+  {
+   "id": "tp_dm_blast_frame",
+   "at": [
+    0.0,
+    0.0,
+    -4.78
+   ],
+   "yaw": 0,
+   "why": "on the opening; chevrons project toward the player, nothing across or below the head"
+  },
+  {
+   "id": "tp_dm_bank_column",
+   "at": [
+    -2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 0,
+   "why": "clear of the approach; the racks face the room because a column you read has to be readable"
+  },
+  {
+   "id": "tp_dm_bank_column",
+   "at": [
+    2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 9
+  },
+  {
+   "id": "tp_dm_screen_wall",
+   "at": [
+    -4.8,
+    0.0,
+    -1.2
+   ],
+   "yaw": 90,
+   "why": "the desk and its hand-run cable face the room"
+  },
+  {
+   "id": "tp_dm_light_recess",
+   "at": [
+    4.8,
+    1.9,
+    -1.0
+   ],
+   "yaw": -90,
+   "why": "SUNK into the wall, not hung on it -- the steps go back and the panel sits at the bottom of them"
+  },
+  {
+   "id": "tp_dm_keycard_reader",
+   "at": [
+    1.82,
+    1.15,
+    -4.74
+   ],
+   "yaw": 0,
+   "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01-T05's"
+  },
+  {
+   "id": "tp_dm_spill_trough",
+   "at": [
+    -3.0,
+    0.0,
+    1.0
+   ],
+   "yaw": 8
+  },
+  {
+   "id": "tp_dm_spill_trough",
+   "at": [
+    2.6,
+    0.0,
+    2.4
+   ],
+   "yaw": -104,
+   "why": "off the walked line; the stain fans away from the open end"
+  }
+ ],
+ "shots": [
+  {
+   "name": "E2_T06_doom_1993_fixed_light",
+   "eye": [
+    0.0,
+    1.7,
+    4.4
+   ],
+   "look": [
+    0.0,
+    1.6,
+    -5.0
+   ],
+   "check_opening": true,
+   "caption": "T06 -- same shell, camera and light as the house baseline"
+  }
+ ]
+}

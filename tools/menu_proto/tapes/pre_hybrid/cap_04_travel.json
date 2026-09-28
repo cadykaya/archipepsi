@@ -1,0 +1,93 @@
+{
+ "about": "Leaving a face and coming back with its context intact; the thread. Scripted input for a capture, not hands-on.",
+ "steps": [
+  {
+   "at": 0.0,
+   "say": "MAP -- A PICK, AN ORBIT, A ZOOM: THE CONTEXT TO KEEP"
+  },
+  {
+   "at": 0.4,
+   "key": "Q"
+  },
+  {
+   "at": 1.4,
+   "key": "BracketRight"
+  },
+  {
+   "at": 2.0,
+   "key": "BracketRight"
+  },
+  {
+   "at": 2.8,
+   "key": "Left"
+  },
+  {
+   "at": 3.1,
+   "key": "Left"
+  },
+  {
+   "at": 3.6,
+   "key": "Equal"
+  },
+  {
+   "at": 4.8,
+   "mark": "context"
+  },
+  {
+   "at": 4.9,
+   "say": "Q -- THE JOURNAL: THE FOCUSED ENTRY'S THREAD RUNS ROUND THE CORNER TO ITS PASSAGE"
+  },
+  {
+   "at": 5.2,
+   "key": "Q"
+  },
+  {
+   "at": 7.0,
+   "mark": "thread"
+  },
+  {
+   "at": 7.2,
+   "say": "DOWN -- THE NEXT SHUT WAY: THE THREAD REWINDS AND IS CAST AGAIN"
+  },
+  {
+   "at": 7.6,
+   "key": "Down"
+  },
+  {
+   "at": 9.0,
+   "mark": "recast"
+  },
+  {
+   "at": 9.2,
+   "say": "E -- FOLLOW IT: THE MAP IS AS IT WAS LEFT; ITS PASSAGE IS OFF THIS VIEW, SO THE THREAD STOPS AT THE EDGE, POINTING TO IT"
+  },
+  {
+   "at": 9.6,
+   "key": "E"
+  },
+  {
+   "at": 11.4,
+   "mark": "followed"
+  },
+  {
+   "at": 11.6,
+   "say": "TAB -- EQUIPMENT, THE SHORT WAY ROUND. Q -- BACK: THE MAP STILL AS IT WAS"
+  },
+  {
+   "at": 12.0,
+   "key": "Tab"
+  },
+  {
+   "at": 13.4,
+   "key": "Q"
+  },
+  {
+   "at": 15.0,
+   "mark": "returned"
+  },
+  {
+   "at": 15.4,
+   "quit": true
+  }
+ ]
+}

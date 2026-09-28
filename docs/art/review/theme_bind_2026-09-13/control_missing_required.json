@@ -1,0 +1,144 @@
+{
+  "mode": "missing_required",
+  "problems": [],
+  "themes": {
+    "concrete_facility": {
+      "authored": {
+        "accent": true,
+        "floor": false,
+        "hazard": false,
+        "trim": true,
+        "wall": true
+      },
+      "disqualified": [
+        "floor"
+      ],
+      "pixels_match": {
+        "accent": true,
+        "trim": true,
+        "wall": true
+      },
+      "refusals": [],
+      "uv1_scale": {
+        "accent": 0.25,
+        "trim": 0.25,
+        "wall": 0.25
+      }
+    },
+    "gothic_stone": {
+      "authored": {
+        "accent": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "wall": true
+      },
+      "disqualified": [],
+      "pixels_match": {
+        "accent": true,
+        "floor": true,
+        "trim": true,
+        "wall": true
+      },
+      "refusals": [],
+      "uv1_scale": {
+        "accent": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "wall": 0.25
+      }
+    },
+    "neon_transit": {
+      "authored": {
+        "accent": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "wall": true
+      },
+      "disqualified": [],
+      "pixels_match": {
+        "accent": true,
+        "floor": true,
+        "trim": true,
+        "wall": true
+      },
+      "refusals": [],
+      "uv1_scale": {
+        "accent": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "wall": 0.25
+      }
+    },
+    "rusted_industrial": {
+      "authored": {
+        "accent": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "wall": true
+      },
+      "disqualified": [],
+      "pixels_match": {
+        "accent": true,
+        "floor": true,
+        "trim": true,
+        "wall": true
+      },
+      "refusals": [],
+      "uv1_scale": {
+        "accent": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "wall": 0.25
+      }
+    },
+    "temple_ruin": {
+      "authored": {
+        "accent": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "wall": true
+      },
+      "disqualified": [],
+      "pixels_match": {
+        "accent": true,
+        "floor": true,
+        "trim": true,
+        "wall": true
+      },
+      "refusals": [],
+      "uv1_scale": {
+        "accent": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "wall": 0.25
+      }
+    },
+    "void_glitch": {
+      "authored": {
+        "accent": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "wall": true
+      },
+      "disqualified": [],
+      "pixels_match": {
+        "accent": true,
+        "floor": true,
+        "trim": true,
+        "wall": true
+      },
+      "refusals": [],
+      "uv1_scale": {
+        "accent": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "wall": 0.25
+      }
+    }
+  }
+}

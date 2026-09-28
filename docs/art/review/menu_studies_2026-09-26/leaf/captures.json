@@ -1,0 +1,153 @@
+{
+ "study": "leaf",
+ "title": "STUDY 1 -- LEAF: THE THING OPENS WHERE IT IS (INVENTORY)",
+ "source": {
+  "note": "SAMPLE DATA: Production's own fixtures, answered by Production's own code. Regenerate; never edit.",
+  "production_ref": "origin/claude/archipepsi-0-4-blindside",
+  "production_rev": "3b96bc4"
+ },
+ "fps": 30,
+ "size": [
+  1920,
+  1080
+ ],
+ "runs": {
+  "motion": {
+   "frames": 271,
+   "seconds": 9.03,
+   "marks": [
+    {
+     "frame": 0,
+     "label": "rest",
+     "t": 0.0
+    },
+    {
+     "frame": 48,
+     "label": "select",
+     "t": 1.6
+    },
+    {
+     "frame": 132,
+     "label": "change",
+     "t": 4.4
+    },
+    {
+     "frame": 192,
+     "label": "adjacent",
+     "t": 6.4
+    },
+    {
+     "frame": 237,
+     "label": "return",
+     "t": 7.9
+    }
+   ],
+   "video": {
+    "file": "motion.mp4",
+    "bytes": 995339
+   }
+  },
+  "reduced": {
+   "frames": 271,
+   "seconds": 9.03,
+   "marks": [
+    {
+     "frame": 0,
+     "label": "rest",
+     "t": 0.0
+    },
+    {
+     "frame": 48,
+     "label": "select",
+     "t": 1.6
+    },
+    {
+     "frame": 132,
+     "label": "change",
+     "t": 4.4
+    },
+    {
+     "frame": 192,
+     "label": "adjacent",
+     "t": 6.4
+    },
+    {
+     "frame": 237,
+     "label": "return",
+     "t": 7.9
+    }
+   ],
+   "video": {
+    "file": "reduced.mp4",
+    "bytes": 264115
+   }
+  }
+ },
+ "stills": [
+  {
+   "file": "stills/01_rest.png",
+   "t": 0.9,
+   "frame": 27,
+   "caption": "rest -- each row is a key, what is on it sits in its socket",
+   "motion_vs_reduced": {
+    "mean_abs": 0.0,
+    "share_over_8": 0.0,
+    "changed_box": null,
+    "overlay": null
+   }
+  },
+  {
+   "file": "stills/02_select.png",
+   "t": 2.4,
+   "frame": 72,
+   "caption": "select -- Arc Bolt opens where it is; it compares with the leaf on RMB",
+   "motion_vs_reduced": {
+    "mean_abs": 0.0,
+    "share_over_8": 0.0,
+    "changed_box": null,
+    "overlay": null
+   }
+  },
+  {
+   "file": "stills/03_change.png",
+   "t": 5.4,
+   "frame": 162,
+   "caption": "change -- moving away folded it; Frost Flask opens UP, toward the free wall",
+   "motion_vs_reduced": {
+    "mean_abs": 0.0,
+    "share_over_8": 0.0,
+    "changed_box": null,
+    "overlay": null
+   }
+  },
+  {
+   "file": "stills/04_adjacent.png",
+   "t": 7.3,
+   "frame": 219,
+   "caption": "adjacent -- a turn left: the map, at rest",
+   "motion_vs_reduced": {
+    "mean_abs": 0.0,
+    "share_over_8": 0.0,
+    "changed_box": null,
+    "overlay": null
+   }
+  },
+  {
+   "file": "stills/05_return.png",
+   "t": 8.7,
+   "frame": 261,
+   "caption": "return -- Frost Flask is still open, the focus still on it",
+   "motion_vs_reduced": {
+    "mean_abs": 0.0,
+    "share_over_8": 0.0,
+    "changed_box": null,
+    "overlay": null
+   }
+  }
+ ],
+ "preview": {
+  "file": "preview.webp",
+  "bytes": 409000,
+  "note": "half size, 15 fps: for seeing the motion inline; the text is not at gameplay size here -- the MP4 is"
+ }
+}

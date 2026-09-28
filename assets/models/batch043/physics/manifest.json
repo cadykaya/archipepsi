@@ -1,0 +1,1255 @@
+{
+  "phys_anchor_block": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          0.0,
+          0.0,
+          0.651
+        ],
+        "id": "attach_eye",
+        "normal": [
+          0.0,
+          1.0,
+          -0.0
+        ],
+        "part": "attach_eye",
+        "position": [
+          0.0,
+          0.651,
+          -0.0
+        ],
+        "proposes": "the tether eye. The ONLY fitting on the class, and it is for attaching something TO the anchor, never for moving the anchor"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "ANCHOR_BLOCK",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "no",
+      "push_force_n": 1944.444
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": false,
+    "mass_class": "FIXED",
+    "mass_kg": 500.0,
+    "material_roles": {
+      "body": "phys_anchor_block",
+      "handling": "phys_anchor_block_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "attach_eye"
+    ],
+    "path": "batch043/physics/phys_anchor_block.glb",
+    "size": [
+      0.988,
+      0.988,
+      0.689
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 0.988,
+      "y": 0.988,
+      "z_up": 0.689
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 0.988,
+      "y_up": 0.689,
+      "z": 0.988
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 80
+  },
+  "phys_ballast": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          0.0,
+          -0.39,
+          0.297
+        ],
+        "id": "attach_pad_0",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "part": "attach_pad_0",
+        "position": [
+          0.0,
+          0.297,
+          0.39
+        ],
+        "proposes": "a device attach pad; four of them so the player is never on the wrong side"
+      },
+      {
+        "authored_blender_z_up": [
+          0.0,
+          0.39,
+          0.297
+        ],
+        "id": "attach_pad_1",
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "part": "attach_pad_1",
+        "position": [
+          0.0,
+          0.297,
+          -0.39
+        ],
+        "proposes": "a device attach pad; four of them so the player is never on the wrong side"
+      },
+      {
+        "authored_blender_z_up": [
+          -0.54,
+          0.0,
+          0.297
+        ],
+        "id": "attach_pad_2",
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "part": "attach_pad_2",
+        "position": [
+          -0.54,
+          0.297,
+          -0.0
+        ],
+        "proposes": "a device attach pad; four of them so the player is never on the wrong side"
+      },
+      {
+        "authored_blender_z_up": [
+          0.54,
+          0.0,
+          0.297
+        ],
+        "id": "attach_pad_3",
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "part": "attach_pad_3",
+        "position": [
+          0.54,
+          0.297,
+          -0.0
+        ],
+        "proposes": "a device attach pad; four of them so the player is never on the wrong side"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "BALLAST",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "no",
+      "push_force_n": 1244.444
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "HEAVY",
+    "mass_kg": 320.0,
+    "material_roles": {
+      "body": "phys_ballast",
+      "handling": "phys_ballast_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "attach_pad_0",
+      "attach_pad_1",
+      "attach_pad_2",
+      "attach_pad_3",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_ballast.glb",
+    "size": [
+      1.125,
+      0.825,
+      0.497
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 1.125,
+      "y": 0.825,
+      "z_up": 0.497
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 1.125,
+      "y_up": 0.497,
+      "z": 0.825
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 144
+  },
+  "phys_cart": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          -0.58,
+          0.0,
+          0.745
+        ],
+        "id": "push_bar",
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "part": "push_bar",
+        "position": [
+          -0.58,
+          0.635,
+          -0.0
+        ],
+        "proposes": "a push bar at one end only -- a cart has a front, and the bar is where it is. NOT a grip: a hand does not lift 180 kg"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "CART",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "at the limit",
+      "push_force_n": 700.0
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "HEAVY",
+    "mass_kg": 180.0,
+    "material_roles": {
+      "body": "phys_cart",
+      "handling": "phys_cart_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "push_bar",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_cart.glb",
+    "size": [
+      1.36,
+      0.856,
+      0.67
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 1.36,
+      "y": 0.856,
+      "z_up": 0.67
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 1.36,
+      "y_up": 0.67,
+      "z": 0.856
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 256
+  },
+  "phys_drum": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          -0.514,
+          0.0,
+          0.37
+        ],
+        "id": "attach_hub_0",
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "part": "attach_hub_0",
+        "position": [
+          -0.514,
+          0.71184,
+          -0.0
+        ],
+        "proposes": "an end hub on the rolling axis, so a device grabs the drum where turning it is free rather than where it fights"
+      },
+      {
+        "authored_blender_z_up": [
+          0.514,
+          0.0,
+          0.37
+        ],
+        "id": "attach_hub_1",
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "part": "attach_hub_1",
+        "position": [
+          0.514,
+          0.71184,
+          -0.0
+        ],
+        "proposes": "an end hub on the rolling axis, so a device grabs the drum where turning it is free rather than where it fights"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "DRUM",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 272.222
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "MEDIUM",
+    "mass_kg": 70.0,
+    "material_roles": {
+      "body": "phys_drum",
+      "handling": "phys_drum_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "attach_hub_0",
+      "attach_hub_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_drum.glb",
+    "size": [
+      1.029,
+      0.684,
+      0.684
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 1.029,
+      "y": 0.684,
+      "z_up": 0.684
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 1.029,
+      "y_up": 0.684,
+      "z": 0.684
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 132
+  },
+  "phys_generic": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          0.0,
+          -0.298,
+          0.4092
+        ],
+        "id": "grip_hand_0",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "part": "grip_hand_0",
+        "position": [
+          0.0,
+          0.4092,
+          0.298
+        ],
+        "proposes": "a recessed hand grip; two of them, opposite, so the object is lifted square"
+      },
+      {
+        "authored_blender_z_up": [
+          0.0,
+          0.298,
+          0.4092
+        ],
+        "id": "grip_hand_1",
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "part": "grip_hand_1",
+        "position": [
+          0.0,
+          0.4092,
+          -0.298
+        ],
+        "proposes": "a recessed hand grip; two of them, opposite, so the object is lifted square"
+      }
+    ],
+    "batch": "043",
+    "carriable": true,
+    "class": "GENERIC",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 58.333
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "LIGHT",
+    "mass_kg": 15.0,
+    "material_roles": {
+      "body": "phys_generic",
+      "handling": "phys_generic_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "grip_hand_0",
+      "grip_hand_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_generic.glb",
+    "size": [
+      0.645,
+      0.646,
+      0.625
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 0.645,
+      "y": 0.646,
+      "z_up": 0.625
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 0.645,
+      "y_up": 0.625,
+      "z": 0.646
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 120
+  },
+  "phys_girder": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          -1.599,
+          0.0,
+          0.0
+        ],
+        "id": "attach_end_a",
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "part": "attach_end_a",
+        "position": [
+          -1.599,
+          0.13,
+          -0.0
+        ],
+        "proposes": "an end plate that meets a wall or another girder's end plate"
+      },
+      {
+        "authored_blender_z_up": [
+          1.599,
+          0.0,
+          0.0
+        ],
+        "id": "attach_end_b",
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "part": "attach_end_b",
+        "position": [
+          1.599,
+          0.13,
+          -0.0
+        ],
+        "proposes": "an end plate that meets a wall or another girder's end plate"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "GIRDER",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 369.444
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "MEDIUM",
+    "mass_kg": 95.0,
+    "material_roles": {
+      "body": "phys_girder",
+      "handling": "phys_girder_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "attach_end_a",
+      "attach_end_b",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_girder.glb",
+    "size": [
+      3.201,
+      0.2,
+      0.26
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 3.201,
+      "y": 0.2,
+      "z_up": 0.26
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 3.201,
+      "y_up": 0.26,
+      "z": 0.2
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 108
+  },
+  "phys_key_component": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          -0.028,
+          0.0,
+          0.008
+        ],
+        "id": "attach_bit",
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "part": "attach_bit",
+        "position": [
+          -0.028,
+          0.0075,
+          -0.0024
+        ],
+        "proposes": "a keyed underside; the ward is offset so the component enters a receiver one way round only"
+      }
+    ],
+    "batch": "043",
+    "carriable": true,
+    "class": "KEY_COMPONENT",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 31.111
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "LIGHT",
+    "mass_kg": 8.0,
+    "material_roles": {
+      "body": "phys_key_component",
+      "handling": "phys_key_component_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "grip_bar",
+      "grip_post_l",
+      "grip_post_r",
+      "attach_bit",
+      "attach_bit_ward",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_key_component.glb",
+    "size": [
+      0.246,
+      0.195,
+      0.305
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 0.246,
+      "y": 0.195,
+      "z_up": 0.305
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 0.246,
+      "y_up": 0.305,
+      "z": 0.195
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 132
+  },
+  "phys_mechanical_part": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          0.0,
+          -0.205,
+          0.1386
+        ],
+        "id": "attach_key",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "part": "attach_key",
+        "position": [
+          0.0,
+          0.1391,
+          0.17375
+        ],
+        "proposes": "the keyed face that enters a repair socket"
+      }
+    ],
+    "batch": "043",
+    "carriable": true,
+    "class": "MECHANICAL_PART",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 213.889
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "MEDIUM",
+    "mass_kg": 55.0,
+    "material_roles": {
+      "body": "phys_mechanical_part",
+      "handling": "phys_mechanical_part_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "grip_bar",
+      "grip_post_l",
+      "grip_post_r",
+      "attach_key",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_mechanical_part.glb",
+    "size": [
+      0.475,
+      0.403,
+      0.43
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 0.475,
+      "y": 0.403,
+      "z_up": 0.43
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 0.475,
+      "y_up": 0.43,
+      "z": 0.403
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 160
+  },
+  "phys_movable_cover": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          0.0,
+          -0.11,
+          0.7912
+        ],
+        "id": "attach_push_0",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "part": "attach_push_0",
+        "position": [
+          0.0,
+          0.7912,
+          0.11
+        ],
+        "proposes": "a push face on each side, so cover can be moved from behind it as well as from in front"
+      },
+      {
+        "authored_blender_z_up": [
+          0.0,
+          0.11,
+          0.7912
+        ],
+        "id": "attach_push_1",
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "part": "attach_push_1",
+        "position": [
+          0.0,
+          0.7912,
+          -0.11
+        ],
+        "proposes": "a push face on each side, so cover can be moved from behind it as well as from in front"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "MOVABLE_COVER",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "no",
+      "push_force_n": 855.556
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "HEAVY",
+    "mass_kg": 220.0,
+    "material_roles": {
+      "body": "phys_movable_cover",
+      "handling": "phys_movable_cover_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "attach_push_0",
+      "attach_push_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_movable_cover.glb",
+    "size": [
+      1.326,
+      0.26,
+      1.72
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 1.326,
+      "y": 0.26,
+      "z_up": 1.72
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 1.326,
+      "y_up": 1.72,
+      "z": 0.26
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 132
+  },
+  "phys_plate": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          -0.64,
+          0.0,
+          0.128
+        ],
+        "id": "attach_slot_0",
+        "normal": [
+          0.0,
+          1.0,
+          -0.0
+        ],
+        "part": "attach_slot_0",
+        "position": [
+          -0.74,
+          0.128,
+          -0.0
+        ],
+        "proposes": "a lifting slot a device hooks into; two of them, so a flat object can be lifted level"
+      },
+      {
+        "authored_blender_z_up": [
+          0.64,
+          0.0,
+          0.128
+        ],
+        "id": "attach_slot_1",
+        "normal": [
+          0.0,
+          1.0,
+          -0.0
+        ],
+        "part": "attach_slot_1",
+        "position": [
+          0.54,
+          0.128,
+          -0.0
+        ],
+        "proposes": "a lifting slot a device hooks into; two of them, so a flat object can be lifted level"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "PLATE",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 233.333
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "MEDIUM",
+    "mass_kg": 60.0,
+    "material_roles": {
+      "body": "phys_plate",
+      "handling": "phys_plate_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "attach_slot_0",
+      "attach_slot_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_plate.glb",
+    "size": [
+      1.8,
+      0.92,
+      0.145
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 1.8,
+      "y": 0.92,
+      "z_up": 0.145
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 1.8,
+      "y_up": 0.145,
+      "z": 0.92
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 92
+  },
+  "phys_power_cell": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          0.0,
+          0.0,
+          0.004
+        ],
+        "id": "attach_socket",
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "part": "attach_socket",
+        "position": [
+          0.0,
+          0.004,
+          -0.0
+        ],
+        "proposes": "the face that meets a power socket"
+      }
+    ],
+    "batch": "043",
+    "carriable": true,
+    "class": "POWER_CELL",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 155.556
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "MEDIUM",
+    "mass_kg": 40.0,
+    "material_roles": {
+      "body": "phys_power_cell",
+      "handling": "phys_power_cell_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "grip_bar",
+      "grip_post_l",
+      "grip_post_r",
+      "attach_socket",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_power_cell.glb",
+    "size": [
+      0.34,
+      0.34,
+      0.6
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 0.34,
+      "y": 0.34,
+      "z_up": 0.6
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 0.34,
+      "y_up": 0.6,
+      "z": 0.34
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 172
+  },
+  "phys_weighted": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "authored_blender_z_up": [
+          0.0,
+          -0.4295,
+          0.3848
+        ],
+        "id": "attach_push_0",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "part": "attach_push_0",
+        "position": [
+          0.0,
+          0.3848,
+          0.4295
+        ],
+        "proposes": "a push face; two of them, opposite, because this class is pushed along an axis rather than carried"
+      },
+      {
+        "authored_blender_z_up": [
+          0.0,
+          0.4295,
+          0.3848
+        ],
+        "id": "attach_push_1",
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "part": "attach_push_1",
+        "position": [
+          0.0,
+          0.3848,
+          -0.4295
+        ],
+        "proposes": "a push face; two of them, opposite, because this class is pushed along an axis rather than carried"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "WEIGHTED",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
+      "origin_shift_applied": "once, by set_origin_group, before the conversion",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 544.444
+    },
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "HEAVY",
+    "mass_kg": 140.0,
+    "material_roles": {
+      "body": "phys_weighted",
+      "handling": "phys_weighted_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
+    "parts": [
+      "attach_push_0",
+      "attach_push_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch043/physics/phys_weighted.glb",
+    "size": [
+      0.82,
+      0.86,
+      0.696
+    ],
+    "size_authoring_blender_z_up": {
+      "x": 0.82,
+      "y": 0.86,
+      "z_up": 0.696
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 0.82,
+      "y_up": 0.696,
+      "z": 0.86
+    },
+    "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 132
+  }
+}

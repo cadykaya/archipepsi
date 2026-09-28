@@ -1,0 +1,60 @@
+{
+  "_comment": [
+    "Batch 006 -- the portal's two states and the standard door.",
+    "",
+    "The portal shots load the APPROVED frame (batch002/portal_b2_wound)",
+    "with each core in it, because a core photographed alone is a picture",
+    "of a membrane and the question is what the portal reads as.",
+    "",
+    "Both state shots share one orbit, for the reason the Check's did: a",
+    "comparison taken from two distances compares the distances."
+  ],
+  "defaults": { "size": [1440, 900], "lens": 35, "ambient": 0.18 },
+  "shots": [
+    { "name": "P_portal_states",
+      "scene": "model:batch002/portal/portal_b2_wound.glb@-2.3,0,0 + batch006/portal/portal_core_locked.glb@-2.3,0,0 + batch002/portal/portal_b2_wound.glb@2.3,0,0 + batch006/portal/portal_core_unlocked.glb@2.3,0,0",
+      "size": [1920, 1080], "lens": 35,
+      "frame": 0.86, "azimuth": 0, "elevation": 4,
+      "caption": "THE PORTAL - SEALED, THEN OPEN. SAME WOUND, TORN",
+      "note": "SOLID AGAINST HOLED READS AT ANY DISTANCE AND IN ANY TINT",
+      "variants": ["grey", "silhouette"] },
+
+    { "name": "P_portal_locked",
+      "scene": "model:batch002/portal/portal_b2_wound.glb + batch006/portal/portal_core_locked.glb",
+      "orbit": [6.4, 20, 6], "target": [0, 1.8, 0],
+      "caption": "SEALED - THE WOUND HAS GROWN OVER THE APERTURE",
+      "note": "IDENTITY GREEN AT ITS DARKEST STEP. NOT A NEW FAMILY" },
+
+    { "name": "P_portal_unlocked",
+      "scene": "model:batch002/portal/portal_b2_wound.glb + batch006/portal/portal_core_unlocked.glb",
+      "orbit": [6.4, 20, 6], "target": [0, 1.8, 0],
+      "caption": "OPEN - THE SAME GROWTH RETRACTED TO THE EDGES",
+      "note": "EXIT_PORTAL.GD RUNS THIS AT 2.0 EMISSION ENERGY, SEALED AT 0.5" },
+
+    { "name": "P_portal_walkup",
+      "scene": "model:batch002/portal/portal_b2_wound.glb + batch006/portal/portal_core_unlocked.glb",
+      "eye": [0, 0, -3.4], "yaw": 0, "game_lens": true,
+      "caption": "WALK-UP AT THE ENGINE'S OWN LENS - IS THERE A WAY THROUGH?" },
+
+    { "name": "P_portal_cores",
+      "scene": "model:batch006/portal/portal_core_locked.glb@-1.7,0,0 + batch006/portal/portal_core_unlocked.glb@1.7,0,0",
+      "size": [1600, 900], "lens": 50,
+      "frame": 0.82, "azimuth": 0, "elevation": 3,
+      "caption": "THE TWO CORES ALONE - 108 TRIS EACH, ONE MATERIAL EACH",
+      "note": "ONE MATERIAL SO A MESH SWAP AND A MATERIAL_OVERRIDE BOTH WORK",
+      "variants": ["silhouette"] },
+
+    { "name": "P_door_standard",
+      "scene": "model:batch006/architecture/door_standard.glb",
+      "frame": 0.8, "azimuth": 28, "elevation": 8,
+      "caption": "DOOR LINING - 2.4 X 3.2 M, THE GAP CHAMBER_BUILDERS CUTS",
+      "note": "THEME TRIM, NOT A UNIVERSAL FAMILY. A LINING IS NOT AN INTERACTABLE",
+      "variants": ["grey"] },
+
+    { "name": "P_door_through",
+      "scene": "model:batch006/architecture/door_standard.glb",
+      "eye": [0, 0, -2.6], "yaw": 0, "game_lens": true,
+      "caption": "WALKING AT IT - THE REVEAL IS THE SURFACE YOU LOOK STRAIGHT AT",
+      "note": "0.4 M OF WALL THICKNESS, LINED, INSTEAD OF A CUT EDGE" }
+  ]
+}

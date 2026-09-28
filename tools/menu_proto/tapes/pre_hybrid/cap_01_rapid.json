@@ -1,0 +1,100 @@
+{
+ "about": "Inventory: rapid selection, and mouse targets that never move away. Scripted input for a capture, not hands-on.",
+ "steps": [
+  {
+   "at": 0.0,
+   "say": "RIGHT -- INTO WHAT GOES ON RMB"
+  },
+  {
+   "at": 0.9,
+   "key": "Right"
+  },
+  {
+   "at": 1.8,
+   "say": "DOWN x4, 90 MS APART -- EVERY PRESS LANDS; NONE WAITS FOR AN UNFOLD TO FINISH"
+  },
+  {
+   "at": 2.4,
+   "key": "Down"
+  },
+  {
+   "after": 0.09,
+   "key": "Down"
+  },
+  {
+   "after": 0.09,
+   "key": "Down"
+  },
+  {
+   "after": 0.09,
+   "key": "Down"
+  },
+  {
+   "at": 4.0,
+   "mark": "rapid_landed"
+  },
+  {
+   "at": 4.2,
+   "say": "MOUSE -- HOVER ONLY LIGHTS A STRIP; NOTHING MOVES UNDER THE POINTER"
+  },
+  {
+   "at": 4.5,
+   "mouse_to_page": [
+    900,
+    300
+   ],
+   "dur": 0.5
+  },
+  {
+   "at": 5.3,
+   "mouse_to_page": [
+    900,
+    250
+   ],
+   "dur": 0.4
+  },
+  {
+   "at": 6.0,
+   "mouse_to_page": [
+    900,
+    205
+   ],
+   "dur": 0.4
+  },
+  {
+   "at": 6.8,
+   "mark": "hover"
+  },
+  {
+   "at": 7.0,
+   "say": "MOUSE -- A CLICK OPENS THE STRIP UNDER THE POINTER, WHERE IT IS"
+  },
+  {
+   "at": 7.5,
+   "click_page": [
+    900,
+    205
+   ]
+  },
+  {
+   "at": 8.8,
+   "mark": "clicked"
+  },
+  {
+   "at": 9.0,
+   "say": "ENTER -- PREVIEW ON RMB: LOCAL, NOT SENT; THE DRAWER'S ORDER DOES NOT CHANGE"
+  },
+  {
+   "at": 9.5,
+   "key": "Enter"
+  },
+  {
+   "at": 11.2,
+   "mark": "previewed"
+  },
+  {
+   "at": 11.6,
+   "quit": true
+  }
+ ]
+}

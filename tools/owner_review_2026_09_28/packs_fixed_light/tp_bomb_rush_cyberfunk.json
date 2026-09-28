@@ -1,0 +1,166 @@
+{
+ "pack": "tp_bomb_rush_cyberfunk",
+ "models": "batch057/brink",
+ "prefix": "BR",
+ "caption_note": "Material treatment MISSING: painted in neon_transit, which is not the pack's own -- though it IS the family the hint names.",
+ "surround": "tp_br_shutter_head",
+ "light": {
+  "ambient": [
+   0.62,
+   0.64,
+   0.68
+  ],
+  "ambient_energy": 0.32,
+  "fog": 0.018,
+  "fog_color": [
+   0.22,
+   0.24,
+   0.26
+  ],
+  "lamps": [
+   {
+    "at": [
+     3.6,
+     2.4,
+     -1.0
+    ],
+    "range": 8.0,
+    "energy": 2.6,
+    "color": [
+     1.0,
+     0.93,
+     0.84
+    ],
+    "why": "fixed review key, the same for every pack"
+   },
+   {
+    "at": [
+     -3.6,
+     2.4,
+     -3.0
+    ],
+    "range": 8.0,
+    "energy": 2.0,
+    "color": [
+     0.88,
+     0.93,
+     1.0
+    ],
+    "why": "fixed review fill"
+   },
+   {
+    "at": [
+     0.0,
+     2.8,
+     2.5
+    ],
+    "range": 9.0,
+    "energy": 0.9,
+    "color": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "why": "fixed front fill"
+   }
+  ]
+ },
+ "place": [
+  {
+   "id": "tp_br_shutter_head",
+   "at": [
+    0.0,
+    0.0,
+    -4.78
+   ],
+   "yaw": 0,
+   "why": "on the opening, chamber side; the shutter is UP in its head box"
+  },
+  {
+   "id": "tp_br_concourse_pillar",
+   "at": [
+    -2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 0,
+   "why": "clear of the approach -- the pack dresses the room, it does not narrow the route"
+  },
+  {
+   "id": "tp_br_concourse_pillar",
+   "at": [
+    2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 34,
+   "why": "turned, so the tagged face is the one you see on the way in"
+  },
+  {
+   "id": "tp_br_board_panel",
+   "at": [
+    -4.9,
+    0.0,
+    -1.2
+   ],
+   "yaw": 90,
+   "why": "the board faces the concourse; the backing sits inside the wall"
+  },
+  {
+   "id": "tp_br_strip_light",
+   "at": [
+    4.82,
+    2.55,
+    -1.0
+   ],
+   "yaw": -90,
+   "why": "high on the opposite wall, where a municipal batten goes"
+  },
+  {
+   "id": "tp_br_validator_plate",
+   "at": [
+    1.82,
+    1.15,
+    -4.74
+   ],
+   "yaw": 0,
+   "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01's and T02's"
+  },
+  {
+   "id": "tp_br_torn_rail",
+   "at": [
+    -3.3,
+    0.0,
+    0.8
+   ],
+   "yaw": 15
+  },
+  {
+   "id": "tp_br_torn_rail",
+   "at": [
+    3.5,
+    0.0,
+    2.0
+   ],
+   "yaw": -62,
+   "why": "off the walked line, where something torn off and left would be"
+  }
+ ],
+ "shots": [
+  {
+   "name": "E2_T03_bomb_rush_cyberfunk_fixed_light",
+   "eye": [
+    0.0,
+    1.7,
+    4.4
+   ],
+   "look": [
+    0.0,
+    1.6,
+    -5.0
+   ],
+   "check_opening": true,
+   "caption": "T03 -- same shell, camera and light as the house baseline"
+  }
+ ]
+}

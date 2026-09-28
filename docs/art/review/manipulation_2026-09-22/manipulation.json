@@ -1,0 +1,158 @@
+{
+  "notes": [
+    "within the envelope's HOLD limit and carries no grip: phys_drum (70 kg), phys_girder (95 kg), phys_plate (60 kg)",
+    "class spread: { \"fixed\": 1, \"heavy\": 4, \"medium\": 5, \"light\": 2 }",
+    "`lightened` moves 10 of 12: phys_anchor_block fixed->heavy, phys_ballast heavy->medium, phys_cart heavy->medium, phys_drum medium->light, phys_girder medium->light, phys_mechanical_part medium->light, phys_movable_cover heavy->medium, phys_plate medium->light, phys_power_cell medium->light, phys_weighted heavy->medium"
+  ],
+  "problems": [],
+  "production": {
+    "envelope_force_n": 700.0,
+    "envelope_friction": 0.396825396825396803,
+    "envelope_mass_kg": 120.0,
+    "envelope_range_m": 20.0,
+    "friction_headroom": 0.66666666666666663,
+    "gravity": 9.80000000000000071,
+    "lightened_impulse_scale": 2.0,
+    "manipulate_verbs": [
+      "HOLD",
+      "PULL",
+      "PUSH"
+    ],
+    "push_limit_kg": 180.0,
+    "source": "Constants, MassClass and ManipulableBody, read-only"
+  },
+  "props": {
+    "phys_anchor_block": {
+      "attaches": 1,
+      "class": "fixed",
+      "class_anchored": "fixed",
+      "class_lightened": "heavy",
+      "grips": 0,
+      "hold": false,
+      "mass_kg": 500.0,
+      "push": "no",
+      "push_force_n": 1944.44444444444457
+    },
+    "phys_ballast": {
+      "attaches": 4,
+      "class": "heavy",
+      "class_anchored": "fixed",
+      "class_lightened": "medium",
+      "grips": 0,
+      "hold": false,
+      "mass_kg": 320.0,
+      "push": "no",
+      "push_force_n": 1244.44444444444434
+    },
+    "phys_cart": {
+      "attaches": 0,
+      "class": "heavy",
+      "class_anchored": "fixed",
+      "class_lightened": "medium",
+      "grips": 0,
+      "hold": false,
+      "mass_kg": 180.0,
+      "push": "at the limit",
+      "push_force_n": 700.000000000000114
+    },
+    "phys_drum": {
+      "attaches": 2,
+      "class": "medium",
+      "class_anchored": "fixed",
+      "class_lightened": "light",
+      "grips": 0,
+      "hold": true,
+      "mass_kg": 70.0,
+      "push": "yes",
+      "push_force_n": 272.222222222222229
+    },
+    "phys_generic": {
+      "attaches": 0,
+      "class": "light",
+      "class_anchored": "fixed",
+      "class_lightened": "light",
+      "grips": 2,
+      "hold": true,
+      "mass_kg": 15.0,
+      "push": "yes",
+      "push_force_n": 58.3333333333333286
+    },
+    "phys_girder": {
+      "attaches": 2,
+      "class": "medium",
+      "class_anchored": "fixed",
+      "class_lightened": "light",
+      "grips": 0,
+      "hold": true,
+      "mass_kg": 95.0,
+      "push": "yes",
+      "push_force_n": 369.444444444444457
+    },
+    "phys_key_component": {
+      "attaches": 2,
+      "class": "light",
+      "class_anchored": "fixed",
+      "class_lightened": "light",
+      "grips": 3,
+      "hold": true,
+      "mass_kg": 8.0,
+      "push": "yes",
+      "push_force_n": 31.1111111111111107
+    },
+    "phys_mechanical_part": {
+      "attaches": 1,
+      "class": "medium",
+      "class_anchored": "fixed",
+      "class_lightened": "light",
+      "grips": 3,
+      "hold": true,
+      "mass_kg": 55.0,
+      "push": "yes",
+      "push_force_n": 213.888888888888886
+    },
+    "phys_movable_cover": {
+      "attaches": 2,
+      "class": "heavy",
+      "class_anchored": "fixed",
+      "class_lightened": "medium",
+      "grips": 0,
+      "hold": false,
+      "mass_kg": 220.0,
+      "push": "no",
+      "push_force_n": 855.555555555555543
+    },
+    "phys_plate": {
+      "attaches": 2,
+      "class": "medium",
+      "class_anchored": "fixed",
+      "class_lightened": "light",
+      "grips": 0,
+      "hold": true,
+      "mass_kg": 60.0,
+      "push": "yes",
+      "push_force_n": 233.333333333333314
+    },
+    "phys_power_cell": {
+      "attaches": 1,
+      "class": "medium",
+      "class_anchored": "fixed",
+      "class_lightened": "light",
+      "grips": 3,
+      "hold": true,
+      "mass_kg": 40.0,
+      "push": "yes",
+      "push_force_n": 155.555555555555543
+    },
+    "phys_weighted": {
+      "attaches": 2,
+      "class": "heavy",
+      "class_anchored": "fixed",
+      "class_lightened": "medium",
+      "grips": 0,
+      "hold": false,
+      "mass_kg": 140.0,
+      "push": "yes",
+      "push_force_n": 544.444444444444457
+    }
+  }
+}

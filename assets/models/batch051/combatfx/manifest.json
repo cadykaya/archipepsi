@@ -1,0 +1,347 @@
+{
+  "fx_beacon_range": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "range_tick_0",
+      "range_tick_1",
+      "range_tick_2",
+      "range_tick_3",
+      "range_tick_4"
+    ],
+    "path": "batch051/combatfx/fx_beacon_range.glb",
+    "size": [
+      3.361,
+      3.442,
+      0.025
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 124
+  },
+  "fx_bulwark_face": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "fits_role": "bulwark",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "face_rib_0",
+      "face_rib_1",
+      "face_rib_2",
+      "face_chevron"
+    ],
+    "path": "batch051/combatfx/fx_bulwark_face.glb",
+    "size": [
+      1.45,
+      0.13,
+      1.566
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 60
+  },
+  "fx_charger_lane": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "lane_edge_-1",
+      "lane_edge_1",
+      "lane_bar_0",
+      "lane_bar_1",
+      "lane_bar_2"
+    ],
+    "path": "batch051/combatfx/fx_charger_lane.glb",
+    "size": [
+      0.9,
+      6.0,
+      0.03
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 72
+  },
+  "fx_diver_trail": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "fits_role": "diver",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "trail_0",
+      "trail_1",
+      "trail_2",
+      "trail_3"
+    ],
+    "path": "batch051/combatfx/fx_diver_trail.glb",
+    "size": [
+      0.56,
+      0.6,
+      2.55
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 60
+  },
+  "fx_hit_body": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "body_tear_0",
+      "body_tear_1",
+      "body_tear_2",
+      "body_tear_3"
+    ],
+    "path": "batch051/combatfx/fx_hit_body.glb",
+    "size": [
+      0.25,
+      0.68,
+      0.25
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 60
+  },
+  "fx_hit_interrupt": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "interrupt_break_b",
+      "interrupt_pin"
+    ],
+    "path": "batch051/combatfx/fx_hit_interrupt.glb",
+    "size": [
+      0.566,
+      0.566,
+      0.16
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 26.9,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 36
+  },
+  "fx_hit_miss": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "miss_tail"
+    ],
+    "path": "batch051/combatfx/fx_hit_miss.glb",
+    "size": [
+      0.05,
+      1.05,
+      0.05
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 24
+  },
+  "fx_hit_shield": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "shield_slide_0",
+      "shield_slide_1",
+      "shield_slide_2",
+      "shield_slide_3"
+    ],
+    "path": "batch051/combatfx/fx_hit_shield.glb",
+    "size": [
+      0.792,
+      0.368,
+      0.62
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 60
+  },
+  "fx_hit_wall": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "wall_spall_0",
+      "wall_spall_1",
+      "wall_spall_2",
+      "wall_spall_3",
+      "wall_spall_4",
+      "wall_spall_5"
+    ],
+    "path": "batch051/combatfx/fx_hit_wall.glb",
+    "size": [
+      0.62,
+      0.06,
+      0.332
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 84
+  },
+  "fx_telegraph_ring": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "ring_tick_0",
+      "ring_tick_1",
+      "ring_tick_2",
+      "ring_tick_3",
+      "ring_tick_4",
+      "ring_tick_5",
+      "ring_tick_6",
+      "ring_tick_7",
+      "ring_tick_8",
+      "ring_tick_9",
+      "ring_tick_10",
+      "ring_tick_11",
+      "ring_complete_0",
+      "ring_complete_1",
+      "ring_complete_2",
+      "ring_complete_3",
+      "ring_cancel_0",
+      "ring_cancel_1"
+    ],
+    "path": "batch051/combatfx/fx_telegraph_ring.glb",
+    "size": [
+      2.286,
+      2.14,
+      0.09
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 280
+  },
+  "fx_warned_ground": {
+    "anchor": "as-built",
+    "batch": "051",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script, animation or particle system.",
+    "kind": "combat_fx",
+    "not_changed": [
+      "collider coverage",
+      "warning timing",
+      "damage",
+      "any approved asset"
+    ],
+    "parts": [
+      "warn_tick_0",
+      "warn_tick_1",
+      "warn_tick_2",
+      "warn_tick_3"
+    ],
+    "path": "batch051/combatfx/fx_warned_ground.glb",
+    "size": [
+      2.402,
+      2.402,
+      0.025
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "timing_owner": "TELEGRAPH_SECONDS is Production's and no duration is encoded here",
+    "triangles": 112
+  }
+}
