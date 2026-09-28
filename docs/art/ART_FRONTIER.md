@@ -3259,6 +3259,33 @@ build):**
 **Next: HOLD.** No Production-owned edits and no integration. The owner
 will give Production a separate, explicit integration assignment.
 
+### Audit, 2026-09-28 — what of the art lane's work is in the game
+
+Asked by the owner, done read-only, without interrupting Production.
+Report: `docs/art/reports/2026-09-28-art-vs-game.md`. It compares
+`claude/archipepsi-art` `94b8318` with Production
+`claude/archipepsi-0-4-blindside` `c12a72f`.
+
+* **The game loads only `godot/content`:**
+  * 6 light fixtures;
+  * 12 room shells;
+  * the six theme families' textures;
+  * 3 projectile models, held `pending`.
+* **Behind:** his shells (11 of 12) and 8 theme textures predate the
+  2026-09-24 course ruling (the re-export `4c1e4ea2`).
+* **Approved but not in the game:** nearly 200 models. Most have no place
+  in the game that loads them. **Candidates waiting on the owner:** about
+  170.
+* **The UI kit** is being imported on his `wip/0.4-menu-integration`.
+* **Corrections to this file's older notes:**
+  * The approved shells ARE offered in live play. `epsilon/requests.py`
+    puts them in every request, and his `shells.is_offerable` passes all
+    12. That supersedes "unused until Production points
+    `SHELL_FOR_TYPE`…" and "only through the showcase".
+  * Req 31 is resolved there: all ten roles are in `ENEMY_ARCHETYPES`.
+
+Still HOLD for the menu. The audit changes nothing in the build.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

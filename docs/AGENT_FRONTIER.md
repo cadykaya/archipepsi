@@ -143,6 +143,12 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
   * 434 scripted checks.
 * **Wake-ups are no-ops.** Integration waits for a SEPARATE, EXPLICIT
   assignment to Production. No Production-owned edits.
+* **2026-09-28: a read-only audit of what art is in the game** (asked by
+  the owner): `docs/art/reports/2026-09-28-art-vs-game.md`.
+  * The game loads only `godot/content`: 6 fixtures, 12 shells, the
+    theme textures, and 3 projectiles held `pending`.
+  * Those shells and textures predate the 2026-09-24 course ruling.
+  * Nearly 200 approved models are not in the game.
 
 Two things from it that other lanes need:
 
