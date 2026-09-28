@@ -51,6 +51,8 @@ func _run() -> void:
 	_the_bands_are_the_art_lanes()
 	await _every_role_in_every_band()
 	await _the_eye_and_the_wound()
+	await _a_wound_is_one_enemys()
+	_the_muzzle_is_inside_the_collider()
 	_a_room_without_a_band()
 	print("GODOT ENEMY ART %s (%d checks, %d notes)" % [
 		"OK" if _failures == 0 else "FAILED: %d" % _failures, _checks, _notes])
@@ -191,6 +193,69 @@ func _the_eye_and_the_wound() -> void:
 	await get_tree().process_frame
 	_check(bad.is_empty(), "every role's eye still dims, wakes and flares at the "
 			+ "windup, and every art body reddens as it is hurt: %s" % [bad])
+
+
+## Imported surface materials are shared by every instance of a model, so
+## a wound must unshare them PER ENEMY: hurting one ranged must not redden
+## the ranged beside it.
+func _a_wound_is_one_enemys() -> void:
+	print("  -- a wound is one enemy's")
+	var bad: Array = []
+	for kind: String in Constants.ENEMY_ARCHETYPES:
+		var hurt := Enemy.create(kind, "concrete_facility")
+		var whole := Enemy.create(kind, "concrete_facility")
+		for e: Enemy in [hurt, whole]:
+			e.process_mode = Node.PROCESS_MODE_DISABLED
+			add_child(e)
+		var model := whole.visual.get_node_or_null("Model") as Node3D
+		if model == null:
+			bad.append("%s: no art body" % kind)
+		else:
+			var before := _green(model)
+			hurt.take_damage(float(hurt.stats["hp"]) * 0.6, Vector3.FORWARD, 0.0)
+			var after := _green(model)
+			if absf(after - before) > 0.0001:
+				bad.append("%s: the unhurt one went %.3f -> %.3f" % [kind,
+						before, after])
+		hurt.queue_free()
+		whole.queue_free()
+	await get_tree().process_frame
+	_check(bad.is_empty(), "hurting one enemy leaves another of its role "
+			+ "untouched, in every role: %s" % [bad])
+
+
+## Near a wall: the shot starts at the art's muzzle, and the collider is
+## what keeps a body out of walls. So the muzzle must be INSIDE the
+## collider -- then no enemy can stand where its shot starts inside or
+## beyond a wall, whatever it faces.
+func _the_muzzle_is_inside_the_collider() -> void:
+	print("  -- the muzzle is inside the collider")
+	var bad: Array = []
+	var armed := 0
+	for kind: String in Constants.ENEMY_ARCHETYPES:
+		for room: String in ROOMS:
+			var enemy := Enemy.create(kind, room)
+			add_child(enemy)
+			if enemy.anchor("anchor_muzzle") == null:
+				# No art muzzle (the melee roles): muzzle() is then the
+				# code's old sight point, unchanged by this integration.
+				remove_child(enemy)
+				enemy.free()
+				continue
+			var env: Dictionary = enemy.envelope
+			var size: Vector3 = env["size"]
+			var box := AABB(Vector3(-size.x / 2.0,
+					float(env["centre_y"]) - size.y / 2.0, -size.z / 2.0), size)
+			armed += 1
+			var at := enemy.to_local(enemy.muzzle())
+			if not box.grow(0.01).has_point(at):
+				bad.append("%s/%s: muzzle %s, collider %s" % [room, kind, at,
+						box])
+			remove_child(enemy)
+			enemy.free()
+	_check(bad.is_empty() and armed > 0, "every role with an art muzzle "
+			+ "(%d role/band pairs) shoots from inside its own collider: %s"
+			% [armed, bad])
 
 
 func _a_room_without_a_band() -> void:
