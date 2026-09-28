@@ -1,0 +1,28 @@
+rev c3bc10397d695e714f1f8795a08ae7992cf792a1
+start 00:20:50
+tree_at_start 2
+first_step 1
+1	make test	0	164	2313 passed, 6 warnings, 627 subtests passed in 162.97s (0:0
+2	make smoke	0	1	SMOKE OK — bridge-only loop: connect, scout, allocate, gen
+3	python3 docs/design-packet-v0.8/check_packet.py	1	1	
+4	make export && git diff --exit-code -- bridge/archipepsi_bridge/schemas/generated godot/scripts/autoload/constants.gd apworld/archipepsi/constants.py	0	1	
+5	make godot-import	0	12	
+6	make doctor	0	3	
+7	make godot-boot	2	16	make: *** [Makefile:585: godot-boot] Error 1
+8	make godot-test	0	21	GODOT CHAMBER TESTS OK
+9	make godot-hud	0	16	GODOT HUD TESTS OK
+10	make godot-rules	0	15	GODOT RULES TESTS OK
+11	make godot-stats	0	16	GODOT STATS TESTS OK
+12	make godot-lab	0	16	GODOT LAB TESTS OK
+13	make godot-affordance	0	15	GODOT AFFORDANCE TESTS OK
+14	make godot-verbs	0	18	GODOT VERBS TESTS OK
+15	make godot-blink	0	19	GODOT BLINK TESTS OK
+16	make godot-content	0	16	GODOT CONTENT TESTS OK
+17	make godot-activity	0	34	GODOT ACTIVITY TESTS OK
+18	make godot-room	0	16	GODOT ROOM TESTS OK
+19	make godot-room-contract	0	171	GODOT ROOM CONTRACT TESTS OK
+20	make godot-graphs	0	135	GODOT GRAPH TESTS OK
+21	make godot-movement	0	19	GODOT MOVEMENT TESTS OK
+22	make godot-zone-audit	0	20	GODOT ZONE AUDIT OK
+23	make godot-legible	0	17	GODOT LEGIBILITY TESTS OK
+24	make godot-physics	0	131	GODOT PHYSICS TESTS OK (68 checks)

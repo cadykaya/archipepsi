@@ -6481,7 +6481,27 @@ its validation):
       - `test_ui_kit_identity` requires `skip` for a font's page, and
         keeps the lossless checks for every other image.
   - **CK11** on `ce6ea3bd`, in a fresh worktree (its import started from
-    nothing): running at the time of this commit (steps 1–18 of 92 green, none red); its result replaces this line.
+    nothing): **92 of 92 green**, 00:55–02:26 UTC on 28 September
+    (`post_playtest_evidence/CK11_frontier_on_ce6ea3bd.tsv`; the stopped
+    first run is `CK11_first_run_on_c3bc1039_stopped.tsv`).
+    - **Steps and runner:** CK10's, with one change. Step 68,
+      `godot-passing-hosted`, reads its default input (Dess's committed
+      N-10 fixture) instead of the scratch capture lost after CK10: 24
+      checks, 4 notes (`CK11_frontier_steps_as_run.txt`).
+    - **Figures:**
+      - `make test`: 2,313 passed.
+      - The menu suites: shell 44, equipment 151, map 71, journal 76;
+        minimap 30.
+      - Machine life: 41 checks over 5 rounds.
+      - The live suites: candidate-live 8, bombs-live 6 (refill),
+        consumable-live and its restart, latched 13, lever 14,
+        transport 12, reversible 6, resume 6, ordinary 10, the three
+        integrations; reload 20.
+    - **The tree at the end:**
+      - `captures.json`'s `source_commit` restamped by
+        `godot-zone-audit`. Every payload and the controller digest are
+        unchanged, so it is not committed.
+      - The kit's sidecars are untouched after the fresh import.
 - **M6, delivery** (`ce6ea3bd`):
   - **The tour:** `make menu-tour`, 49.9 s at 1280×720 and 30 fps (h264 and
     aac), recorded on `c3bc1039`. The later commits change no game code

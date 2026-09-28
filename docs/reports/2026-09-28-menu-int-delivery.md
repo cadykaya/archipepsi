@@ -2,7 +2,7 @@
 
 **Prod, engine lane, 2026-09-28.**
 - **Code revision:** `ce6ea3bd` on `wip/0.4-menu-integration` (draft PR #14).
-- **Full frontier:** CK11 on that revision, running at the time of this commit (steps 1–18 of 92 green, none red); its result replaces this line.
+- **Full frontier:** CK11 on that revision, **92 of 92 steps green.**
 - **Not merged:** CK10 (`867f742`) remains the accepted checkpoint until
   you review this.
 
@@ -356,7 +356,7 @@ changed.
   campaign, bombs, consumables, resume and more (part of CK11).
 - **CK11,** the full frontier (92 steps) on `ce6ea3bd`, in a fresh
   worktree whose Godot import started from nothing, as your unpack will:
-  running at the time of this commit (steps 1–18 of 92 green, none red); its result replaces this line.
+  **92 of 92 green** (00:55–02:26 UTC, 28 September).
 - **Renders** of all four walls under Forward+ at 720p and 1080p, with
   contrast measured on the renders themselves.
 - **Pixel checks:** the renders are pixel-identical between a fresh import

@@ -678,7 +678,7 @@ owner's D-06/D-07 rulings and the seam table are in
         on `ce6ea3bd`: the device and all four walls on live data; the
         menu suites 44/151/71/76; the gameplay suites' menu steps; renders
         and contrast under Forward+; the lighting reconciliation;
-        performance probed. CK11 (the full frontier on `ce6ea3bd`, fresh import) is running at the time of this commit (steps 1–18 of 92 green, none red); its result replaces this line.
+        performance probed. CK11: the full frontier on `ce6ea3bd` from a fresh import, **92 of 92 green**.
         - The delivery: the build `archipepsi-0.4-MENU-INT-ce6ea3b.zip`,
           the tour (`make menu-tour`, on the owner's campaign), and the
           report `docs/reports/2026-09-28-menu-int-delivery.md`. The
