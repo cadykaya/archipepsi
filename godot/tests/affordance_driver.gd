@@ -57,6 +57,7 @@ func _run() -> void:
 	await _the_panel_is_reachable_by_a_real_shot()
 	await _the_panel_needs_a_real_hit()
 	await _the_approved_family_is_what_you_see()
+	await _the_theme_dressing_is_the_approved_dressing()
 	await _a_moving_platform_comes_back()
 	await _a_local_reward_reports_itself_once()
 	await _an_earned_reward_does_not_come_back()
@@ -243,6 +244,61 @@ func _the_approved_family_is_what_you_see() -> void:
 	(built["root"] as Node).queue_free()
 	for n: Node in [a, b, pad]:
 		n.queue_free()
+	await get_tree().process_frame
+
+
+## ART-CATCHUP: every prop `_theme_props` places wears the approved
+## dressing (batches 010 and 013), and the two that COLLIDE (the drum and
+## the stump) keep exactly the code body they always had. void_glitch's
+## `prop_missing.mdl` stays a label, on purpose.
+func _the_theme_dressing_is_the_approved_dressing() -> void:
+	var want := {"gothic_stone": ["prop_sconce", "prop_sconce_flame"],
+		"rusted_industrial": ["prop_oil_drum", "prop_valve_wheel"],
+		"neon_transit": ["prop_transit_sign"],
+		"temple_ruin": ["prop_root_fall", "prop_column_stump"],
+		"concrete_facility": ["prop_wall_plate"]}
+	var bad: Array = []
+	for theme: String in want:
+		var seen := {}
+		var bodies_ok := true
+		# A 4 m corridor too: narrow rooms get the wall variants (the
+		# valve instead of drums, roots instead of a stump).
+		for seed in 24:
+			var chamber := {"id": "c%d" % seed, "zone_id": "zone_001",
+					"type": "corridor", "length": 22.0,
+					"width": 8.0 if seed % 2 == 0 else 4.0, "features": []}
+			var built: Dictionary = ChamberBuilders.build(chamber, theme)
+			var root: Node3D = built["root"]
+			for n: Node in root.find_children("*", "MeshInstance3D", true,
+					false):
+				var mi := n as MeshInstance3D
+				for model: String in want[theme]:
+					if mi.mesh != null and mi.mesh == ChamberBuilders._prop_art(model):
+						seen[model] = true
+						# Dressing never collides on its own.
+						if not mi.find_children("*", "CollisionShape3D",
+								true, false).is_empty():
+							bodies_ok = false
+				# A dressed floor prop: its code body, unchanged.
+				if mi.mesh == null:
+					for c: Node in mi.find_children("*", "CollisionShape3D",
+							true, false):
+						var shape := (c as CollisionShape3D).shape
+						if not shape is CylinderShape3D:
+							bodies_ok = false
+						elif not is_equal_approx(
+								(shape as CylinderShape3D).radius, 0.42) \
+								and not is_equal_approx(
+								(shape as CylinderShape3D).radius, 0.55):
+							bodies_ok = false
+			root.free()
+		for model: String in want[theme]:
+			if not seen.has(model):
+				bad.append("%s: never placed %s" % [theme, model])
+		if not bodies_ok:
+			bad.append("%s: a prop's collision changed" % theme)
+	_check(bad.is_empty(), "every theme prop is the approved dressing, "
+			+ "colliders as they were: %s" % [bad])
 	await get_tree().process_frame
 
 

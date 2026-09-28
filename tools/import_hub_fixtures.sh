@@ -18,11 +18,21 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GODOT="${GODOT:-$ROOT/godot-bin/godot}"
 [ -x "$GODOT" ] || { echo "import_hub_fixtures: no godot at $GODOT" >&2; exit 2; }
 DST="$ROOT/godot/content/hub"
-rm -rf "$DST"
 mkdir -p "$DST"
+WANT="epsilon_installation.glb hub_campaign_board.glb hub_controls_board.glb"
+# Sidecars (.import) are kept, so a re-run does not mint new uids;
+# only models no longer on the list are removed, below.
 cp "$ROOT/assets/models/batch002/epsilon/epsilon_installation.glb" "$DST/"
 for b in campaign controls; do
 	cp "$ROOT/assets/models/batch003/hub/hub_${b}_board.glb" "$DST/"
+done
+# The copies above are the list: drop any other model (and its sidecar).
+for d in "$DST"; do
+	for f in "$d"/*.glb; do
+		[ -e "$f" ] || continue
+		n="$(basename "$f")"
+		case " $WANT " in *" $n "*) ;; *) rm -f "$f" "$f.import" "${f%.glb}"_*.png "${f%.glb}"_*.png.import ;; esac
+	done
 done
 log="$(mktemp)"
 xvfb-run -a timeout 600 "$GODOT" --headless --path "$ROOT/godot" --import >"$log" 2>&1 || true

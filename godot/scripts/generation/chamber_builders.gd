@@ -19,6 +19,10 @@ const CORRIDOR_HEIGHT := 3.6
 ## plus margin. A prop reaching PROP_FOOTPRINT in from each wall must
 ## still leave BRUTE_LANE between them.
 const PROP_FOOTPRINT := 1.4
+## Where the approved sconce's flame sits: in the bowl, which the art
+## builds at 0.44 m up and 0.27 m out (`build_theme_dressing.py`), its top
+## at 0.49; the centre-anchored flame is 0.22 tall and sits down into it.
+const SCONCE_FLAME_AT := Vector3(0.0, 0.56, 0.27)
 const BRUTE_LANE := 2.6
 
 ## A mesh at least this wide on both floor axes is architecture -- a
@@ -1066,6 +1070,33 @@ static func _graffiti(root: Node3D, at: Vector3, theme: String,
 ## station a station. Wall-adjacent or ceiling-mounted; only floor pieces
 ## that hug walls may collide. `span_x` is the room width, `span_z` its
 ## depth/length; positions stay inside [1.2, span_z - 1.2].
+## ART-CATCHUP: the approved theme dressing (batches 010 and 013, PASS),
+## or null when it is not shipped -- each prop keeps its code shape then.
+static func _prop_art(model: String) -> Mesh:
+	return ArtModels.mesh("res://content/props/%s.glb" % model)
+
+## An authored prop as a plain mesh, never a collider: where the code prop
+## collides, its body stays exactly as it was and this only dresses it.
+static func _dress(parent: Node3D, mesh: Mesh, at: Vector3, yaw := 0.0,
+		scale_y := 1.0) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	node.mesh = mesh
+	node.position = at
+	node.rotation.y = yaw
+	node.scale = Vector3(1.0, scale_y, 1.0)
+	parent.add_child(node)
+	return node
+
+## A wall prop's authored origin is its BACK, on the wall, facing +Z; the
+## side walls' inner face is half a wall in from `wall_x`. (The code props
+## were centred on `wall_x` itself, inside the wall -- the warning plate
+## entirely, the valve and sconce mostly.)
+static func _on_side_wall(parent: Node3D, mesh: Mesh, side: float,
+		wall_x: float, y: float, z: float) -> MeshInstance3D:
+	return _dress(parent, mesh,
+			Vector3(side * (wall_x - WALL_THICKNESS / 2.0), y, z),
+			-side * PI / 2.0)
+
 static func _theme_props(root: Node3D, theme: String,
 		rng: RandomNumberGenerator, span_x: float, span_z: float,
 		height: float, cut := {}, keep_out := []) -> void:
@@ -1098,6 +1129,15 @@ static func _theme_props(root: Node3D, theme: String,
 		match theme:
 			"gothic_stone":
 				# Torch sconce: iron bracket, a flame that glows.
+				var sconce := _prop_art("prop_sconce")
+				var fire := _prop_art("prop_sconce_flame")
+				if sconce != null and fire != null:
+					var bracket := _on_side_wall(root, sconce, side, wall_x,
+							1.65, z)
+					# The flame sits in the bowl: two nodes, as authored,
+					# so the bracket still reads with no fire drawn.
+					_dress(bracket, fire, SCONCE_FLAME_AT)
+					continue
 				_box(root, Vector3(0.12, 0.5, 0.12),
 						Vector3(side * (wall_x - 0.16), 1.9, z),
 						ThemeMaterials.trim_mat(theme), false)
@@ -1120,12 +1160,22 @@ static func _theme_props(root: Node3D, theme: String,
 					var drum := _cylinder_prop(root, 0.42, 0.95,
 							Vector3(side * (wall_x - 0.75), 0.48, drum_z),
 							ThemeMaterials.accent_mat(theme))
+					var drum_art := _prop_art("prop_oil_drum")
+					if drum_art != null:
+						# The body (and its collider) stay; the approved
+						# drum dresses it, and stacks with it, at 0.95 m.
+						drum.mesh = null
+						_dress(drum, drum_art, Vector3(0, -0.475, 0))
 					if stacked:
 						var top := drum.duplicate()
 						top.position.y += 0.95
 						root.add_child(top)
 				else:
 					# Narrow space: a wall valve wheel instead.
+					var valve := _prop_art("prop_valve_wheel")
+					if valve != null:
+						_on_side_wall(root, valve, side, wall_x, 1.19, z)
+						continue
 					_box(root, Vector3(0.1, 0.7, 0.7),
 							Vector3(side * (wall_x - 0.06), 1.5, z),
 							ThemeMaterials.accent_mat(theme), false)
@@ -1143,17 +1193,29 @@ static func _theme_props(root: Node3D, theme: String,
 				# 1. Two draws from the same call read as one value at a
 				# glance, and the second is a different number.
 				var sign_x := rng.randf_range(-wall_x * 0.4, wall_x * 0.4)
-				_box(root, Vector3(1.6, 0.5, 0.08),
-						Vector3(sign_x, height - 0.7, z),
-						ThemeMaterials.glow_material(
-							Color(ThemeMaterials.spec(theme)["accent_color"]),
-							1.3), false)
+				var housing := _prop_art("prop_transit_sign")
+				var label_y := height - 0.7
+				var label_z := z - 0.05
+				if housing != null:
+					# The approved housing hangs from its top edge with its
+					# lit face on +Z; turned to face the player, who walks
+					# in along +Z. The line stays a Label3D, on that face
+					# (0.30 m below the top, 0.07 m proud of the centre).
+					_dress(root, housing, Vector3(sign_x, height - 0.45, z), PI)
+					label_y = height - 0.45 - 0.30
+					label_z = z - 0.08
+				else:
+					_box(root, Vector3(1.6, 0.5, 0.08),
+							Vector3(sign_x, height - 0.7, z),
+							ThemeMaterials.glow_material(
+								Color(ThemeMaterials.spec(theme)["accent_color"]),
+								1.3), false)
 				var sign_label := Label3D.new()
 				sign_label.text = signs[rng.randi_range(0, signs.size() - 1)]
 				sign_label.font_size = 34
 				sign_label.pixel_size = 0.004
 				sign_label.modulate = Color(0.08, 0.09, 0.12)
-				sign_label.position = Vector3(sign_x, height - 0.7, z - 0.05)
+				sign_label.position = Vector3(sign_x, label_y, label_z)
 				# `face_label` takes a vector pointing TOWARD THE VIEWER
 				# -- that is how the Hub calls it. A chamber is entered at
 				# z = 0 and walked toward +z, so the viewer is always on
@@ -1172,6 +1234,16 @@ static func _theme_props(root: Node3D, theme: String,
 				if not floor_props_ok or rng.randf() < 0.5:
 					var root_length := rng.randf_range(1.2,
 							maxf(1.4, height - 0.6))
+					var section := _prop_art("prop_root_fall")
+					if section != null:
+						# Tiled in 1.0 m sections from under the ceiling,
+						# never stretched: the length stays the engine's.
+						var top := height - 0.2
+						for k in maxi(1, roundi(root_length)):
+							_dress(root, section, Vector3(
+									side * (wall_x - WALL_THICKNESS / 2.0 - 0.13),
+									top - float(k), z))
+						continue
 					_box(root, Vector3(0.1, root_length, 0.1),
 							Vector3(side * (wall_x - 0.1),
 								height - root_length / 2.0 - 0.2, z),
@@ -1183,15 +1255,27 @@ static func _theme_props(root: Node3D, theme: String,
 							0.55, span_z, door_cut, keep_out)
 					if is_nan(stump_z):
 						continue
-					_cylinder_prop(root, 0.55, stump_height,
+					var stump := _cylinder_prop(root, 0.55, stump_height,
 							Vector3(side * (wall_x - 0.85),
 								stump_height / 2.0, stump_z),
 							ThemeMaterials.wall_mat(theme))
+					var stump_art := _prop_art("prop_column_stump")
+					if stump_art != null:
+						# Authored at 1.20 m, the midpoint, with its broken
+						# top in the top 0.4 m, so the engine's height
+						# scales the shaft (the art's own contract).
+						stump.mesh = null
+						_dress(stump, stump_art, Vector3(0, -stump_height / 2.0,
+								0), 0.0, stump_height / 1.2)
 			"concrete_facility":
 				# Bolted warning plate.
+				var plate_y := rng.randf_range(1.2, 2.0)
+				var plate := _prop_art("prop_wall_plate")
+				if plate != null:
+					_on_side_wall(root, plate, side, wall_x, plate_y - 0.31, z)
+					continue
 				_box(root, Vector3(0.06, 0.6, 0.9),
-						Vector3(side * (wall_x - 0.05),
-							rng.randf_range(1.2, 2.0), z),
+						Vector3(side * (wall_x - 0.05), plate_y, z),
 						ThemeMaterials.hazard_mat(theme), false)
 			"void_glitch":
 				# The prop that never loaded.

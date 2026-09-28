@@ -29,6 +29,7 @@
       "godot/content/lab/",
       "godot/content/fixtures/",
       "godot/content/projectiles/",
+      "godot/content/props/",
       "godot/content/shells/",
       "godot/content/test_fixtures/",
       "godot/content/theme/",
