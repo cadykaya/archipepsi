@@ -363,6 +363,15 @@ changed.
   and this tree.
 - **Performance:** a probe of the box on your campaign's data (above).
 - **The recorded tour.**
+- **GitHub CI:**
+  - The quick PR gate (schemas, bridge, packet) is green on this
+    revision.
+  - The full Godot job runs out of its 30-minute limit partway through
+    the gameplay suites, before it reaches the menu's. It does so on the
+    base branch too (CK10's commits end the same way), so it vouches for
+    neither; CK11 is the evidence here.
+  - Raising that limit, or splitting the job, is a small CI change
+    outside this assignment. I have not made it.
 - **The build:** checked from a clean unpack (the Godot import changes no shipped file; `godot-boot` passes; the candidate launcher's `--dry-run` keeps its saves inside the unpack).
 
 **Human:**
