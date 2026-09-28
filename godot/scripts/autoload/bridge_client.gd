@@ -39,12 +39,26 @@ var _socket := WebSocketPeer.new()
 var _retry_delay := 0.5
 var _retry_timer := 0.0
 var _was_connecting := false
+## True for a launch that must never reach a bridge (`RoomPlaytest`): no
+## socket was ever opened, and none is retried.
+var isolated := false
 
 func _ready() -> void:
 	# THE AP WORLD IS NOT PAUSED (H-PAUSE). A paused game keeps its
 	# connection and takes what is legitimately delivered while the pause
 	# interface is open; snapshots, notifications and refusals still arrive.
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# THE CONCOURSE-PIER PLAYTEST NEVER CONNECTS, and it is decided here,
+	# before any socket exists: an autoload is ready before the main scene
+	# runs a line. A campaign bridge left running on this machine must not
+	# hear its exits, timings or kills, nor push a snapshot that moves the
+	# player. So nothing is opened and `_process` (the retry) never runs:
+	# `online` stays false and every intent takes the ordinary offline
+	# path, dropped with a warning. Every other launch is unchanged.
+	if RoomPlaytest.requested():
+		isolated = true
+		set_process(false)
+		return
 	_open()
 
 func _open() -> void:

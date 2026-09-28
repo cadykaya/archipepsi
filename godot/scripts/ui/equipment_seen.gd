@@ -75,6 +75,9 @@ static func _load() -> void:
 
 
 static func _save() -> void:
+	# Read, never written, by an isolated playtest (`RoomPlaytest`).
+	if RoomPlaytest.requested():
+		return
 	if not _persist:
 		return
 	var config := ConfigFile.new()

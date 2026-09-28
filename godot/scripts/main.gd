@@ -227,6 +227,15 @@ func _ready() -> void:
 				+ "three-door junction, a red lock and a return plug")
 	if bool(asked["showcase"]):
 		_enter_showcase(asked)
+	# THE CONCOURSE-PIER PLAYTEST (`RoomPlaytest`), only when asked for by
+	# name; `BridgeClient` has already declined to connect. Its live check
+	# runs beside the real `Main`, like the reload proof below.
+	if RoomPlaytest.requested():
+		_enter_room_playtest()
+		if RoomPlaytestCheck.requested():
+			var room_check := RoomPlaytestCheck.new()
+			room_check.main = self
+			add_child(room_check)
 	# THE TWO-PROCESS RELOAD PROOF, and only when an operator asks.
 	#
 	# Unlike every other driver, this one runs AFTER `boot()` and beside
@@ -301,6 +310,32 @@ func _ready() -> void:
 ## Everything past the refusal is the REAL path -- the same
 ## `ZoneController` and the same `_to_zone` an ordinary Zone takes, so
 ## what this proves is the runtime rather than a harness beside it.
+## True for the whole of a `--concourse-pier` launch. It scopes the places
+## the playtest differs from a campaign: whatever leads to the Hub starts
+## the route again (the reset), and the banner says nothing is saved.
+var _room_playtest := false
+
+## Enter the owner-authorized concourse-pier playtest: `RoomPlaytest`'s
+## Zone through the same `_to_zone` an ordinary Zone takes, lit the same
+## way in both modes. Called again by the exit, RETURN TO HUB and ABANDON.
+func _enter_room_playtest() -> void:
+	var refused := RoomPlaytest.admit(ContentRegistry.shared())
+	if refused != "":
+		push_error("room playtest: %s" % refused)
+		return
+	_room_playtest = true
+	var populated := RoomPlaytest.populated_requested()
+	print("room playtest: %s, %s" % [RoomPlaytest.SHELL_ID,
+			"populated" if populated else "empty"])
+	_to_zone(RoomPlaytest.build(populated))
+	if view == View.ZONE and zone != null and zone.layout_failed == "":
+		RoomPlaytest.light(zone)
+		# THE EXIT, by the Zone's own rule: its portal opens when every
+		# Check the Zone holds is claimed, read on each snapshot. This Zone
+		# holds none, and offline no snapshot comes, so it is read once.
+		zone.refresh()
+	_refresh_banner()
+
 func _enter_showcase(asked: Dictionary) -> void:
 	if bool(asked["refused"]):
 		# Already reported by the caller. The showcase additionally does
@@ -449,7 +484,9 @@ func boot() -> void:
 				_refresh_banner())
 
 func _refresh_banner() -> void:
-	if not BridgeClient.online:
+	if _room_playtest:
+		hud.set_banner("PLAYTEST — NOT CONNECTED, NOTHING IS SAVED")
+	elif not BridgeClient.online:
 		hud.set_banner("BRIDGE OFFLINE — RECONNECTING…")
 	elif view != View.MENU \
 			and not BridgeClient.snapshot.get("ap_connected", false):
@@ -654,6 +691,12 @@ func _to_menu() -> void:
 	menu.refresh()
 
 func _to_hub() -> void:
+	# The playtest has no Hub to go to: offline its portal is disabled. So
+	# every way out of the route -- the exit portal, RETURN TO HUB, a
+	# confirmed ABANDON -- builds the route again from its start.
+	if _room_playtest:
+		_enter_room_playtest()
+		return
 	_clear_world()
 	view = View.HUB
 	menu.visible = false
@@ -1078,6 +1121,11 @@ func _remember_zone_progress() -> void:
 
 func _on_abandon() -> void:
 	pause_menu.close()
+	# Offline an ABANDON would wait for a snapshot that never comes; in the
+	# playtest there is no campaign progress to abandon, so it resets.
+	if _room_playtest:
+		_enter_room_playtest()
+		return
 	if view == View.ZONE:
 		_abandoning = true
 		_send_zone_timing(false)

@@ -35,6 +35,9 @@ static func _load() -> void:
 			_marked[str(key)] = true
 
 static func _save() -> void:
+	# Read, never written, by an isolated playtest (`RoomPlaytest`).
+	if RoomPlaytest.requested():
+		return
 	var config := ConfigFile.new()
 	for component_id: String in _marked:
 		config.set_value(_SECTION, component_id, true)
