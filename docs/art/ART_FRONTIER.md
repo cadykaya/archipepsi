@@ -3311,6 +3311,37 @@ separately.
 **Next: HOLD** for the owner's decisions. New approvals arrive as a
 separate owner message.
 
+### Delivered, 2026-09-28 — the authorised repair pass. STOPPED for the remaining visual decisions.
+
+The owner authorised narrow technical repairs to the documented
+objective defects. The handoff is
+`docs/art/review/repairs_2026-09-28/README.md`, on the separate branch
+`claude/archipepsi-art-repairs-2026-09-28`, based on `a1584c8`.
+
+* **Repaired, each family separable,** through the existing builders:
+  * **049:** six real hinges with declared positions
+    (`9231ce3` + `c4dbd90`);
+  * **the skiff:** `*_fore` is RailCarrier's FORWARD (`d48c361`);
+  * **the lightened panels:** their own material; the nine on fittings
+    moved clear (`e4103ba`).
+* **Dated corrections** to stale records and to my own review (`dc0d879`).
+* **Held, with the exact conflict recorded:**
+  * `fx_bulwark_face` (a candidate effect, not the approved body);
+  * the Passing carriers, whose ends conflict with the pinned room;
+  * the Counterfire and Unweighted kits and the yard anchor;
+  * the diver trail;
+  * the danger-mark presentation (geometry prepared in
+    `DANGER_MARKS.md`);
+  * the telegraph ring, statuses, packs and withheld shells.
+* **Status:** nothing promoted, bound or integrated. Every repaired asset
+  is still a candidate.
+
+*(Corrected 2026-09-28: wherever this file says "023–030 remain
+PENDING", read 023–028. 029 and 030 were revised as 036-R and 037-R, and
+both revisions passed.)*
+
+**Next: HOLD** for the owner's remaining visual decisions.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

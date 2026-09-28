@@ -147,6 +147,22 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
   library is DELIVERED; HOLD for decisions.**
   `docs/art/review/owner_review_2026-09-28/START_HERE.md`. Production was
   read at pin `c12a72f` only; nothing was promoted, bound or repaired.
+* **2026-09-28, later: the authorised repair pass is DELIVERED; HOLD for
+  the remaining visual decisions.** It is on the separate branch
+  `claude/archipepsi-art-repairs-2026-09-28`, based on `a1584c8`; the
+  handoff is `docs/art/review/repairs_2026-09-28/README.md`.
+  * **Repaired, each family separable:**
+    * the 049 hinges (`9231ce3` + `c4dbd90`);
+    * the skiff's fore/aft ends (`d48c361`);
+    * the lightened panels (`e4103ba`);
+    * dated corrections (`dc0d879`).
+  * **Status:** all still candidates. Nothing is promoted, bound or
+    integrated, and no Production file was touched.
+  * **Held with the exact conflicts recorded:**
+    * the room kits (Passing, Counterfire, Unweighted);
+    * `fx_bulwark_face`;
+    * the danger-mark presentation;
+    * the ring, statuses, packs and shells.
 * **2026-09-28: a read-only audit of what art is in the game** (asked by
   the owner): `docs/art/reports/2026-09-28-art-vs-game.md`.
   * The game loads only `godot/content`: 6 fixtures, 12 shells, the
