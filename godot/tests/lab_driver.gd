@@ -50,6 +50,7 @@ func _run() -> void:
 
 	_fixtures_exist(lab)
 	_the_measures_say_the_engines_numbers(lab)
+	await _the_shipped_art_is_what_loads(lab)
 	_dummy_takes_real_damage(lab, player)
 	_dummy_cannot_be_farmed(lab)
 	_statuses_apply_and_clear(lab)
@@ -136,6 +137,50 @@ func _lit_extent(lab: EchoLab, path: String, axis: int) -> PackedFloat32Array:
 	for v: Vector3 in node.mesh.surface_get_arrays(lit)[Mesh.ARRAY_VERTEX]:
 		out.append((to_lab * v)[axis])
 	return out
+
+## ART-CATCHUP: every family this catch-up wired falls back to its code
+## shape when its model is missing -- which must be a RED suite, not a
+## quiet game of boxes. So: the Hub's installation and boards, the exit
+## portal's frame and cores, and the Lab's fixtures are the shipped art.
+func _the_shipped_art_is_what_loads(lab: EchoLab) -> void:
+	var missing: Array = []
+	var hub := HubController.new()
+	add_child(hub)
+	await get_tree().process_frame
+	if hub.find_child("EpsilonInstallation", true, false) == null:
+		missing.append("the Epsilon installation")
+	for board: String in ["CampaignBoard:hub_campaign_board",
+			"ControlsBoard:hub_controls_board"]:
+		var parts := board.split(":")
+		var holder := hub.find_child(parts[0], true, false)
+		if holder == null or holder.find_child(parts[1], true, false) == null:
+			missing.append(parts[1])
+	hub.queue_free()
+	var portal := ExitPortal.create("concrete_facility")
+	add_child(portal)
+	await get_tree().process_frame
+	if (portal.get_node("Frame") as MeshInstance3D).mesh \
+			!= ExitPortal.art_mesh("portal_b2_wound"):
+		missing.append("the portal frame")
+	for open: bool in [false, true]:
+		portal.set_unlocked(open, 0 if open else 2)
+		var want := ExitPortal.art_mesh(
+				"portal_core_unlocked" if open else "portal_core_locked")
+		if want == null or (portal.get_node("Core") as MeshInstance3D).mesh != want:
+			missing.append("the %s portal core" % ("open" if open else "sealed"))
+	portal.queue_free()
+	for fixture: String in ["dummy", "hazard"]:
+		var node := lab.fixture(fixture)
+		var art := LabFixtures.art(fixture)
+		if art == null or node == null or (node.get("_core") as MeshInstance3D).mesh != art:
+			missing.append("the Lab %s" % fixture)
+	if lab.get_node_or_null("TallWall/HeightMarkers") == null:
+		missing.append("the Lab height strip")
+	if lab.get_node_or_null("RunwayMeasure1") == null:
+		missing.append("the Lab runway measure")
+	await get_tree().process_frame
+	_check(missing.is_empty(), "the catch-up's art is what loads, not its "
+			+ "code fallback: missing %s" % [missing])
 
 func _the_measures_say_the_engines_numbers(lab: EchoLab) -> void:
 	var zs := _lit_extent(lab, "RunwayMeasure1", 2)
