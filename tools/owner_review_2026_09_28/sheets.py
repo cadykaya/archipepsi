@@ -191,7 +191,12 @@ class Sheet:
         img = Image.new("RGB", (W, H), BG)
         d = ImageDraw.Draw(img)
         y = PAD
-        d.text((PAD, y), self.title, fill=INK, font=F_TITLE)
+        ft = F_TITLE
+        size = 40
+        while d.textlength(self.title, font=ft) > W - 2 * PAD and size > 24:
+            size -= 2
+            ft = font(size, True)
+        d.text((PAD, y), self.title, fill=INK, font=ft)
         y += 52
         if self.subtitle:
             for line in wrap(d, self.subtitle, F_SUB, W - 2 * PAD):
