@@ -86,6 +86,17 @@ const HELD_MAX := 4
 ## surfaces there to match (its `Shell.SHADE`). Forward+ honours the
 ## light's cull mask, so the tone applies only where the leak exists.
 const SHADE_COMPATIBILITY := {"map": 0.74, "journal": 0.86}
+## UNDER ANY OTHER RENDERER (Forward+, the game's): the box is drawn as the
+## approved captures show it, measured wall by wall against the prototype's
+## own renders (MENU-INT M5; the figures are in the ledger). Those captures
+## are GL Compatibility's, which lights the Map and Journal walls, and every
+## pale surface, more than the game's renderer does. So: a fill light
+## straight onto each of those two walls (`_approved_fill`, its energy
+## here); a gain for pale surfaces (`MenuParts.pale`); and the two walls'
+## own card shade over it.
+const APPROVED_FILL := {"map": 0.4, "journal": 0.85}
+const PALE_GAIN_FORWARD := 1.2
+const SHADE_FORWARD := {"map": 0.87, "journal": 0.87}
 ## THE HARNESS on each wall: the trunk's clamps, and the spans its lacing
 ## keeps clear of (what a wall hangs from it). The prototype's numbers.
 const HARNESS := {
@@ -158,10 +169,14 @@ func _ready() -> void:
 	_world.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	_stage.add_child(_world)
 	var method := RenderingServer.get_current_rendering_method()
+	var compatibility := method == "gl_compatibility"
 	for page: String in PAGES:
-		shade[page] = float(SHADE_COMPATIBILITY.get(page, 1.0)) \
-				if method == "gl_compatibility" else 1.0
+		shade[page] = float((SHADE_COMPATIBILITY if compatibility else SHADE_FORWARD)
+				.get(page, 1.0))
+	MenuParts.pale_gain = 1.0 if compatibility else PALE_GAIN_FORWARD
 	_build_box()
+	if not compatibility:
+		_approved_fill()
 	_build_glass()
 	_face(_front, true)
 
@@ -775,6 +790,20 @@ func _page_hit(index: int, origin: Vector3, along: Vector3) -> Vector2:
 
 
 # ------------------------------------------------------------ building
+
+## THE APPROVED LIGHT, under the game's renderer: a fill straight onto the
+## Map and Journal walls, which stand brighter in every approved capture
+## (see APPROVED_FILL). Straight on: the other three walls' faces stand
+## edge-on to it or behind it, so their flat faces take none of it (it casts
+## no shadow, and the miniature's own layer is outside its mask).
+func _approved_fill() -> void:
+	for page: String in APPROVED_FILL:
+		var fill := DirectionalLight3D.new()
+		fill.name = "ApprovedFill"
+		fill.light_energy = float(APPROVED_FILL[page])
+		fill.light_cull_mask = 1
+		(_faces[page] as Node3D).add_child(fill)
+
 
 func _build_box() -> void:
 	var environment := WorldEnvironment.new()

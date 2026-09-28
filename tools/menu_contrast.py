@@ -49,8 +49,23 @@ def _dist(p, q) -> float:
     return ((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2) ** 0.5
 
 
+def _outline_copy(word: dict, words: list[dict]) -> bool:
+    """A dark copy under a word, a few pixels off: its drawn outline (a
+    bitmap face has none of its own), not a word of its own."""
+    lum = sum(word["ink"]) / 3.0
+    for other in words:
+        if other is word or other["text"] != word["text"]:
+            continue
+        if abs(other["rect"][0] - word["rect"][0]) <= 4 \
+                and abs(other["rect"][1] - word["rect"][1]) <= 4 \
+                and sum(other["ink"]) / 3.0 > lum + 0.2:
+            return True
+    return False
+
+
 def measure(png: Path) -> list[dict]:
     words = json.loads((png.parent / (png.stem + ".words.json")).read_text())
+    words = [w for w in words if not _outline_copy(w, words)]
     image = Image.open(png).convert("RGB")
     w, h = image.size
     px = image.load()

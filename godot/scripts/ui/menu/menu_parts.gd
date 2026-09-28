@@ -103,11 +103,15 @@ static func k(z: float) -> float:
 
 # ============================================================ materials
 
+## A lit material. A PALE one (a card, a tape, a keycap, bare metal) takes
+## the renderer's `pale_gain`: the approved captures were drawn by GL
+## Compatibility, which lights pale surfaces more than the game's renderer
+## does; dark ones it lights alike (MENU-INT M5, measured).
 static func mat(colour: Color, metal := 0.0, rough := 1.0) -> StandardMaterial3D:
 	var key := "m%s/%.2f/%.2f" % [colour.to_html(), metal, rough]
 	if not _mats.has(key):
 		var m := StandardMaterial3D.new()
-		m.albedo_color = colour
+		m.albedo_color = pale(colour)
 		m.metallic = metal
 		m.roughness = rough
 		m.cull_mode = BaseMaterial3D.CULL_DISABLED
@@ -522,7 +526,7 @@ static func flag(kit: MenuKit, parent: Node3D, x: float, words: String, kk: int,
 	var w := kit.measure(words, kk) + pad * 2.0
 	if faint != "":
 		w += kit.measure(faint, kk) + 18.0
-	var card := mat(tone(FLAG, shade), 0.0, 1.0)
+	var card := mat(card(shade), 0.0, 1.0)
 	sleeve(parent, Vector2(x + w * 0.5, TRUNK_Y), false, TRUNK_R + 1.6, w, TRUNK_Z, card, 18)
 	var r := Rect2(x, TRUNK_Y + TRUNK_R - 4.0, w, 8.0 * kk + 18.0)
 	slab(parent, rrect(r, 3.0), TRUNK_Z - 0.0015, TRUNK_Z + 0.0015, card)
@@ -539,7 +543,7 @@ static func vflag(kit: MenuKit, parent: Node3D, x: float, y: float, words: Strin
 		shade := 1.0, r := 3.5, z := WIRE_Z) -> Rect2:
 	var w := kit.measure(words, 2) + 22.0
 	var h := 30.0
-	var card := mat(tone(FLAG, shade), 0.0, 1.0)
+	var card := mat(card(shade), 0.0, 1.0)
 	sleeve(parent, Vector2(x, y + h * 0.5), true, r + 1.6, h, z, card, 14)
 	var rect := Rect2(x + r - 2.0, y, w + 2.0, h)
 	slab(parent, rrect(rect, 3.0), z - 0.0012, z + 0.0012, card)
@@ -554,7 +558,7 @@ static func tag(parent: Node3D, r: Rect2, z := 0.03, eyelets := true, shade := 1
 	var poly := PackedVector2Array([r.position + Vector2(ch, 0),
 		Vector2(r.end.x - ch, r.position.y), Vector2(r.end.x, r.position.y + ch), r.end,
 		Vector2(r.position.x, r.end.y), r.position + Vector2(0, ch)])
-	slab(parent, poly, z - 0.004, z, mat(tone(FLAG, shade), 0.0, 1.0))
+	slab(parent, poly, z - 0.004, z, mat(card(shade), 0.0, 1.0))
 	if not eyelets:
 		return
 	for ex: float in [r.position.x + 38.0, r.end.x - 38.0]:
@@ -710,6 +714,24 @@ static func tape(kit: MenuKit, parent: Node3D, at: Vector2, words: String, z: fl
 ## on every wall. `shade` is the wall's factor; 1.0 elsewhere.
 static func tone(colour: Color, shade: float) -> Color:
 	return Color(colour.r * shade, colour.g * shade, colour.b * shade)
+
+
+## Set by the shell for the renderer: 1.0 under GL Compatibility.
+static var pale_gain := 1.0
+## What counts as pale: an sRGB luma above this.
+const PALE_LUMA := 0.45
+
+
+static func pale(colour: Color) -> Color:
+	if pale_gain == 1.0 or colour.get_luminance() <= PALE_LUMA:
+		return colour
+	return Color(minf(colour.r * pale_gain, 1.0), minf(colour.g * pale_gain, 1.0),
+			minf(colour.b * pale_gain, 1.0), colour.a)
+
+
+## The pale card of a tag, a flag or a heading, at a wall's shade.
+static func card(shade: float) -> Color:
+	return tone(FLAG, shade)
 
 
 # ============================================================ Epsilon

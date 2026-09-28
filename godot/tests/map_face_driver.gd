@@ -332,6 +332,14 @@ func _blocker(edge_id: String) -> Dictionary:
 	return {}
 
 
+## Whether the glass carries an exit tag for this way.
+func _exit_tag(edge_id: String) -> bool:
+	for t: Dictionary in face._tags:
+		if str(t["kind"]) == "exit" and str(t["ref"]) == edge_id:
+			return true
+	return false
+
+
 func _count(root: Node) -> int:
 	return _all(root).size()
 
@@ -875,6 +883,34 @@ func _places_and_ways_back() -> void:
 	_check(rings == zone.plug_positions.size() and rings > 0,
 			"every way back the bridge lists is a way-out mark where it "
 			+ "stands (%d)" % rings)
+	# A way back is a way out of the room it stands in (room_a) and of no
+	# other: where it lands, it is neither an exit tag nor counted.
+	var plug: Dictionary = {}
+	for row: Dictionary in face.connectors_shown():
+		if str(row["realization"]) == "traversal_only" \
+				and face.plug_node(str(row["edge_id"])) != null:
+			plug = row
+			break
+	var eid := str(plug.get("edge_id", ""))
+	var stands := str(plug.get("room_a", ""))
+	var lands := str(plug.get("room_b", ""))
+	face.pick(stands)
+	await _frames(2)
+	var there := face.detail_text()
+	var tagged_there := _exit_tag(eid)
+	face.pick(lands)
+	await _frames(2)
+	var here := face.detail_text()
+	var lands_name := face._room_name(lands)
+	var stands_name := face._room_name(stands)
+	_check(eid != "" and tagged_there
+			and there.contains("- a way back to %s: open" % lands_name),
+			"where a way back stands it is a way out, and says where it "
+			+ "takes you:\n%s" % there)
+	_check(not _exit_tag(eid) and not here.contains("- a way back")
+			and here.contains("- the way back from %s lands here" % stands_name),
+			"where it lands it is not a way out -- no tag, no count -- and "
+			+ "says only where it comes from:\n%s" % here)
 	shell.close()
 	face.overview()
 

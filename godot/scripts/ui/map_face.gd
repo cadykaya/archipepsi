@@ -65,6 +65,15 @@ const STICK_DEADZONE := 0.25
 ## can tell (?) keep their letters.
 const SYMBOL_ICON := {"K": "blocked", "P": "circuit", "M": "control"}
 const MINI_LAYER := 2                # the miniature's own light lights this
+## The rooms' tones, as the approved captures show them. The prototype's
+## #4a525f floor and #2c3139 wall were reviewed as GL Compatibility drew
+## its box meshes; the lens's own room mesh, under the game's renderer
+## (and under Compatibility too), drew them far darker: a floor at
+## (67, 75, 87) against the approved (106, 117, 136), a wall at (29, 32,
+## 38) against (40, 46, 54). Calibrated in linear light so the game draws
+## the approved tones (MENU-INT M5; the measurements are in the ledger).
+const FLOOR_TONE := Color("#747f94")
+const WALL_TONE := Color("#3b444f")
 
 ## The lens: what `go` animates. Every field moves the miniature as a whole.
 class Lens:
@@ -556,8 +565,8 @@ func _room(r: Dictionary) -> void:
 	var id := str(r["id"])
 	var rect: Rect2 = r["rect"]
 	var y := float(r["floor_y"])
-	var floor_mat := kit.lit(Color("#4a525f"), true)
-	var wall_mat := kit.lit(Color("#2c3139"), true)
+	var floor_mat := kit.lit(FLOOR_TONE, true)
+	var wall_mat := kit.lit(WALL_TONE, true)
 	var node := MeshInstance3D.new()
 	node.name = "Room_%s" % id
 	node.mesh = _room_mesh(rect, y, floor_mat, wall_mat)
@@ -1146,6 +1155,8 @@ func _place_labels() -> void:
 		var name := _room_name(other)
 		var words := ""
 		var colour := MenuKit.INK_DIM
+		if _plugs.has(eid) and str(c["room_a"]) != picked:
+			continue                    # another room's way back, landing here
 		if _plugs.has(eid):
 			words = "A WAY BACK"
 			open_n += 1
@@ -1410,7 +1421,15 @@ func _describe(room_id: String) -> String:
 		var where := ("to " + other_name) if other_name != "" \
 				else "a way on, not yet walked"
 		if _plugs.has(str(row["edge_id"])):
-			where = "a way back"
+			# A WAY BACK IS A DEVICE WHERE IT STANDS (room_a), taking you to
+			# room_b. It is a way out of the room it stands in; where it
+			# lands, it is not one, and a room not walked is not named.
+			if a != room_id:
+				if other_name != "":
+					lines.append("- the way back from %s lands here" % other_name)
+				continue
+			where = ("a way back to " + other_name) if other_name != "" \
+					else "a way back"
 		var state := str(row["state"])
 		var reason := str(row["reason"])
 		var said := state if reason == "" else "%s: %s" % [state, reason]
