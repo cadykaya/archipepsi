@@ -143,6 +143,10 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
   * 434 scripted checks.
 * **Wake-ups are no-ops.** Integration waits for a SEPARATE, EXPLICIT
   assignment to Production. No Production-owned edits.
+* **2026-09-28: the owner review of existing candidates and the room
+  library is DELIVERED; HOLD for decisions.**
+  `docs/art/review/owner_review_2026-09-28/START_HERE.md`. Production was
+  read at pin `c12a72f` only; nothing was promoted, bound or repaired.
 * **2026-09-28: a read-only audit of what art is in the game** (asked by
   the owner): `docs/art/reports/2026-09-28-art-vs-game.md`.
   * The game loads only `godot/content`: 6 fixtures, 12 shells, the

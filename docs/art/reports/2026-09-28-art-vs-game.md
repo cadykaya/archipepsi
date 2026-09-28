@@ -79,7 +79,7 @@ assignments, run through his checks, rather than in a push from me.
 | The Amalgam preparation: status kit, machinery and physics props (043, 053); status glyphs (052) | Proposals, pending |
 | Branching rooms (044) | PENDING, 13 Sept |
 | **The 0.4 setpieces** (045–051): the four setpieces' identities, the Blindside yard kit, the skiff, the three rooms' kits, conduits, enemy jobs, telegraphs and impacts | Candidates, from 22 Sept, with ten handoff documents |
-| **The source-game theme packs:** props for T01–T07 (054, 056–061); T01 and T05's own textures (Track D); the course treatment for the other four themes (055) | Proposals and candidates. T01 and T05's textures were accepted as candidates on 25 Sept. The course treatment was not accepted for gothic_stone, and is pending for the other three. A pack binds only once Production gives it a status, and `THEME_PACK_STATUS` is still empty. |
+| **The source-game theme packs:** props for T01–T07 (054, 056–061); T01 and T05's own textures (Track D); the course treatment for the other four themes (055) | Proposals and candidates. T01's textures were accepted as a candidate on 25 Sept; for T05, that ruling accepted the accent and calmed the floor (*corrected 2026-09-28: this first said both were "accepted as candidates"*). The course treatment was not accepted for gothic_stone, and is pending for the other three. A pack binds only once Production gives it a status, and `THEME_PACK_STATUS` is still empty. |
 
 That is about 170 models, plus 37 candidate course textures.
 

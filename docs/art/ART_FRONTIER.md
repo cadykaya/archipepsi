@@ -3286,6 +3286,31 @@ Report: `docs/art/reports/2026-09-28-art-vs-game.md`. It compares
 
 Still HOLD for the menu. The audit changes nothing in the build.
 
+### Delivered, 2026-09-28 — the owner review of existing candidates and the room library. STOPPED for decisions.
+
+The package is `docs/art/review/owner_review_2026-09-28/START_HERE.md`.
+The report is `docs/art/reports/2026-09-28-owner-review-candidates-and-rooms.md`.
+It is the art half of the catch-up; Prod integrates the approved work
+separately.
+
+* **Candidates:** about 170, in roughly 30 decisions across groups A–E and
+  an appendix, with the four statuses kept apart.
+* **The room library:** six examples plus alternates, each with an eye
+  view and a roof-off plan.
+* **Production was read at pin `c12a72f` only,** on a scratch copy; its own
+  shot drivers made the "today" frames.
+* **About twenty art defects were measured** and reported with their
+  smallest repairs; none was repaired. The worst:
+  * `fx_bulwark_face` faces backwards;
+  * the skiff's lamps are swapped;
+  * the ground marks are undersized;
+  * the 049 parts have no pivots;
+  * the Unweighted kit no longer fits the repaired room.
+* **Not done:** no promotion, integration, binding, or new asset batch.
+
+**Next: HOLD** for the owner's decisions. New approvals arrive as a
+separate owner message.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.
