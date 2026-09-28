@@ -1353,6 +1353,7 @@ func _real_items_fit() -> void:
 	await _open("refilled", true, "equipment", campaign)
 	var missing_before: Dictionary = face.kit.missing.duplicate()
 	var bad: Array = []
+	var legend_bad: Array = []
 	var worst := 0
 	var read := 0
 	for i in face.key_count():
@@ -1362,6 +1363,17 @@ func _real_items_fit() -> void:
 			worst = maxi(worst, Time.get_ticks_usec() - t0)
 			await get_tree().process_frame
 			read += 1
+			for dev: String in ["kbm", "pad"]:
+				shell.device = dev
+				shell._refresh_glass()
+				var pr := shell.prompt_rect()
+				var vw := get_viewport().get_visible_rect().size
+				if pr.end.x > vw.x - 40.0 * maxf(1.0, floorf(vw.y / 360.0)) \
+						or shell.prompt_lines != 1:
+					legend_bad.append("%s %s ends %d, %d lines" % [id, dev,
+							int(pr.end.x), shell.prompt_lines])
+			shell.device = "kbm"
+			shell._refresh_glass()
 			var st := _st()
 			var off := _off_wall(_readout())
 			if not bool(_focus().get("fits", false)) \
@@ -1372,6 +1384,9 @@ func _real_items_fit() -> void:
 	_check(read >= 55 and bad.is_empty(),
 			"all %d real items read in their window without running over, " % read
 			+ "squashing or stacking: %s" % [bad])
+	_check(legend_bad.is_empty(),
+			"and reading each, the legend fits the window on one line, keyboard "
+			+ "and pad: %s" % [legend_bad])
 	var new_missing: Array = []
 	for c: String in face.kit.missing:
 		if not missing_before.has(c):

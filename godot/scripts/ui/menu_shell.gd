@@ -134,8 +134,10 @@ var _controllers := {}               # page -> the mounted wall's controller
 var _light: OmniLight3D = null
 var _arrows: Array[Button] = []
 var _glass: Control = null
-var _prompt_row: HBoxContainer = null
+var _prompt_row: VBoxContainer = null        # one or two lines of prompts
 var _prompts_shown: Array = []
+## How many lines the prompts took at the last refresh (a suite reads it).
+var prompt_lines := 1
 var _front := 0
 ## The yaw the camera is headed for, in quarter turns (unwrapped, so a
 ## turn is always the short way round and never a spin).
@@ -389,6 +391,20 @@ func words_on_screen() -> Array:
 		out.append({"text": l.text, "rect": [r.position.x, r.position.y, r.size.x,
 			r.size.y], "ink": [l.modulate.r, l.modulate.g, l.modulate.b]})
 	return out
+
+
+## One line of the prompt legend.
+func _prompt_line(gap: float) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_theme_constant_override("separation", int(gap))
+	_prompt_row.add_child(h)
+	return h
+
+
+## Where the prompts are on the screen, as laid out.
+func prompt_rect() -> Rect2:
+	return Rect2(_prompt_row.position, _prompt_row.get_combined_minimum_size())
 
 
 ## The prompt line as drawn: [{action, shows, words}].
@@ -932,7 +948,7 @@ func _build_glass() -> void:
 				else Control.PRESET_CENTER_RIGHT)
 		_glass.add_child(arrow)
 		_arrows.append(arrow)
-	_prompt_row = HBoxContainer.new()
+	_prompt_row = VBoxContainer.new()
 	_prompt_row.name = "Prompts"
 	_prompt_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_glass.add_child(_prompt_row)
@@ -1023,12 +1039,20 @@ func _refresh_glass() -> void:
 	if own is Array:
 		pairs = (own as Array).duplicate()
 	var back := back_words()
+	# ONE PROMPT FOR ONE THING: a wall's own prompt that says what the back
+	# press already says (the Map's "your view") is that press's, once.
+	pairs = pairs.filter(func(pair: Array) -> bool:
+		return str(pair[1]) != back)
 	pairs.append(["back" if back != "close" else "close", back])
 	if device == "pad" and back != "close":
 		pairs.append(["close", "close"])
-	_prompt_row.add_theme_constant_override("separation", int(14.0 * s))
+	var groups: Array = []
 	for pair: Array in pairs:
-		var tokens: Array = _controls(str(pair[0]))
+		var tokens: Array = []
+		# A prompt may name several actions that share one word: their
+		# controls are shown together ("[ ] and a click: places").
+		for action: Variant in (pair[0] if pair[0] is Array else [pair[0]]):
+			tokens += _controls(str(action))
 		if tokens.is_empty():
 			continue
 		var row := HBoxContainer.new()
@@ -1038,10 +1062,35 @@ func _refresh_glass() -> void:
 		for token: String in tokens:
 			shows.append(_control_token(row, token, s))
 		_glass_text(row, str(pair[1]), s, _INK_DIM)
-		_prompts_shown.append({"action": str(pair[0]), "shows": shows,
+		var action_name := "+".join(PackedStringArray((pair[0] if pair[0] is Array
+				else [pair[0]]).map(func(a: Variant) -> String: return str(a))))
+		_prompts_shown.append({"action": action_name, "shows": shows,
 			"words": kit.display(str(pair[1]))})
-		_prompt_row.add_child(row)
-	_prompt_row.position = Vector2(40.0 * s, view.y - 22.0 * s)
+		groups.append(row)
+	# THE LINE FITS THE WINDOW, at the Glyph face's own whole-pixel scale:
+	# what does not fit goes onto a second line above it -- never smaller
+	# text, and never off the edge.
+	var gap := 14.0 * s
+	var room := view.x - 80.0 * s
+	_prompt_row.add_theme_constant_override("separation", int(2.0 * s))
+	var line := _prompt_line(gap)
+	var lines: Array = [line]
+	var used := 0.0
+	for row: HBoxContainer in groups:
+		line.add_child(row)
+		# Measured in place, where the group knows its theme's separation.
+		var w := row.get_combined_minimum_size().x
+		if used > 0.0 and used + gap + w > room:
+			line.remove_child(row)
+			line = _prompt_line(gap)
+			lines.append(line)
+			line.add_child(row)
+			used = 0.0
+		used += (gap if used > 0.0 else 0.0) + w
+	prompt_lines = lines.size()
+	_prompt_row.reset_size()
+	_prompt_row.position = Vector2(40.0 * s, view.y - 22.0 * s
+			- float(lines.size() - 1) * 14.0 * s)
 	# The turn cues: the arrow, the wall it turns to, and its key.
 	for i in _arrows.size():
 		var arrow: Button = _arrows[i]

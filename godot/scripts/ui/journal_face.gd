@@ -43,9 +43,12 @@ const LINE := 20.0
 const HEAD_H := 30.0
 const TAG_Z := 0.026
 ## Lifted for 1280 x 720 (the fifth ruling): quieter entries a step up from
-## the old DIM; the objectives stay the brightest.
-const ENTRY := Color("#b9bec2")
-const NOTE_INK := Color("#aeb3b8")
+## the old DIM; the objectives stay the brightest. One step more after the
+## owner's review of the delivery (2026-09-28, "a modest brightness
+## increase for the quieter entries"): the notes had read 3.8-4.5:1 on the
+## graphite. Same hue, same order -- objectives, entries, notes.
+const ENTRY := Color("#cdd1d4")                # was #b9bec2
+const NOTE_INK := Color("#c2c6ca")             # was #aeb3b8
 
 var kit: MenuKit
 var shell: MenuShell

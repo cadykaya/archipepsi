@@ -997,6 +997,8 @@ func toggle_detail() -> void:
 	# The lens slides the place clear of the tag; nothing is covered.
 	kit.go(lens, "shift", -PANEL_W * 0.5 if expanded else 0.0, 0.3)
 	_refresh_marks()
+	if can_return():
+		_build_glass_back()       # the pad's B means "less" while this is open
 
 
 # ------------------------------------------------------------ picking
@@ -1515,9 +1517,12 @@ func _build_glass_back() -> void:
 	var words := "BACK TO YOUR VIEW"
 	var x := at.x
 	if kit.device == "pad":
-		kit.sprite(_glass_back, "pad_face_east", at + Vector2(13, 13), 2, MenuKit.INK,
-				0.014)
-		x += 34.0
+		# B is Back: it names this only while Back does it (not while a
+		# place's detail is open, when B closes that first).
+		if not expanded:
+			kit.sprite(_glass_back, "pad_face_east", at + Vector2(13, 13), 2,
+					MenuKit.INK, 0.014)
+			x += 34.0
 	else:
 		var w := kit.measure("BACKSPACE", 2) + 16.0
 		kit.plate(_glass_back, at, Vector2(w, 26), 0.012, kit.lit(Color("#c9d0db")),
@@ -1782,7 +1787,10 @@ func raw_input(event: InputEvent) -> bool:
 			KEY_BRACKETLEFT:
 				step_place(-1)
 			KEY_BACKSPACE:
-				if not back():
+				# BACK TO YOUR VIEW is a direct action (§8), as its tag on the
+				# window says: straight back, whatever is open. With no view
+				# kept, Backspace is Back.
+				if not (return_view() if can_return() else back()):
 					kit.cue("edge")
 			_:
 				return false
@@ -1891,12 +1899,14 @@ func wheel(_hit: Dictionary, dir: int) -> bool:
 func prompts() -> Array:
 	if zone == null:
 		return []
-	var out := [["place", "places"], ["click", "pick"]]
-	if not _return.is_empty():
-		out.insert(0, ["back_view", "your view"])
+	# Grouped so the line fits the window: [ ] and a click both pick a
+	# place; the lens's zoom and turn are one kind of thing.
+	# BACK TO YOUR VIEW's own key is on its tag in the window, where the
+	# action is; the line keeps the back press, which says what it does.
+	var out := [[["place", "click"], "places"]]
 	if picked != "":
 		out.append(["accept", "less" if expanded else "more"])
-	out += [["overview", "overview"], ["zoom", "zoom"], ["orbit", "turn"]]
+	out += [["overview", "overview"], [["zoom", "orbit"], "zoom, turn"]]
 	if _floors.size() > 1:
 		out.append(["floors", "floors"])
 	return out

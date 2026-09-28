@@ -139,7 +139,13 @@ class Probe extends Node:
 	func repeats() -> bool:
 		return true
 
+	var long := false
+
 	func prompts() -> Array:
+		if long:
+			return [["move", "probe"], ["accept", "a very long action the window cannot hold"],
+				["overview", "overview"], ["floors", "floors"], ["zoom", "zoom"],
+				["orbit", "turn"], ["place", "places"]]
 		return [["move", "probe"]]
 
 
@@ -767,6 +773,26 @@ func _the_glass() -> void:
 	_check(deeper.has("sym:pad_face_east") and deeper.has("sym:pad_start"),
 			"with a deeper view open, the pad shows B for back and Start for a "
 			+ "direct close: %s" % [deeper])
+	# A line too long for the window wraps -- above, on screen, at the same
+	# scale -- and never runs off the edge or shrinks.
+	var view := get_viewport().get_visible_rect().size
+	var s := maxf(1.0, floorf(view.y / 360.0))
+	var one := shell.prompt_rect()
+	probe.long = true
+	shell._refresh_glass()
+	var two := shell.prompt_rect()
+	var lines2 := shell.prompt_lines
+	var scales: Array = []
+	for n: Node in shell._prompt_row.find_children("*", "Label", true, false):
+		scales.append((n as Label).scale.x)
+	probe.long = false
+	shell._refresh_glass()
+	_check(lines2 == 2 and shell.prompt_lines == 1 and two.end.x <= view.x - 40.0 * s
+			and two.position.x >= 0.0 and two.end.y <= view.y
+			and two.size.y > one.size.y and scales.all(func(k: float) -> bool:
+				return is_equal_approx(k, s)),
+			"a prompt line too long for the window wraps onto a second line, on "
+			+ "screen, at the face's own scale (%s; scales %s)" % [two, scales])
 	await _key(KEY_Q)
 	await _rest()
 	shell.close()

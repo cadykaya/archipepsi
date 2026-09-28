@@ -332,6 +332,43 @@ func _blocker(edge_id: String) -> Dictionary:
 	return {}
 
 
+## The prompt line in this state fits the window on one line, at the
+## Glyph face's own scale, for the keyboard's prompts and the pad's.
+func _legend_fits(what: String) -> void:
+	var view := get_viewport().get_visible_rect().size
+	var s := maxf(1.0, floorf(view.y / 360.0))
+	var seen: Array = []
+	for dev: String in ["kbm", "pad"]:
+		shell.device = dev
+		shell._refresh_glass()
+		await _frames(1)
+		var r := shell.prompt_rect()
+		seen.append("%s %d..%d, %d line(s)" % [dev, int(r.position.x), int(r.end.x),
+				shell.prompt_lines])
+		_check(r.position.x >= 0.0 and r.end.x <= view.x - 40.0 * s
+				and shell.prompt_lines == 1,
+				"%s: the legend fits the %dx%d window on one line (%s)"
+				% [what, int(view.x), int(view.y), seen[-1]])
+	shell.device = "kbm"
+	shell._refresh_glass()
+
+
+## Whether BACK TO YOUR VIEW's tag, drawn for the pad, shows the B symbol.
+func _tag_has_pad_b() -> bool:
+	shell.device = "pad"
+	shell.kit.device = "pad"
+	face.on_device()
+	var found := false
+	var tag: Node = face._glass_back
+	if tag != null:
+		for n: Node in tag.find_children("*", "Sprite3D", true, false):
+			found = true
+	shell.device = "kbm"
+	shell.kit.device = "kbm"
+	face.on_device()
+	return found
+
+
 ## Whether the glass carries an exit tag for this way.
 func _exit_tag(edge_id: String) -> bool:
 	for t: Dictionary in face._tags:
@@ -935,6 +972,34 @@ func _shown_an_entry_and_back() -> void:
 			"shown c005: it is picked, in the window, every floor shown")
 	_check(shell.back_words() == "your view" and face.state()["back"] == "your view",
 			"and the Back prompt says the next press goes back to your view")
+	# The owner's review of the tour: here the legend ran off the window.
+	await _legend_fits("shown an entry: followed, a place picked, floors")
+	_check(_tag_has_pad_b(), "on the pad, BACK TO YOUR VIEW's tag shows B while "
+			+ "B does it")
+	face.toggle_detail()
+	await _settle()
+	await _legend_fits("and with its detail open")
+	var pad_tag := _tag_has_pad_b()
+	# Backspace is BACK TO YOUR VIEW, directly -- as the tag says -- even
+	# with the detail open; Escape backs out of the detail first.
+	var kept := _view_state()
+	await _key(KEY_BACKSPACE)
+	await _settle()
+	_check(not face.can_return() and not face.expanded,
+			"with a place's detail open, Backspace goes straight back to your "
+			+ "view, as its tag says (from %s)" % [kept])
+	_check(not pad_tag, "and on the pad, whose B closes the detail first, the tag "
+			+ "does not claim B while the detail is open")
+	face.follow({"room": "c005"})
+	await _settle()
+	face.toggle_detail()
+	await _settle()
+	await _key(KEY_ESCAPE)
+	await _settle()
+	_check(face.can_return() and not face.expanded,
+			"Escape closes the detail first, and the kept view is still there")
+	face.follow({"room": "c005"})
+	await _settle()
 	face.follow({"edge": POWER_DOOR})
 	await _settle()
 	var door := face.target_world({"edge": POWER_DOOR})
