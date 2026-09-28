@@ -6489,4 +6489,15 @@ its validation):
   - **The build:** `archipepsi-0.4-MENU-INT-ce6ea3b.zip` (checked from a clean unpack of `ce6ea3bd`: the import changes no shipped file, `godot-boot` passes, and the candidate launcher's `--dry-run` keeps its saves in the unpack; the final zip is packed with CK11's result in its note).
   - **The report:** `docs/reports/2026-09-28-menu-int-delivery.md`, sent
     with the tour and pictures as one archive.
-  - **Then stop for the owner's review.** Draft PR #14 is not subscribed.
+  - **Then stop for the owner's review.**
+  - **A subscription found and removed (2026-09-28, 01:0x UTC).**
+    - **What happened:** draft PR #14 had been subscribed to its activity
+      since it was opened (27 September, 20:52 UTC). That broke the
+      owner's "keep subscriptions off", and it contradicted what this
+      ledger and my messages said.
+    - **What was done:** it is unsubscribed, and #12 and #13 are
+      unsubscribed as a precaution.
+    - **What the events were:** fourteen queued events, all CI results
+      for heads already superseded. None was acted on, and nothing was
+      posted.
+    - **Scheduled work:** this session's heartbeat Routine is disabled.

@@ -393,8 +393,15 @@ changed.
   - no save migration;
   - Epsilon's live model unchanged;
   - no purchases or keys.
-- **Nothing running in the background:** no watcher, subscription,
-  schedule or heartbeat. PR #14 is not subscribed.
+- **Nothing running in the background now:** no watcher, subscription,
+  schedule or heartbeat. This session's heartbeat Routine is disabled.
+- **A subscription I missed.**
+  - **What happened:** against your instruction, PR #14 had been
+    subscribed to its CI events since I opened it (27 September, 20:52
+    UTC). I had told you it was not.
+  - **How I found it:** its queued events arrived today.
+  - **What I did:** I unsubscribed it, and #12 and #13 too to be sure. I
+    acted on none of the events, and nothing was posted to the PR.
 - **Held for you, not begun:**
   - HB-F4g;
   - the CK9-F1 sweep;
