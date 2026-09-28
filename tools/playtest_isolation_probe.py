@@ -3,7 +3,10 @@
 stand-in bridge listening where a campaign bridge would (`make
 godot-concourse-pier`).
 
-    python3 tools/playtest_isolation_probe.py [path/to/godot]
+    python3 tools/playtest_isolation_probe.py [path/to/godot] [project root]
+
+(The project root defaults to this clone; point it at an unpacked build to
+check that build.)
 
 What it proves, through the real startup path (`--path godot -- ...`, the
 same main scene and autoloads the launchers start):
@@ -33,8 +36,10 @@ import tempfile
 import threading
 import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GODOT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "godot-bin", "godot")
+ROOT = os.path.abspath(sys.argv[2]) if len(sys.argv) > 2 \
+    else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+GODOT = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 \
+    else os.path.join(ROOT, "godot-bin", "godot")
 HOST, PORT = "127.0.0.1", 38290
 PLAYER_FILES = ("settings.cfg", "loadout.cfg", "equipment_seen.cfg")
 ENGINE_OWN = ("logs", "shader_cache", "vulkan")

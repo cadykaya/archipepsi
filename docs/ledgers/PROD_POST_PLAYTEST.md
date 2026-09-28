@@ -6729,3 +6729,44 @@ verified separately, each on the tree named.
   size on the same face.
 - The comparison frames are labelled as an isolated preview. The game
   is unchanged pending the owner's ruling.
+
+## Concourse-pier playtest (owner brief, 2026-09-28)
+
+**What it is:** Arty's pending room `shell_concourse_pier` (art
+`697fd8af`, handoff `f38b525c`) in a short, isolated route of the real
+game, in two modes: empty, and one small encounter. It is built on CK14
+`17b76098`, on the branch `review/concourse-pier-playtest`; CK14 and its
+build are untouched. The instructions, tests and limitations are in
+`docs/reports/2026-09-28-concourse-pier-playtest.md`.
+
+**Arty's untested WIP** (the brief reached her by mistake) was read once.
+- **Kept:** the Zone-dictionary route (ShowcaseZone's mechanism), the
+  in-memory load exception, the lights plan, the spawn-volume encounter,
+  and the walk and shoot helpers.
+- **Changed:**
+  - One objective, `reach_reward`, in both modes. Her `kill_all` for
+    populated is not approved, and her `reach_exit` for empty is not a
+    valid objective.
+  - The reset: the exit, RETURN TO HUB and ABANDON rebuild the route.
+    Offline, the Hub's portal is disabled, so her Hub-portal reset could
+    never fire.
+  - Isolation, now proven through the real startup path rather than
+    assumed.
+  - The ranged enemy's spot, moved after measurement.
+- **Her check was rewritten:** it had walked straight at the room from
+  the spawn and missed the corridor's corner.
+
+**Shared code** (each change is inert unless `--concourse-pier` is on the
+command line):
+- `BridgeClient._ready` returns before `_open()`.
+- `PlayerSettings.save_to_disk`, `Favourites._save` and
+  `EquipmentSeen._save` return early.
+- `main.gd` gains the entry, the reset in `_to_hub`, ABANDON, and the
+  banner.
+- `test_ci_coverage.NOT_A_SUITE` names `godot-concourse-pier`, with its
+  reason.
+
+**Found, not fixed (outside the brief):** the older "no bridge" scenario
+launchers still open a bridge connection. These are the railway, Passing
+Platforms, Counterfire and Unweighted. The bridge client connects in
+every launch except this playtest's.

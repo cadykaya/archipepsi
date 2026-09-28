@@ -54,7 +54,16 @@ NOT_A_SUITE = {"godot-import", "godot-integration",
                # `PASSING_ZONE=<path>`), and `godot-candidate-live` plays
                # the same hosted room in CI. Give it a CI step the day the
                # fixture lands.
-               "godot-passing-hosted"}
+               "godot-passing-hosted",
+               # AN OPERATOR'S PROBE FOR ONE REVIEW PLAYTEST, not a gate on
+               # the shipping game. `godot-concourse-pier` (owner brief,
+               # 2026-09-28) holds the bridge's own port with a stand-in
+               # listener to prove the pending room's playtest never
+               # connects, and runs both modes' live checks, about five
+               # minutes. It lives on the playtest's review branch and is
+               # run by hand; the room is `pending` and ordinary Zones
+               # never build it.
+               "godot-concourse-pier"}
 
 
 #: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the

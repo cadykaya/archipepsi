@@ -712,6 +712,12 @@ owner's D-06/D-07 rulings and the seam table are in
           the ledger's ART-CATCHUP section.
         - Arty's notes: `docs/art-requests/2026-09-28-art-catchup-prod-notes.md`.
           Do not run her `verify_content_pack.sh` in a Production tree.
+    - **CONCOURSE-PIER PLAYTEST (owner brief, 2026-09-28): DELIVERED,
+      STOP.** Arty's pending room in an isolated two-mode playtest, on
+      `review/concourse-pier-playtest` (from CK14 `17b76098`). Run it by
+      hand with `make godot-concourse-pier`. The report is
+      `docs/reports/2026-09-28-concourse-pier-playtest.md`. The room stays
+      `pending`; this is not visual acceptance.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.
