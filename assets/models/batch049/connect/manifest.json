@@ -148,7 +148,7 @@
     "status": "PROPOSAL -- visual only, review-pending, not a production default",
     "texel_density": 32.0,
     "texels_per_metre": 32,
-    "triangles": 64
+    "triangles": 100
   },
   "conn_hold_paddle": {
     "anchor": "as-built",

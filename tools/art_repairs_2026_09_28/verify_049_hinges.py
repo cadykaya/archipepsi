@@ -9,6 +9,10 @@ and the manifest beside them, and checks each one:
   1. REST. Every mesh node's world-space vertices, UVs and materials are
      what they were at <old-ref> (default a1584c8, the reviewed source).
      The repair moves no shape; it only gives the moving parts a real pin.
+     The one exception is a node that a LATER repair reshaped on purpose
+     (`RESHAPED`). That node must keep the same outer box and material,
+     and the verifier that owns the reshape is run: if it fails, this
+     fails.
   2. HINGE. The hinge node is a root node at the manifest's
      `pivot_runtime` with no rotation or scale, it carries exactly the
      manifest's parts at identity, and the pin lies inside the first part
@@ -36,6 +40,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
 DIR = "assets/models/batch049/connect"
 AXES = {"x": (1.0, 0.0, 0.0), "z": (0.0, 0.0, 1.0)}
 TOL = 1e-5
+
+#: Nodes a later repair reshaped on purpose, and the verifier that owns
+#: the change. 2026-09-28: the gauge's solid bezel hid its face, and the
+#: follow-up opened it into a frame the same outer size.
+RESHAPED = {("conn_gauge", "gauge_bezel"): "verify_049_gauge.py"}
 
 
 def parse(data: bytes) -> tuple[dict, bytes]:
@@ -146,6 +155,7 @@ def main() -> int:
               encoding="utf-8") as handle:
         manifest = json.load(handle)
     problems: list[str] = []
+    owners: set[str] = set()
     hinged = sorted(k for k, v in manifest.items() if "hinge" in v)
     print("049 hinges: %d model(s) declare one; old ref %s"
           % (len(hinged), old_ref))
@@ -162,6 +172,17 @@ def main() -> int:
             now = new.get(name)
             if now is None or "world" not in now:
                 problems.append("%s: mesh node %s is gone" % (asset, name))
+                continue
+            if (asset, name) in RESHAPED:
+                outer = [[f(v[k] for v in pts) for f in (min, max)
+                          for k in range(3)]
+                         for pts in (was["world"], now["world"])]
+                if max(abs(a - b) for a, b in zip(*outer)) > TOL:
+                    problems.append("%s: %s's outer box moved"
+                                    % (asset, name))
+                if was["materials"] != now["materials"]:
+                    problems.append("%s: %s changed material" % (asset, name))
+                owners.add(RESHAPED[(asset, name)])
                 continue
             drift = max(max(abs(a - b) for a, b in zip(p, q))
                         for p, q in zip(was["world"], now["world"]))
@@ -231,12 +252,23 @@ def main() -> int:
             print("  conn_set_dial: every detent points at its own tooth"
                   if not any("points" in p for p in problems) else "")
 
+    for owner in sorted(owners):
+        run = subprocess.run([sys.executable, os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), owner)],
+            capture_output=True, text=True)
+        last = (run.stdout.strip().splitlines() or ["(no output)"])[-1]
+        print("  reshaped later, owned by %s: %s" % (owner, last))
+        if run.returncode != 0:
+            problems.append("%s fails, so the reshaped node is unproven"
+                            % owner)
+
     if problems:
         for p in problems:
             print("FAIL: %s" % p)
         return 1
     print("PASS: %d hinged model(s); rest geometry, UVs and materials "
-          "unchanged; every hinge where the manifest says" % len(hinged))
+          "unchanged except where a later repair owns the change; every "
+          "hinge where the manifest says" % len(hinged))
     return 0
 
 

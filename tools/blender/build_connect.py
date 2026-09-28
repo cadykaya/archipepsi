@@ -476,6 +476,13 @@ def conn_gauge():
     unlike A08.2's class plate this really is a continuous reading: how
     much of a deferred thing has happened. `gauge_needle` is the part
     that moves and `gauge_face` is what it moves over.
+
+    `gauge_bezel` is a frame, and the face is read through its window.
+    Until 2026-09-28 it was a solid block the same size, and the face sat
+    wholly inside it: the needle turned over nothing. The window's edge
+    is 1 cm inside the face's flats, so the bezel still holds the face's
+    rim. It is 1 cm outside the needle's whole sweep, so no reading
+    carries the needle under it.
     """
     parts = []
     body = _b("gauge_case", (0.3, 0.14, 0.3), (0, 0.07, 0.15), "wall")
@@ -484,8 +491,8 @@ def conn_gauge():
     parts.append(_paint(face, "trim"))
     parts.append(_b("gauge_needle", (0.02, 0.03, 0.1), (0, -0.02, 0.19),
                     "accent", "trim"))
-    parts.append(_b("gauge_bezel", (0.3, 0.05, 0.3), (0, 0.0, 0.15),
-                    "accent", "trim"))
+    parts.append(_paint(brushkit.frame("gauge_bezel", (0.3, 0.3), 0.05, 0.05,
+                                       (0, 0.0, 0.15)), "accent", "trim"))
     return body, parts
 
 
@@ -571,7 +578,11 @@ HINGES = {
                      # so no position may hang the handle in front of it.
                      "keep_readable": ["breaker_window"]},
     "conn_gauge": {"hinge": "hinge_gauge", "axis": "z", "wall": True,
-                   "moving": ["gauge_needle"]},
+                   "moving": ["gauge_needle"],
+                   # The face is read through the bezel's window, so the
+                   # needle may not cross the bezel at any reading -- not
+                   # even as built, which the new-contact rule excuses.
+                   "clear_of": ["gauge_bezel"]},
 }
 
 #: The positions that are ART'S DECLARATION rather than a measurement, and
@@ -732,6 +743,13 @@ def assert_positions(asset, spec, body, parts):
             raise SystemExit("%s: at '%s' a moving part goes %.3f m into "
                              "the wall" % (asset, pose,
                                            max(v.y for v in verts) - wall))
+        for name in spec.get("clear_of", ()):
+            for at in (0.0, deg):
+                if _touched(moving, [named[name]], spec["pivot"],
+                            spec["axis"], at):
+                    raise SystemExit("%s: at %.1f deg %s touches %s, which "
+                                     "it must stay clear of" % (
+                                         asset, at, spec["moving"], name))
         for keep in spec.get("keep_readable", ()):
             lo, hi = common.world_box(named[keep])
             if (min(v.x for v in verts) < hi[0]
