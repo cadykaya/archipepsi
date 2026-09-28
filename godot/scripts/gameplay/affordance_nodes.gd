@@ -14,6 +14,27 @@ extends RefCounted
 ## a rail's low-friction lane. It owns no movement code — it hands the
 ## player an influence dictionary and the player's own physics step merges
 ## it (`Player.environment_influence`).
+## The approved affordance family (batch 009, PASS 2026-08-28: "one
+## family, seven promises", all in the signal family), or null when the
+## model is not shipped -- every caller keeps its code shape for that.
+static func art(model: String) -> Mesh:
+	return ArtModels.mesh("res://content/affordances/%s.glb" % model)
+
+
+## This instance's own copy of an authored affordance's signal emitter
+## (surface 1), unshared on first use so one panel's damage glow is not
+## every panel's.
+static func own_signal(node: MeshInstance3D) -> StandardMaterial3D:
+	var mine := node.get_surface_override_material(1) as StandardMaterial3D
+	if mine == null:
+		var shared := node.mesh.surface_get_material(1) as StandardMaterial3D
+		if shared == null or not shared.emission_enabled:
+			return null
+		mine = shared.duplicate()
+		node.set_surface_override_material(1, mine)
+	return mine
+
+
 class Volume extends Area3D:
 	var influence: Dictionary = {}
 	## A rail lane carries the authoritative path it was swept along, so
@@ -178,6 +199,13 @@ class BreakablePanel extends StaticBody3D:
 		mesh.size = Vector3(0.4, 2.6, 2.4)
 		_mesh.mesh = mesh
 		_mesh.material_override = ThemeMaterials.glow_material(tint, 0.5)
+		# ART-CATCHUP: the approved panel (batch 009) in the signal family,
+		# floor-anchored on this centred node. The collider is unchanged.
+		var authored := AffordanceNodes.art("breakwall_panel")
+		if authored != null:
+			_mesh.mesh = authored
+			_mesh.position = Vector3(0, -1.3, 0)
+			_mesh.material_override = null
 		add_child(_mesh)
 		# Cracks, so it reads as breakable before you have tried.
 		for i in 3:
@@ -185,7 +213,10 @@ class BreakablePanel extends StaticBody3D:
 			var crack_mesh := BoxMesh.new()
 			crack_mesh.size = Vector3(0.44, 0.06, 1.6 - 0.3 * i)
 			crack.mesh = crack_mesh
-			crack.position = Vector3(0, 0.6 + 0.7 * i, 0.1 * i)
+			# On the panel's face: the node is the panel's CENTRE, so the
+			# three sit at -0.7, 0 and +0.7 (they were at 0.6..2.0, the top
+			# one floating 0.7 m over a 2.6 m panel).
+			crack.position = Vector3(0, -0.7 + 0.7 * i, 0.1 * i)
 			crack.rotation.x = 0.2 * (i - 1)
 			crack.material_override = ThemeMaterials.glow_material(
 					tint.darkened(0.4), 0.2)
@@ -214,7 +245,13 @@ class BreakablePanel extends StaticBody3D:
 			broken.emit()
 			queue_free()
 			return true
-		if _mesh != null:
+		if _mesh != null and _mesh.material_override == null:
+			# The authored panel: its signal emitter (surface 1) brightens
+			# as it weakens, the same feedback the code panel gives.
+			var glow := AffordanceNodes.own_signal(_mesh)
+			if glow != null:
+				glow.emission_energy_multiplier = 1.0 + 1.5 * (1.0 - hp / HP)
+		elif _mesh != null:
 			_mesh.material_override = ThemeMaterials.glow_material(
 					tint, 0.5 + 1.5 * (1.0 - hp / HP))
 		return false
@@ -435,6 +472,12 @@ class BouncePad extends Area3D:
 		mesh_node.mesh = mesh
 		mesh_node.position = Vector3(0, 0.2, 0)
 		mesh_node.material_override = ThemeMaterials.glow_material(tint, 1.6)
+		# ART-CATCHUP: the approved drum (batch 009), floor-anchored.
+		var authored := AffordanceNodes.art("bounce_pad")
+		if authored != null:
+			mesh_node.mesh = authored
+			mesh_node.position = Vector3.ZERO
+			mesh_node.material_override = null
 		add_child(mesh_node)
 		body_entered.connect(_on_entered)
 

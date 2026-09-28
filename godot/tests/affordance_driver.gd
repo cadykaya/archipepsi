@@ -56,6 +56,7 @@ func _run() -> void:
 	await _a_volume_freed_under_you_lets_go()
 	await _the_panel_is_reachable_by_a_real_shot()
 	await _the_panel_needs_a_real_hit()
+	await _the_approved_family_is_what_you_see()
 	await _a_moving_platform_comes_back()
 	await _a_local_reward_reports_itself_once()
 	await _an_earned_reward_does_not_come_back()
@@ -199,6 +200,52 @@ func _check_once(condition: bool, message: String) -> void:
 ## Width is taken from the tag's own requirement rather than a generous
 ## constant, so every case runs against the tightest room that tag will
 ## ever see.
+## ART-CATCHUP: the approved batch 009 forms reach their real consumers
+## (the panel, the pad, the wind column's rings), the colliders are the
+## ones the gameplay was built on, and a panel's damage glow stays on the
+## panel that was hit.
+func _the_approved_family_is_what_you_see() -> void:
+	if AffordanceNodes.art("breakwall_panel") == null:
+		_check(false, "the approved affordance models are not shipped")
+		return
+	var a := AffordanceNodes.BreakablePanel.new()
+	var b := AffordanceNodes.BreakablePanel.new()
+	var pad := AffordanceNodes.BouncePad.new()
+	for n: Node in [a, b, pad]:
+		add_child(n)
+	await get_tree().process_frame
+	_check(a._mesh.mesh == AffordanceNodes.art("breakwall_panel"),
+			"the breakable panel wears the approved panel")
+	var box := (a.get_child(0) as CollisionShape3D).shape as BoxShape3D
+	_check(box.size.is_equal_approx(Vector3(0.4, 2.6, 2.4)),
+			"the panel's collider is unchanged (%s)" % box.size)
+	var pad_mesh: Mesh = null
+	for c: Node in pad.get_children():
+		if c is MeshInstance3D:
+			pad_mesh = (c as MeshInstance3D).mesh
+	_check(pad_mesh == AffordanceNodes.art("bounce_pad"),
+			"the bounce pad wears the approved drum")
+	var before := AffordanceNodes.own_signal(b._mesh).emission_energy_multiplier
+	a.take_damage(a.MIN_IMPACT, Vector3.ZERO, 0.0)
+	var hurt := AffordanceNodes.own_signal(a._mesh).emission_energy_multiplier
+	var other := AffordanceNodes.own_signal(b._mesh).emission_energy_multiplier
+	_check(hurt > before and is_equal_approx(other, before),
+			"a hit panel glows brighter (%.2f -> %.2f) and its neighbour "
+			% [before, hurt] + "does not (%.2f)" % other)
+	var rings := 0
+	var built: Dictionary = await _build_chamber(["wind_volume"])
+	for m: Node in (built["root"] as Node).find_children("*", "MeshInstance3D",
+			true, false):
+		if (m as MeshInstance3D).mesh == AffordanceNodes.art("wind_ring"):
+			rings += 1
+	_check(rings == 3, "the wind column stacks three approved rings (%d)"
+			% rings)
+	(built["root"] as Node).queue_free()
+	for n: Node in [a, b, pad]:
+		n.queue_free()
+	await get_tree().process_frame
+
+
 func _chamber_with(tags: Array) -> Dictionary:
 	var features: Array = []
 	var width := 5.0

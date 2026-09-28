@@ -656,6 +656,12 @@ static func _wind_volume(root: Node3D, theme: String, origin: Vector3,
 		mark.position = origin + Vector3(0, float(ring) * 1.2, 0)
 		mark.material_override = ThemeMaterials.glow_material(
 				Constants.AFFORDANCE_SIGNAL, 0.7)
+		# ART-CATCHUP: the approved ring (batch 009), vanes angled up; the
+		# engine still stacks three of them up the column.
+		var authored := AffordanceNodes.art("wind_ring")
+		if authored != null:
+			mark.mesh = authored
+			mark.material_override = null
 		root.add_child(mark)
 	# Toward the room's centre, never blindly +x: a perch that always went
 	# right sat outside the wall on one side and in the walking lane on the
