@@ -6588,3 +6588,20 @@ apply to the delivered report, which is kept unedited as the checkpoint.
   shows what a player sees, at a player's speed. It is not evidence of
   real-time smoothness.
 
+
+### CK12 — the full frontier on the finishing pass `e708c5fa`: 92 of 92
+
+Run in an isolated worktree on `e708c5fa` (the finishing pass only; no
+art catch-up work is in it), fresh import, the same 92 steps as CK11
+(`CK11_frontier_steps_as_run.txt`). Every step green:
+`post_playtest_evidence/CK12_frontier_on_e708c5fa.tsv`. The tree's only
+change at the end is the zone audit's own `source_commit` stamp in
+`godot/tests/fixtures/placement/captures.json`, which that step writes.
+
+Scope: CK12 vouches for the menu finishing revision. It says nothing
+about the later art catch-up commits on `wip/0.4-art-catchup`, which are
+verified separately. `ce6ea3bd` and its CK11 record stay the menu-only
+recovery point (`review/menu-int-ck11-ce6ea3b`).
+
+After CK12 the 0.4 development head `claude/archipepsi-0-4-blindside`
+was fast-forwarded from `c12a72f` to this branch (no merge, no rewrite).
