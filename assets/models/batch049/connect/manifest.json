@@ -4,6 +4,25 @@
     "batch": "049",
     "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
     "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "hinge": {
+      "as_built": "closed",
+      "axis": "x",
+      "carries": [
+        "breaker_handle"
+      ],
+      "derived": "declared by art: conn_breaker",
+      "drive": "rotate the `hinge_breaker` NODE about its own local X axis to a declared angle. It is an empty at the pin and the parts it carries are its children at identity, so its origin is the attachment point and cannot move. Positive angles follow the right-hand rule about the runtime axis. Do not rotate the carried parts themselves.",
+      "node": "hinge_breaker",
+      "pivot_runtime": [
+        0.0,
+        0.38,
+        0.0
+      ],
+      "positions_degrees": {
+        "closed": 0.0,
+        "thrown": 30.0
+      }
+    },
     "kind": "connection_visual",
     "not_changed": [
       "collision",
@@ -13,6 +32,7 @@
       "any approved asset"
     ],
     "parts": [
+      "hinge_breaker",
       "breaker_handle",
       "breaker_window",
       "breaker_bus"
@@ -34,6 +54,25 @@
     "batch": "049",
     "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
     "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "hinge": {
+      "as_built": "down",
+      "axis": "x",
+      "carries": [
+        "flag_blade"
+      ],
+      "derived": "declared by art: conn_flag_ack",
+      "drive": "rotate the `hinge_flag` NODE about its own local X axis to a declared angle. It is an empty at the pin and the parts it carries are its children at identity, so its origin is the attachment point and cannot move. Positive angles follow the right-hand rule about the runtime axis. Do not rotate the carried parts themselves.",
+      "node": "hinge_flag",
+      "pivot_runtime": [
+        0.0,
+        0.62,
+        -0.055
+      ],
+      "positions_degrees": {
+        "down": 0.0,
+        "up": 90.0
+      }
+    },
     "kind": "connection_visual",
     "not_changed": [
       "collision",
@@ -44,6 +83,7 @@
     ],
     "parts": [
       "flag_pivot",
+      "hinge_flag",
       "flag_blade",
       "flag_base"
     ],
@@ -64,6 +104,26 @@
     "batch": "049",
     "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
     "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "hinge": {
+      "as_built": "half",
+      "axis": "z",
+      "carries": [
+        "gauge_needle"
+      ],
+      "derived": "declared by art: conn_gauge",
+      "drive": "rotate the `hinge_gauge` NODE about its own local Z axis to a declared angle. It is an empty at the pin and the parts it carries are its children at identity, so its origin is the attachment point and cannot move. Positive angles follow the right-hand rule about the runtime axis. Do not rotate the carried parts themselves.",
+      "node": "hinge_gauge",
+      "pivot_runtime": [
+        0.0,
+        0.15,
+        0.02
+      ],
+      "positions_degrees": {
+        "empty": 90.0,
+        "full": -90.0,
+        "half": 0.0
+      }
+    },
     "kind": "connection_visual",
     "not_changed": [
       "collision",
@@ -74,6 +134,7 @@
     ],
     "parts": [
       "gauge_face",
+      "hinge_gauge",
       "gauge_needle",
       "gauge_bezel"
     ],
@@ -95,6 +156,29 @@
     "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
     "commitment": "held input -- returns when released",
     "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "hinge": {
+      "as_built": "released",
+      "axis": "x",
+      "carries": [
+        "paddle_arm",
+        "paddle_grip"
+      ],
+      "derived": "measured from the geometry",
+      "drive": "rotate the `hinge_paddle` NODE about its own local X axis to a declared angle. It is an empty at the pin and the parts it carries are its children at identity, so its origin is the attachment point and cannot move. Positive angles follow the right-hand rule about the runtime axis. Do not rotate the carried parts themselves.",
+      "held_rests_on": [
+        "paddle_spring"
+      ],
+      "node": "hinge_paddle",
+      "pivot_runtime": [
+        0.0,
+        0.72,
+        0.0
+      ],
+      "positions_degrees": {
+        "held": 22.0,
+        "released": 0.0
+      }
+    },
     "kind": "connection_visual",
     "not_changed": [
       "collision",
@@ -104,6 +188,7 @@
       "any approved asset"
     ],
     "parts": [
+      "hinge_paddle",
       "paddle_arm",
       "paddle_grip",
       "paddle_spring",
@@ -257,6 +342,31 @@
     "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
     "commitment": "permanent repair -- one shot, breaks its tab",
     "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "hinge": {
+      "as_built": "intact",
+      "axis": "x",
+      "carries": [
+        "seal_lever"
+      ],
+      "derived": "declared by art: conn_repair_seal",
+      "drive": "rotate the `hinge_seal_lever` NODE about its own local X axis to a declared angle. It is an empty at the pin and the parts it carries are its children at identity, so its origin is the attachment point and cannot move. Positive angles follow the right-hand rule about the runtime axis. Do not rotate the carried parts themselves.",
+      "hides": {
+        "thrown": [
+          "seal_tab_left",
+          "seal_tab_right"
+        ]
+      },
+      "node": "hinge_seal_lever",
+      "pivot_runtime": [
+        0.0,
+        0.12,
+        0.04
+      ],
+      "positions_degrees": {
+        "intact": 0.0,
+        "thrown": 90.0
+      }
+    },
     "kind": "connection_visual",
     "not_changed": [
       "collision",
@@ -269,6 +379,7 @@
       "seal_frame",
       "seal_tab_left",
       "seal_tab_right",
+      "hinge_seal_lever",
       "seal_lever"
     ],
     "path": "batch049/connect/conn_repair_seal.glb",
@@ -386,6 +497,32 @@
     "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
     "commitment": "persistent configuration -- stays where it is put",
     "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "hinge": {
+      "as_built": "detent_2",
+      "axis": "z",
+      "carries": [
+        "dial_knob",
+        "dial_pointer"
+      ],
+      "derived": "measured from the geometry",
+      "drive": "rotate the `hinge_dial` NODE about its own local Z axis to a declared angle. It is an empty at the pin and the parts it carries are its children at identity, so its origin is the attachment point and cannot move. Positive angles follow the right-hand rule about the runtime axis. Do not rotate the carried parts themselves.",
+      "node": "hinge_dial",
+      "pivot_runtime": [
+        0.0,
+        0.17,
+        0.035
+      ],
+      "positions_degrees": {
+        "detent_0": -90.0,
+        "detent_1": -45.0,
+        "detent_2": 0.0,
+        "detent_3": 45.0,
+        "detent_4": 90.0,
+        "detent_5": 135.0,
+        "detent_6": -180.0,
+        "detent_7": -135.0
+      }
+    },
     "kind": "connection_visual",
     "not_changed": [
       "collision",
@@ -404,6 +541,7 @@
       "dial_tooth_5",
       "dial_tooth_6",
       "dial_tooth_7",
+      "hinge_dial",
       "dial_knob",
       "dial_pointer"
     ],
