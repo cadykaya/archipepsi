@@ -58,6 +58,7 @@ TAGS = {
     "POSED": ((150, 104, 28), "POSED REFERENCE STATE · not a live test"),
     "RENDER": ((92, 96, 104), "ART RENDER · review scene, not gameplay"),
     "PLAN": ((92, 96, 104), "PLAN / SECTION · from the manifest"),
+    "SCALE": ((92, 96, 104), "TO-SCALE PLAN · from the pinned constants"),
     "NEW": ((118, 72, 146), "NEW REVIEW RENDER · 2026-09-28, review scene"),
 }
 
@@ -96,6 +97,46 @@ def wrap(draw: ImageDraw.ImageDraw, text: str, f, width: int) -> list[str]:
                 line = w
         out.append(line)
     return out
+
+
+def autocrop(path: str, pad: float = 0.18, aspect: float = 16 / 9,
+             skip_top: int = 70) -> tuple:
+    """Where the subject is, on an art-lane void render.
+
+    The backdrop is a smooth gradient; the model is pixel-art texture. So:
+    high-pass (image minus a heavy blur), threshold, erode away thin lines
+    (the floor/wall seam), and take the box of what survives. The caption
+    band at the top is skipped. The box is padded and widened to `aspect`
+    so every crop in a row matches. Returns (l, t, r, b) in source pixels.
+    """
+    from PIL import ImageChops, ImageFilter
+    im = Image.open(path).convert("L")
+    w, h = im.size
+    hp = ImageChops.difference(im, im.filter(ImageFilter.GaussianBlur(12)))
+    mask = hp.point(lambda v: 1 if v > 16 else 0)
+    mask.paste(0, (0, 0, w, skip_top))
+    # Projection profiles: a floor/wall seam spans the frame but is thin, so
+    # it adds a few pixels to every column; the subject adds many. Columns
+    # (then rows, within those columns) above a fraction of the peak count.
+    px = mask.load()
+    cols = [sum(px[x, y] for y in range(skip_top, h)) for x in range(w)]
+    if max(cols) == 0:
+        return (0, 0, w, h)
+    keep = [x for x, c in enumerate(cols) if c > 0.12 * max(cols)]
+    l, r = min(keep), max(keep) + 1
+    rows = [sum(px[x, y] for x in range(l, r)) for y in range(h)]
+    keep = [y for y, c in enumerate(rows) if c > 0.08 * max(rows)]
+    t, b = min(keep), max(keep) + 1
+    cw, ch = (r - l) * (1 + 2 * pad), (b - t) * (1 + 2 * pad)
+    if cw / ch < aspect:
+        cw = ch * aspect
+    else:
+        ch = cw / aspect
+    cw, ch = min(cw, w), min(ch, h)
+    cx, cy = (l + r) / 2, (t + b) / 2
+    x0 = int(max(0, min(w - cw, cx - cw / 2)))
+    y0 = int(max(0, min(h - ch, cy - ch / 2)))
+    return (x0, y0, int(x0 + cw), int(y0 + ch))
 
 
 @dataclass
@@ -210,7 +251,9 @@ class Sheet:
             ims = []
             for p in panels:
                 im = Image.open(p.path).convert("RGB")
-                if p.crop:
+                if p.crop == "auto":
+                    im = im.crop(autocrop(p.path))
+                elif p.crop:
                     im = im.crop(p.crop)
                 ims.append(im.resize((pw, int(im.height * pw / im.width)), Image.LANCZOS))
             ih = max(im.height for im in ims)
