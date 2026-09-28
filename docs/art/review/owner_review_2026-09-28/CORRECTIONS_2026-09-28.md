@@ -61,3 +61,12 @@ These are all on the repair branch, and none of them promotes anything.
 
 Details and the smallest repair for each are in
 `docs/art/review/repairs_2026-09-28/README.md`.
+
+*Follow-up, 2026-09-28 (owner-authorised):*
+- **The panels:** all twelve are now re-seated (`a0f1e769`): these ten,
+  plus the ballast's pair, which the stricter test caught.
+- **The gauge's face** shows through its bezel, now a frame the same
+  size (`9deb2c64`).
+- **`aabb_of`** is still open.
+
+Both are in the repair handoff's "Follow-up" section.

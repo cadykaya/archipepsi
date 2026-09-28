@@ -3342,6 +3342,42 @@ both revisions passed.)*
 
 **Next: HOLD** for the owner's remaining visual decisions.
 
+### Delivered, 2026-09-28 — the repair follow-up. STOPPED for the remaining visual decisions.
+
+The owner accepted the three families as technical progress. That is
+not a promotion of their candidate art, and not a Production binding.
+Four follow-ups, each its own commit on the same repair branch.
+
+* **Every lightened panel seated and clear** (`a0f1e76`):
+  * the seat and clearance test runs on all 22 panels;
+  * twelve are re-seated: the six floating, the four coplanar, and the
+    ballast's pair;
+  * `verify_053_panels.py` asks MATERIAL, CLEAR and SEATED separately,
+    and fails the first repair's files on SEATED alone.
+* **The gauge face shows** (`9deb2c6`):
+  * the solid bezel is now a frame of the same size, and the pin and
+    travel are unchanged;
+  * the build refuses a bezel the needle touches;
+  * `verify_049_gauge.py` reads the face and needle at every degree.
+* **Docs:**
+  * the paddle's poses are `level` / `down`, mechanical names; A1 is
+    still open (`e059dd7`);
+  * the danger seam is charger and artillery only, with three code
+    readings labelled (`72dad0c`).
+* **`tools/verify_content_pack.sh`** now works in a private copy; the
+  caller's tree is never written or deleted (`3c2f371`). The test covers
+  both trees and passing and failing runs. The unsafe script ran only in
+  disposable worktrees.
+* **Found, not changed:**
+  * the plate's nose wedge slopes across the width;
+  * the linear-hex colour convention;
+  * 42 runners that clear `godot/_harness`;
+  * `run_theme_bind.sh` cannot compile Production at the pin: its
+    constants are now autoload references there. The art check passes
+    with its default ref.
+
+**Next: HOLD** for the owner's remaining visual decisions.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

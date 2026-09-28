@@ -4,9 +4,10 @@
 #   tools/art_repairs_2026_09_28/run_pose_views.sh <out-dir> [old-ref]
 #
 # Extracts the six reviewed 049 models from <old-ref> (default a1584c8)
-# into a temporary folder, stages the harness the same way the art lane's
-# other runners do (a godot/_harness folder removed on exit), and renders
-# three frames per control. Writes only into <out-dir>.
+# into a temporary folder, stages the harness in a godot/_harness folder
+# it creates and removes (or stops, if that folder is already somebody
+# else's), and renders three frames per control. Writes only into
+# <out-dir>.
 set -e
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 GODOT="${GODOT:-$ROOT/.tools/godot}"
@@ -18,9 +19,19 @@ OLD="$(mktemp -d)"
 # shellcheck source=../content/godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT" "$OLD/batch049/connect"
+# The harness folder is claimed, never cleared: if it already exists it is
+# somebody else's, and the runner stops without touching it.
+if ! mkdir "$H" 2>/dev/null; then
+  rm -rf "$OLD"
+  echo "$(basename "$0"): $H already exists and is not this run's;" \
+       "nothing was touched" >&2
+  exit 2
+fi
 cleanup() { rm -rf "$H" "$OLD"; }
 trap cleanup EXIT
-rm -rf "$H"; mkdir -p "$H"
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 for id in conn_hold_paddle conn_repair_seal conn_breaker conn_flag_ack \
           conn_set_dial conn_gauge; do
   git -C "$ROOT" show "$REF:assets/models/batch049/connect/$id.glb" \

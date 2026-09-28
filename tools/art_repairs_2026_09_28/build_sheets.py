@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Repair 2026-09-28 -- the four evidence sheets.
+"""Repair 2026-09-28 -- the evidence sheets.
 
     tools/art_repairs_2026_09_28/run_pose_views.sh <frames>/pose
     tools/art_repairs_2026_09_28/run_tint_views.sh <frames>/tint
+    tools/art_repairs_2026_09_28/run_gauge_views.sh <frames>/gauge
+    tools/art_repairs_2026_09_28/run_tint_views.sh <frames>/tint_fu \
+        e4103ba followup
     python3 tools/art_repairs_2026_09_28/build_sheets.py <frames> <out-dir>
 
 Composes the before/after frames into phone-width sheets with the owner
@@ -32,6 +35,9 @@ sheets.TAGS.update({
     "REST": ((92, 96, 104), "AS BUILT · identical in both files at rest"),
     "BEFORE": ((128, 52, 52), "BEFORE · reviewed file a1584c8"),
     "AFTER": ((46, 125, 84), "AFTER · repaired file, this branch"),
+    "FIRST": ((128, 52, 52), "BEFORE · first repair, e4103ba"),
+    "SOLID": ((128, 52, 52), "BEFORE · 77d33ca, the bezel solid"),
+    "FOLLOW": ((46, 125, 84), "AFTER · follow-up, this branch"),
 })
 FOOT = ("Review renders through Godot's own GLTFDocument importer, one rig "
         "per sheet. Magenta and green are REVIEW TINTS, never a colour "
@@ -53,9 +59,9 @@ def s049(frames, out):
                                   "manifest. No colliders; no driver."),
                **UNCHANGED)
     rows = [
-        ("conn_hold_paddle", "Paddle · held 22°",
+        ("conn_hold_paddle", "Paddle · down 22°",
          "Measured: the last whole degree before it bears on its own "
-         "spring.", "the pin travelled 0.275 m"),
+         "spring. A position, not an input.", "the pin travelled 0.275 m"),
         ("conn_repair_seal", "Seal lever · thrown 90°",
          "Declared: pulled straight out; the tab halves hide.",
          "the pin travelled 0.179 m"),
@@ -80,8 +86,16 @@ def s049(frames, out):
                      note=travel),
                Panel("%s/pose/%s_2_new.png" % (frames, asset),
                      title, tag="AFTER", note=how)])
+    s.text("Follow-up, 2026-09-28",
+           "The paddle's positions were named 'released' and 'held'. They "
+           "are now 'level' and 'down'. A pose names where the part is. It "
+           "is not an input or a rule, and it does not settle whether the "
+           "control is momentary or permanent (A1, open). The gauge rows "
+           "show the bezel before the follow-up opened it: see sheet 5.")
     s.footer(FOOT + " Verified by verify_049_hinges.py: rest geometry, UVs "
-             "and materials identical to a1584c8, node for node.")
+             "and materials identical to a1584c8, node for node. The one "
+             "exception is the gauge's bezel, which the follow-up reshaped; "
+             "verify_049_gauge.py owns that change.")
     return s.save(os.path.join(out, "1_049_hinges.jpg"))
 
 
@@ -130,10 +144,107 @@ def s_panels(frames, out):
                      tag="BEFORE"),
                Panel("%s/tint/%s_new.png" % (frames, key), name,
                      tag="AFTER", note=moved)])
+    s.text("Follow-up, 2026-09-28",
+           "This sheet is the first round. The thirteen panels it left in "
+           "place were clear of the fittings, but ten of them were badly "
+           "seated: six hung off the body and four lay flush with it. The "
+           "stricter test also caught the ballast's pair, which had slid "
+           "onto a band. All twelve are re-seated: see sheet 6.")
     s.footer(FOOT + " Verified by verify_053_panels.py. Thirteen panels "
              "were already clear; they keep their place and only change "
              "material.")
     return s.save(os.path.join(out, "3_lightened_panels.jpg"))
+
+
+def s_gauge(frames, out):
+    s = Sheet("049 · the gauge face shows through its bezel",
+              "Before: the bezel was a solid block with the face inside "
+              "it, so the needle turned over nothing. After: the same "
+              "bezel is a frame, and the face is read through its 0.20 m "
+              "window. Real materials, no tint. Both files are turned by "
+              "the same hinge to the manifest's own readings.")
+    s.statuses(compat=("yes", "Same case, face, needle, pin, axis and "
+                              "travel. Same outer size; 64 → 100 tris."),
+               **UNCHANGED)
+    for pose, deg, clock in (("empty", "+90°", "9 o'clock"),
+                             ("half", "0°", "12 o'clock"),
+                             ("full", "−90°", "3 o'clock")):
+        title = "%s · %s" % (pose.capitalize(), deg)
+        s.row([Panel("%s/gauge/gauge_%s_old_front.png" % (frames, pose),
+                     title, tag="SOLID",
+                     note="No face; the needle is cream on a cream bezel"),
+               Panel("%s/gauge/gauge_%s_new_front.png" % (frames, pose),
+                     title, tag="FOLLOW",
+                     note="The needle at %s over the face" % clock),
+               Panel("%s/gauge/gauge_%s_new_side.png" % (frames, pose),
+                     "35° to the side", tag="FOLLOW",
+                     note="The face sits back; the needle stands in front")])
+    s.text("What proves it",
+           "verify_049_gauge.py looks straight on through a 2 mm grid of "
+           "rays at every degree from −90° to +90°. The dial round the pin "
+           "(the needle's 9 cm reach, plus 5 mm) shows only face or "
+           "needle. The needle is never covered, and is always seen "
+           "against the face. On the old file the face shows 0 cm², and "
+           "the needle is seen against the bezel at every angle.")
+    s.footer("Review renders through Godot's own GLTFDocument importer, one "
+             "rig per sheet, real materials. The build refuses a bezel the "
+             "needle touches at any reading. Arty, 2026-09-28.")
+    return s.save(os.path.join(out, "5_gauge_face.jpg"))
+
+
+def s_panels_seated(frames, out):
+    s = Sheet("Lightened panels · every panel seated",
+              "The follow-up ran the seat and clearance test on all 22 "
+              "panels, not only the nine near fittings, and re-seated "
+              "twelve. Both frames tint the panels flat magenta so their "
+              "place reads. Their real look is the grey-blue on sheet 3, "
+              "kept as the working treatment. Each camera is aimed from the "
+              "exported files at the first panel that moved, from its old "
+              "and new faces; a mirrored partner may be out of frame.")
+    s.statuses(compat=("yes", "Bodies, fittings, sizes, attach points, "
+                              "masses and classes unchanged."),
+               **UNCHANGED)
+    rows = [
+        ("ballast", "Ballast · both",
+         "Slid onto a band, flush with it",
+         "Between the bands: 3 cm lower, 60% high"),
+        ("cart", "Cart · both",
+         "On the deck's sides, partly over no body",
+         "On the deck top"),
+        ("girder", "Girder · both",
+         "Up to 4.5 cm off the web",
+         "Seated on the web, 7 cm in"),
+        ("key_component", "Key component · one",
+         "Flush with its face: the body shows through",
+         "On the +X side; the other kept its place"),
+        ("mechanical_part", "Mechanical part · hub end",
+         "Flush on the uneven hub: the body shows through",
+         "On the −X side, like the +X panel"),
+        ("plate", "Plate · both",
+         "Flush with its long sides: the body shows through",
+         "One on the +X end, one on the top"),
+        ("power_cell", "Power cell · both",
+         "Up to 4.2 cm off the core, across the cage",
+         "Seated on the core at 80% width"),
+    ]
+    for key, name, before, after in rows:
+        s.row([Panel("%s/tint_fu/%s_old.png" % (frames, key), name,
+                     tag="FIRST", note=before),
+               Panel("%s/tint_fu/%s_new.png" % (frames, key), name,
+                     tag="FOLLOW", note=after)])
+    s.text("What proves it",
+           "verify_053_panels.py asks every panel three separate "
+           "questions:\n"
+           "- MATERIAL: does it wear its own slot?\n"
+           "- CLEAR: is it off every fitting?\n"
+           "- SEATED: rays 1 cm apart all find the body 2 mm to 3 cm "
+           "behind its face, flat to 1 cm.\n"
+           "On this branch all 22 pass. On e4103ba's files only SEATED "
+           "fails, 12 times. On a1584c8's it fails 22 / 9 / 17. Where a "
+           "before frame shows the tint striped, the panel is flush with "
+           "the body and the two fight for the same pixels: z-fighting.")
+    s.footer(FOOT)
+    return s.save(os.path.join(out, "6_panels_seated.jpg"))
 
 
 def _pinned(path):
@@ -264,7 +375,7 @@ def main():
     """<frames> <out-dir> [sheet function ...]: all sheets, or just those."""
     frames, out = sys.argv[1], sys.argv[2]
     os.makedirs(out, exist_ok=True)
-    every = (s049, s_skiff, s_panels, s_danger)
+    every = (s049, s_skiff, s_panels, s_danger, s_gauge, s_panels_seated)
     only = sys.argv[3:]
     for build in (b for b in every if not only or b.__name__ in only):
         path = build(frames, out)
