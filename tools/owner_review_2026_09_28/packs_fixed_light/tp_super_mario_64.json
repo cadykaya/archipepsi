@@ -1,0 +1,165 @@
+{
+ "pack": "tp_super_mario_64",
+ "models": "batch056/clockwork",
+ "prefix": "CK",
+ "caption_note": "Material treatment MISSING: painted in rusted_industrial, which is not the pack's own -- and not the family THEME_BY_GAME_HINT names either.",
+ "surround": "tp_ck_door_bezel",
+ "light": {
+  "ambient": [
+   0.62,
+   0.64,
+   0.68
+  ],
+  "ambient_energy": 0.32,
+  "fog": 0.018,
+  "fog_color": [
+   0.22,
+   0.24,
+   0.26
+  ],
+  "lamps": [
+   {
+    "at": [
+     3.6,
+     2.4,
+     -1.0
+    ],
+    "range": 8.0,
+    "energy": 2.6,
+    "color": [
+     1.0,
+     0.93,
+     0.84
+    ],
+    "why": "fixed review key, the same for every pack"
+   },
+   {
+    "at": [
+     -3.6,
+     2.4,
+     -3.0
+    ],
+    "range": 8.0,
+    "energy": 2.0,
+    "color": [
+     0.88,
+     0.93,
+     1.0
+    ],
+    "why": "fixed review fill"
+   },
+   {
+    "at": [
+     0.0,
+     2.8,
+     2.5
+    ],
+    "range": 9.0,
+    "energy": 0.9,
+    "color": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "why": "fixed front fill"
+   }
+  ]
+ },
+ "place": [
+  {
+   "id": "tp_ck_door_bezel",
+   "at": [
+    0.0,
+    0.0,
+    -4.78
+   ],
+   "yaw": 0,
+   "why": "on the opening, chamber side"
+  },
+  {
+   "id": "tp_ck_gear_column",
+   "at": [
+    -2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 0,
+   "why": "clear of the approach -- the pack dresses the room, it does not narrow the route"
+  },
+  {
+   "id": "tp_ck_gear_column",
+   "at": [
+    2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 22
+  },
+  {
+   "id": "tp_ck_wall_movement",
+   "at": [
+    -4.85,
+    0.0,
+    -1.2
+   ],
+   "yaw": 90,
+   "why": "the works face into the room; the plate sits back in the wall"
+  },
+  {
+   "id": "tp_ck_pendulum_lamp",
+   "at": [
+    4.75,
+    1.6,
+    -1.0
+   ],
+   "yaw": -90,
+   "why": "hung at reading height on the opposite wall"
+  },
+  {
+   "id": "tp_ck_key_escutcheon",
+   "at": [
+    1.82,
+    1.15,
+    -4.74
+   ],
+   "yaw": 0,
+   "why": "batch043's wall-switch contract: beside the door, at hand height, same place as T01's"
+  },
+  {
+   "id": "tp_ck_fallen_hand",
+   "at": [
+    -3.2,
+    0.0,
+    0.9
+   ],
+   "yaw": 20
+  },
+  {
+   "id": "tp_ck_fallen_hand",
+   "at": [
+    3.4,
+    0.0,
+    2.1
+   ],
+   "yaw": -70,
+   "why": "off the walked line, the way something that fell and was left would be"
+  }
+ ],
+ "shots": [
+  {
+   "name": "E2_T02_super_mario_64_fixed_light",
+   "eye": [
+    0.0,
+    1.7,
+    4.4
+   ],
+   "look": [
+    0.0,
+    1.6,
+    -5.0
+   ],
+   "check_opening": true,
+   "caption": "T02 -- same shell, camera and light as the house baseline"
+  }
+ ]
+}

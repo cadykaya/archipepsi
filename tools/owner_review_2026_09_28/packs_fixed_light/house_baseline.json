@@ -1,0 +1,86 @@
+{
+ "pack": "house_baseline",
+ "models": "batch054/forest_temple",
+ "prefix": "FT",
+ "caption_note": "No pack: the house room alone.",
+ "surround": "",
+ "light": {
+  "ambient": [
+   0.62,
+   0.64,
+   0.68
+  ],
+  "ambient_energy": 0.32,
+  "fog": 0.018,
+  "fog_color": [
+   0.22,
+   0.24,
+   0.26
+  ],
+  "lamps": [
+   {
+    "at": [
+     3.6,
+     2.4,
+     -1.0
+    ],
+    "range": 8.0,
+    "energy": 2.6,
+    "color": [
+     1.0,
+     0.93,
+     0.84
+    ],
+    "why": "fixed review key, the same for every pack"
+   },
+   {
+    "at": [
+     -3.6,
+     2.4,
+     -3.0
+    ],
+    "range": 8.0,
+    "energy": 2.0,
+    "color": [
+     0.88,
+     0.93,
+     1.0
+    ],
+    "why": "fixed review fill"
+   },
+   {
+    "at": [
+     0.0,
+     2.8,
+     2.5
+    ],
+    "range": 9.0,
+    "energy": 0.9,
+    "color": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "why": "fixed front fill"
+   }
+  ]
+ },
+ "place": [],
+ "shots": [
+  {
+   "name": "E2_T00_house_baseline_fixed_light",
+   "eye": [
+    0.0,
+    1.7,
+    4.4
+   ],
+   "look": [
+    0.0,
+    1.6,
+    -5.0
+   ],
+   "caption": "HOUSE BASELINE -- no pack, same shell, camera and light"
+  }
+ ],
+ "baseline": true
+}
