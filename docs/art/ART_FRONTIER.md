@@ -3407,7 +3407,9 @@ Four follow-ups, each its own commit on the same repair branch.
     width;
   * **FU-4:** the linear-hex colour convention. The library's colours
     are not to be changed.
-* **ε (U+03B5) in `ui_text`,** for Production's "PLATFORM ε"
+* **ε (U+03B5) in `ui_text`** (APPROVED by the owner, 2026-09-28:
+  keep this version; Production handles the shipped copy), for
+  Production's "PLATFORM ε"
   (`chamber_builders.gd:1137` at `c12a72f`):
   * `94f6e82` is one narrow commit: `tools/glyphui/author_text.py` plus
     the generated pair `assets/ui/ui_text.{fnt,png}` (75 characters).

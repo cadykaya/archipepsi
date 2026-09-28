@@ -72,4 +72,7 @@ at 8, 16, 32 and 64 px.
 The proof tools are in the commit after the glyph, not in it. Each claims
 `godot/_harness` or stops: none clears a folder it did not create.
 
+*Approved 2026-09-28:* the owner keeps this version of the ε. Production
+handles its shipped copy.
+
 **Holding** for the remaining visual decisions.

@@ -190,7 +190,8 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     * FU-2: unsafe `_harness` runners;
     * FU-3: the plate's wedge;
     * FU-4: the colour convention. No library colour changes.
-  * ε: `94f6e82` (the narrow, importable commit: `author_text.py` plus
+  * ε, APPROVED 2026-09-28 (keep this version; Production handles the
+    shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
 * **2026-09-28: a read-only audit of what art is in the game** (asked by
