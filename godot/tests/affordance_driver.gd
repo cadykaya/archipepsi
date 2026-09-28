@@ -304,7 +304,7 @@ func _the_theme_dressing_is_the_approved_dressing() -> void:
 
 
 ## The owner's correction (2026-09-28): the transit sign's line is in the
-## Glyph text face, with no outline, MOUNTED on the housing's lit face (a
+## Glyph text face alone (every character, `ε` included), with no outline, MOUNTED on the housing's lit face (a
 ## child of the housing, so it follows it), centred on that face -- not on
 ## the model's bounds, which include the frame and hangers -- and every
 ## line fits inside it with the padding clear. It faces the player, who
@@ -330,10 +330,18 @@ func _the_sign_is_lettered_on_its_face() -> void:
 			if board == null or board.mesh != housing:
 				bad.append("a line not mounted on its housing")
 				continue
-			var font := line.font as FontVariation
-			if font == null or font.base_font == null \
-					or font.base_font.resource_path != ChamberBuilders.SIGN_FONT:
-				bad.append("%s: not the Glyph text face" % line.text)
+			var font := line.font as FontFile
+			if font == null or font.resource_path != ChamberBuilders.SIGN_FONT \
+					or not font.fallbacks.is_empty():
+				bad.append("%s: not the Glyph text face alone" % line.text)
+			elif ChamberBuilders.TRANSIT_SIGNS.find(line.text) < 0:
+				bad.append("%s: not one of Epsilon's lines as written" % line.text)
+			else:
+				# Every character from Glyph itself: nothing falls back.
+				for i in line.text.length():
+					var c := line.text.unicode_at(i)
+					if c != 32 and not font.has_char(c):
+						bad.append("%s: Glyph has no U+%04X" % [line.text, c])
 			if line.outline_size != 0:
 				bad.append("%s: outlined" % line.text)
 			var at := line.position

@@ -1101,12 +1101,10 @@ static func sign_face(housing: Mesh) -> AABB:
 static func _letter_sign(board: MeshInstance3D, housing: Mesh,
 		line: String) -> Label3D:
 	var face := sign_face(housing)
-	# The Glyph face has no `ε` ("PLATFORM ε"): that one glyph comes from
-	# the engine's fallback font rather than printing as a box. Wrapped, so
-	# the menu's shared face is not changed.
-	var font := FontVariation.new()
-	font.base_font = load(SIGN_FONT) as Font
-	font.fallbacks = [ThemeDB.fallback_font]
+	# Glyph throughout: the face carries every character of every line,
+	# `ε` included (Arty's 94f6e82a). The text is set as written -- never
+	# upper-cased, which would turn `ε` into `Ε`.
+	var font := load(SIGN_FONT) as FontFile
 	var widest := 1.0
 	for each: String in TRANSIT_SIGNS:
 		widest = maxf(widest, font.get_string_size(each,
