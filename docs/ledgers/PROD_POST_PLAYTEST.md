@@ -6521,3 +6521,70 @@ its validation):
       for heads already superseded. None was acted on, and nothing was
       posted.
     - **Scheduled work:** this session's heartbeat Routine is disabled.
+
+## MENU-INT finishing pass (owner review, 2026-09-28) — then onto the 0.4 line
+
+**The owner kept the delivered menu as the selected implementation** and
+approved carrying it into 0.4 after a small finishing pass. This is not a
+claim of hands-on Windows testing.
+
+**The delivered checkpoint is preserved unchanged:**
+- **Where:** `review/menu-int-ck11-ce6ea3b` (`96c671cc`, code
+  `ce6ea3bd`).
+- **What it holds:** the archive, the report
+  (`docs/reports/2026-09-28-menu-int-delivery.md`, not edited since) and
+  CK11's record.
+- **Scope:** CK11's 92 of 92 is a result on `ce6ea3bd` only. It is not
+  a run of any later code.
+
+**The finishing pass** (`e708c5fa`):
+1. **The Map's legend at 1280x720.**
+   - **Measured for every wall on both devices:** only the Map on the
+     keyboard overflowed. It needed 1,150 px with a place picked and
+     1,386 px after SHOW ON THE MAP, against 1,120.
+   - **Grouped, not shrunk:** `[ ]` and a click share "places". Zoom and
+     turn share one prompt. A wall prompt that repeats the back press's
+     words is shown once.
+   - **BACK TO YOUR VIEW's key lives on its tag in the window.**
+     Backspace now does what that tag says, directly, even with a
+     place's detail open; it used to close the detail first. On the pad,
+     B closes the detail first, so the tag shows B only while B does it.
+   - **General fallback:** a line too wide for the window wraps onto a
+     second line, at the Glyph face's own scale. It is never smaller
+     text and never off the edge.
+   - **Checks:**
+     - map 79 (the legend on one line in the busiest states, on both
+       devices; Backspace; the pad tag);
+     - equipment 152 (every real item's legend, on both devices);
+     - shell 45 (the fallback).
+2. **The Journal's quieter entries, one step brighter.**
+   - **The change:** the note ink goes from `#aeb3b8` to `#c2c6ca`, and
+     the entry ink from `#b9bec2` to `#cdd1d4`. The hue and the order are
+     unchanged, and the objectives stay the brightest.
+   - **Result (journal shots, 720p):** the least word goes from 3.84 to
+     4.68:1 and the median from 4.59 to 5.59:1. No word is now under
+     4.5:1.
+3. **The other limitations stay named:**
+   - the open and update hitches;
+   - the small 4-floor overview;
+   - no pad binding for favourites;
+   - GitHub's full Godot job timing out at 30 minutes.
+
+   Real-machine performance and hands-on comfort remain untested.
+
+**Performance claims, scoped to what was measured.** These corrections
+apply to the delivered report, which is kept unedited as the checkpoint.
+- **"An open menu costs about 5–13% more to draw than play does" was
+  wrong.** What was measured is draw calls: the box adds 120–323 draw
+  calls to about 2,549 in the tour's Zone, under a software renderer.
+  - Draw calls are not frame time, and no frame-time percentage was
+    measured.
+- **The headless probe measured script time:**
+  - an idle box added nothing visible above the probe's 6.9 ms frame
+    pacing;
+  - opening took about 55–65 ms, and a snapshot while open 55–85 ms.
+  - These are CPU script costs in this container, not GPU frame times.
+- **The Movie Maker tour renders at a fixed 30 fps of game time.** It
+  shows what a player sees, at a player's speed. It is not evidence of
+  real-time smoothness.
+
