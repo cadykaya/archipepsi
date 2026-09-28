@@ -253,6 +253,13 @@ static func create(kind: String, theme: String) -> Enemy:
 	# scales it about its own middle rather than about the floor.
 	if bool(envelope["flying"]):
 		body_visual.position = Vector3(0, float(envelope["centre_y"]), 0)
+	# THE ART LANE'S ENEMY, where one is approved for this role and this
+	# room's value band (ART-CATCHUP): the same collider, the same anchors
+	# of behaviour, a body that is the role's own silhouette. The code-built
+	# bodies below remain the fallback, never a second look beside it.
+	if _authored_body(body_visual, kind, theme, envelope):
+		return enemy
+	if bool(envelope["flying"]):
 		_build_flyer(body_visual, size, theme, kind)
 		return enemy
 	match kind:
@@ -260,6 +267,142 @@ static func create(kind: String, theme: String) -> Enemy:
 		"brute": _build_brute(body_visual, size, theme)
 		_: _build_melee(body_visual, size, theme)
 	return enemy
+
+# ============================================================ the art bodies
+
+## Where the imported family lives (`tools/import_enemy_models.sh`).
+const MODEL_ROOT := "res://content/enemies"
+## The approved band map, read, never restated (`enemy_value_bands.json`).
+static var _band_of_room: Dictionary = {}
+## The eye each role has always had, by colour: warm orange for the two
+## that watch from a distance, red for the rest (the code bodies' own).
+const EYE_COLOURS := {"ranged": Color(1.0, 0.6, 0.15),
+	"drifter": Color(1.0, 0.6, 0.15), "brute": Color(1.0, 0.2, 0.15)}
+
+
+## The value band a room's enemies wear: "standard" or "deep", or "" when
+## the map does not name the room.
+static func band_for(theme: String) -> String:
+	if _band_of_room.is_empty():
+		var text := FileAccess.get_file_as_string(MODEL_ROOT
+				+ "/enemy_value_bands.json")
+		var data: Variant = JSON.parse_string(text) if text != "" else null
+		if typeof(data) == TYPE_DICTIONARY:
+			var bands: Dictionary = (data as Dictionary).get("bands", {})
+			for band: String in bands:
+				for room: Variant in (bands[band] as Dictionary).get("rooms", []):
+					_band_of_room[str(room)] = band
+	return str(_band_of_room.get(theme, ""))
+
+
+## The imported model for a role in a room, or "" when there is none.
+static func model_path(kind: String, theme: String) -> String:
+	var band := band_for(theme)
+	if band == "":
+		return ""
+	var path := "%s/%s/enemy_role_%s.glb" % [MODEL_ROOT, band, kind]
+	return path if ResourceLoader.exists(path) else ""
+
+
+static func _authored_body(visual: Node3D, kind: String, theme: String,
+		envelope: Dictionary) -> bool:
+	var path := model_path(kind, theme)
+	if path == "":
+		return false
+	var packed := load(path) as PackedScene
+	if packed == null:
+		return false
+	var model := packed.instantiate() as Node3D
+	if model == null:
+		return false
+	model.name = "Model"
+	# Authored standing on the floor (a flyer too); the collider says where
+	# its body is. `visual` already sits at a flyer's centre.
+	var lift := float(envelope["bottom_y"])
+	if bool(envelope["flying"]):
+		lift -= float(envelope["centre_y"])
+	model.position = Vector3(0, lift, 0)
+	visual.add_child(model)
+	_seat_eye(visual, model, kind, envelope)
+	return true
+
+
+## THE EYE STAYS (RULED 2026-09-26): Production's own emissive `Eye`, its
+## colours and its idle / alert / windup-flare driver (`_set_eye`), seated
+## on the model. Where: at the art's `anchor_warn`, carried out along the
+## way the role looks (-Z; straight down for the drifter, which shows no
+## facing) to the body's surface, so it is on the outside of the model
+## rather than inside it. Not a new palette, a glow or a rim.
+static func _seat_eye(visual: Node3D, model: Node3D, kind: String,
+		envelope: Dictionary) -> void:
+	var size: Vector3 = envelope["size"]
+	var warn := model.find_child("anchor_warn", true, false) as Node3D
+	var from := _in(visual, warn) if warn != null \
+			else Vector3(0, float(envelope["top_y"]) * 0.8, 0)
+	var down := kind == "drifter"
+	var dir := Vector3.DOWN if down else Vector3.FORWARD
+	# Cast IN from outside the body, back toward the anchor: the first
+	# surface met is the outermost one there. (Out from inside, a body of
+	# overlapping parts stops the ray on an inner face.)
+	var outside := from + dir * 20.0
+	var at := from
+	var best := INF
+	for mesh_node: Node in model.find_children("*", "MeshInstance3D", true, false):
+		var part := mesh_node as MeshInstance3D
+		if part.mesh == null or part.name.begins_with("anchor"):
+			continue
+		var to_part := _xform_to(visual, part)
+		var local_from := to_part.affine_inverse() * outside
+		var local_dir := (to_part.basis.inverse() * -dir).normalized()
+		var tri := part.mesh.generate_triangle_mesh()
+		if tri == null:
+			continue
+		var hit: Dictionary = tri.intersect_ray(local_from, local_dir)
+		if hit.is_empty():
+			continue
+		var point: Vector3 = to_part * (hit["position"] as Vector3)
+		var d := outside.distance_to(point)
+		if d < best:
+			best = d
+			at = point
+	at += dir * 0.015
+	var colour: Color = EYE_COLOURS.get(kind, Color(1.0, 0.3, 0.2))
+	var eye_size := Vector3(clampf(size.x * 0.3, 0.12, 0.34), 0.07, 0.04)
+	if down:
+		eye_size = Vector3(size.x * 0.2, 0.04, size.z * 0.2)
+	_eye(visual, eye_size, at, colour)
+
+
+## An anchor's point in `root`'s space, walking the parents (the model is
+## not in the tree yet, so there is no global transform to ask). The art's
+## anchors are small marker meshes embedded in the body with their node at
+## the model's origin: the point is the marker's centre, not the node's.
+static func _in(root: Node3D, node: Node3D) -> Vector3:
+	return _xform_to(root, node) * _marker_centre(node)
+
+
+static func _marker_centre(node: Node3D) -> Vector3:
+	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+		return (node as MeshInstance3D).mesh.get_aabb().get_center()
+	return Vector3.ZERO
+
+
+static func _xform_to(root: Node3D, node: Node3D) -> Transform3D:
+	var t := Transform3D.IDENTITY
+	var at: Node = node
+	while at != null and at != root:
+		if at is Node3D:
+			t = (at as Node3D).transform * t
+		at = at.get_parent()
+	return t
+
+
+## A named anchor of the art body ("" nodes: none).
+func anchor(anchor_name: String) -> Node3D:
+	if visual == null:
+		return null
+	return visual.find_child(anchor_name, true, false) as Node3D
+
 
 static func _part(parent: Node3D, size: Vector3, at: Vector3,
 		material: Material, tilt := 0.0) -> MeshInstance3D:
@@ -1459,6 +1602,13 @@ func muzzle() -> Vector3:
 	# hover height above this pivot. `pivot + 1.2` was chest height for a
 	# walker and, for a flyer, a point in the air nowhere near what the
 	# player could see firing.
+	# THE SHOT STARTS WHERE THE PLAYER SEES THE MUZZLE, when the art body
+	# has one (`anchor_muzzle`): the accepted ranged carries it 1.29 m up,
+	# 0.23 m aside and 0.20 m forward, and a shot 0.32 m from what fires
+	# it reads as a lie.
+	var named := anchor("anchor_muzzle")
+	if named != null and named.is_inside_tree():
+		return named.global_transform * _marker_centre(named)
 	if bool(envelope.get("flying", false)):
 		return body_centre()
 	return global_position + Vector3.UP * 1.2
@@ -1554,16 +1704,32 @@ func _ensure_tint_parts() -> void:
 func _collect_tint_parts(node: Node) -> void:
 	for child in node.get_children():
 		if child is MeshInstance3D:
-			var shared: Material = child.material_override
+			var part := child as MeshInstance3D
+			var shared: Material = part.material_override
 			if shared is StandardMaterial3D:
 				var mine: StandardMaterial3D = shared.duplicate()
-				child.material_override = mine
-				_tint_parts.append(mine)
-				# Capture the base energy BEFORE overwriting it, or the
-				# first chip of damage makes the eye dimmer than undamaged.
-				_tint_base_energy.append(mine.emission_energy_multiplier)
-				_tint_base_albedo.append(mine.albedo_color)
+				part.material_override = mine
+				_add_tint_part(mine)
+			elif shared == null and part.mesh != null:
+				# AN IMPORTED MODEL's materials are on its mesh's surfaces
+				# (a glTF sets no override): each is unshared the same way,
+				# as a per-surface override, so an art enemy reddens as the
+				# code-built ones do (the art lane's A10 blocker).
+				for i in part.mesh.get_surface_count():
+					var surface := part.get_active_material(i)
+					if surface is StandardMaterial3D:
+						var own: StandardMaterial3D = surface.duplicate()
+						part.set_surface_override_material(i, own)
+						_add_tint_part(own)
 		_collect_tint_parts(child)
+
+
+func _add_tint_part(mine: StandardMaterial3D) -> void:
+	_tint_parts.append(mine)
+	# Capture the base energy BEFORE overwriting it, or the first chip of
+	# damage makes the eye dimmer than undamaged.
+	_tint_base_energy.append(mine.emission_energy_multiplier)
+	_tint_base_albedo.append(mine.albedo_color)
 
 func _refresh_damage_tint() -> void:
 	var hurt := 1.0 - clampf(hp / maxf(1.0, float(stats["hp"])), 0.0, 1.0)

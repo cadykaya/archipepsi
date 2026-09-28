@@ -152,6 +152,7 @@ jobs:
           make godot-bombs
           make godot-zone-state
           make godot-roster
+          make godot-enemy-art
           make godot-actuator
           make godot-constraints
           make godot-archive
