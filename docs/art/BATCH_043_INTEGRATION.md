@@ -173,6 +173,22 @@ which is §33.7's *"attach point available: visible marker when within 6 m"*.
 > The manifest's `lightened_panels` block records each move.
 > `phys_anchor_block` has no panels and is unchanged. No size, fitting,
 > mass or class moved.
+>
+> **Followed up later on 2026-09-28: every panel is now seated.** The same
+> test applies to all 22. Ten more panels were badly seated:
+> - six hung off the body (the cart's, the girder's, the power cell's);
+> - four were flush with the face under them, where they z-fight (the
+>   plate's, one of the key component's, and the mechanical part's hub
+>   end).
+>
+> The ballast's two, moved in the first pass, crossed a cast band and sat
+> flush with it.
+>
+> Each now sits on the body, flat and at least 2 mm proud of its face,
+> never proud of the collider box. Four panels (the ballast's pair and
+> the power cell's pair) had to be made smaller to fit between bands or on
+> one facet; the manifest records `shrunk_to`. Still unchanged: every size,
+> fitting, attach point, mass and class.
 
 **Reading the family.** Unpainted dark steel appears only where the player's
 device touches. A hand grip follows §10.1's **`carriable` flag**, not a mass

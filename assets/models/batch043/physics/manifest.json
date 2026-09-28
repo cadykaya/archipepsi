@@ -199,31 +199,47 @@
         "lightened_panel_0": {
           "centre_runtime": [
             0.3,
-            0.27324,
+            0.24324,
             0.3624
           ],
           "cleared": [
             "attach_pad_0"
           ],
+          "face_runtime": "+Z",
           "moved_from_runtime": [
             0.0,
             0.27324,
             0.3624
+          ],
+          "shrunk_to": {
+            "height": 0.6,
+            "width": 1.0
+          },
+          "was_seated_badly": [
+            "flush with the face under it"
           ]
         },
         "lightened_panel_1": {
           "centre_runtime": [
             0.3,
-            0.27324,
+            0.24324,
             -0.3624
           ],
           "cleared": [
             "attach_pad_1"
           ],
+          "face_runtime": "-Z",
           "moved_from_runtime": [
             0.0,
             0.27324,
             -0.3624
+          ],
+          "shrunk_to": {
+            "height": 0.6,
+            "width": 1.0
+          },
+          "was_seated_badly": [
+            "flush with the face under it"
           ]
         }
       }
@@ -328,15 +344,33 @@
         "lightened_panel_0": {
           "centre_runtime": [
             0.0,
+            0.384,
+            0.21391
+          ],
+          "face_runtime": "+Y (top)",
+          "moved_from_runtime": [
+            0.0,
             0.3685,
             0.41282
+          ],
+          "was_seated_badly": [
+            "partly over no body"
           ]
         },
         "lightened_panel_1": {
           "centre_runtime": [
             0.0,
+            0.384,
+            -0.21391
+          ],
+          "face_runtime": "+Y (top)",
+          "moved_from_runtime": [
+            0.0,
             0.3685,
             -0.41282
+          ],
+          "was_seated_badly": [
+            "partly over no body"
           ]
         }
       }
@@ -595,6 +629,7 @@
           "cleared": [
             "grip_hand_0"
           ],
+          "face_runtime": "+Z",
           "moved_from_runtime": [
             0.0,
             0.34375,
@@ -610,6 +645,7 @@
           "cleared": [
             "grip_hand_1"
           ],
+          "face_runtime": "-Z",
           "moved_from_runtime": [
             0.0,
             0.34375,
@@ -737,14 +773,32 @@
           "centre_runtime": [
             0.0,
             0.143,
+            0.014
+          ],
+          "face_runtime": "+Z",
+          "moved_from_runtime": [
+            0.0,
+            0.143,
             0.085
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.045 m off the body"
           ]
         },
         "lightened_panel_1": {
           "centre_runtime": [
             0.0,
             0.143,
+            -0.014
+          ],
+          "face_runtime": "-Z",
+          "moved_from_runtime": [
+            0.0,
+            0.143,
             -0.085
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.045 m off the body"
           ]
         }
       }
@@ -846,9 +900,18 @@
       "panels": {
         "lightened_panel_0": {
           "centre_runtime": [
+            0.1082,
+            0.12678,
+            -0.0
+          ],
+          "face_runtime": "+X",
+          "moved_from_runtime": [
             0.0,
             0.12678,
             0.0826
+          ],
+          "was_seated_badly": [
+            "flush with the face under it"
           ]
         },
         "lightened_panel_1": {
@@ -967,17 +1030,31 @@
           "cleared": [
             "attach_key"
           ],
+          "face_runtime": "+X",
           "moved_from_runtime": [
             0.0,
             0.18122,
             0.14875
+          ],
+          "was_seated_badly": [
+            "flush with the face under it"
           ]
         },
         "lightened_panel_1": {
           "centre_runtime": [
+            -0.2226,
+            0.18122,
+            -0.01875
+          ],
+          "face_runtime": "-X",
+          "moved_from_runtime": [
             0.0,
             0.18122,
             -0.18625
+          ],
+          "was_seated_badly": [
+            "across uneven body (0.020 m)",
+            "flush with the face under it"
           ]
         }
       }
@@ -1108,10 +1185,14 @@
           "cleared": [
             "attach_push_0"
           ],
+          "face_runtime": "+Z",
           "moved_from_runtime": [
             0.0,
             0.946,
             0.115
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.055 m off the body"
           ]
         },
         "lightened_panel_1": {
@@ -1123,10 +1204,14 @@
           "cleared": [
             "attach_push_1"
           ],
+          "face_runtime": "-Z",
           "moved_from_runtime": [
             0.0,
             0.946,
             -0.115
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.055 m off the body"
           ]
         }
       }
@@ -1248,16 +1333,34 @@
       "panels": {
         "lightened_panel_0": {
           "centre_runtime": [
-            -0.0,
+            0.689,
+            0.07475,
+            0.13
+          ],
+          "face_runtime": "+X",
+          "moved_from_runtime": [
+            0.0,
             0.07975,
             0.445
+          ],
+          "was_seated_badly": [
+            "flush with the face under it"
           ]
         },
         "lightened_panel_1": {
           "centre_runtime": [
             -0.0,
+            0.089,
+            -0.23
+          ],
+          "face_runtime": "+Y (top)",
+          "moved_from_runtime": [
+            0.0,
             0.07975,
             -0.445
+          ],
+          "was_seated_badly": [
+            "flush with the face under it"
           ]
         }
       }
@@ -1361,14 +1464,42 @@
           "centre_runtime": [
             0.0,
             0.2695,
+            0.10449
+          ],
+          "face_runtime": "+Z",
+          "moved_from_runtime": [
+            0.0,
+            0.2695,
             0.155
+          ],
+          "shrunk_to": {
+            "height": 1.0,
+            "width": 0.8
+          },
+          "was_seated_badly": [
+            "across uneven body (0.017 m)",
+            "hangs up to 0.042 m off the body"
           ]
         },
         "lightened_panel_1": {
           "centre_runtime": [
             0.0,
             0.2695,
+            -0.10449
+          ],
+          "face_runtime": "-Z",
+          "moved_from_runtime": [
+            0.0,
+            0.2695,
             -0.155
+          ],
+          "shrunk_to": {
+            "height": 1.0,
+            "width": 0.8
+          },
+          "was_seated_badly": [
+            "across uneven body (0.017 m)",
+            "hangs up to 0.042 m off the body"
           ]
         }
       }
@@ -1499,10 +1630,14 @@
           "cleared": [
             "attach_push_0"
           ],
+          "face_runtime": "+X",
           "moved_from_runtime": [
             0.0,
             0.38258,
             0.395
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.019 m off the body"
           ]
         },
         "lightened_panel_1": {
@@ -1514,10 +1649,14 @@
           "cleared": [
             "attach_push_1"
           ],
+          "face_runtime": "-X",
           "moved_from_runtime": [
             0.0,
             0.38258,
             -0.395
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.019 m off the body"
           ]
         }
       }
