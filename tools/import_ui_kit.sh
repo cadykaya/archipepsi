@@ -21,6 +21,9 @@
 # next import -- a glyph's one-pixel strokes would smear. Mipmaps stay off
 # (the default): the faces are drawn with a nearest filter at whole-pixel
 # scales. Then the importer runs again, so everything derived stays Godot's.
+# A bitmap font's page image (ui_text.png, ui_numerals.png) is its font's:
+# on a fresh import the engine writes `importer="skip"` for it, and that is
+# the sidecar committed (`test_ui_kit_identity.py`).
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GODOT="${GODOT:-$ROOT/.tools/godot}"

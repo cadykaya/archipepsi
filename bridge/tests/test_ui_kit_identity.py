@@ -48,13 +48,34 @@ def test_every_symbol_the_contract_names_is_shipped():
         assert str(entry.get("text", "")).strip(), key
 
 
+def _font_pages() -> set[str]:
+    """The images the shipped bitmap fonts draw from (`page ... file=`)."""
+    pages: set[str] = set()
+    for fnt in SHIPPED.glob("*.fnt"):
+        pages.update(re.findall(r'^page id=\d+ file="([^"]+)"',
+                                fnt.read_text(encoding="utf-8"), flags=re.M))
+    return pages
+
+
 def test_the_engine_imports_the_pixels_losslessly():
     pngs = sorted(SHIPPED.glob("*.png"))
     assert pngs
+    pages = _font_pages()
+    assert pages, "the shipped fonts name no page image"
     for png in pngs:
         sidecar = png.with_name(png.name + ".import")
         assert sidecar.is_file(), f"{png.name} was never imported"
         text = sidecar.read_text(encoding="utf-8")
+        if png.name in pages:
+            # A FONT'S PAGE IS ITS FONT'S. Godot's BMFont importer reads its
+            # pixels into the font (the next test, and the font verifier),
+            # and on a fresh import the engine sets the image itself to
+            # `skip`: never a texture, so never recompressed. The sidecar
+            # is committed as the engine writes it, so a fresh clone or
+            # unpack imports without changing a tracked file.
+            assert re.search(r'^importer="skip"$', text, flags=re.M), (
+                png.name, "a font's page is imported by its font")
+            continue
         params = dict(re.findall(r"^([\w/]+)=(.*)$", text, flags=re.M))
         assert params.get("compress/mode") == "0", (png.name, "lossless")
         assert params.get("mipmaps/generate") == "false", png.name
