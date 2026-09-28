@@ -180,6 +180,16 @@ GLYPHS = {
     # open, the same five points.
     "\u2605": ["..#..", "#####", ".###.", ".#.#.", "#...#"],   # black star
     "\u2606": ["..#..", "##.##", ".#.#.", ".#.#.", "#...#"],   # white star
+
+    # --- 2026-09-28, the owner's request for Production's sign "PLATFORM
+    # \u03b5" (`chamber_builders.gd:1137` at c12a72f), one character and
+    # no more. Full height, not the 3-row x-height of `x`: at three rows
+    # an epsilon has no room for its two bowls and pinched waist, and it
+    # read as a `c`. It is built from the face's own parts, the `C`'s
+    # rounded top and bottom and the `S`'s `.##.` middle stroke as the
+    # waist. Open on the right with rounded corners, it cannot be taken
+    # for `E` (square, full bar) or `3` (open on the left).
+    "\u03b5": [".###", "#...", ".##.", "#...", ".###"],   # greek small epsilon
 }
 
 #: Frame order, and therefore the order on the sheet. Sorted so that
