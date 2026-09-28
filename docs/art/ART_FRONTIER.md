@@ -3373,10 +3373,53 @@ Four follow-ups, each its own commit on the same repair branch.
   * the linear-hex colour convention;
   * 42 runners that clear `godot/_harness`;
   * `run_theme_bind.sh` cannot compile Production at the pin: its
-    constants are now autoload references there. The art check passes
-    with its default ref.
+    constants are now autoload references there. The usual art-check
+    configuration passes; the pinned run is a separate result (FU-1
+    below).
 
 **Next: HOLD** for the owner's remaining visual decisions.
+
+### 2026-09-28 — the repair pass accepted; ε added for "PLATFORM ε". HOLD.
+
+* **Accepted as complete at this review scope:**
+  * all-panel seating and clearance;
+  * the opened gauge bezel;
+  * the pose and documentation corrections;
+  * the isolated content-pack verifier.
+
+  The repaired versions and their separate commits stay, with no further
+  panel or gauge redesign. **This accepts the technical corrections, not
+  the candidate families for normal gameplay.** Visual choices and
+  runtime-binding decisions are still pending.
+* **Two verification results, never merged** (`check_art_current.sh` at
+  `3c2f371`):
+  * the usual configuration (Production's default local ref `19c5d8e`)
+    PASSES;
+  * the pinned-Production run (`c12a72f`) FAILS one gate, theme-bind
+    (FU-1).
+
+  This is **not** a current-Production compatibility pass.
+* **Named follow-ups,** recorded and not started (details in the repair
+  handoff):
+  * **FU-1:** the theme-bind harness against pinned Production;
+  * **FU-2:** the 42 remaining unsafe runners that clear `godot/_harness`;
+  * **FU-3:** the plate's `pl_nose` wedge, which slopes across the
+    width;
+  * **FU-4:** the linear-hex colour convention. The library's colours
+    are not to be changed.
+* **ε (U+03B5) in `ui_text`,** for Production's "PLATFORM ε"
+  (`chamber_builders.gd:1137` at `c12a72f`):
+  * `94f6e82` is one narrow commit: `tools/glyphui/author_text.py` plus
+    the generated pair `assets/ui/ui_text.{fnt,png}` (75 characters).
+    It cherry-picks alone onto `a1584c8` and onto Production's
+    `12a8ede1`;
+  * `1f9d5ae` holds the proof and the handoff
+    (`docs/art/review/glyph_epsilon_2026-09-28/`). The engine importer
+    PASSES, and ε is drawn by `ui_text` alone, pixel-exact at 1x and 2x;
+  * every existing character keeps its pixels and advance. Production's
+    shipped copy (`godot/content/ui/`) was not touched.
+
+**Next: HOLD** for the remaining visual decisions.
 
 ### Standing notes
 

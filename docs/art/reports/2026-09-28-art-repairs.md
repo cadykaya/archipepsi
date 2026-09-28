@@ -24,6 +24,11 @@ Each family has a verifier, and each verifier fails on the old files.
 `tools/check_art_current.sh` passes, so every model rebuilds
 byte-identical from its source.
 
+*Clarified 2026-09-28:* those runs read Production's default local ref
+(`19c5d8e`), not the pin. They are not a current-Production
+compatibility pass. At the pin, one gate fails; see the handoff's "Two
+verification results, kept apart".
+
 ## Held, with the exact conflict recorded
 
 - The room kits: Passing, Counterfire, Unweighted, and the yard anchor.

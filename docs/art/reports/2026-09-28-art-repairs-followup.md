@@ -68,6 +68,24 @@ then rebuilds byte-identical through its own builder.
   old script, so this could not be confirmed. The new script touches
   nothing in either case.
 
+## Accepted, and what that does not cover
+
+*Added 2026-09-28, after the owner's review.* The technical repair pass
+is accepted as complete at this review scope. The repaired versions and
+their separate commits stay, and no further panel or gauge redesign is
+requested. The owner accepted the technical corrections, not the
+candidate families for normal gameplay. The visual choices and
+runtime-binding decisions are still pending.
+
+The two art-check results stay distinct:
+- the usual configuration passes;
+- the pinned-Production run has the theme-bind harness failure.
+
+Neither is a current-Production compatibility pass. The four items
+under "Found, not changed" are now named follow-ups FU-1 to FU-4 in the
+handoff: the theme-bind harness, the unsafe runners, the plate's wedge
+and the colour convention. They are recorded, not started.
+
 ## Stopping point
 
 Nothing is promoted, bound or integrated. No Production branch, worktree,

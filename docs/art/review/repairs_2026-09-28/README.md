@@ -23,11 +23,25 @@ commit; see [Follow-up, 2026-09-28](#follow-up-2026-09-28):
 4. `verify_content_pack.sh` can no longer delete or overwrite the
    caller's files.
 
+**Accepted, 2026-09-28.** You accepted the technical repair pass as
+complete at this review scope:
+- all-panel seating and clearance;
+- the opened gauge bezel;
+- the pose and documentation corrections;
+- the isolated content-pack verifier.
+
+The repaired versions and their separate commits stay, and no further
+panel or gauge redesign is requested. **This accepts the technical
+corrections, not the candidate families for normal gameplay.** The
+pending visual choices and the runtime-binding decisions are still
+pending. The two art-check results are kept apart below, and four
+issues are recorded as [named follow-ups](#named-follow-ups).
+
 | | |
 |---|---|
 | **Branch** | `claude/archipepsi-art-repairs-2026-09-28` |
 | **Base** | the reviewed source `a1584c8a8a4d2beba95bc157ae3b6298a64c7fe2` (the owner review, kept as it is) |
-| **Pipeline** | every model rebuilt by its own builder, with Blender 4.5.9 LTS. No binary was hand-edited. `tools/check_art_current.sh` passes at the three repairs' head (`e4103ba`) and again at the handoff (`ad3eb1b`). After the follow-up it passes at `3c2f3711` in the same configuration as those runs, reading Production's default local ref (`19c5d8e`). With `PROD_REF` at the pin, one gate cannot compile Production's newer code. That gate, `run_theme_bind.sh`, is unchanged since `a1584c8`; see "Found during the follow-up". |
+| **Pipeline** | every model rebuilt by its own builder, with Blender 4.5.9 LTS. No binary was hand-edited. `tools/check_art_current.sh` passes at the three repairs' head (`e4103ba`) and again at the handoff (`ad3eb1b`). After the follow-up it passes at `3c2f3711` in the same configuration as those runs, which reads Production's default local ref (`19c5d8e`). The pinned-Production run is a separate result, with a theme-bind harness failure. It is not a compatibility pass; see [Two verification results, kept apart](#two-verification-results-kept-apart). |
 
 ## Take one family without the others
 
@@ -423,7 +437,8 @@ again this pass.
 | **`conn_gauge`'s face is invisible.** The face disc lies wholly inside the solid bezel box. | Open the bezel into a frame, or bring the face 1 cm proud. |
 | **`ArtBench.aabb_of`** measures each mesh with only its own transform. It frames cameras; no recorded number uses it. | Accumulate parent transforms, as `connect_fit.gd` now does. |
 
-**Found during the follow-up, not repaired:**
+**Found during the follow-up, not repaired** *(named FU-1 to FU-4 on
+2026-09-28; see [Named follow-ups](#named-follow-ups))*:
 
 | Found | Smallest repair |
 |---|---|
@@ -471,7 +486,7 @@ No frame was re-rendered to hide an error.
 | `tools/content/test_verify_content_pack_safety.sh` | PASS: on passing and failing runs, in both trees, the new verifier deleted, overwrote and added nothing (about 5 min) |
 | `tools/content/run_connect_fit.sh` | PASS: 14 assets, A09's distinctions kept |
 | `tools/content/run_import_examples.sh` | 4 examples, 0 problems |
-| `tools/check_art_current.sh` | PASS at `e4103ba`, at `ad3eb1b` and at `3c2f3711`: every generated asset rebuilds byte-identical. These runs read Production's default local ref (`19c5d8e`). At `3c2f3711` with `PROD_REF` at the pin, everything passes except `run_theme_bind.sh`, which cannot compile Production's newer `theme_pack.gd` (reported below). |
+| `tools/check_art_current.sh` | PASS at `e4103ba`, at `ad3eb1b` and at `3c2f3711`: every generated asset rebuilds byte-identical. These are the usual configuration, reading Production's default local ref (`19c5d8e`). The pinned-Production run at `3c2f3711` is a separate result, not a compatibility pass: `run_theme_bind.sh` fails there (FU-1). |
 
 **Rebuild the evidence:**
 
@@ -483,6 +498,33 @@ No frame was re-rendered to hide an error.
 
 The runners claim `godot/_harness` or stop; none clears a folder it did
 not create.
+
+## Two verification results, kept apart
+
+These are two different runs of `tools/check_art_current.sh` at
+`3c2f3711`. Neither stands for the other.
+
+| Run | Production read at | Result |
+|---|---|---|
+| **The usual art-check configuration** | its default local ref, `19c5d8e`, as at `e4103ba` and `ad3eb1b` | **PASS.** Every generated asset rebuilds byte-identical, and every gate passes. |
+| **The newer pinned Production** | the pin, `c12a72f` | **FAIL, one gate:** `run_theme_bind.sh` cannot compile Production's `theme_pack.gd`, whose constants are now autoload references (FU-1). |
+
+**This is not a current-Production compatibility pass,** and nothing in
+this handoff claims one. What the first run shows is that the art is
+current against its own source and against the Production code that
+configuration reads.
+
+## Named follow-ups
+
+Recorded, not started. Each is a narrow item of its own. None is part of
+a new repair campaign, and FU-4 changes no colour.
+
+| ID | Follow-up | Smallest repair, if taken up |
+|---|---|---|
+| **FU-1** | **The theme-bind harness against pinned Production.** At `c12a72f`, `theme_pack.gd`'s `UNIVERSAL_ROLES` and `PACK_TABLE` are `Constants.*` autoload references, and a `-s` harness has no autoloads. The gate script is unchanged since `a1584c8`. | Inline the two constants from Production's own `constants.gd`, as `verify_content_pack.sh` does for `ContentRegistry` |
+| **FU-2** | **The remaining unsafe runners.** 42 art-lane runners still clear `godot/_harness` whoever owns it. The four repair and glyph runners claim it or stop. | Give each the same claim-or-stop guard, or `verify_content_pack.sh`'s private copy |
+| **FU-3** | **The plate's wedge mismatch.** `pl_nose` uses `wedge`'s default `axis="y"`, so it slopes across the plate's width rather than chamfering the leading edge its docstring describes. | `axis="x"`, turned so the low edge is the tip |
+| **FU-4** | **The colour convention.** Art-lane hex values are written straight into the linear base colour, so every flat colour exports lighter than its hex would be in sRGB. A runtime that restores a manifest hex (such as `at_rest`) as sRGB would draw it darker. | A decision, not a patch: say "linear" where manifests carry hex, or convert once in `palette.rgba`. That would change every flat colour, and is **not** proposed here. |
 
 ## Not done, on purpose
 

@@ -178,6 +178,21 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     caller's tree (`3c2f371`), with a sentinel test on passing and
     failing runs. Production reported the old behaviour; it was
     reproduced only in disposable worktrees.
+* **2026-09-28, then: the repair pass is ACCEPTED as technical
+  corrections only; ε is added for "PLATFORM ε"; HOLD.**
+  * The candidate families are not accepted for normal gameplay. Visual
+    choices and runtime binding are still pending.
+  * The art check PASSES in its usual configuration (Production's
+    default local ref, `19c5d8e`). The pinned-Production run (`c12a72f`)
+    has the theme-bind harness failure. It is not a compatibility pass.
+  * Named follow-ups, not started:
+    * FU-1: theme-bind at the pin;
+    * FU-2: unsafe `_harness` runners;
+    * FU-3: the plate's wedge;
+    * FU-4: the colour convention. No library colour changes.
+  * ε: `94f6e82` (the narrow, importable commit: `author_text.py` plus
+    `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
+    handoff).
 * **2026-09-28: a read-only audit of what art is in the game** (asked by
   the owner): `docs/art/reports/2026-09-28-art-vs-game.md`.
   * The game loads only `godot/content`: 6 fixtures, 12 shells, the

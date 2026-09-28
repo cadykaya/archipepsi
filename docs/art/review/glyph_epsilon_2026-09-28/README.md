@@ -34,6 +34,14 @@ new pair. That is Production's step. I did not edit that copy, that
 branch or that session. The page size is unchanged, so the existing
 import settings still apply.
 
+**How the sign reaches it.** At `12a8ede1` the sign is a `Label3D`
+whose text is the string as written, with no upper-casing. So the
+lowercase U+03B5 is the character it asks for. (The menu kit's
+`display()` upper-cases, which would turn ε into Ε, U+0395, but the menu
+shows no ε.) The label sets `font_size` 34 and no font. Which face the
+sign uses, and at what size, is Production's binding. The face is proved
+at 8, 16, 32 and 64 px.
+
 ## The glyph
 
     .###
