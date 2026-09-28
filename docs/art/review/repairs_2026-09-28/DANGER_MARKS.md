@@ -37,7 +37,7 @@ At their current sizes, all three marks are warnings, not boundaries.
 | **Windup** | 0.7 s (`TELEGRAPH_SECONDS["charger"]`, `enemy.gd:94`), announced by `telegraph_started("charge", 0.7)` |
 | **Travel** | 13 m/s for 1.1 s: up to **14.3 m** of the charger's origin along that line (`constants.gd:40-41`, `enemy.gd:1015`). A wall ends it early (`:1025`). Rooted or anchored, it does not move at all (`:858`, `:1008`). |
 | **What hits** | The player's origin within **2.8 m** of the charger's origin at any moment of the rush (`reach` × 0.2, `enemy.gd:1018`). This is 3D distance, so height counts. |
-| **True footprint** | Every point within 2.8 m of the travelled segment: on open ground a **stadium 5.6 m wide and up to 19.9 m long**, including 2.8 m behind the start. It is shorter where a wall stops the rush, and a single point when the charger is held. |
+| **True footprint** | Every point within 2.8 m of the travelled segment: on open ground a **stadium 5.6 m wide and up to 19.9 m long**, including 2.8 m behind the start. It is shorter where a wall stops the rush. When the charger is held (rooted or anchored), it is a 2.8 m disc around the charger, because the hit test still runs where it stands. |
 | **Art today** | `fx_charger_lane`, 0.9 × 6.0 m: **about a sixth of the width and under a third of the length** |
 
 **Correction to my own review.** The owner review's D2 plan drew the
@@ -61,7 +61,7 @@ rush's reach as the 0.9 m art lane stretched to 14.3 m. It is 5.6 m wide.
 | | At `c12a72f` |
 |---|---|
 | **What the radius is** | **Not a danger to the player.** Every 1.0 s, each other living enemy within **12 m** of the beacon (origin to origin, 3D) gets `empowered` for 2.0 s: +50% damage (`constants.gd:27-29`, `enemy.gd:1204-1217`, `_hit_for`, `:1428`) |
-| **The beacon's own blow** | Damage 2 at 2 m reach (`constants.gd:278`). This is the only direct danger, and it is small. |
+| **The beacon's own blow** | Damage 2 within 2 m, every 2 s, with no windup and no telegraph (`constants.gd:278`, `enemy.gd:760-767`). This is the only direct danger, and it is small. |
 | **Art today** | `fx_beacon_range`, about 1.7 m radius: **a marker of the beacon**, not of its range |
 
 A 12 m ring would be a boundary of *enemy empowerment*. It would not mark
@@ -76,7 +76,11 @@ beacon's own attack.
 | Artillery | Something at the target during the 0.8 s windup, before the runtime disc exists | The runtime's own 3.2 m disc, or art built at exactly 3.2 m on the same anchor and for the same 1.6 s |
 | Beacon | The beacon itself (the ring as it is) | A 12 m ring, read as "enemies in here hit harder", under a visibility rule the owner sets |
 
-**Binding seam, for every row:** Production's `telegraph_started(kind,
-duration)` and `telegraph_finished(kind, completed)` (`enemy.gd:18-32`).
-Its own comment says `completed` means "actually landed"; the code sends
-true on release, even for a miss.
+**Binding seam, for the charger and the artillery:** Production's
+`telegraph_started(kind, duration)` and `telegraph_finished(kind,
+completed)` (`enemy.gd:18-32`). Its own comment says `completed` means
+"actually landed"; the code sends true on release, even for a miss.
+
+**The beacon has no telegraph.** Its aura pulses every 1.0 s and its
+blow lands without a windup (`enemy.gd:517-518`, `:760-767`). A mark for
+it could only follow the beacon itself; there is no signal to bind to.

@@ -16,7 +16,7 @@ held for your decisions, with the exact conflict recorded.
 |---|---|
 | **Branch** | `claude/archipepsi-art-repairs-2026-09-28` |
 | **Base** | the reviewed source `a1584c8a8a4d2beba95bc157ae3b6298a64c7fe2` (the owner review, kept as it is) |
-| **Pipeline** | every model rebuilt by its own builder, with Blender 4.5.9 LTS. No binary was hand-edited. `tools/check_art_current.sh` passes at the head of the three repairs. |
+| **Pipeline** | every model rebuilt by its own builder, with Blender 4.5.9 LTS. No binary was hand-edited. `tools/check_art_current.sh` passes at the three repairs' head (`e4103ba`) and again at the handoff (`ad3eb1b`). |
 
 ## Take one family without the others
 
@@ -27,8 +27,9 @@ held for your decisions, with the exact conflict recorded.
 | 3 · lightened panels | `e4103ba95068c7471b68ecac75456eaef89eb841` | 11 GLBs and the manifest in `assets/models/batch043/physics/` |
 | Dated corrections | `dc0d879b7a3470b814151fca98824b136c7765b8` | Documents only |
 
-Each family touches only its own builder, its own models and its own
-verifier, so `git cherry-pick <commits>` applies it on its own.
+Each family's exact files are listed in its section below. None depends
+on another. Each was tested by cherry-picking it alone onto `a1584c8`,
+and each applies cleanly with `git cherry-pick <commits>`.
 **Eligibility is your call.** None of these assets is approved, and
 Production's frozen integration set does not contain them.
 
@@ -249,7 +250,7 @@ No frame was re-rendered to hide an error.
 | `python3 tools/art_repairs_2026_09_28/verify_053_panels.py` | PASS: 22 panels on their own material and clear; 9 moved and seated. On the old files: FAIL. |
 | `tools/content/run_connect_fit.sh` | PASS: 14 assets, A09's distinctions kept |
 | `tools/content/run_import_examples.sh` | 4 examples, 0 problems |
-| `tools/check_art_current.sh` | PASS at `e4103ba`: every generated asset rebuilds byte-identical |
+| `tools/check_art_current.sh` | PASS at `e4103ba` and again at `ad3eb1b`: every generated asset rebuilds byte-identical |
 
 **Rebuild the evidence:**
 
