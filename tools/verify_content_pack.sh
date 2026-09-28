@@ -24,20 +24,46 @@
 # Production's files are fetched read-only at run time into a throwaway
 # harness and deleted on exit. Nothing from the gameplay branch is committed
 # to the art branch, and that branch is never written to.
+#
+# NOTHING IN THE CALLER'S TREE IS WRITTEN OR DELETED. Until 2026-09-28 this
+# script staged its harness in `godot/_harness` and Production's manifest at
+# `godot/content/registry/legacy_procedural.json`. It cleared both before
+# and after the run, whoever they belonged to. On a Production checkout,
+# that manifest is a TRACKED file, and `_harness` is where scratch harnesses
+# live. Production reported both lost, and stopped running this script.
+#
+# So everything the run writes goes into a private copy of `godot/` in a new
+# temporary directory, and the checks that need it read the copy:
+#   - Production's manifest beside the registry it joins;
+#   - the harness scripts;
+#   - Godot's own import cache.
+# Cleanup removes that directory and nothing else, on success, on failure
+# and on an interrupt. The copy is refused if `godot/` holds a symbolic link,
+# because a write in the copy could then reach back into the tree it came
+# from. `tools/content/test_verify_content_pack_safety.sh` proves all this
+# against sentinel files, on a passing run and on a failing one.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GODOT="${GODOT:-$ROOT/.tools/godot}"
 PROD="${PROD_REF:-origin/claude/archipepsi-echoes-continuation-b1adno}"
-H="$ROOT/godot/_harness"
 [ -x "$GODOT" ] || { echo "verify-content: no godot at $GODOT" >&2; exit 2; }
+LINK="$(find "$ROOT/godot" -type l -print -quit)"
+[ -z "$LINK" ] || { echo "verify-content: $LINK is a symbolic link; a" \
+  "private copy of godot/ could write through it, so nothing was run" >&2
+  exit 2; }
 
-cleanup() {
-  rm -rf "$H"
-  rm -f "$ROOT/godot/content/registry/legacy_procedural.json"
-}
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/verify-content.XXXXXX")"
+cleanup() { rm -rf "$WORK"; }
 trap cleanup EXIT
-cleanup
-mkdir -p "$H"
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+P="$WORK/godot"
+cp -R "$ROOT/godot" "$P"
+# The copy's harness folder is this run's own; the caller's is not touched.
+rm -rf "$P/_harness"
+H="$P/_harness"
+mkdir "$H"
 
 # Production's validator, adapted in exactly two mechanical ways and no more:
 #
@@ -103,18 +129,19 @@ git show "$PROD:godot/scripts/content/visual_ownership.gd" \
 # chain pointing at ids no pack defines. A simulation of a state that has
 # since become real is not a simulation, it is a second, wrong copy.
 git show "$PROD:godot/content/registry/legacy_procedural.json" \
-  > "$ROOT/godot/content/registry/legacy_procedural.json"
+  > "$P/content/registry/legacy_procedural.json"
 
 # 1. PYTHON. First, because it is the cheaper gate and the one that was
 #    missing. Both manifests are present, so `build_registry` also checks the
 #    cross-pack rules against the real post-handoff state.
 echo "[verify] --- Production's Python ContentManifest ---"
-python3 "$ROOT/tools/content/verify_manifest.py" "$PROD"
+python3 "$ROOT/tools/content/verify_manifest.py" "$PROD" \
+  "$P"/content/registry/*.json
 
 # 2. GDSCRIPT.
 echo "[verify] --- Production's GDScript ContentRegistry ---"
 cp "$ROOT/tools/content/verify_pack.gd" "$H/verify.gd"
-xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" \
+xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$P" \
   -s _harness/verify.gd 2>&1 | grep -E "^\[verify\]|SCRIPT ERROR" || true
 
 # 3. COLLISION. Not Production's validator -- ours, and the reason it
@@ -125,7 +152,7 @@ xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" 
 # RoomAudit's own probe at every declared surface. Reports; never PASSes.
 echo "[verify] --- collision in the shipped scenes (art-side evidence) ---"
 cp "$ROOT/tools/content/verify_collision.gd" "$H/collision.gd"
-xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" \
+xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$P" \
   -s _harness/collision.gd 2>&1 | grep -E "^\[collision\]|SCRIPT ERROR" || true
 
 # 4. SCENE / MANIFEST PARITY. The generated `.tscn` carries the traversal
