@@ -106,7 +106,21 @@ These are scripted runs in the real game, not human play.
   - **The Static Pulse** kills both.
   - **Leaving with both alive:** a second pass walks the upper loop over
     the pier, past the live ranged enemy, and out.
-- **Affected suites:** see the ledger entry.
+- **Affected suites:**
+  - `make test`: 2313 passed.
+  - Also green: `godot-boot`, `godot-content`, `godot-room-contract`,
+    `godot-integration` (a real bridge still connects),
+    `godot-reload`, `godot-playtest3a`, `godot-menu-shell`,
+    `godot-equipment-face`, `godot-map-face`, `godot-lab` and
+    `godot-test`.
+- **From a clean unpack of the ZIP:**
+  - the Godot import;
+  - `make godot-concourse-pier`'s probe run against the unpacked tree:
+    both modes, 0 connection attempts, the player's files byte-identical,
+    and the control connects;
+  - both modes through `play-concourse-pier.sh`.
+
+  No shipped file changed.
 
 ## Limitations
 

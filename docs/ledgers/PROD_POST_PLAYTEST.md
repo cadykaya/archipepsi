@@ -6770,3 +6770,13 @@ command line):
 launchers still open a bridge connection. These are the railway, Passing
 Platforms, Counterfire and Unweighted. The bridge client connects in
 every launch except this playtest's.
+
+**Verified:**
+- `make test`: 2313 passed.
+- Green: boot, content, room-contract, integration, reload, playtest3a,
+  menu-shell, equipment-face, map-face, lab and chambers.
+- `make godot-concourse-pier`: PASS.
+- The ZIP, from a clean unpack: the import, the probe against the
+  unpacked tree (PASS), and both launcher modes. No shipped file
+  changed.
+- Not played by hand, and not run on Windows.
