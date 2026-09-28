@@ -6391,5 +6391,102 @@ its validation):
       snapshot. It now refreshes the Map first, and says a change
       against what it last showed.
     - N-21, the fold's raw field names.
-  - **Next:** the live drivers' menu steps, then M5 renders, the
-    serial live suites and CK11, then M6.
+- **M5, verification** (`2aeaa54c`, `a1b28bb2`, `e270fe1b`, `ce6ea3bd`):
+  - **The gameplay suites' menu steps** work the box as a player does:
+    `godot-bombs`, `godot-bombs-live`, `godot-candidate-live`,
+    `godot-consumable-live`, and `godot-boot` (after CK11's first run,
+    below). Run serially with the real bridge: candidate-live 8 of 8
+    phases, bombs-live 3 of 3, consumable-live OK.
+  - **Renders:** all four walls under Forward+ (lavapipe) at 720p and
+    1080p. The shots targets now use the game's renderer.
+  - **Contrast,** measured on the renders (`tools/menu_contrast.py`;
+    unshaded ink against its lit ground, words from
+    `MenuShell.words_on_screen`). Medians:
+
+    | Wall | Median contrast |
+    |---|---|
+    | Settings | 11.0–11.1:1 |
+    | Map | 9.0–12.5:1 |
+    | Equipment | 6.4–7.5:1 |
+    | Journal | 4.6–4.9:1 |
+
+    - **Least:** Equipment 3.31:1 (silkscreen); Journal 3.84:1; Settings
+      4.76:1.
+    - **The Map's "YOU":** 2.01:1 over a picked room's pale floor at 720p
+      (drawn with a dark outline the measure does not credit); 4.31:1 at
+      1080p.
+    - **Under 3:1:** nothing else.
+  - **The lighting reconciliation** (§4). The approved captures are GL
+    Compatibility's; under Forward+ the Map and Journal walls, pale
+    surfaces and the map's rooms were darker.
+    - **What was added:** a straight-on fill on those two walls
+      (`APPROVED_FILL` map 0.4, journal 0.85; no shadow, outside the
+      miniature's layer), a pale gain of 1.2 (`MenuParts.pale`), the
+      walls' card shade 0.87 under Forward+, and the rooms' tones
+      (`FLOOR_TONE`, `WALL_TONE`).
+    - **Unchanged:** Compatibility keeps what it had. The lamp is
+      unchanged.
+    - **Approved over ours, linear median,** after reconciliation:
+
+      | Wall | Whole wall | Other regions |
+      |---|---|---|
+      | Settings | 1.00 | pale 1.01 |
+      | Equipment | 0.95 | pale 1.12 |
+      | Map | 1.00 | title tag 1.07; top band 1.32; window frame 1.52 (residual) |
+      | Journal | 1.06 | title tag 0.93; frame 1.03; pale 1.00 |
+
+    - **The map's rooms:** floor (105,116,136) against the approved
+      (106,117,136).
+  - **The Map's ways back, made true at both ends** (`a1b28bb2`).
+    - A return device is a way out of the room it stands in (`room_a`)
+      only.
+    - Where it lands, it is neither a glass tag nor counted, and the
+      detail says "the way back from <room> lands here". An unwalked
+      room is never named.
+    - It was the old Map's wording ("a way back", four times at the
+      start room). Two new map checks cover it; map 71.
+  - **Performance** (a scratch probe, headless and under lavapipe, on
+    `tour_snapshot.json`: 61 items, six rooms):
+    - **Per frame:** the idle box adds nothing measurable (frames paced
+      at 6.9 ms with or without it), and a turn's worst frame is 9.0
+      ms.
+    - **One-off:** building the box and its walls takes 120 ms at start;
+      opening takes 55–65 ms; a snapshot while open takes 55–85 ms,
+      against 15 ms closed. That is a hitch of a few frames at those
+      moments, reported, not optimised.
+    - **Draw calls:** the box's viewport draws 120 (Journal) to 323
+      (Equipment). The Zone behind keeps rendering (2,549 in the tour's
+      Zone).
+  - **The tour's walk is one a player can make** (`c3bc1039`).
+    - The first fixture walked backwards through one-way return devices
+      into four rooms not reachable on foot. `_explore` now walks only
+      the way a way goes, takes keys, sets the span control, opens the
+      blue lock, and claims Checks in rooms walked.
+    - `test_tour_fixture.py` judges the walk by the bridge's own map, and
+      fails on the old fixture.
+  - **CK11's first run** (`c3bc1039`, stopped at step 24: 22 green, 2
+    red, both from this assignment):
+    - **Step 3, `check_packet.py`:** the packet's `schemas/mechanics.py`
+      needed N-21 too. Reconciled, and recorded under N-21.
+    - **Step 7, `godot-boot`:** it still built PauseMenu as a 2D panel.
+      It now asks the same of the box, opened by `Main._open_menu`: it
+      covers the window opaquely, the Settings wall is centred by its
+      corners (0.0 px), and the four actions are on screen whole. A
+      sabotage fails both checks.
+    - **Found in its fresh worktree:** a fresh import rewrites the two
+      font pages' sidecars (`ui_text.png`, `ui_numerals.png`) to
+      `importer="skip"`, changing tracked files. Reproduced in a clean
+      copy; the committed sidecars are now the engine's own (`ce6ea3bd`).
+      - Renders are pixel-identical: 15 of 15, fresh against cached.
+      - `test_ui_kit_identity` requires `skip` for a font's page, and
+        keeps the lossless checks for every other image.
+  - **CK11** on `ce6ea3bd`, in a fresh worktree (its import started from
+    nothing): running at the time of this commit (steps 1–18 of 92 green, none red); its result replaces this line.
+- **M6, delivery** (`ce6ea3bd`):
+  - **The tour:** `make menu-tour`, 49.9 s at 1280×720 and 30 fps (h264 and
+    aac), recorded on `c3bc1039`. The later commits change no game code
+    or pixels.
+  - **The build:** `archipepsi-0.4-MENU-INT-ce6ea3b.zip` (checked from a clean unpack of `ce6ea3bd`: the import changes no shipped file, `godot-boot` passes, and the candidate launcher's `--dry-run` keeps its saves in the unpack; the final zip is packed with CK11's result in its note).
+  - **The report:** `docs/reports/2026-09-28-menu-int-delivery.md`, sent
+    with the tour and pictures as one archive.
+  - **Then stop for the owner's review.** Draft PR #14 is not subscribed.

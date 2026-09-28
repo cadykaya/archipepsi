@@ -674,17 +674,25 @@ owner's D-06/D-07 rulings and the seam table are in
       - The work is on `wip/0.4-menu-integration`.
       - It is checked under the game's Forward+, with Mesa's lavapipe
         installed in the container.
-      - **Where it is:** M1 done (`6cc9d74`, the Glyph kit). The device
-        and all four walls are on live data. The four menu suites are
-        rewritten by their guarantees and green through `Main` (M4
-        checkpoint; the counts are in the ledger). N-21 is filed for Dess.
-        **Next:** the live drivers' menu steps (candidate_live, bombs_live,
-        consumable_live, boot, machine_life), then M5 (renders at 720p and
-        1080p, contrast, performance, live suites serially, CK11), then
-        M6. Draft PR #14 is the WIP branch's; it is not subscribed.
+      - **Where it is: DELIVERED, REVIEW STOP (2026-09-28).** M1–M6 done
+        on `ce6ea3bd`: the device and all four walls on live data; the
+        menu suites 44/151/71/76; the gameplay suites' menu steps; renders
+        and contrast under Forward+; the lighting reconciliation;
+        performance probed. CK11 (the full frontier on `ce6ea3bd`, fresh import) is running at the time of this commit (steps 1–18 of 92 green, none red); its result replaces this line.
+        - The delivery: the build `archipepsi-0.4-MENU-INT-ce6ea3b.zip`,
+          the tour (`make menu-tour`, on the owner's campaign), and the
+          report `docs/reports/2026-09-28-menu-int-delivery.md`. The
+          details are in the ledger's MENU-INT section.
+        - Open for the owner: merging onto the 0.4 branch; the Journal's
+          ink contrast (a change to the approved look); the hitches on
+          open and on a snapshot while open, reported and not optimised.
+        - N-21 (and the packet's copy of it) is recorded for Dess. Draft
+          PR #14 is the WIP branch's; it is not subscribed. Nothing is
+          scheduled.
     - **After MENU-INT:** HB-F4g's measurement (variants 1, 2, 3 and
-      junction; census; a 30-Zone walk), then HB-F4f, then CK11. They
-      are held until the owner resumes them.
+      junction; census; a 30-Zone walk), then HB-F4f, then a full
+      frontier (CK12; CK11 was MENU-INT's). They are held until the owner
+      resumes them.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.
