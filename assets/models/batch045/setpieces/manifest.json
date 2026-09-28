@@ -332,6 +332,7 @@
       "rail_y": 0.6,
       "reach_cap_node_z": 1.45
     },
+    "fore_is": "runtime +Z of the RailCarrier node: RailCarrier.pose() sets basis.z to the path tangent, the FORWARD direction. `*_fore` parts are at +Z, `*_aft` at -Z.",
     "kind": "setpiece_visual",
     "not_changed": [
       "collision",
@@ -395,6 +396,7 @@
       "rail_y": 0.6,
       "reach_cap_node_z": 1.45
     },
+    "fore_is": "runtime +Z of the RailCarrier node: RailCarrier.pose() sets basis.z to the path tangent, the FORWARD direction. `*_fore` parts are at +Z, `*_aft` at -Z.",
     "kind": "setpiece_visual",
     "not_changed": [
       "collision",

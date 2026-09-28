@@ -46,11 +46,27 @@ No animation. A09.4 says the acknowledgments' motion must reflect real
 accepted/refused/deferred state and must not "animate success ahead of
 the authoritative result" -- so the moving parts are NODES with declared
 positions, and what moves them is Production's.
+
+## The hinges (repair, 2026-09-28)
+
+Until this repair the positions were declared only in these docstrings,
+and every moving part exported with an identity transform -- so turning
+one turned it about the asset origin, the foot of the mount, instead of
+about its own pin. Batch 043 found the same defect on `mach_wall_switch`
+and fixed it with a hinge; `HINGES` below is that fix for the six parts
+that move here, and the manifest now carries each hinge's pivot, axis and
+positions in RUNTIME axes. `assert_positions` refuses any declared
+position that pushes a part into something it did not touch as built.
 """
 
 import json
+import math
 import os
 import sys
+
+import bpy
+import mathutils
+from mathutils.bvhtree import BVHTree
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -460,6 +476,13 @@ def conn_gauge():
     unlike A08.2's class plate this really is a continuous reading: how
     much of a deferred thing has happened. `gauge_needle` is the part
     that moves and `gauge_face` is what it moves over.
+
+    `gauge_bezel` is a frame, and the face is read through its window.
+    Until 2026-09-28 it was a solid block the same size, and the face sat
+    wholly inside it: the needle turned over nothing. The window's edge
+    is 1 cm inside the face's flats, so the bezel still holds the face's
+    rim. It is 1 cm outside the needle's whole sweep, so no reading
+    carries the needle under it.
     """
     parts = []
     body = _b("gauge_case", (0.3, 0.14, 0.3), (0, 0.07, 0.15), "wall")
@@ -468,8 +491,8 @@ def conn_gauge():
     parts.append(_paint(face, "trim"))
     parts.append(_b("gauge_needle", (0.02, 0.03, 0.1), (0, -0.02, 0.19),
                     "accent", "trim"))
-    parts.append(_b("gauge_bezel", (0.3, 0.05, 0.3), (0, 0.0, 0.15),
-                    "accent", "trim"))
+    parts.append(_paint(brushkit.frame("gauge_bezel", (0.3, 0.3), 0.05, 0.05,
+                                       (0, 0.0, 0.15)), "accent", "trim"))
     return body, parts
 
 
@@ -517,6 +540,315 @@ def conn_service_stack():
     return body, parts
 
 
+# --- the hinges (repair, 2026-09-28) -------------------------------------
+#
+# Owner review 2026-09-28, group A: "the 049 moving parts have no pivots".
+# Every moving part exported with an identity transform and its vertices
+# where the builder put them, so a runtime that rotated `paddle_arm`
+# swung it about the foot of the mount, not about its own root. The
+# pivots below are DERIVED from the parts' measured boxes, never typed,
+# so they cannot drift from the geometry; each position is derived from
+# something the model already has -- a tooth, a spring, a window -- or
+# says plainly that it is art's declaration.
+
+#: The hinge node exports with an identity rotation, so its local axes ARE
+#: the runtime axes. Runtime X is authoring X; runtime Z -- out of the
+#: wall, toward the player -- is authoring -Y.
+_AXES = {"x": (1.0, 0.0, 0.0), "z": (0.0, -1.0, 0.0)}
+
+#: asset -> the hinge node, the parts it carries (the pivot must lie inside
+#: the first), the runtime axis it turns about, and whether the asset is
+#: wall-mounted (a position may not push a part through the wall plane).
+HINGES = {
+    "conn_set_dial": {"hinge": "hinge_dial", "axis": "z", "wall": True,
+                      "moving": ["dial_knob", "dial_pointer"]},
+    "conn_hold_paddle": {"hinge": "hinge_paddle", "axis": "x", "wall": True,
+                         "moving": ["paddle_arm", "paddle_grip"]},
+    "conn_repair_seal": {"hinge": "hinge_seal_lever", "axis": "x",
+                         "wall": True, "moving": ["seal_lever"],
+                         # A09.2's one-shot: the tab halves are separate
+                         # nodes so a runtime can show them broken.
+                         "hides": {"thrown": ["seal_tab_left",
+                                              "seal_tab_right"]}},
+    "conn_flag_ack": {"hinge": "hinge_flag", "axis": "x", "wall": False,
+                      "moving": ["flag_blade"]},
+    "conn_breaker": {"hinge": "hinge_breaker", "axis": "x", "wall": True,
+                     "moving": ["breaker_handle"],
+                     # `breaker_window` is where a runtime shows the state,
+                     # so no position may hang the handle in front of it.
+                     "keep_readable": ["breaker_window"]},
+    "conn_gauge": {"hinge": "hinge_gauge", "axis": "z", "wall": True,
+                   "moving": ["gauge_needle"],
+                   # The face is read through the bezel's window, so the
+                   # needle may not cross the bezel at any reading -- not
+                   # even as built, which the new-contact rule excuses.
+                   "clear_of": ["gauge_bezel"]},
+}
+
+#: The positions that are ART'S DECLARATION rather than a measurement, and
+#: why each number is the one it is. Everything else is derived below.
+_DECLARED = {
+    # Pulled straight out toward the player: the pin is one half-depth up
+    # from the lever's foot, so at 90 degrees the root stays inside the
+    # same 3 cm of case it is set into as built.
+    "conn_repair_seal": {"intact": 0.0, "thrown": 90.0},
+    # A flag is down (as built, level) or up (vertical). A09.4: "two
+    # declared positions, no third".
+    "conn_flag_ack": {"down": 0.0, "up": 90.0},
+    # Closed as built; thrown is the handle tipped down 30 degrees, which
+    # keeps its lowest edge above the window a runtime shows the state in
+    # (asserted by `keep_readable`).
+    "conn_breaker": {"closed": 0.0, "thrown": 30.0},
+    # The face carries no printed scale, so the sweep is art's: an
+    # ordinary half-dial, empty at nine o'clock and full at three,
+    # clockwise. The needle as built is the half-way reading.
+    "conn_gauge": {"empty": 90.0, "half": 0.0, "full": -90.0},
+}
+
+
+def _mid(lo, hi):
+    return [(a + b) / 2.0 for a, b in zip(lo, hi)]
+
+
+def _overlap_mid(a, b, axis):
+    """The middle of where two parts' extents overlap on one axis."""
+    lo, hi = max(a[0][axis], b[0][axis]), min(a[1][axis], b[1][axis])
+    if lo > hi:
+        raise SystemExit("no overlap on axis %d to put a pin in" % axis)
+    return (lo + hi) / 2.0
+
+
+def _pivot(asset, named, body):
+    """Where each part's pin is, read off the geometry as built."""
+    box = common.world_box
+    if asset == "conn_set_dial":
+        # On the knob's own axis, at a depth inside BOTH the knob and the
+        # pointer it carries.
+        knob, ptr = box(named["dial_knob"]), box(named["dial_pointer"])
+        c = _mid(*knob)
+        return (c[0], _overlap_mid(knob, ptr, 1), c[2])
+    if asset in ("conn_hold_paddle", "conn_breaker"):
+        # The part's root, on the face of the body it comes out of, at the
+        # part's own centre line.
+        moving = named[HINGES[asset]["moving"][0]]
+        c = _mid(*box(moving))
+        return (c[0], box(body)[0][1], c[2])
+    if asset == "conn_repair_seal":
+        lo, hi = box(named["seal_lever"])
+        c = _mid(lo, hi)
+        return (c[0], c[1], lo[2] + (hi[1] - lo[1]) / 2.0)
+    if asset == "conn_flag_ack":
+        # Inside the hub the blade is set into.
+        blade, hub = box(named["flag_blade"]), box(named["flag_pivot"])
+        return (_mid(*hub)[0], _overlap_mid(blade, hub, 1), _mid(*hub)[2])
+    if asset == "conn_gauge":
+        # The centre of the face the needle reads against, at the needle's
+        # own depth.
+        face = _mid(*box(named["gauge_face"]))
+        return (face[0], _mid(*box(named["gauge_needle"]))[1], face[2])
+    raise SystemExit("%s has no pivot rule" % asset)
+
+
+def _posed(obj, pivot, axis, degrees):
+    """World-space vertices of `obj` turned `degrees` about the hinge."""
+    p = mathutils.Vector(pivot)
+    turn = (mathutils.Matrix.Translation(p)
+            @ mathutils.Matrix.Rotation(math.radians(degrees), 4,
+                                        mathutils.Vector(_AXES[axis]))
+            @ mathutils.Matrix.Translation(-p))
+    return [turn @ (obj.matrix_world @ v.co) for v in obj.data.vertices]
+
+
+def _touched(moving, fixed, pivot, axis, degrees):
+    """The fixed parts the moving parts intersect at one position."""
+    def tree(verts, obj):
+        return BVHTree.FromPolygons(
+            verts, [tuple(p.vertices) for p in obj.data.polygons])
+    trees = [tree(_posed(m, pivot, axis, degrees), m) for m in moving]
+    hit = set()
+    for f in fixed:
+        other = tree([f.matrix_world @ v.co for v in f.data.vertices], f)
+        if any(t.overlap(other) for t in trees):
+            hit.add(f.name)
+    return hit
+
+
+def _positions(asset, named, body, parts, spec):
+    """Every declared position, in degrees about the hinge's own axis."""
+    if asset in _DECLARED:
+        return dict(_DECLARED[asset])
+    if asset == "conn_set_dial":
+        # One position per detent tooth, measured from the teeth: the
+        # angle that points the pointer at that tooth, as a player facing
+        # the wall sees it (runtime X right, runtime Y up).
+        def angle(obj):
+            c = _mid(*common.world_box(obj))
+            return math.degrees(math.atan2(c[2] - spec["pivot"][2],
+                                           c[0] - spec["pivot"][0]))
+        pointer = angle(named["dial_pointer"])
+        out = {}
+        for i in range(8):
+            a = (angle(named["dial_tooth_%d" % i]) - pointer + 180.0) % 360.0
+            out["detent_%d" % i] = round(a - 180.0, 3)
+        return out
+    if asset == "conn_hold_paddle":
+        # LEVEL is the arm as built. DOWN is as far as it turns down before
+        # it bears on something it does not touch when level: its own
+        # spring. The names say where the part is and nothing else. They
+        # are not an input and not a rule, and they do not settle whether
+        # this control is momentary or permanent (owner review A1, open).
+        moving = [named[n] for n in spec["moving"]]
+        fixed = [body] + [p for p in parts if p.name not in spec["moving"]]
+        rest = _touched(moving, fixed, spec["pivot"], spec["axis"], 0.0)
+        for deg in range(1, 91):
+            new = _touched(moving, fixed, spec["pivot"], spec["axis"],
+                           float(deg)) - rest
+            if new:
+                return {"level": 0.0, "down": float(deg - 1),
+                        "_meets": sorted(new)}
+        raise SystemExit("conn_hold_paddle: the paddle meets nothing in "
+                         "90 degrees, so DOWN has nothing to rest on")
+    raise SystemExit("%s has no positions" % asset)
+
+
+def assert_positions(asset, spec, body, parts):
+    """No declared position may push a part into something new.
+
+    As built, some parts already sit into what they turn in -- the paddle
+    arm 1 cm into its mount, the seal lever through its tab. That is the
+    pin. What a POSITION may not do is carry a part into anything it did
+    not touch as built, through the floor, or through the wall behind a
+    wall-mounted piece. That last one is the defect this repair exists
+    for: turned about the asset origin, the paddle went into the wall.
+    """
+    named = {p.name: p for p in parts}
+    moving = [named[n] for n in spec["moving"]]
+    fixed = [body] + [p for p in parts if p.name not in spec["moving"]]
+    rest = _touched(moving, fixed, spec["pivot"], spec["axis"], 0.0)
+    wall = common.world_box(body)[1][1] if spec["wall"] else None
+    for pose, deg in spec["positions"].items():
+        if pose.startswith("_"):
+            continue
+        hidden = set(spec.get("hides", {}).get(pose, ()))
+        new = _touched(moving, [f for f in fixed if f.name not in hidden],
+                       spec["pivot"], spec["axis"], deg) - rest
+        if new:
+            raise SystemExit(
+                "%s: at '%s' (%.1f deg) %s runs into %s, which it does not "
+                "touch as built" % (asset, pose, deg, spec["moving"],
+                                    sorted(new)))
+        verts = [v for m in moving
+                 for v in _posed(m, spec["pivot"], spec["axis"], deg)]
+        if min(v.z for v in verts) < -1e-5:
+            raise SystemExit("%s: at '%s' a moving part goes through the "
+                             "floor" % (asset, pose))
+        if wall is not None and max(v.y for v in verts) > wall + 1e-5:
+            raise SystemExit("%s: at '%s' a moving part goes %.3f m into "
+                             "the wall" % (asset, pose,
+                                           max(v.y for v in verts) - wall))
+        for name in spec.get("clear_of", ()):
+            for at in (0.0, deg):
+                if _touched(moving, [named[name]], spec["pivot"],
+                            spec["axis"], at):
+                    raise SystemExit("%s: at %.1f deg %s touches %s, which "
+                                     "it must stay clear of" % (
+                                         asset, at, spec["moving"], name))
+        for keep in spec.get("keep_readable", ()):
+            lo, hi = common.world_box(named[keep])
+            if (min(v.x for v in verts) < hi[0]
+                    and max(v.x for v in verts) > lo[0]
+                    and min(v.z for v in verts) < hi[2]
+                    and max(v.z for v in verts) > lo[2]):
+                raise SystemExit("%s: at '%s' the moving part hangs in "
+                                 "front of %s, which must stay readable"
+                                 % (asset, pose, keep))
+
+
+def _hinge(name, moving, pivot):
+    """Batch 043's `_hinge`, for a moving part made of more than one node.
+
+    An Empty AT the pivot; each moving part's vertices re-based so the
+    pivot is its local origin, and the part parented to the Empty at
+    identity. The exporter writes the Empty carrying the pivot's
+    translation and the parts as its children at identity, so rotating
+    the hinge turns them about the pin -- and the pin cannot move, because
+    rotating a transform never moves its own origin. The pivot must lie
+    INSIDE the first part: a pin the geometry does not contain is a pin in
+    the air. Call it after the UVs are projected; re-basing moves no UV.
+    """
+    empty = bpy.data.objects.new(name, None)
+    empty.empty_display_type = "PLAIN_AXES"
+    empty.empty_display_size = 0.05
+    bpy.context.collection.objects.link(empty)
+    empty.location = pivot
+    offset = mathutils.Vector(pivot)
+    for i, part in enumerate(moving):
+        world = part.matrix_world.copy()
+        for vertex in part.data.vertices:
+            vertex.co = world @ vertex.co - offset
+        part.data.update()
+        part.matrix_world = mathutils.Matrix.Identity(4)
+        part.parent = empty
+        part.matrix_parent_inverse = mathutils.Matrix.Identity(4)
+        if i:
+            continue
+        for k, axis in enumerate("XYZ"):
+            lo = min(v.co[k] for v in part.data.vertices)
+            hi = max(v.co[k] for v in part.data.vertices)
+            if not (lo - 1e-4 <= 0.0 <= hi + 1e-4):
+                raise AssertionError(
+                    "%s: the pivot is outside %s on %s (local %.4f..%.4f)."
+                    % (name, part.name, axis, lo, hi))
+    bpy.context.view_layer.update()
+    return empty
+
+
+def _to_runtime(v):
+    """Authoring Z-up -> glTF / Godot Y-up. (x, y, z) -> (x, z, -y).
+    `+ 0.0` so a zero never prints as -0.0."""
+    return [round(v[0], 5) + 0.0, round(v[2], 5) + 0.0,
+            round(-v[1], 5) + 0.0]
+
+
+#: What every hinge's position names are, said in the manifest so a
+#: consumer does not read a mechanic into a word.
+POSITIONS_ARE = ("mechanical poses: where the carried parts can sit, named "
+                 "for where they are. A name is not an input, a state or a "
+                 "rule.")
+_OPEN = {"conn_hold_paddle": " Whether this control is momentary or "
+                             "permanent is the owner's open decision (A1); "
+                             "these poses do not settle it."}
+
+
+def hinge_entry(asset, spec):
+    """What the manifest tells a runtime about one hinge."""
+    positions = {k: v for k, v in spec["positions"].items()
+                 if not k.startswith("_")}
+    entry = {
+        "node": spec["hinge"],
+        "carries": list(spec["moving"]),
+        "pivot_runtime": _to_runtime(spec["pivot"]),
+        "axis": spec["axis"],
+        "positions_degrees": positions,
+        "as_built": [k for k, v in positions.items() if v == 0.0][0],
+        "drive": "rotate the `%s` NODE about its own local %s axis to a "
+                 "declared angle. It is an empty at the pin and the parts "
+                 "it carries are its children at identity, so its origin "
+                 "is the attachment point and cannot move. Positive angles "
+                 "follow the right-hand rule about the runtime axis. Do not "
+                 "rotate the carried parts themselves."
+                 % (spec["hinge"], spec["axis"].upper()),
+        "derived": "declared by art: %s" % asset
+                   if asset in _DECLARED else "measured from the geometry",
+        "positions_are": POSITIONS_ARE + _OPEN.get(asset, ""),
+    }
+    if "_meets" in spec["positions"]:
+        entry["down_meets"] = spec["positions"]["_meets"]
+    if "hides" in spec:
+        entry["hides"] = spec["hides"]
+    return entry
+
+
 #: name, builder, checks
 ASSETS = [
     ("conn_run_elbow", conn_run_elbow, ("band",)),
@@ -562,12 +894,25 @@ def main():
         for obj in objects:
             common.uv_project_world(obj, DENSITY, SIZE)
         common.assert_parts_touch(body, parts, name)
+        spec = None
+        if name in HINGES:
+            spec = dict(HINGES[name])
+            named = {p.name: p for p in parts}
+            spec["pivot"] = _pivot(name, named, body)
+            spec["positions"] = _positions(name, named, body, parts, spec)
+            assert_positions(name, spec, body, parts)
+            hinge = _hinge(spec["hinge"], [named[n] for n in spec["moving"]],
+                           spec["pivot"])
+            first = parts.index(named[spec["moving"][0]])
+            parts = parts[:first] + [hinge] + parts[first:]
         entry = common.export_glb(body, "%s/%s.glb" % (OUT, name), "prop",
                                   tier="architecture", texture_size=SIZE,
                                   anchor="as-built", parts=parts)
         entry["parts"] = [p.name for p in parts]
         if name in COMMITMENT:
             entry["commitment"] = COMMITMENT[name]
+        if spec is not None:
+            entry["hinge"] = hinge_entry(name, spec)
         made[name] = entry
         print("[connect] %-20s %4d tris, %d part(s)"
               % (name, entry["triangles"], len(parts)))

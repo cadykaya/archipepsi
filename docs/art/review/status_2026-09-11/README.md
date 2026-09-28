@@ -29,6 +29,8 @@ thirteen the runtime actually IMPLEMENTS, this kit had drawn exactly **two**:
 today had nothing on screen to say so, and eleven of the kit's markers were
 for kinds `apply()` refuses outright with *NO STATUS BEFORE ITS EFFECT*.
 
+*(Corrected 2026-09-28: at Production's `c12a72f` the runtime implements fifteen, not thirteen. `rooted` and `anchored` were added after this was written.)*
+
 Batch 052 draws the other eleven — `slowed`, `frozen`, `shocked`,
 `poisoned`, `marked`, `stunned`, `vulnerable`, `empowered`, `low_profile`,
 `haste`, `regenerating` — so the kit now covers the whole closed vocabulary.

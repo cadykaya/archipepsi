@@ -79,6 +79,8 @@ import brushkit  # noqa: E402
 import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
+from mathutils import Vector  # noqa: E402
+from mathutils.bvhtree import BVHTree  # noqa: E402
 
 THEME = common.THEME
 OUT = "batch043/physics"
@@ -103,6 +105,13 @@ OUT = "batch043/physics"
 #: render on both grounds rather than trusting either number.
 HANDLING = "#191d23"
 DENSITY = propkit.PROP_DENSITY
+
+#: The lightened panels' OWN material, at rest (repair, 2026-09-28). This
+#: is Batch 043's `LENS_DIM`, the value its machinery gives a state node
+#: that is not lit, because that is exactly what a lightened panel is. It
+#: is not `HANDLING`: in this family bare dark metal means "the player's
+#: device touches here", and a status panel is not somewhere to touch.
+LIGHTENED_REST = "#4a5058"
 
 
 # ----------------------------------------------------------------------
@@ -777,7 +786,7 @@ def assert_grip_is_hand_scale(name, carriable, parts):
             "carriable." % (name, ", ".join(stray)))
 
 
-def _lightened_panels(shell, name):
+def _lightened_panels(shell, name, fittings):
     """Somewhere for the ONE status the runtime implements on an object.
 
     `ECHO_STATUS_SUPPORTED_TARGETS` gives `lightened` and only
@@ -794,20 +803,302 @@ def _lightened_panels(shell, name):
     nobody asked to change.
 
     ART DECLARES THE NODE; a runtime decides what lights it and when.
+
+    CLEAR OF THE FITTINGS AND SEATED ON THE BODY (repair, 2026-09-28).
+    - The owner review found nine of the twenty-two panels on or under a
+      fitting.
+    - The first repair pass found ten more badly seated: six hanging off
+      the body (the cart's partly over nothing), four exactly flush with
+      the face under them, where they z-fight.
+    Every panel now passes the same two tests where the rule first puts
+    it: `_near` (clear of every fitting) and `_defects` (seated). A panel
+    that passes both does not move by a millimetre. One that fails moves
+    the SHORTEST distance to a place that passes both, and the manifest
+    records every move and the defect it fixed.
     """
     lo, hi = common.world_box(shell)
     w = hi[0] - lo[0]
     h = hi[2] - lo[2]
     mid_x = (lo[0] + hi[0]) / 2.0
-    thick = 0.03
+    thick = PANEL_THICK
     panel = (min(0.34, w * 0.40), thick, min(0.16, max(0.04, h * 0.30)))
     at_z = lo[2] + h * 0.55
-    out = []
+    fits = [(f.name, common.world_box(f), None) for f in fittings]
+    tree = BVHTree.FromPolygons(
+        [shell.matrix_world @ v.co for v in shell.data.vertices],
+        [tuple(p.vertices) for p in shell.data.polygons])
+    out, moves = [], {}
     for i, sy in enumerate((-1.0, 1.0)):
         face = hi[1] if sy > 0.0 else lo[1]
-        out.append(_grip("lightened_panel_%d" % i, panel,
-                         (mid_x, face - sy * thick / 2.0, at_z)))
+        at = (mid_x, face - sy * thick / 2.0, at_z)
+        box = _panel_box(at, panel)
+        blocked = [n for n, fb, skip in fits
+                   if skip != "y%+d" % sy and _near(box, fb, 1, sy)]
+        defects = _defects(_measure(tree, lo, hi, at, panel, 1, sy), thick)
+        size = panel
+        if blocked or defects:
+            was = at
+            at, size, where = _nearest_seat(tree, lo, hi, fits, panel, i, sy,
+                                            at_z, mid_x, name)
+            moves["lightened_panel_%d" % i] = {
+                "was": was, "cleared": sorted(blocked), "seating": defects,
+                "face": where,
+                "narrowed": _shrink(size, panel, where)}
+        # A placed panel is an obstacle for the next one, so the two can
+        # never end up on the same spot -- EXCEPT from the directly opposite
+        # face. Two panels on either side of the girder's 5 cm web overlap
+        # only inside the web, where nothing can see them, and counting that
+        # pushed the second one 0.37 m along the beam for no visible reason.
+        tag = moves["lightened_panel_%d" % i]["face"] if (
+            "lightened_panel_%d" % i) in moves else "y%+d" % sy
+        fits.append(("lightened_panel_%d" % i, _panel_box(at, size),
+                     _OPPOSITE[tag]))
+        out.append(_grip("lightened_panel_%d" % i, size, at))
+    return out, moves
+
+
+#: The panel geometry the repair keeps, and the numbers it adds.
+PANEL_THICK = 0.03
+PANEL_CLEAR = 0.02   # the gap a panel keeps from any fitting and any edge
+PANEL_PROUD = 0.004  # off a surface, when the box face would leave it hanging
+PANEL_MIN_PROUD = 0.002  # the least a panel may stand off its surface: flush
+                         # faces z-fight, and four panels were exactly flush
+PANEL_FLAT = 0.01    # the most the seat under one panel may vary in depth
+PANEL_PITCH = 0.01   # the coarsest spacing of the rays that measure a seat
+#: Which authoring axes carry a panel's WIDTH and HEIGHT, by the axis it
+#: faces along.
+_WIDTH = {"y": 0, "x": 1, "z": 0}
+_HEIGHT = {"y": 2, "x": 2, "z": 1}
+
+
+def _shrink(size, panel, where):
+    """(width, height) as fractions of the rule's panel, or None if full."""
+    w = round(size[_WIDTH[where[0]]] / panel[0], 2)
+    h = round(size[_HEIGHT[where[0]]] / panel[2], 2)
+    return None if (w, h) == (1.0, 1.0) else {"width": w, "height": h}
+
+
+#: A placed panel is an obstacle everywhere except on the face OPPOSITE the
+#: one it is on.
+_OPPOSITE = {"y-1": "y+1", "y+1": "y-1", "x+1": "x-1", "x-1": "x+1",
+             "z+1": "z-1"}
+
+#: A face tag from `_nearest_seat`, authoring axis and sign, as the runtime
+#: names it: authoring (x, y, z) is runtime (x, -z, y).
+_RUNTIME_FACE = {"y-1": "+Z", "y+1": "-Z", "x+1": "+X", "x-1": "-X",
+                 "z+1": "+Y (top)"}
+
+
+def _move_record(move, shift):
+    """What the manifest says about a panel the repair placed."""
+    out = {"moved_from_runtime": _to_runtime(_shifted(move["was"], shift)),
+           "face_runtime": _RUNTIME_FACE[move["face"]]}
+    if move["cleared"]:
+        out["cleared"] = move["cleared"]
+    if move["seating"]:
+        out["was_seated_badly"] = move["seating"]
+    if move["narrowed"] is not None:
+        out["shrunk_to"] = move["narrowed"]
     return out
+
+
+def _panel_box(at, size):
+    return ([at[k] - size[k] / 2.0 for k in range(3)],
+            [at[k] + size[k] / 2.0 for k in range(3)])
+
+
+def _near(box, fitting, axis, sign):
+    """Does a fitting sit on, under or in front of this panel?
+
+    The panel's box grown by PANEL_CLEAR across the face and by 10 cm
+    OUTWARD, so a pad standing proud in front of a panel counts -- that is
+    the case the review found on the weighted block.
+    """
+    lo = [box[0][k] - PANEL_CLEAR for k in range(3)]
+    hi = [box[1][k] + PANEL_CLEAR for k in range(3)]
+    lo[axis], hi[axis] = box[0][axis], box[1][axis]
+    if sign > 0:
+        hi[axis] += 0.10
+    else:
+        lo[axis] -= 0.10
+    return all(fitting[0][k] < hi[k] and fitting[1][k] > lo[k]
+               for k in range(3))
+
+
+def _measure(tree, lo, hi, centre, size, axis, sign, strict=False):
+    """How far behind the box face the body is, across a panel's footprint.
+
+    Rays cast at the body from outside on a grid no coarser than
+    PANEL_PITCH (a first version cast nine, and the movable cover's 7 cm rib
+    slipped between two rows, straight through the panel). Returns the
+    depths, with None where a ray finds no body; or None when the panel
+    would not even fit on the face, PANEL_CLEAR inside its edges.
+
+    `strict` is for the search: it stops at the first ray that already
+    rules the place out (no body, a surface too near the box face to stand
+    proud of, or a spread wider than PANEL_FLAT) and returns None.
+    """
+    for k in range(3):
+        if k != axis and (centre[k] - size[k] / 2.0 < lo[k] + PANEL_CLEAR
+                          or centre[k] + size[k] / 2.0 > hi[k] - PANEL_CLEAR):
+            return None
+    face = hi[axis] if sign > 0 else lo[axis]
+    others = [k for k in range(3) if k != axis]
+    counts = [max(3, int(math.ceil(size[k] / PANEL_PITCH)) + 1)
+              for k in others]
+    # Corners and centre first: they rule most places out in five rays.
+    grid = [(ia, ib) for ia in range(counts[0]) for ib in range(counts[1])]
+    ends = [(0, 0), (0, counts[1] - 1), (counts[0] - 1, 0),
+            (counts[0] - 1, counts[1] - 1), (counts[0] // 2, counts[1] // 2)]
+    grid = ends + [g for g in grid if g not in ends]
+    direction = [0.0, 0.0, 0.0]
+    direction[axis] = -sign
+    direction = Vector(direction)
+    depths, low, high = [], None, None
+    for ia, ib in grid:
+        origin = list(centre)
+        origin[others[0]] += (-0.48 + 0.96 * ia / (counts[0] - 1)) \
+            * size[others[0]]
+        origin[others[1]] += (-0.48 + 0.96 * ib / (counts[1] - 1)) \
+            * size[others[1]]
+        origin[axis] = face + sign * 0.5
+        hit = tree.ray_cast(Vector(origin), direction, 2.0)
+        depth = None if hit[0] is None else (face - hit[0][axis]) * sign
+        if depth is not None:
+            low = depth if low is None else min(low, depth)
+            high = depth if high is None else max(high, depth)
+        if strict and (depth is None or depth < PANEL_MIN_PROUD
+                       or high - low > PANEL_FLAT):
+            return None
+        depths.append(depth)
+    return depths
+
+
+def _defects(depths, thick):
+    """What is wrong with a panel whose outer face sits ON the box face.
+
+    That is where the unrepaired rule put every panel, so this names the
+    defect at the original placement, in words the manifest keeps.
+    """
+    if depths is None:
+        return ["does not fit on the face"]
+    if any(d is None for d in depths):
+        return ["partly over no body"]
+    out = []
+    if max(depths) - min(depths) > PANEL_FLAT:
+        out.append("across uneven body (%.3f m)"
+                   % (max(depths) - min(depths)))
+    if max(depths) > thick:
+        out.append("hangs up to %.3f m off the body" % (max(depths) - thick))
+    if min(depths) < PANEL_MIN_PROUD:
+        out.append("flush with the face under it")
+    return out
+
+
+def _seat(tree, lo, hi, centre, size, axis, sign):
+    """The panel centre that seats it at `centre` across the face, or None.
+
+    SEATED means four things, all measured by `_measure`:
+      * every ray finds the body, so the panel is over the body and not
+        over air or a gap in a frame;
+      * the surface under the panel is flat to within PANEL_FLAT, so a
+        panel may cross a cast band but not straddle a rib;
+      * the panel's back touches that surface everywhere;
+      * its face stands at least PANEL_MIN_PROUD off that surface, so the
+        two never share a plane.
+    Its outer face goes on the box face, as the unrepaired rule put it,
+    whenever that meets all four; otherwise PANEL_PROUD off the surface.
+    Either way it is never proud of the box: collision is sized from it.
+    A surface ON the box face leaves no room to stand proud, so there is
+    no seat there.
+    """
+    depths = _measure(tree, lo, hi, centre, size, axis, sign, strict=True)
+    if depths is None or any(d is None for d in depths):
+        return None
+    if max(depths) - min(depths) > PANEL_FLAT:
+        return None
+    if min(depths) >= PANEL_MIN_PROUD and max(depths) <= size[axis]:
+        outer = 0.0
+    elif min(depths) - PANEL_PROUD >= 0.0:
+        outer = min(depths) - PANEL_PROUD
+    else:
+        return None
+    face = hi[axis] if sign > 0 else lo[axis]
+    seated = list(centre)
+    seated[axis] = face - sign * (outer + size[axis] / 2.0)
+    return tuple(seated)
+
+
+def _offsets(lo, hi, start, size, a, b, step=0.005):
+    """Every in-face offset of a panel on a half-centimetre grid, nearest
+    first. Ties go down before up, straight before diagonal, then +b before
+    -b, so the order is fixed and a rebuild lands the same place."""
+    spans = []
+    for k in (a, b):
+        low = lo[k] + PANEL_CLEAR + size[k] / 2.0 - start[k]
+        high = hi[k] - PANEL_CLEAR - size[k] / 2.0 - start[k]
+        spans.append(range(int(math.ceil(low / step - 1e-9)),
+                           int(math.floor(high / step + 1e-9)) + 1))
+    grid = [(i, j) for i in spans[0] for j in spans[1]]
+    grid.sort(key=lambda ij: (ij[0] * ij[0] + ij[1] * ij[1], ij[0] > 0,
+                              abs(ij[1]), -ij[1]))
+    return [(i * step, j * step) for i, j in grid]
+
+
+def _nearest_seat(tree, lo, hi, fits, panel, index, sy, at_z, mid_x, name):
+    """The shortest move that clears every fitting and seats on the body.
+
+    The order it tries:
+    - its own face, re-seated where it is first, then sliding down, up
+      and along it a half-centimetre at a time;
+    - then the side face it is nearer to turning onto (panel 0 goes to +X
+      and panel 1 to -X, so the pair stays on opposite faces);
+    - then the top, for a slab whose sides are its box;
+    - and only if every face refuses the full panel, the same again
+      SMALLER, a tenth at a time and the least area lost first, so a panel
+      on a faceted body can sit on one flat facet, and one on a banded
+      body between two bands, instead of bridging them.
+    Returns the centre, the size, and the face as a tag.
+    """
+    mid_y = (lo[1] + hi[1]) / 2.0
+    steps = (1.0, 0.9, 0.8, 0.7, 0.6, 0.5)
+    sizes = sorted(((fw, fh) for fw in steps for fh in steps),
+                   key=lambda f: (-f[0] * f[1], -f[1]))
+    for fw, fh in sizes:
+        wide, tall = panel[0] * fw, panel[2] * fh
+        faces = [
+            ("y%+d" % sy, 1, sy, (wide, panel[1], tall),
+             (mid_x, 0.0, at_z), (2, 0)),
+            ("x%+d" % -sy, 0, -sy, (panel[1], wide, tall),
+             (0.0, mid_y, at_z), (2, 1)),
+            ("z+1", 2, 1.0, (wide, tall, panel[1]),
+             (mid_x, mid_y + sy * (hi[1] - lo[1]) / 4.0, 0.0), (1, 0)),
+        ]
+        for tag, axis, sign, size, start, (a, b) in faces:
+            # EVERY offset on the face, nearest first -- including the
+            # diagonal ones. A search that slides along one axis at a time
+            # cannot reach a place that needs two moves at once: the
+            # ballast's panel has to go sideways off its pad AND down
+            # between two cast bands.
+            # Full size keeps the half-centimetre grid the first repair
+            # placed its panels on, so none of those moves. A SMALLER
+            # panel is a new placement and searches a centimetre grid,
+            # which is what keeps an exhaustive search affordable.
+            step = 0.005 if (fw, fh) == (1.0, 1.0) else 0.01
+            for da, db in _offsets(lo, hi, start, size, a, b, step):
+                centre = list(start)
+                centre[a] += da
+                centre[b] += db
+                seated = _seat(tree, lo, hi, centre, size, axis, sign)
+                if seated is None:
+                    continue
+                box = _panel_box(seated, size)
+                if not any(_near(box, fb, axis, sign)
+                           for _n, fb, skip in fits if skip != tag):
+                    return seated, size, tag
+    raise SystemExit("%s: lightened_panel_%d has no seat clear of the "
+                     "fittings on any face, even at half width"
+                     % (name, index))
 
 
 def assert_flush_with_body(shell, panels, name, tolerance=0.0005):
@@ -842,8 +1133,9 @@ def main():
         common.reset_scene()
         shell, parts, attach = build()
         assert_grip_is_hand_scale(name, carriable, parts)
+        panels, moves = [], {}
         if manipulable:
-            panels = _lightened_panels(shell, name)
+            panels, moves = _lightened_panels(shell, name, parts)
             assert_flush_with_body(shell, panels, name)
             parts = parts + panels
         shift = common.set_origin_group([shell] + parts, anchor)
@@ -865,9 +1157,17 @@ def main():
         # bodies are mostly recessed geometry in shadow.
         bare_mat = common.make_material("%s_grip" % name, HANDLING,
                                         roughness=0.95)
+        # The panels' own slot (repair, 2026-09-28). Until then they wore
+        # `bare_mat`, the family's "touch here" material, and read as more
+        # handles. Created only where there are panels, so the one object
+        # without any -- the anchor block -- exports exactly as it did.
+        lit_mat = None
+        if panels:
+            lit_mat = common.make_material("%s_lightened" % name,
+                                           LIGHTENED_REST, roughness=0.95)
         for part in parts:
             common.uv_project_world(part, DENSITY, propkit.PROP_SIZE)
-            common.assign(part, bare_mat)
+            common.assign(part, lit_mat if part in panels else bare_mat)
         common.assert_parts_touch(shell, parts, name)
         entry = common.export_glb(shell, "%s/%s.glb" % (OUT, name), "prop",
                                   tier="prop", texture_size=propkit.PROP_SIZE,
@@ -914,13 +1214,35 @@ def main():
                                    "+Z is depth; the origin is %s"
                                    % ("floor-centred, on the ground plane"
                                       if anchor == "floor" else anchor),
-            "material_roles": {"body": name, "handling": "%s_grip" % name},
+            "material_roles": dict(
+                {"body": name, "handling": "%s_grip" % name},
+                **({"lightened": "%s_lightened" % name} if panels else {})),
             "attach_points": runtime_attach,
             "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract "
                               "for object size or attachment interfaces "
                               "exists; these are not one",
             "collision": "NONE. Not derived, not shipped, not evidence.",
         })
+        if panels:
+            # Where each panel is, and -- for the ones the 2026-09-28
+            # repair moved -- where it was and which fitting it cleared.
+            entry["lightened_panels"] = {
+                "material": "%s_lightened" % name,
+                "at_rest": LIGHTENED_REST,
+                "drive": "each `lightened_panel_*` NODE owns the one "
+                         "material slot `%s_lightened`; a runtime that "
+                         "shows `lightened` overrides it there. Art "
+                         "declares the node, not what lights it."
+                         % name,
+                "panels": {
+                    p.name: dict(
+                        {"centre_runtime": _to_runtime(
+                            [(a + b) / 2.0 for a, b in
+                             zip(*common.world_box(p))])},
+                        **(_move_record(moves[p.name], shift)
+                           if p.name in moves else {}))
+                    for p in panels},
+            }
         made.append(entry)
 
     path = os.path.join(common.MODEL_DIR, OUT, "manifest.json")

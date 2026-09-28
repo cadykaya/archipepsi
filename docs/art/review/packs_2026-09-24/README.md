@@ -5,6 +5,13 @@
 **PROPOSAL. CANDIDATE PACKS — authored, not selected, not
 owner-approved.**
 
+*(Corrected 2026-09-28: where these frames say "imported and fit-checked",
+read "imported into the art lane's review scene". Nothing here was
+imported into Production's game, and `THEME_PACK_STATUS` is empty at
+`c12a72f`. The 25 September ruling accepted T01's textures as a candidate.
+For T05 it accepted the accent and calmed the floor; it gave T05 no
+candidate status.)*
+
 Three renders of **the same shell** (`shell_junction_cross`), through
 Production's own `ThemeMaterials`, with only the pack changed:
 

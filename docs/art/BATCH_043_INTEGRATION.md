@@ -38,6 +38,8 @@ git diff --stat 7ea95e2 HEAD -- assets/models/batch043 \
                                 assets/textures/batch043     # empty
 ```
 
+> **Corrected 2026-09-28: no longer empty.** Batch 053 (22 Sept) changed the physics props after `7ea95e2`. It added `lightened_panel_*` to the eleven manipulable props and renamed the cart's `grip_bar` to `push_bar`. The 2026-09-28 repair then gave those panels their own material. This document still describes `7ea95e2`; where it differs, the manifests at the current head are authoritative.
+
 One thing outside Batch 043 did move after `7ea95e2`, and it is named here
 rather than left for someone to find in a diff. Revision 3 taught the
 exporter to annotate its `size` field with the axes it is in; only Batch
@@ -131,7 +133,7 @@ unit `normal` in runtime axes, and what it proposes. Twenty-one in total:
 | `phys_drum` | `attach_hub_0/1` — end hubs on the rolling axis, `n = (±1, 0, 0)` |
 | `phys_girder` | `attach_end_a/b` — end plates, `n = (±1, 0, 0)` |
 | `phys_weighted` | `attach_push_0/1` — opposite push faces, `n = (0, 0, ±1)` |
-| `phys_cart` | `grip_bar` — a push bar at one end only, `n = (−1, 0, 0)` |
+| `phys_cart` | `grip_bar` — a push bar at one end only, `n = (−1, 0, 0)` *(Corrected 2026-09-28: named `push_bar` since Batch 053.)* |
 | `phys_movable_cover` | `attach_push_0/1` — push faces on both sides, `n = (0, 0, ±1)` |
 | `phys_ballast` | `attach_pad_0…3` — four pads, `n` on ±X and ±Z |
 | `phys_anchor_block` | `attach_eye` — the tether eye, `n = (0, 1, 0)`. The **only** fitting on the class |
@@ -148,6 +150,45 @@ Two roles per asset, in `material_roles`:
 Each fitting is **its own node with exactly one material slot**, so
 `set_surface_override_material(0, m)` on the node is enough to light it —
 which is §33.7's *"attach point available: visible marker when within 6 m"*.
+
+> **Added 2026-09-28, on the repair branch
+> `claude/archipepsi-art-repairs-2026-09-28`, not at `7ea95e2`.** The eleven
+> manipulable props now have a **third** role:
+>
+> | role | material name | what it is |
+> | --- | --- | --- |
+> | `lightened` | `<asset_id>_lightened` | the two `lightened_panel_*` nodes' own slot: flat `#4a5058` at rest, which is this batch's unlit state-node value |
+>
+> Before this repair, the panels (added in Batch 053) wore
+> `<asset_id>_grip`. That told the player a status panel was somewhere to
+> touch.
+>
+> Nine panels also moved clear of the fittings they covered:
+> - the ballast's pads;
+> - the weighted block's pads;
+> - the generic crate's grips;
+> - the mechanical part's key;
+> - the movable cover's push pads.
+>
+> The manifest's `lightened_panels` block records each move.
+> `phys_anchor_block` has no panels and is unchanged. No size, fitting,
+> mass or class moved.
+>
+> **Followed up later on 2026-09-28: every panel is now seated.** The same
+> test applies to all 22. Ten more panels were badly seated:
+> - six hung off the body (the cart's, the girder's, the power cell's);
+> - four were flush with the face under them, where they z-fight (the
+>   plate's, one of the key component's, and the mechanical part's hub
+>   end).
+>
+> The ballast's two, moved in the first pass, crossed a cast band and sat
+> flush with it.
+>
+> Each now sits on the body, flat and at least 2 mm proud of its face,
+> never proud of the collider box. Four panels (the ballast's pair and
+> the power cell's pair) had to be made smaller to fit between bands or on
+> one facet; the manifest records `shrunk_to`. Still unchanged: every size,
+> fitting, attach point, mass and class.
 
 **Reading the family.** Unpainted dark steel appears only where the player's
 device touches. A hand grip follows §10.1's **`carriable` flag**, not a mass

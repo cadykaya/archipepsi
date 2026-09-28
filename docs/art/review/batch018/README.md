@@ -36,3 +36,5 @@ two families cannot disagree about what a legal climb is. Batch 017's
 shells rebuild byte-identical after the extraction.
 
 Status: **PENDING**. Not self-marked.
+
+*(Corrected 2026-09-28: this batch has since been reviewed: **PASS**. The verdict is in `docs/art/ART_REVIEW.md`.)*

@@ -1,6 +1,8 @@
 # Batch 021-R — `arch_duct` evidence
 
 **Status: PENDING.** Evidence only. **The asset is unchanged** — no
+
+*(Corrected 2026-09-28: this batch has since been reviewed: **PASS**. The verdict is in `docs/art/ART_REVIEW.md`.)*
 geometry, no material, no dimension. The owner passed five of the six
 Batch 021 modules and held `arch_duct` for one reason: `S_services_family`
 rendered it edge-on and small beside the vent, so silhouette, construction,

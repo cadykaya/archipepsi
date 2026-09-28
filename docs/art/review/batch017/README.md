@@ -48,3 +48,5 @@ square-on and blew it white. `key_energy` is now a scene-group option
 defaulting to the old value, so nothing already shot has moved.
 
 Status: **PENDING**. Not self-marked.
+
+*(Corrected 2026-09-28: this batch has since been reviewed: **PASS**. The verdict is in `docs/art/ART_REVIEW.md`.)*

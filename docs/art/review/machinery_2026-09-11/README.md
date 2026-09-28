@@ -60,6 +60,8 @@ burns you — and teaching a player otherwise costs more than a dull-looking
 conduit ever would. The reuse is gone and no reserved colour appears in this
 kit at all.
 
+*(Corrected 2026-09-28: one frame breaks this. `MACH_switch_disagreeing.png` lights the receiver lens in hazard orange `#e8541f` (`tools/content/machinery_preview.gd:314-315`). Read that frame for the lens's position, not its colour.)*
+
 A second pass made `blocked` *dimmer* than `inactive` and measured **25.0
 against 23.9** — one L\* apart, which is nothing. It also had the semantics
 backwards. `inactive` is scenery: a conduit with no signal in it and nothing

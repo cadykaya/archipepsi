@@ -191,12 +191,66 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_ballast_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_ballast_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.3,
+            0.24324,
+            0.3624
+          ],
+          "cleared": [
+            "attach_pad_0"
+          ],
+          "face_runtime": "+Z",
+          "moved_from_runtime": [
+            0.0,
+            0.27324,
+            0.3624
+          ],
+          "shrunk_to": {
+            "height": 0.6,
+            "width": 1.0
+          },
+          "was_seated_badly": [
+            "flush with the face under it"
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            0.3,
+            0.24324,
+            -0.3624
+          ],
+          "cleared": [
+            "attach_pad_1"
+          ],
+          "face_runtime": "-Z",
+          "moved_from_runtime": [
+            0.0,
+            0.27324,
+            -0.3624
+          ],
+          "shrunk_to": {
+            "height": 0.6,
+            "width": 1.0
+          },
+          "was_seated_badly": [
+            "flush with the face under it"
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "HEAVY",
     "mass_kg": 320.0,
     "material_roles": {
       "body": "phys_ballast",
-      "handling": "phys_ballast_grip"
+      "handling": "phys_ballast_grip",
+      "lightened": "phys_ballast_lightened"
     },
     "not_changed": [
       "player physics",
@@ -282,12 +336,52 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_cart_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_cart_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.0,
+            0.384,
+            0.21391
+          ],
+          "face_runtime": "+Y (top)",
+          "moved_from_runtime": [
+            0.0,
+            0.3685,
+            0.41282
+          ],
+          "was_seated_badly": [
+            "partly over no body"
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            0.0,
+            0.384,
+            -0.21391
+          ],
+          "face_runtime": "+Y (top)",
+          "moved_from_runtime": [
+            0.0,
+            0.3685,
+            -0.41282
+          ],
+          "was_seated_badly": [
+            "partly over no body"
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "HEAVY",
     "mass_kg": 180.0,
     "material_roles": {
       "body": "phys_cart",
-      "handling": "phys_cart_grip"
+      "handling": "phys_cart_grip",
+      "lightened": "phys_cart_lightened"
     },
     "not_changed": [
       "player physics",
@@ -390,12 +484,34 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_drum_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_drum_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.0,
+            0.74602,
+            0.32684
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            0.0,
+            0.74602,
+            -0.32684
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "MEDIUM",
     "mass_kg": 70.0,
     "material_roles": {
       "body": "phys_drum",
-      "handling": "phys_drum_grip"
+      "handling": "phys_drum_grip",
+      "lightened": "phys_drum_lightened"
     },
     "not_changed": [
       "player physics",
@@ -499,12 +615,52 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_generic_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_generic_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.0,
+            0.27375,
+            0.3074
+          ],
+          "cleared": [
+            "grip_hand_0"
+          ],
+          "face_runtime": "+Z",
+          "moved_from_runtime": [
+            0.0,
+            0.34375,
+            0.3074
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            0.0,
+            0.27375,
+            -0.3074
+          ],
+          "cleared": [
+            "grip_hand_1"
+          ],
+          "face_runtime": "-Z",
+          "moved_from_runtime": [
+            0.0,
+            0.34375,
+            -0.3074
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "LIGHT",
     "mass_kg": 15.0,
     "material_roles": {
       "body": "phys_generic",
-      "handling": "phys_generic_grip"
+      "handling": "phys_generic_grip",
+      "lightened": "phys_generic_lightened"
     },
     "not_changed": [
       "player physics",
@@ -608,12 +764,52 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_girder_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_girder_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.0,
+            0.143,
+            0.014
+          ],
+          "face_runtime": "+Z",
+          "moved_from_runtime": [
+            0.0,
+            0.143,
+            0.085
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.045 m off the body"
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            0.0,
+            0.143,
+            -0.014
+          ],
+          "face_runtime": "-Z",
+          "moved_from_runtime": [
+            0.0,
+            0.143,
+            -0.085
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.045 m off the body"
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "MEDIUM",
     "mass_kg": 95.0,
     "material_roles": {
       "body": "phys_girder",
-      "handling": "phys_girder_grip"
+      "handling": "phys_girder_grip",
+      "lightened": "phys_girder_lightened"
     },
     "not_changed": [
       "player physics",
@@ -697,12 +893,43 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_key_component_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_key_component_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.1082,
+            0.12678,
+            -0.0
+          ],
+          "face_runtime": "+X",
+          "moved_from_runtime": [
+            0.0,
+            0.12678,
+            0.0826
+          ],
+          "was_seated_badly": [
+            "flush with the face under it"
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            0.0,
+            0.12678,
+            -0.0826
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "LIGHT",
     "mass_kg": 8.0,
     "material_roles": {
       "body": "phys_key_component",
-      "handling": "phys_key_component_grip"
+      "handling": "phys_key_component_grip",
+      "lightened": "phys_key_component_lightened"
     },
     "not_changed": [
       "player physics",
@@ -789,12 +1016,56 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_mechanical_part_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_mechanical_part_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.2226,
+            0.18122,
+            -0.01875
+          ],
+          "cleared": [
+            "attach_key"
+          ],
+          "face_runtime": "+X",
+          "moved_from_runtime": [
+            0.0,
+            0.18122,
+            0.14875
+          ],
+          "was_seated_badly": [
+            "flush with the face under it"
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            -0.2226,
+            0.18122,
+            -0.01875
+          ],
+          "face_runtime": "-X",
+          "moved_from_runtime": [
+            0.0,
+            0.18122,
+            -0.18625
+          ],
+          "was_seated_badly": [
+            "across uneven body (0.020 m)",
+            "flush with the face under it"
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "MEDIUM",
     "mass_kg": 55.0,
     "material_roles": {
       "body": "phys_mechanical_part",
-      "handling": "phys_mechanical_part_grip"
+      "handling": "phys_mechanical_part_grip",
+      "lightened": "phys_mechanical_part_lightened"
     },
     "not_changed": [
       "player physics",
@@ -900,12 +1171,58 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_movable_cover_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_movable_cover_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.0,
+            1.181,
+            0.034
+          ],
+          "cleared": [
+            "attach_push_0"
+          ],
+          "face_runtime": "+Z",
+          "moved_from_runtime": [
+            0.0,
+            0.946,
+            0.115
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.055 m off the body"
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            0.0,
+            1.181,
+            -0.034
+          ],
+          "cleared": [
+            "attach_push_1"
+          ],
+          "face_runtime": "-Z",
+          "moved_from_runtime": [
+            0.0,
+            0.946,
+            -0.115
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.055 m off the body"
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "HEAVY",
     "mass_kg": 220.0,
     "material_roles": {
       "body": "phys_movable_cover",
-      "handling": "phys_movable_cover_grip"
+      "handling": "phys_movable_cover_grip",
+      "lightened": "phys_movable_cover_lightened"
     },
     "not_changed": [
       "player physics",
@@ -1009,12 +1326,52 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_plate_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_plate_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.689,
+            0.07475,
+            0.13
+          ],
+          "face_runtime": "+X",
+          "moved_from_runtime": [
+            0.0,
+            0.07975,
+            0.445
+          ],
+          "was_seated_badly": [
+            "flush with the face under it"
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            -0.0,
+            0.089,
+            -0.23
+          ],
+          "face_runtime": "+Y (top)",
+          "moved_from_runtime": [
+            0.0,
+            0.07975,
+            -0.445
+          ],
+          "was_seated_badly": [
+            "flush with the face under it"
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "MEDIUM",
     "mass_kg": 60.0,
     "material_roles": {
       "body": "phys_plate",
-      "handling": "phys_plate_grip"
+      "handling": "phys_plate_grip",
+      "lightened": "phys_plate_lightened"
     },
     "not_changed": [
       "player physics",
@@ -1098,12 +1455,62 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_power_cell_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_power_cell_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.0,
+            0.2695,
+            0.10449
+          ],
+          "face_runtime": "+Z",
+          "moved_from_runtime": [
+            0.0,
+            0.2695,
+            0.155
+          ],
+          "shrunk_to": {
+            "height": 1.0,
+            "width": 0.8
+          },
+          "was_seated_badly": [
+            "across uneven body (0.017 m)",
+            "hangs up to 0.042 m off the body"
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            0.0,
+            0.2695,
+            -0.10449
+          ],
+          "face_runtime": "-Z",
+          "moved_from_runtime": [
+            0.0,
+            0.2695,
+            -0.155
+          ],
+          "shrunk_to": {
+            "height": 1.0,
+            "width": 0.8
+          },
+          "was_seated_badly": [
+            "across uneven body (0.017 m)",
+            "hangs up to 0.042 m off the body"
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "MEDIUM",
     "mass_kg": 40.0,
     "material_roles": {
       "body": "phys_power_cell",
-      "handling": "phys_power_cell_grip"
+      "handling": "phys_power_cell_grip",
+      "lightened": "phys_power_cell_lightened"
     },
     "not_changed": [
       "player physics",
@@ -1209,12 +1616,58 @@
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
     "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
+    "lightened_panels": {
+      "at_rest": "#4a5058",
+      "drive": "each `lightened_panel_*` NODE owns the one material slot `phys_weighted_lightened`; a runtime that shows `lightened` overrides it there. Art declares the node, not what lights it.",
+      "material": "phys_weighted_lightened",
+      "panels": {
+        "lightened_panel_0": {
+          "centre_runtime": [
+            0.3498,
+            0.38258,
+            -0.0
+          ],
+          "cleared": [
+            "attach_push_0"
+          ],
+          "face_runtime": "+X",
+          "moved_from_runtime": [
+            0.0,
+            0.38258,
+            0.395
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.019 m off the body"
+          ]
+        },
+        "lightened_panel_1": {
+          "centre_runtime": [
+            -0.3498,
+            0.38258,
+            -0.0
+          ],
+          "cleared": [
+            "attach_push_1"
+          ],
+          "face_runtime": "-X",
+          "moved_from_runtime": [
+            0.0,
+            0.38258,
+            -0.395
+          ],
+          "was_seated_badly": [
+            "hangs up to 0.019 m off the body"
+          ]
+        }
+      }
+    },
     "manipulable": true,
     "mass_class": "HEAVY",
     "mass_kg": 140.0,
     "material_roles": {
       "body": "phys_weighted",
-      "handling": "phys_weighted_grip"
+      "handling": "phys_weighted_grip",
+      "lightened": "phys_weighted_lightened"
     },
     "not_changed": [
       "player physics",

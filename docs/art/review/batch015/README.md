@@ -41,4 +41,6 @@ fixture inside each bay is a likelier fix than a deeper recess — depth
 costs lane width this corridor does not have.
 
 Status: **PENDING**. Whether four corridors read as four rooms is a
+
+*(Corrected 2026-09-28: this batch has since been reviewed: **PASS**. The verdict is in `docs/art/ART_REVIEW.md`.)*
 judgement, and this lane does not self-mark it.

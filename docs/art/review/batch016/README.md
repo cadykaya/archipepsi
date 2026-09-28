@@ -43,3 +43,5 @@ available: 1.00 m *is* `MAX_VERTICAL_STEP`, and a centimetre more makes it a
 trap needing a ramp.
 
 Status: **PENDING**. Not self-marked.
+
+*(Corrected 2026-09-28: this batch has since been reviewed: **PASS**. The verdict is in `docs/art/ART_REVIEW.md`.)*

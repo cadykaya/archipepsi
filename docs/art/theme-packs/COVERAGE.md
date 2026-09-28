@@ -2,6 +2,23 @@
 
 **Arty**
 
+## CORRECTION, 2026-09-28 — rows written before the 24–25 September work
+
+The coverage row for T01–T07 (§1) and the rows for `tp_ocarina_of_time`
+(T01) and `tp_kingdom_hearts_2` (T05) predate the 24–25 September
+texture work and rulings.
+- **T01** now has its own texture set, accepted as a **candidate** on
+  25 September.
+- **T05** has its own set. The ruling accepted its accent and calmed its
+  floor, but gave it no candidate status.
+- The course treatment for the other themes was **not accepted** for
+  `gothic_stone` and is **pending** for three.
+
+No pack binds until Production gives it a status, and
+`THEME_PACK_STATUS` is empty at `c12a72f`. The review frames' "imported
+and fit-checked" means imported into the art lane's review scene, not
+into the game. The rows are left as written; read them with this note.
+
 ## CORRECTION, 2026-09-24 — the blocker in §2 and §3 has been ANSWERED
 
 **D-11 was delivered on 22–23 September, after this document was

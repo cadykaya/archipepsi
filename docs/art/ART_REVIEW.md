@@ -4578,9 +4578,16 @@ branch-scale vocabulary. Candidate art, same three states. Handoff:
 | `conn_id_plaque` | 60 tris · 0.98 × 0.18 × 0.50 m · 32.0 texels/m | A09.3 | the SAME asset at both ends; `nav_blade` bolts to `blade_seat` |
 | `conn_flag_ack` | 48 tris · 0.26 × 0.46 × 0.79 m · 32.0 texels/m | A09.4 | two positions, no third, no animation |
 | `conn_breaker` | 48 tris · 0.44 × 0.34 × 0.64 m · 32.0 texels/m | A09.4 | handle position is the state; `breaker_window` shows which |
-| `conn_gauge` | 64 tris · 0.30 × 0.17 × 0.30 m · 32.0 texels/m | A09.4 | a continuous read -- and here, unlike A08.2's plate, that is right |
+| `conn_gauge` | 100 tris · 0.30 × 0.17 × 0.30 m · 32.0 texels/m | A09.4 | a continuous read -- and here, unlike A08.2's plate, that is right |
 | `conn_relay_cabinet` | 84 tris · 0.98 × 0.58 × 2.14 m · 32.0 texels/m | A09.5 | nonblocking: 0.9 m of floor, nothing to stand on |
 | `conn_service_stack` | 76 tris · 0.72 × 0.93 × 2.46 m · 32.0 texels/m | A09.5 | the generator end of the same installation |
+
+*Corrected 2026-09-28:* `conn_gauge` was 64 tris as reviewed. Its
+`gauge_bezel` was then a solid block that hid the face completely, so
+the needle turned over nothing. The bezel is now a frame the same outer
+size (0.30 × 0.05 × 0.30 m), and the face is read through its 0.20 m
+window. That is 36 more triangles; the case, face, needle, pin and sweep
+are unchanged. See `docs/art/review/repairs_2026-09-28/README.md`.
 
 **It extends Batch 043 rather than replacing it.** Every piece keeps the
 2.00 × 0.50 m run's face height and the separate `state_band`

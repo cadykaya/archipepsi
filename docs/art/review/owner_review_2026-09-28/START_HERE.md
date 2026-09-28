@@ -2,6 +2,10 @@
 
 *Arty — 2026-09-28*
 
+> *Later on 2026-09-28:* the dated corrections since `a1584c8` are in
+> [CORRECTIONS_2026-09-28.md](CORRECTIONS_2026-09-28.md), and the
+> authorised repairs are in `docs/art/review/repairs_2026-09-28/`.
+
 The unreviewed candidates (about 170 models) are grouped into roughly 30
 decisions, one per shared design choice rather than one per file. The
 existing ordinary-room library is shown beside today's rooms. Nothing is

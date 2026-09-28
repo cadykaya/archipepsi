@@ -102,6 +102,8 @@ local acknowledgments, and "how much of a deferred thing has happened"
 genuinely is a continuous reading. The two rules are not in conflict;
 they are about two different sensors, and both kits say which.
 
+*(Added 2026-09-28, on the repair branch `claude/archipepsi-art-repairs-2026-09-28`: until now the "declared positions" were only in the builder's docstrings. Each moving part now hangs from a hinge node, and the manifest's `hinge` block gives its pivot, axis and positions. See `docs/art/review/repairs_2026-09-28/`.)*
+
 ---
 
 ## 5 · A09.5 — nonblocking, and checked

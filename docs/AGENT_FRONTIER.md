@@ -147,6 +147,53 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
   library is DELIVERED; HOLD for decisions.**
   `docs/art/review/owner_review_2026-09-28/START_HERE.md`. Production was
   read at pin `c12a72f` only; nothing was promoted, bound or repaired.
+* **2026-09-28, later: the authorised repair pass is DELIVERED; HOLD for
+  the remaining visual decisions.** It is on the separate branch
+  `claude/archipepsi-art-repairs-2026-09-28`, based on `a1584c8`; the
+  handoff is `docs/art/review/repairs_2026-09-28/README.md`.
+  * **Repaired, each family separable:**
+    * the 049 hinges (`9231ce3` + `c4dbd90`);
+    * the skiff's fore/aft ends (`d48c361`);
+    * the lightened panels (`e4103ba`);
+    * dated corrections (`dc0d879`).
+  * **Status:** all still candidates. Nothing is promoted, bound or
+    integrated, and no Production file was touched.
+  * **Held with the exact conflicts recorded:**
+    * the room kits (Passing, Counterfire, Unweighted);
+    * `fx_bulwark_face`;
+    * the danger-mark presentation;
+    * the ring, statuses, packs and shells.
+* **2026-09-28, follow-up: DELIVERED; HOLD for the remaining visual
+  decisions.** Same branch; the handoff's "Follow-up" section and
+  `docs/art/reports/2026-09-28-art-repairs-followup.md`. The owner
+  accepted the families as technical progress, with no promotion and no
+  binding.
+  * Every lightened panel is seated and clear; twelve re-seated
+    (`a0f1e76`).
+  * The gauge face shows through its bezel (`9deb2c6`).
+  * The paddle's poses are `level` / `down` (`e059dd7`).
+  * The danger sheet's binding line is scoped, and the code readings are
+    labelled (`72dad0c`).
+  * `tools/verify_content_pack.sh` never writes or deletes in the
+    caller's tree (`3c2f371`), with a sentinel test on passing and
+    failing runs. Production reported the old behaviour; it was
+    reproduced only in disposable worktrees.
+* **2026-09-28, then: the repair pass is ACCEPTED as technical
+  corrections only; ε is added for "PLATFORM ε"; HOLD.**
+  * The candidate families are not accepted for normal gameplay. Visual
+    choices and runtime binding are still pending.
+  * The art check PASSES in its usual configuration (Production's
+    default local ref, `19c5d8e`). The pinned-Production run (`c12a72f`)
+    has the theme-bind harness failure. It is not a compatibility pass.
+  * Named follow-ups, not started:
+    * FU-1: theme-bind at the pin;
+    * FU-2: unsafe `_harness` runners;
+    * FU-3: the plate's wedge;
+    * FU-4: the colour convention. No library colour changes.
+  * ε, APPROVED 2026-09-28 (keep this version; Production handles the
+    shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
+    `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
+    handoff).
 * **2026-09-28: a read-only audit of what art is in the game** (asked by
   the owner): `docs/art/reports/2026-09-28-art-vs-game.md`.
   * The game loads only `godot/content`: 6 fixtures, 12 shells, the

@@ -3311,6 +3311,118 @@ separately.
 **Next: HOLD** for the owner's decisions. New approvals arrive as a
 separate owner message.
 
+### Delivered, 2026-09-28 — the authorised repair pass. STOPPED for the remaining visual decisions.
+
+The owner authorised narrow technical repairs to the documented
+objective defects. The handoff is
+`docs/art/review/repairs_2026-09-28/README.md`, on the separate branch
+`claude/archipepsi-art-repairs-2026-09-28`, based on `a1584c8`.
+
+* **Repaired, each family separable,** through the existing builders:
+  * **049:** six real hinges with declared positions
+    (`9231ce3` + `c4dbd90`);
+  * **the skiff:** `*_fore` is RailCarrier's FORWARD (`d48c361`);
+  * **the lightened panels:** their own material; the nine on fittings
+    moved clear (`e4103ba`).
+* **Dated corrections** to stale records and to my own review (`dc0d879`).
+* **Held, with the exact conflict recorded:**
+  * `fx_bulwark_face` (a candidate effect, not the approved body);
+  * the Passing carriers, whose ends conflict with the pinned room;
+  * the Counterfire and Unweighted kits and the yard anchor;
+  * the diver trail;
+  * the danger-mark presentation (geometry prepared in
+    `DANGER_MARKS.md`);
+  * the telegraph ring, statuses, packs and withheld shells.
+* **Status:** nothing promoted, bound or integrated. Every repaired asset
+  is still a candidate.
+
+*(Corrected 2026-09-28: wherever this file says "023–030 remain
+PENDING", read 023–028. 029 and 030 were revised as 036-R and 037-R, and
+both revisions passed.)*
+
+**Next: HOLD** for the owner's remaining visual decisions.
+
+### Delivered, 2026-09-28 — the repair follow-up. STOPPED for the remaining visual decisions.
+
+The owner accepted the three families as technical progress. That is
+not a promotion of their candidate art, and not a Production binding.
+Four follow-ups, each its own commit on the same repair branch.
+
+* **Every lightened panel seated and clear** (`a0f1e76`):
+  * the seat and clearance test runs on all 22 panels;
+  * twelve are re-seated: the six floating, the four coplanar, and the
+    ballast's pair;
+  * `verify_053_panels.py` asks MATERIAL, CLEAR and SEATED separately,
+    and fails the first repair's files on SEATED alone.
+* **The gauge face shows** (`9deb2c6`):
+  * the solid bezel is now a frame of the same size, and the pin and
+    travel are unchanged;
+  * the build refuses a bezel the needle touches;
+  * `verify_049_gauge.py` reads the face and needle at every degree.
+* **Docs:**
+  * the paddle's poses are `level` / `down`, mechanical names; A1 is
+    still open (`e059dd7`);
+  * the danger seam is charger and artillery only, with three code
+    readings labelled (`72dad0c`).
+* **`tools/verify_content_pack.sh`** now works in a private copy; the
+  caller's tree is never written or deleted (`3c2f371`). The test covers
+  both trees and passing and failing runs. The unsafe script ran only in
+  disposable worktrees.
+* **Found, not changed:**
+  * the plate's nose wedge slopes across the width;
+  * the linear-hex colour convention;
+  * 42 runners that clear `godot/_harness`;
+  * `run_theme_bind.sh` cannot compile Production at the pin: its
+    constants are now autoload references there. The usual art-check
+    configuration passes; the pinned run is a separate result (FU-1
+    below).
+
+**Next: HOLD** for the owner's remaining visual decisions.
+
+### 2026-09-28 — the repair pass accepted; ε added for "PLATFORM ε". HOLD.
+
+* **Accepted as complete at this review scope:**
+  * all-panel seating and clearance;
+  * the opened gauge bezel;
+  * the pose and documentation corrections;
+  * the isolated content-pack verifier.
+
+  The repaired versions and their separate commits stay, with no further
+  panel or gauge redesign. **This accepts the technical corrections, not
+  the candidate families for normal gameplay.** Visual choices and
+  runtime-binding decisions are still pending.
+* **Two verification results, never merged** (`check_art_current.sh` at
+  `3c2f371`):
+  * the usual configuration (Production's default local ref `19c5d8e`)
+    PASSES;
+  * the pinned-Production run (`c12a72f`) FAILS one gate, theme-bind
+    (FU-1).
+
+  This is **not** a current-Production compatibility pass.
+* **Named follow-ups,** recorded and not started (details in the repair
+  handoff):
+  * **FU-1:** the theme-bind harness against pinned Production;
+  * **FU-2:** the 42 remaining unsafe runners that clear `godot/_harness`;
+  * **FU-3:** the plate's `pl_nose` wedge, which slopes across the
+    width;
+  * **FU-4:** the linear-hex colour convention. The library's colours
+    are not to be changed.
+* **ε (U+03B5) in `ui_text`** (APPROVED by the owner, 2026-09-28:
+  keep this version; Production handles the shipped copy), for
+  Production's "PLATFORM ε"
+  (`chamber_builders.gd:1137` at `c12a72f`):
+  * `94f6e82` is one narrow commit: `tools/glyphui/author_text.py` plus
+    the generated pair `assets/ui/ui_text.{fnt,png}` (75 characters).
+    It cherry-picks alone onto `a1584c8` and onto Production's
+    `12a8ede1`;
+  * `1f9d5ae` holds the proof and the handoff
+    (`docs/art/review/glyph_epsilon_2026-09-28/`). The engine importer
+    PASSES, and ε is drawn by `ui_text` alone, pixel-exact at 1x and 2x;
+  * every existing character keeps its pixels and advance. Production's
+    shipped copy (`godot/content/ui/`) was not touched.
+
+**Next: HOLD** for the remaining visual decisions.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

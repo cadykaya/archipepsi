@@ -157,6 +157,14 @@ fails the asset if its height moves by more than a millimetre.
 
 ---
 
+*(Corrected 2026-09-28: in `sp_skiff_deck`, `lamp_fore` was the TRAILING
+lamp. RailCarrier's FORWARD is the node's +Z (`rail_carrier.gd:420` at
+`c12a72f`), and the builder had put `fore` at -Z. The repair branch
+`claude/archipepsi-art-repairs-2026-09-28` renames both ends. The
+geometry is unchanged. The hoist car's and crossing carrier's end
+fittings are not repaired: where they belong depends on the Passing
+room decision.)*
+
 ## 4 · Evidence
 
 `tools/content/run_setpiece_fit.sh` → `docs/art/review/setpieces_2026-09-22/fit.json`
