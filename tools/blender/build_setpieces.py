@@ -217,7 +217,15 @@ def skiff(guards=True):
                             (sx * (hx - 0.17), sy * (hy - 0.17),
                              top + 0.13), "accent", "trim"))
 
-    for end, tag in ((1.0, "fore"), (-1.0, "aft")):
+    # FORE IS RUNTIME +Z, and that is a fact about `RailCarrier`, not
+    # about Blender. `RailCarrier.pose()` sets the node's basis.z to the
+    # path tangent -- the direction of FORWARD, toward the next higher
+    # dock -- and this deck replaces `Deck` at identity, so the fore end
+    # is runtime +Z, which the exporter makes from authoring -Y. Until
+    # 2026-09-28 this loop put `fore` at authoring +Y, so `lamp_fore` was
+    # the TRAILING lamp (owner review 2026-09-28, group C, measured on
+    # the exported .glb against rail_carrier.gd:420 at c12a72f).
+    for end, tag in ((-1.0, "fore"), (1.0, "aft")):
         y = end * (hy - 0.06)
         # A SOLID LOWER PANEL, not a kick strip. Thin rails at both
         # heights read as scaffolding; a vehicle's end is a plate with a
@@ -550,6 +558,12 @@ def main():
                                   anchor=anchor, parts=parts)
         entry["parts"] = [p.name for p in parts]
         entry["origin_means"] = "RailCarrier node origin: the deck box centre"
+        if name.startswith("sp_skiff_deck"):
+            # Written down so nobody has to derive it again (2026-09-28).
+            entry["fore_is"] = ("runtime +Z of the RailCarrier node: "
+                                "RailCarrier.pose() sets basis.z to the path "
+                                "tangent, the FORWARD direction. `*_fore` "
+                                "parts are at +Z, `*_aft` at -Z.")
         made[name] = entry
         print("[setpiece] %-18s %4d tris, %d part(s)"
               % (name, entry["triangles"], len(parts)))
