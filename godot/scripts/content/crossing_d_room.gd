@@ -52,6 +52,10 @@ const SHAFT := Rect2(-9.0, -12.0, 4.0, 4.0)
 const CAGE_BOTTOM := Vector3(-7.0, 0.15, -10.0)
 const CAGE_TOP := Vector3(-7.0, 9.15, -10.0)
 const LIFT_SECONDS := 6.0
+## How long a rider stands in the cage, or a caller at a landing, before
+## the lift answers: long enough not to fire on a player walking past.
+const RIDE_BEAT := 1.0
+const CALL_BEAT := 0.6
 const TOWER_HEAD := 14.0
 ## The glass door from the Machine Hall's far side, in the hall's west
 ## wall, and the open way in from the hall to its near side.
@@ -147,9 +151,10 @@ var populated := true
 
 var lift: Actuator
 var cage: AnimatableBody3D
-var lift_lever: CallLever
-var call_bottom: CallLever
-var call_top: CallLever
+## Presence, not levers (D-17: nothing to do in the hall): the cage, and
+## each landing in front of its door.
+var cage_sensor: Area3D
+var landing_sensors: Array[Area3D] = []
 var lift_door_bottom: ServiceShutter
 var lift_door_top: ServiceShutter
 var glass_door: ServiceShutter
@@ -178,6 +183,10 @@ var powered := false
 var bridge_locked := false
 var cleared := false
 var _lift_goal := 0
+var _ride_armed := true
+var _ride_wait := 0.0
+var _call_wait := [0.0, 0.0]
+var _told_unpowered := false
 var _hall_lights: Array[OmniLight3D] = []
 var _beacon: OmniLight3D
 var _badges := {}
@@ -414,10 +423,10 @@ func _tower() -> void:
 	lift.driven = cage
 	lift.powered = false
 	add_child(lift)
-	# The ride control, on the cage: momentary, like every call control.
-	lift_lever = CallLever.make("LIFT", P.POWER, theme)
-	lift_lever.position = Vector3(1.45, 0.33, 1.45)
-	cage.add_child(lift_lever)
+	# NO LEVERS IN THE HALL (D-17 keeps them out of it): the lift answers
+	# to presence. Step into the powered cage and it rides after a beat;
+	# wait at a landing and it comes for you.
+	cage_sensor = _sensor(cage, Vector3(0, 1.3, 0), Vector3(3.4, 2.2, 3.4))
 	# Doors: each landing's opens only while the cage stands at it.
 	lift_door_bottom = ServiceShutter.create(
 			Vector3((sx0 + sx1) * 0.5, 1.6, front),
@@ -433,18 +442,16 @@ func _tower() -> void:
 	lift_door_top.name = "LiftDoorTop"
 	lift_door_top.panel_material = _mat("trim")
 	add_child(lift_door_top)
-	call_bottom = CallLever.make("CALL LIFT", P.POWER, theme)
-	call_bottom.position = Vector3(sx1 + 1.2, 0.18, front + 0.8)
-	add_child(call_bottom)
-	call_top = CallLever.make("CALL LIFT", P.POWER, theme)
-	call_top.position = Vector3(sx0 + 0.4, YARD_FLOOR + 0.18,
-			ALCOVE.position.y + 0.9)
-	add_child(call_top)
+	landing_sensors.append(_sensor(self, Vector3((sx0 + sx1) * 0.5, 1.2,
+			front + 1.3), Vector3(SHAFT.size.x, 2.4, 2.0)))
+	landing_sensors.append(_sensor(self, Vector3((sx0 + sx1) * 0.5,
+			YARD_FLOOR + 1.2, HALL.position.y - WALL - 1.2),
+			Vector3(SHAFT.size.x, 2.4, 2.0)))
 	_badges["lift"] = P.power_badge(self,
 			Vector3((sx0 + sx1) * 0.5, 3.75, front + 0.35), false, "LIFT")
 	_sign("lift", "LIFT — NO POWER", Vector3((sx0 + sx1) * 0.5, 5.0,
 			front + 0.4), 30)
-	_sign("exit_up", "EXIT ↑  UP THE LIFT, ACROSS THE YARD",
+	_sign("exit_up", "EXIT",
 			Vector3((sx0 + sx1) * 0.5, head + 1.3, front + 0.4), 30,
 			Color(0.6, 1.0, 0.7))
 	_beacon = _light(Vector3((sx0 + sx1) * 0.5, head + 0.8, front + 0.8),
@@ -473,8 +480,6 @@ func _yard_stair() -> void:
 			YARD_FLOOR + 3.4, HALL.position.y - WALL - 0.2), false, "GATE")
 	_badges["gate_hall"] = P.power_badge(self, Vector3(GATE_X.x - 0.5,
 			YARD_FLOOR + 3.4, HALL.position.y + 0.25), false, "GATE")
-	_sign("gate_hall", "GATE — OPENS FROM THE YARD SIDE",
-			Vector3(10.75, YARD_FLOOR + 4.6, -11.6), 22)
 
 
 # =========================================================== the courtyard
@@ -748,9 +753,6 @@ func _machine_hall() -> void:
 			LOCK_LEVER_AT + Vector3(0, 1.7, 0), 22, P.POWER.lightened(0.3))
 	_sign("socket", "SOCKET — POWERS THE GLASS DOOR AND THE LIFT",
 			SOCKET_AT + Vector3(0, 2.4, 0), 22, P.POWER.lightened(0.3))
-	_sign("glass_door", "DOOR — OPENS WITH THE MACHINE HALL'S POWER",
-			Vector3(HALL.position.x + 0.6, 4.4, (GLASS_DOOR_Z.x
-				+ GLASS_DOOR_Z.y) * 0.5), 20)
 	for at in [Vector3(-23.0, 7.5, 9.0), Vector3(-23.0, 7.5, -1.0),
 			Vector3(-23.0, 7.5, -11.0), Vector3(-15.0, 6.0, -9.0)]:
 		_light(at, 0.85, 14.0)
@@ -936,9 +938,6 @@ func _wire() -> void:
 	lock_lever.pulled.connect(_on_lock)
 	socket.installed.connect(_on_installed)
 	gate_lever.pulled.connect(_on_gate)
-	lift_lever.pulled.connect(_on_lift_lever.bind("ride"))
-	call_bottom.pulled.connect(_on_lift_lever.bind("bottom"))
-	call_top.pulled.connect(_on_lift_lever.bind("top"))
 	lift.stop_reached.connect(_on_lift_stop)
 	exit_door.used.connect(func() -> void: exit_used.emit())
 	for stand_in: P.StandIn in stand_ins.values():
@@ -1014,34 +1013,78 @@ func _on_gate(_lever: CallLever) -> void:
 	P.conduit_power(_lines["gate"], true)
 	P.set_power(_badges["gate"], true)
 	P.set_power(_badges["gate_hall"], true)
-	(_signs["gate_hall"] as Label3D).text = "STAIR TO THE UPPER YARD"
 	said.emit("The gate to the stair is open.")
 
 
-## LIFT CONTROL, all three levers: without power they say so and do
-## nothing; with it, both doors shut first and only then does the cage
-## move, so nobody is ever under it or in a doorway it leaves.
-func _on_lift_lever(_lever: CallLever, which: String) -> void:
+## LIFT CONTROL, by presence. Without power the cage says so to whoever
+## stands in it and nothing moves. With it: a rider who stands a beat in
+## the cage is taken to the other landing; a player who waits a beat at a
+## landing has the cage brought to them. Both doors shut first, and only
+## then does the cage move, so nobody is ever under it or in a doorway it
+## leaves; and a rider must step out before it takes them anywhere again.
+func _drive_lift(delta: float) -> void:
+	var in_cage := _player_in(cage_sensor)
 	if not powered:
-		said.emit("The lift has no power. Its line runs to the Machine Hall.")
+		if in_cage and not _told_unpowered:
+			_told_unpowered = true
+			said.emit("The lift has no power. Its line runs to the Machine Hall.")
+		elif not in_cage:
+			_told_unpowered = false
 		return
-	if lift.at_stop() < 0:
-		return                      # already travelling
 	var here := lift.at_stop()
-	var goal := here
-	match which:
-		"ride":
-			goal = 1 - here
-		"bottom":
-			goal = 0
-		"top":
-			goal = 1
-	if goal == here:
-		_open_landing(here)
+	if here >= 0 and _lift_goal != here:
+		if lift_door_bottom.is_shut() and lift_door_top.is_shut():
+			lift.select(_lift_goal)
 		return
+	if here < 0:
+		return
+	if not in_cage:
+		_ride_armed = true
+		_ride_wait = 0.0
+	elif _ride_armed:
+		_ride_wait += delta
+		if _ride_wait >= RIDE_BEAT:
+			_send(1 - here)
+			return
+	for i in 2:
+		if i != here and _player_in(landing_sensors[i]):
+			_call_wait[i] += delta
+			if _call_wait[i] >= CALL_BEAT:
+				_send(i)
+				return
+		else:
+			_call_wait[i] = 0.0
+
+
+func _send(goal: int) -> void:
 	_lift_goal = goal
+	_ride_armed = false
+	_ride_wait = 0.0
+	_call_wait = [0.0, 0.0]
 	lift_door_bottom.command(false)
 	lift_door_top.command(false)
+
+
+func _player_in(area: Area3D) -> bool:
+	for body in area.get_overlapping_bodies():
+		if body is Player:
+			return true
+	return false
+
+
+func _sensor(parent: Node3D, at: Vector3, size: Vector3) -> Area3D:
+	var area := Area3D.new()
+	area.name = "Presence"
+	area.monitoring = true
+	area.monitorable = false
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	area.add_child(shape)
+	parent.add_child(area)
+	area.position = at
+	return area
 
 
 func _on_lift_stop(index: int) -> void:
@@ -1055,17 +1098,8 @@ func _open_landing(index: int) -> void:
 
 
 func _refresh_lift_labels() -> void:
-	var here := lift.at_stop()
-	if not powered:
-		lift_lever.label = "LIFT — NO POWER"
-		call_bottom.label = "CALL LIFT — NO POWER"
-		call_top.label = "CALL LIFT — NO POWER"
-		(_signs["lift"] as Label3D).text = "LIFT — NO POWER"
-		return
-	lift_lever.label = "LIFT — DOWN" if here == 1 else "LIFT — UP"
-	call_bottom.label = "CALL LIFT"
-	call_top.label = "CALL LIFT"
-	(_signs["lift"] as Label3D).text = "LIFT — POWERED"
+	(_signs["lift"] as Label3D).text = "LIFT — STEP IN TO RIDE" if powered \
+			else "LIFT — NO POWER"
 
 
 func _on_enemy_died(_enemy: Enemy) -> void:
@@ -1088,11 +1122,8 @@ func _drop_case() -> void:
 		child.queue_free()
 
 
-func _physics_process(_delta: float) -> void:
-	# The lift waits for both doors to be shut before it moves.
-	if powered and lift.at_stop() >= 0 and _lift_goal != lift.at_stop() \
-			and lift_door_bottom.is_shut() and lift_door_top.is_shut():
-		lift.select(_lift_goal)
+func _physics_process(delta: float) -> void:
+	_drive_lift(delta)
 
 
 # ============================================================ for suites

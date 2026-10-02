@@ -256,11 +256,10 @@ func _courtyard() -> void:
 	_check(await _walk(Vector3(-7.0, 0, 6.0)), "into the hall from the arrival")
 	# The lift, before any power: a pull does nothing and says why.
 	_check(await _walk(Vector3(-7.0, 0, -6.6)), "to the lift's open door")
-	_check(await _walk(Vector3(-6.3, 0, -9.4), 0.4), "into the dark cage")
-	await _use(room.lift_lever.global_position + Vector3(0, 0.1, 0))
-	await _hold(1.5)
+	_check(await _walk(Vector3(-7.0, 0, -10.0), 0.4), "into the dark cage")
+	await _hold(2.5)
 	_check(room.lift.t == 0.0 and not room.powered,
-			"the lift lever without power: the cage stays (t = %.2f)"
+			"standing in the cage without power: nothing moves (t = %.2f)"
 			% room.lift.t)
 	_check(host._note.text.contains("no power"),
 			"and says so: \"%s\"" % host._note.text)
@@ -528,7 +527,8 @@ func _machine_hall() -> void:
 	_check(room.lift.powered and room.badge_on("lift")
 			and room.line_live("power") and room.line_live("power_hall"),
 			"the lift has power, and both lines say so")
-	_check(room.sign_text("lift") == "LIFT — POWERED", "the lift's sign agrees")
+	_check(room.sign_text("lift") == "LIFT — STEP IN TO RIDE",
+			"the lift's sign agrees")
 	var far_check: CrossingDParts.StandIn = room.stand_ins["machine_far_ledge"]
 	_check(await _walk(far_check.global_position + Vector3(1.4, 0, 0.0), 0.4),
 			"to the far ledge's Check")
@@ -562,8 +562,7 @@ func _ride_up() -> void:
 	_check(await _walk(Vector3(-7.0, 0, -6.6)), "to the lift")
 	_check(room.lift.at_stop() == 0 and room.lift_door_bottom.is_open(),
 			"the cage waits at the bottom, its door open")
-	_check(await _walk(Vector3(-6.3, 0, -9.4), 0.4), "into the cage")
-	await _use(room.lift_lever.global_position + Vector3(0, 0.1, 0))
+	_check(await _walk(Vector3(-7.0, 0, -10.0), 0.4), "into the cage")
 	for _i in 900:
 		await get_tree().physics_frame
 		if room.lift.at_stop() == 1 and room.lift_door_top.is_open():
@@ -748,7 +747,9 @@ func _fight() -> void:
 	_check(await _walk(Vector3(-2.6, room.YARD_FLOOR, -14.6), 0.5),
 			"out of the alcove over its sill")
 	var kept_in := true
+	# Into the walkers' 18 m: beside the first low wall.
 	await _walk(Vector3(3.0, room.YARD_FLOOR, -17.0), 0.6)
+	await _walk(Vector3(2.6, room.YARD_FLOOR, -22.6), 0.6)
 	# Let the roles come, and watch what they do for a few seconds.
 	for _i in 300:
 		await get_tree().physics_frame
@@ -911,9 +912,21 @@ func _shortcuts_and_exit() -> void:
 	_check(await _walk(Vector3(-3.6, 0, -10.75), 0.6), "down the stair")
 	_check(body.global_position.y < 0.5, "into the Central Hall (at %s)"
 			% _v(body.global_position))
-	_check(await _walk(Vector3(8.0, 0, -10.75), 0.6) and await _walk(
-			Vector3(10.75, room.YARD_FLOOR, -10.8), 0.6),
-			"and back up the stair: the yard without the lift")
+	# The lift, left at the top: wait at its landing and it comes down.
+	if room.powered and room.lift.at_stop() == 1:
+		_check(await _walk(Vector3(-7.0, 0, -6.2), 0.4),
+				"to the lift's landing in the hall")
+		for _i in 900:
+			await get_tree().physics_frame
+			if room.lift.at_stop() == 0 and room.lift_door_bottom.is_open():
+				break
+		_check(room.lift.at_stop() == 0 and room.lift_door_bottom.is_open(),
+				"waiting at the landing brings the cage down to the hall")
+	# Round the tower's front -- not through the lift's open door, where
+	# a player who stood a second would be taken up -- to the stair's foot.
+	_check(await _route([Vector3(-3.0, 0, -6.2), Vector3(-3.6, 0, -10.75),
+			Vector3(8.0, 0, -10.75), Vector3(10.75, room.YARD_FLOOR, -10.8)]),
+			"and back up the stair from its foot: the yard without the lift")
 	_check(await _walk(Vector3(10.75, room.YARD_FLOOR, -14.0), 0.5),
 			"through the gate")
 	_check(await _route([Vector3(11.0, room.YARD_FLOOR, -18.0),
@@ -1008,8 +1021,7 @@ func _run_past() -> void:
 		_check(false, "the run past needs the power from the quick carry")
 		return
 	await _walk(Vector3(-7.0, 0, -6.6))
-	await _walk(Vector3(-6.3, 0, -9.4), 0.4)
-	await _use(room.lift_lever.global_position + Vector3(0, 0.1, 0))
+	await _walk(Vector3(-7.0, 0, -10.0), 0.4)
 	for _i in 900:
 		await get_tree().physics_frame
 		if room.lift.at_stop() == 1 and room.lift_door_top.is_open():
