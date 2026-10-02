@@ -273,6 +273,7 @@ static func place_all(root: Node3D, chamber: Dictionary, theme: String,
 static func _placements(chamber: Dictionary, width: float,
 		depth: float) -> Array:
 	var out: Array = []
+	var taken: Array = []
 	for index in (chamber.get("features", []) as Array).size():
 		var feature: Dictionary = chamber["features"][index]
 		var tag := str(feature.get("tag", ""))
@@ -284,8 +285,79 @@ static func _placements(chamber: Dictionary, width: float,
 		var origin := resolve_position(
 				feature.get("at", [0.5, 0.5]), width, depth, tag)
 		origin.z = _clear_of_side_doors(origin.z, chamber, depth, tag)
+		if is_finite(origin.z):
+			origin = _clear_of_features(origin, tag, chamber, depth, taken)
+			taken.append(floor_of(tag, origin))
 		out.append({"index": index, "tag": tag, "origin": origin})
 	return out
+
+## The floor a feature of this tag occupies standing at `origin`, as a
+## `Rect2` in the room's own x/z: `FOOTPRINT`'s reach either side.
+static func floor_of(tag: String, origin: Vector3) -> Rect2:
+	var reach: Dictionary = FOOTPRINT.get(tag, {})
+	var half_width: float = float(reach.get("half_width", 1.2))
+	var half_depth: float = float(reach.get("half_depth", 1.2))
+	return Rect2(origin.x - half_width, origin.z - half_depth,
+			2.0 * half_width, 2.0 * half_depth)
+
+## How finely `_clear_of_features` walks a wall for a free stretch.
+const CLEAR_STEP := 0.25
+
+## NO TWO FEATURES ON ONE STRETCH OF FLOOR (HB-F4f).
+##
+## `resolve_position` reads each feature alone. The owner's zone_012
+## declared its rail and its powered door both at `[0.18, 0.3]`, and both
+## resolved onto the same stretch of the left wall: the rail's beam ran
+## through the door's opening 1.1 m up, and its note hung inside the
+## door's alcove, where a player reached it only through the door.
+##
+## So a feature whose floor would cross one already placed moves -- the
+## first declared keeps its place -- to the nearest stretch, along either
+## wall, that is clear of every feature placed before it and of an open
+## side doorway: the other side of the lane at the same point along the
+## room if that is clear, since `resolve_position`'s bounds are the same
+## on both sides. If nowhere in the room holds it clear, it stays where
+## it resolved and says so. Nothing is dropped for this: a feature that
+## is not built refuses the layout, and a Zone discarded is worse than
+## two features sharing a wall.
+static func _clear_of_features(origin: Vector3, tag: String,
+		chamber: Dictionary, depth: float, taken: Array) -> Vector3:
+	if not _crosses(taken, floor_of(tag, origin)):
+		return origin
+	var half_depth: float = float(FOOTPRINT.get(tag, {}).get(
+			"half_depth", 1.2))
+	var low := THRESHOLD_CLEARANCE + half_depth
+	var high := maxf(low, depth - THRESHOLD_CLEARANCE - half_depth)
+	var best := Vector3.INF
+	var best_away := INF
+	var steps := int(floor((high - low) / CLEAR_STEP + 0.001))
+	# The declared side first, so a tie keeps the lean the composer gave.
+	for x: float in [origin.x, -origin.x]:
+		for i in steps + 1:
+			var z := minf(low + i * CLEAR_STEP, high)
+			var away := absf(z - origin.z)
+			if away >= best_away:
+				continue
+			if _clear_of_side_doors(z, chamber, depth, tag) != z:
+				continue
+			var here := Vector3(x, origin.y, z)
+			if _crosses(taken, floor_of(tag, here)):
+				continue
+			best = here
+			best_away = away
+	if best == Vector3.INF:
+		push_warning("zone: room '%s' has no stretch of floor for its '%s' "
+				% [str(chamber.get("id", "?")), tag]
+				+ "clear of the features declared before it; it stands "
+				+ "where it resolved, across another feature's floor")
+		return origin
+	return best
+
+static func _crosses(taken: Array, box: Rect2) -> bool:
+	for raw: Variant in taken:
+		if (raw as Rect2).intersects(box):
+			return true
+	return false
 
 ## THE FLOOR EVERY FEATURE WILL OCCUPY, as `Rect2`s in the room's own
 ## x/z: `FOOTPRINT`'s reach either side of where `place_all` puts it.
@@ -305,11 +377,7 @@ static func footprints(chamber: Dictionary, width: float,
 		var origin: Vector3 = placed["origin"]
 		if not is_finite(origin.z):
 			continue
-		var reach: Dictionary = FOOTPRINT.get(str(placed["tag"]), {})
-		var half_width: float = float(reach.get("half_width", 1.2))
-		var half_depth: float = float(reach.get("half_depth", 1.2))
-		out.append(Rect2(origin.x - half_width, origin.z - half_depth,
-				2.0 * half_width, 2.0 * half_depth))
+		out.append(floor_of(str(placed["tag"]), origin))
 	return out
 
 static func _build(root: Node3D, tag: String, theme: String,

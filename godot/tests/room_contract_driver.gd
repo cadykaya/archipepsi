@@ -119,6 +119,7 @@ func _run() -> void:
 	await _test_no_prop_stands_in_an_assigned_side_doorway()
 	await _test_a_junction_keeps_what_it_owes()
 	await _test_no_prop_stands_in_a_feature()
+	await _test_no_two_features_share_a_floor()
 	await _test_a_branch_door_is_kept_for_its_branch()
 	await _test_a_blocker_is_reported_turned_with_its_body()
 	await _test_a_fight_holds_the_return()
@@ -3594,6 +3595,123 @@ func _test_no_prop_stands_in_a_feature() -> void:
 				% [certified.size(), str(runs)])
 		root.queue_free()
 		await get_tree().process_frame
+
+## NO TWO FEATURES ON ONE STRETCH OF FLOOR (HB-F4f).
+##
+## `resolve_position` placed each feature alone, and the owner's zone_012
+## declared its rail and its powered door at the same `[0.18, 0.3]`. Both
+## stood on one stretch of `c001`'s left wall: the rail's beam ran through
+## the door's opening 1.1 m up, and the rail's note hung inside the door's
+## alcove, where a player reached it only through the door
+## (`HB-F4e_rail_probe_zone_012.log`).
+##
+## TWO HALVES.
+## - A CENSUS of every ordered pair of tags, the second declared at the
+##   first's point and at the same point across the lane, across a spread
+##   of corridor sizes with and without an open side door. Two features
+##   always have somewhere clear -- the other side of the lane at the same
+##   point, if nowhere else -- so no two floors `footprints` reports may
+##   cross, and every feature `place_all` builds stands on its own.
+## - THE OWNER'S ROOM, built as the campaign composed it: the rail's floor
+##   is clear of the powered door's, and its note is not inside the
+##   door's alcove. That the door's plate still latches is
+##   `_test_no_prop_stands_in_a_feature`'s check, on the same room.
+func _test_no_two_features_share_a_floor() -> void:
+	print("  -- HB-F4f: no two features on one stretch of floor")
+	var tags: Array = AffordanceFeatures.FOOTPRINT.keys()
+	var sizes := [[7.9, 12.0], [7.9, 17.1], [8.4, 14.0], [9.5, 20.0],
+			[8.8, 16.0], [10.4, 24.0]]
+	var sides := [[["side_left", "SEALED"], ["side_right", "SEALED"]],
+			[["side_left", "USED"], ["side_right", "SEALED"]],
+			[["side_left", "SEALED"], ["side_right", "LOCKED"]]]
+	var pairs := 0
+	var crossing: Array = []
+	for size: Array in sizes:
+		for plan_sides: Array in sides:
+			var plan := [["entry", "USED"], ["exit", "USED"]]
+			plan.append_array(plan_sides)
+			for a: String in tags:
+				for b: String in tags:
+					for at_b: Array in [[0.18, 0.3], [0.82, 0.3]]:
+						var chamber := {"id": "pair", "type": "corridor",
+								"width": size[0], "length": size[1],
+								"features": [
+									{"tag": a, "at": [0.18, 0.3], "note": null},
+									{"tag": b, "at": at_b, "note": null}],
+								"doors": _doors(plan)}
+						var floors := AffordanceFeatures.footprints(chamber,
+								float(size[0]), float(size[1]))
+						if floors.size() < 2:
+							continue
+						pairs += 1
+						if (floors[0] as Rect2).intersects(floors[1] as Rect2):
+							crossing.append("%s+%s at %s in %sx%s %s: %s / %s"
+									% [a, b, str(at_b), str(size[0]),
+										str(size[1]), str(plan_sides),
+										str(floors[0]), str(floors[1])])
+	print("    %d pairs of features in %d corridor plans; %d crossing"
+			% [pairs, sizes.size() * sides.size(), crossing.size()])
+	_check(pairs > 0 and crossing.is_empty(),
+			"%d pairs of features, the second declared at the first's point "
+			% pairs + "or across the lane from it, and no two floors cross "
+			+ "(crossing: %s)" % str(crossing.slice(0, 6)))
+	# THE OWNER'S ROOM, as the campaign composed it.
+	var chamber := {"id": "c001", "zone_id": "zone_012",
+			"type": "corridor", "width": 7.9, "length": 17.1,
+			"objective": "reach_exit", "enemies": [],
+			"features": [
+				{"tag": "rail", "at": [0.18, 0.3], "note": null},
+				{"tag": "moving_platform", "at": [0.82, 0.7], "note": null},
+				{"tag": "powered_door", "at": [0.18, 0.3], "note": null}],
+			"doors": _doors([["entry", "SEALED"], ["exit", "USED"],
+				["side_left", "SEALED"], ["side_right", "SEALED"]])}
+	var floors := AffordanceFeatures.footprints(chamber, 7.9, 17.1)
+	var crossed := 0
+	for i in floors.size():
+		for j in range(i + 1, floors.size()):
+			if (floors[i] as Rect2).intersects(floors[j] as Rect2):
+				crossed += 1
+	_check(floors.size() == 3 and crossed == 0,
+			"zone_012 c001: its three features stand on three floors that "
+			+ "do not cross (%d crossing of %d)" % [crossed, floors.size()])
+	var built := ChamberBuilders.build(chamber, "temple_ruin")
+	var root: Node3D = built["root"]
+	var alcove := AABB()
+	var door_at := Vector3.INF
+	var rail_at := Vector3.INF
+	for raw: Variant in built.get("features", []):
+		var node := raw as Node3D
+		match str(node.get_meta("affordance_tag", "")):
+			"powered_door":
+				door_at = node.position
+				for child: Node in node.get_children():
+					if not child is StaticBody3D:
+						continue
+					var shape := child.get_child(0) as CollisionShape3D
+					if shape == null or not shape.shape is BoxShape3D:
+						continue
+					var size := (shape.shape as BoxShape3D).size
+					var box := AABB(node.position
+							+ (child as Node3D).position - size / 2.0, size)
+					alcove = box if alcove.size == Vector3.ZERO \
+							else alcove.merge(box)
+			"rail":
+				rail_at = node.position
+	var note_at := Vector3.INF
+	for child: Node in root.get_children():
+		if child is LocalRewardPickup \
+				and "_rail_" in (child as LocalRewardPickup).reward_id:
+			note_at = (child as Node3D).position
+	print("    zone_012 c001: rail at %s, powered door at %s, its alcove %s, "
+			% [str(rail_at), str(door_at), str(alcove)]
+			+ "the rail's note at %s" % str(note_at))
+	_check(alcove.size != Vector3.ZERO and is_finite(note_at.x)
+				and not alcove.grow(0.05).has_point(note_at),
+			"zone_012 c001: the rail's note is not inside the powered door's "
+			+ "alcove (note at %s, alcove %s)" % [str(note_at), str(alcove)])
+	root.free()
+	rooms_checked += 1
+	await get_tree().process_frame
 
 ## Every collision shape in a subtree, in tree order.
 func _collision_shapes(root: Node) -> Array:

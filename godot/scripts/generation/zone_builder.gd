@@ -1293,8 +1293,20 @@ static func _owed_exit(build: Dictionary, shape: Dictionary,
 			out.append(_world_aabb(raw as AABB, origin, yaw))
 	return out
 
-## THE ROOM THE WAY ON ARRIVES AT, in the world (HB-F4a-3): the next spine
-## room's envelope, standing straight ahead where the owed corridor ends.
+## HOW FAR AHEAD THE WAY ON IS OWED, in spine rooms (HB-F4g).
+##
+## One was HB-F4a-3's: the owner's zone_008 needed the room its owed
+## corridor arrives at. Walked further, the campaign's zone_013, zone_019
+## and zone_022 each fail one room later -- a junction arena hangs two
+## four-room branches, the way on leaves it through one short room, and
+## the branch routes wrap round just past THAT room's end, where the next
+## spine room has to stand.
+const OWED_WAY_ON_ROOMS := 2
+
+## THE ROOMS THE WAY ON ARRIVES AT, in the world (HB-F4a-3, HB-F4g): the
+## next `OWED_WAY_ON_ROOMS` spine rooms' envelopes, each standing
+## straight ahead where the owed corridor before it ends, with the
+## corridor between them.
 ##
 ## The corridor alone was not enough. The owner's zone_008 routes eight
 ## rooms round `c011` before the spine goes on; they kept its 10 m of owed
@@ -1302,29 +1314,51 @@ static func _owed_exit(build: Dictionary, shape: Dictionary,
 ## `c016`, 13.2 m deep, had to stand -- and no pose the ladder tried was
 ## clear of them. Owed on the corridor's terms: a preference the plain
 ## search can drop, so no Zone that laid out before can stop laying out.
-## The room is built only to be measured, and freed at once.
-static func _owed_next_room(next_chamber: Dictionary, theme: String,
-		build: Dictionary, shape: Dictionary, origin: Vector3,
-		yaw: float) -> Array:
-	if next_chamber.is_empty():
-		return []
-	var next := ContentInstantiator.build_chamber(next_chamber, theme)
-	var bounds: AABB = next.get("bounds", AABB())
-	var entry: Vector3 = next.get("entry_offset", RoomContract.LEGACY_ENTRY)
-	var built: Variant = next.get("root")
-	if built is Node:
-		(built as Node).free()
-	# The owed corridor's end, walked exactly as `_exit_reservation` lays
-	# its rungs.
-	var at: Vector3 = build.get("exit_offset", Vector3.ZERO)
-	var declared := float(build.get("exit_yaw", 0.0))
-	var turn := deg_to_rad(declared) \
-			if RoomContract.EXIT_YAWS.has(declared) else 0.0
-	for _k in RESERVED_CONNECTORS:
-		at += _rot(turn, shape["exit_offset"] as Vector3)
-	var room_yaw := yaw + turn
-	return [_world_aabb(bounds, origin_for(origin + _rot(yaw, at), room_yaw,
-			entry), room_yaw)]
+## Each room is built only to be measured, and freed at once.
+static func _owed_way_on(spine_list: Array, at_index: int,
+		chamber_by_id: Dictionary, theme: String, build: Dictionary,
+		shape: Dictionary, origin: Vector3, yaw: float) -> Array:
+	var out: Array = []
+	var from := {"exit_offset": build.get("exit_offset", Vector3.ZERO),
+			"exit_yaw": build.get("exit_yaw", 0.0)}
+	var from_origin := origin
+	var from_yaw := yaw
+	for k in range(1, OWED_WAY_ON_ROOMS + 1):
+		if at_index < 0 or at_index + k >= spine_list.size():
+			break
+		var chamber: Dictionary = chamber_by_id.get(
+				str(spine_list[at_index + k]), {})
+		if chamber.is_empty():
+			break
+		# The corridor into a room further on than the next: the first
+		# one is the spine's own owed exit (`_owed_exit`), already owed.
+		if k > 1:
+			out.append_array(_owed_exit(from, shape, from_origin,
+					from_yaw))
+		var next := ContentInstantiator.build_chamber(chamber, theme)
+		var bounds: AABB = next.get("bounds", AABB())
+		var entry: Vector3 = next.get("entry_offset",
+				RoomContract.LEGACY_ENTRY)
+		var built: Variant = next.get("root")
+		if built is Node:
+			(built as Node).free()
+		# The owed corridor's end, walked exactly as `_exit_reservation`
+		# lays its rungs.
+		var at: Vector3 = from["exit_offset"]
+		var declared := float(from["exit_yaw"])
+		var turn := deg_to_rad(declared) \
+				if RoomContract.EXIT_YAWS.has(declared) else 0.0
+		for _k in RESERVED_CONNECTORS:
+			at += _rot(turn, shape["exit_offset"] as Vector3)
+		var room_yaw := from_yaw + turn
+		var room_origin := origin_for(from_origin + _rot(from_yaw, at),
+				room_yaw, entry)
+		out.append(_world_aabb(bounds, room_origin, room_yaw))
+		from = {"exit_offset": next.get("exit_offset", Vector3.ZERO),
+				"exit_yaw": next.get("exit_yaw", 0.0)}
+		from_origin = room_origin
+		from_yaw = room_yaw
+	return out
 
 ## THE BRIDGING CONNECTOR A QUEUED BRANCH WILL LAY (HB-F4c), in the world:
 ## the box in front of its parent's socket, computed exactly as the branch
@@ -2288,17 +2322,16 @@ static func _build_once(zone: Dictionary, theme_override := "",
 		# the whole subtree is placed, a branch's branch included.
 		var spine_owed := [] if replaying \
 				else _owed_exit(result, shape, origin, yaw)
-		# AND THE ROOM IT ARRIVES AT (HB-F4a-3), when there are branches to
-		# route round this room at all: their routes kept the corridor
-		# clear and wrapped round just past its end, where the next spine
-		# room has to stand.
+		# AND THE ROOMS IT ARRIVES AT (HB-F4a-3, HB-F4g), when there are
+		# branches to route round this room at all: their routes kept the
+		# corridor clear and wrapped round just past its end, where the
+		# next spine room has to stand -- and, past a short one, where the
+		# room after it does.
 		if not replaying and not pending.is_empty():
 			var spine_list: Array = graph.get("spine", [])
-			var at_index := spine_list.find(spine_id)
-			if at_index >= 0 and at_index + 1 < spine_list.size():
-				spine_owed.append_array(_owed_next_room(
-						chamber_by_id.get(str(spine_list[at_index + 1]), {}),
-						theme, result, shape, origin, yaw))
+			spine_owed.append_array(_owed_way_on(spine_list,
+					spine_list.find(spine_id), chamber_by_id, theme,
+					result, shape, origin, yaw))
 		# AND EVERY DOOR STILL OWED A BRANCH (HB-F4c). A room's declared
 		# branch doors were kept clear of what already stood when the
 		# room was placed (`_socket_reservations`), and of nothing placed

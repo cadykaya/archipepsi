@@ -1,0 +1,156 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  OWED c018 off c006 via side_right: routed after 1 pose(s)
+  OWED c019 off c018 via side_left: routed after 1 pose(s)
+  OWED c010 off c008 via side_left: routed after 1 pose(s)
+  OWED c014 off c008 via side_right: routed after 1 pose(s)
+  OWED c011 off c010 via side_left: routed after 1 pose(s)
+  OWED c012 off c010 via side_right: routed after 1 pose(s)
+  OWED c015 off c014 via side_left: routed after 1 pose(s)
+  OWED c016 off c014 via side_right: routed after 26 pose(s)
+  OWED c021 off c012 via side_right: routed after 19 pose(s)
+  OWED c022 off c016 via side_left: routed after 5 pose(s)
+  DIAG spine c013: cursor=(154.049988, 4.590000, -124.260010) yaw=270 room=(6.800000, 5.500000, 6.800000) entry=(0.000000, 0.000000, 0.000000)
+       budget=80 poses tested=6 corners entered=0
+       first pose overlaps rooms: ["c015(platform_path)"]
+       overlaps placed[33/52] at (141.049988, -35.410000, -152.410004) size (8.000000, 49.549999, 33.099991); shared (1.800003, 5.500000, 6.800003)
+       first pose box (147.249985, 3.590000, -127.660011) size (6.800003, 5.500000, 6.800003)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=false link_fits=false
+       step 6 room_fits=false link_fits=false
+       step 7 room_fits=false link_fits=false
+       step 8 room_fits=false link_fits=false
+       step 9 room_fits=true link_fits=true
+  OWED c018 off c006 via side_right: routed after 1 pose(s)
+  OWED c019 off c018 via side_left: routed after 1 pose(s)
+  OWED c010 off c008 via side_left: routed after 1 pose(s)
+  OWED c014 off c008 via side_right: routed after 1 pose(s)
+  OWED c011 off c010 via side_left: routed after 1 pose(s)
+  OWED c012 off c010 via side_right: routed after 1 pose(s)
+  OWED c015 off c014 via side_left: routed after 1 pose(s)
+  OWED c016 off c014 via side_right: routed after 26 pose(s)
+  OWED c021 off c012 via side_right: routed after 19 pose(s)
+  OWED c022 off c016 via side_left: routed after 5 pose(s)
+  DIAG spine c013: cursor=(154.049988, 4.590000, -129.260010) yaw=270 room=(6.800000, 5.500000, 6.800000) entry=(0.000000, 0.000000, 0.000000)
+       budget=80 poses tested=6 corners entered=0
+       first pose overlaps rooms: ["c015(platform_path)"]
+       overlaps placed[33/53] at (141.049988, -35.410000, -152.410004) size (8.000000, 49.549999, 33.099991); shared (1.800003, 5.500000, 6.799995)
+       first pose box (147.249985, 3.590000, -132.660004) size (6.800003, 5.500000, 6.799995)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=false link_fits=false
+       step 6 room_fits=false link_fits=false
+       step 7 room_fits=false link_fits=false
+       step 8 room_fits=false link_fits=false
+       step 9 room_fits=true link_fits=true
+  OWED c018 off c006 via side_right: routed after 1 pose(s)
+  OWED c019 off c018 via side_left: routed after 1 pose(s)
+  OWED c010 off c008 via side_left: routed after 1 pose(s)
+  OWED c014 off c008 via side_right: routed after 1 pose(s)
+  OWED c011 off c010 via side_left: routed after 1 pose(s)
+  OWED c012 off c010 via side_right: routed after 1 pose(s)
+  OWED c015 off c014 via side_left: routed after 1 pose(s)
+  OWED c016 off c014 via side_right: routed after 26 pose(s)
+  OWED c021 off c012 via side_right: routed after 19 pose(s)
+  OWED c022 off c016 via side_left: routed after 5 pose(s)
+  DIAG spine c013: cursor=(149.049988, 4.590000, -124.260010) yaw=270 room=(6.800000, 5.500000, 6.800000) entry=(0.000000, 0.000000, 0.000000)
+       budget=80 poses tested=3 corners entered=0
+       first pose overlaps rooms: ["c015(platform_path)"]
+       overlaps placed[33/53] at (141.049988, -35.410000, -152.410004) size (8.000000, 49.549999, 33.099991); shared (6.800003, 5.500000, 6.800003)
+       first pose box (142.249985, 3.590000, -127.660011) size (6.800003, 5.500000, 6.800003)
+       step 0 room_fits=false link_fits=false
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=false link_fits=false
+       step 6 room_fits=false link_fits=false
+       step 7 room_fits=false link_fits=false
+       step 8 room_fits=true link_fits=true
+  OWED c018 off c006 via side_right: routed after 1 pose(s)
+  OWED c019 off c018 via side_left: routed after 1 pose(s)
+  OWED c010 off c008 via side_left: routed after 1 pose(s)
+  OWED c014 off c008 via side_right: routed after 1 pose(s)
+  OWED c011 off c010 via side_left: routed after 1 pose(s)
+  OWED c012 off c010 via side_right: routed after 1 pose(s)
+  OWED c015 off c014 via side_left: routed after 1 pose(s)
+  OWED c016 off c014 via side_right: routed after 28 pose(s)
+  OWED c021 off c012 via side_right: routed after 19 pose(s)
+  OWED c022 off c016 via side_left: routed after 5 pose(s)
+  DIAG spine c013: cursor=(149.049988, 4.590000, -129.260010) yaw=270 room=(6.800000, 5.500000, 6.800000) entry=(0.000000, 0.000000, 0.000000)
+       budget=81 poses tested=3 corners entered=0
+       first pose overlaps rooms: ["c015(platform_path)"]
+       overlaps placed[34/54] at (141.049988, -35.410000, -157.410004) size (8.000000, 49.549999, 33.099991); shared (6.800003, 5.500000, 6.799995)
+       first pose box (142.249985, 3.590000, -132.660004) size (6.800003, 5.500000, 6.799995)
+       step 0 room_fits=false link_fits=false
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=false link_fits=false
+       step 6 room_fits=false link_fits=false
+       step 7 room_fits=false link_fits=false
+       step 8 room_fits=true link_fits=true
+  OWED c018 off c006 via side_right: routed after 1 pose(s)
+  OWED c019 off c018 via side_left: routed after 1 pose(s)
+  OWED c010 off c008 via side_left: routed after 1 pose(s)
+  OWED c014 off c008 via side_right: routed after 1 pose(s)
+  OWED c011 off c010 via side_left: routed after 1 pose(s)
+  OWED c012 off c010 via side_right: routed after 1 pose(s)
+  OWED c015 off c014 via side_left: routed after 1 pose(s)
+  OWED c016 off c014 via side_right: routed after 1 pose(s)
+  OWED c021 off c012 via side_right: routed after 19 pose(s)
+  OWED c022 off c016 via side_left: routed after 1 pose(s)
+  DIAG spine c013: cursor=(149.049988, 4.590000, -134.260010) yaw=270 room=(6.800000, 5.500000, 6.800000) entry=(0.000000, 0.000000, 0.000000)
+       budget=82 poses tested=3 corners entered=0
+       first pose overlaps rooms: ["c015(platform_path)"]
+       overlaps placed[35/51] at (141.049988, -35.410000, -162.410004) size (8.000000, 49.549999, 33.099991); shared (6.800003, 5.500000, 6.799988)
+       first pose box (142.249985, 3.590000, -137.660004) size (6.800003, 5.500000, 6.799988)
+       step 0 room_fits=false link_fits=false
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=true link_fits=true
+  OWED c018 off c006 via side_right: routed after 1 pose(s)
+  OWED c019 off c018 via side_left: routed after 1 pose(s)
+  OWED c010 off c008 via side_left: routed after 1 pose(s)
+  OWED c014 off c008 via side_right: routed after 1 pose(s)
+  OWED c011 off c010 via side_left: routed after 1 pose(s)
+  OWED c012 off c010 via side_right: routed after 1 pose(s)
+  OWED c015 off c014 via side_left: routed after 1 pose(s)
+  OWED c016 off c014 via side_right: routed after 1 pose(s)
+  OWED c021 off c012 via side_right: routed after 19 pose(s)
+  OWED c022 off c016 via side_left: routed after 1 pose(s)
+  DIAG spine c013: cursor=(142.649994, 4.590000, -140.660004) yaw=270 room=(6.800000, 5.500000, 6.800000) entry=(0.000000, 0.000000, 0.000000)
+       budget=82 poses tested=3 corners entered=0
+       first pose overlaps rooms: ["c015(platform_path)"]
+       overlaps placed[37/53] at (134.649994, -35.410000, -168.809998) size (8.000000, 49.549999, 33.099991); shared (6.800003, 5.500000, 6.799988)
+       first pose box (135.849991, 3.590000, -144.059998) size (6.800003, 5.500000, 6.799988)
+       step 0 room_fits=false link_fits=false
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=true link_fits=true
+  OWED c018 off c006 via side_right: routed after 1 pose(s)
+  OWED c019 off c018 via side_left: routed after 1 pose(s)
+  OWED c010 off c008 via side_left: routed after 1 pose(s)
+  OWED c014 off c008 via side_right: routed after 1 pose(s)
+  OWED c011 off c010 via side_left: routed after 1 pose(s)
+  OWED c012 off c010 via side_right: routed after 1 pose(s)
+  OWED c015 off c014 via side_left: routed after 1 pose(s)
+  OWED c016 off c014 via side_right: routed after 1 pose(s)
+  OWED c021 off c012 via side_right: routed after 19 pose(s)
+  OWED c022 off c016 via side_left: routed after 1 pose(s)
+  DIAG spine c013: cursor=(142.649994, 4.590000, -145.660004) yaw=270 room=(6.800000, 5.500000, 6.800000) entry=(0.000000, 0.000000, 0.000000)
+       budget=83 poses tested=3 corners entered=0
+       first pose overlaps rooms: ["c015(platform_path)"]
+       overlaps placed[38/54] at (134.649994, -35.410000, -173.809998) size (8.000000, 49.549999, 33.099991); shared (6.800003, 5.500000, 6.799988)
+       first pose box (135.849991, 3.590000, -149.059998) size (6.800003, 5.500000, 6.799988)
+       step 0 room_fits=false link_fits=false
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=true link_fits=true
+godot exit 0
+RESULT: room 'c013' could not be placed clear of the 54 room(s) before it
