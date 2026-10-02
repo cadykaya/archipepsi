@@ -33,5 +33,32 @@ for dir in "$WIN" "$LIN"; do
 	(cd "$dir" && sha256sum -- * > SHA256SUMS.txt)
 done
 (cd "$OUT/windows" && rm -f "../$NAME-windows.zip" && zip -qr "../$NAME-windows.zip" "$NAME")
+# THE SAME WINDOWS FOLDER IN TWO PARTS, for a channel that will not carry
+# the one zip (the chat's upload limit; Wisp's studies went the same way).
+# The executable is cut in two and joined by a script that checks the
+# joined size and starts the game. The cut sits at 44%: the engine's code
+# compresses worse than the game's pack behind it, so the two zips come
+# out about the same size.
+SPLIT="$OUT/windows-split/$NAME"
+rm -rf "$OUT/windows-split"
+mkdir -p "$SPLIT"
+cp -- "$WIN"/* "$SPLIT"/
+EXE="$SPLIT/Archipepsi-Crossing-D.exe"
+SIZE=$(stat -c %s "$EXE")
+CUT=$((SIZE * 44 / 100))
+head -c "$CUT" "$EXE" > "$EXE.part1"
+tail -c +"$((CUT + 1))" "$EXE" > "$EXE.part2"
+rm "$EXE"
+JOIN="1 - Join the game, run once (Windows).bat"
+sed "s/@SIZE@/$SIZE/g" "$ROOT/tools/crossing_d/$JOIN" > "$SPLIT/$JOIN"
+(cd "$OUT/windows-split" && rm -f "../$NAME-windows-part1of2.zip" \
+	"../$NAME-windows-part2of2.zip" \
+	&& zip -q -9 "../$NAME-windows-part1of2.zip" \
+		"$NAME/Archipepsi-Crossing-D.exe.part1" "$NAME/$JOIN" \
+		"$NAME/Play Crossing D - no enemies (Windows).bat" \
+		"$NAME/Archipepsi-Crossing-D.console.exe" "$NAME/README.txt" \
+		"$NAME/SHA256SUMS.txt" \
+	&& zip -q -9 "../$NAME-windows-part2of2.zip" \
+		"$NAME/Archipepsi-Crossing-D.exe.part2")
 (cd "$OUT/linux" && rm -f "../$NAME-linux.zip" && zip -qr "../$NAME-linux.zip" "$NAME")
 ls -l "$OUT"/*.zip

@@ -5,6 +5,11 @@ no bridge, no campaign, nothing of yours is saved or changed.
 
 PLAY (Windows)
   1. Unzip into a new, empty folder.
+     IF THE BUILD CAME IN TWO PARTS (part1of2 and part2of2 zips): unzip
+     BOTH into that same new folder, then double-click
+       "1 - Join the game, run once (Windows).bat"
+     once. It joins the two parts into Archipepsi-Crossing-D.exe, checks
+     its size, and starts the game.
   2. Double-click  Archipepsi-Crossing-D.exe
      That is the whole Crossing, the Upper Yard's fight included.
      "Play Crossing D - no enemies (Windows).bat" is the same four rooms

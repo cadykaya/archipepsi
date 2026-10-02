@@ -8,10 +8,16 @@ concourse-pier branch (`6e357390`), which sits on CK14 `17b76098`.*
 
 ## How to play it (Windows)
 
-1. Unzip `Archipepsi-Crossing-D-review-<revision>-windows.zip` into a
-   **new, empty folder**.
-2. Double-click **`Archipepsi-Crossing-D.exe`**. That is the whole
-   Crossing, with the Upper Yard's fight.
+The build comes in **two parts**, because the one zip (37.8 MiB) is over
+the chat's upload limit; Wisp's studies were delivered the same way.
+
+1. Download `...-windows-part1of2.zip` and `...-windows-part2of2.zip`.
+   Unzip **both** into the same **new, empty folder**.
+2. Double-click **`1 - Join the game, run once (Windows).bat`** once.
+   - It joins the two parts into `Archipepsi-Crossing-D.exe`, checks its
+     exact size, and starts the game.
+   - From then on, double-click **`Archipepsi-Crossing-D.exe`**. That is
+     the whole Crossing, with the Upper Yard's fight.
    - `Play Crossing D - no enemies (Windows).bat` runs the same four
      rooms with the Upper Yard empty. This is the first step of Dess's
      two-step order.
@@ -74,6 +80,7 @@ they send nothing.
 |---|---|
 | `Archipepsi-Crossing-D.exe` (double-click) | Started with no import step and was still running at 50 s. The engine chose Vulkan Forward+ (on software Vulkan here). The log shows the Crossing's start-up line ("populated yard; isolated"). It rendered the arrival with the HUD and the objective line, and the play timer advanced (screenshots at 20, 35 and 50 s). **0 connection attempts.** |
 | `Play Crossing D - no enemies (Windows).bat` (double-click) | Same, with the start-up line "empty yard". **0 connection attempts.** |
+| **The two-part delivery, as sent** | Both zips were unzipped into one new folder whose path has spaces, and the join script was double-clicked. The joined executable is byte-identical to the one tested above (SHA-256 `b0f7f4e7…`). The parts were removed and the game started. A second double-click of the executable, and the no-enemies launcher, each started it again. **0 connection attempts.** |
 | The live checks, under Wine | The Windows executable itself, from a fresh unzip, ran headless under Wine with the scripted run (`tools/crossing_review_probe.py --wine`). It played the whole route by real input: **137 checks** with the fight and **105** with the Yard empty, all passing. The Yard's three enemies were put down at baseline numbers in 18 s of play. **0 connection attempts.** The player's three files were byte-identical afterwards. |
 
 The only engine errors in these logs are two lines saying Windows audio
@@ -406,4 +413,10 @@ Crossing's own host, rooms, check and export presets.
 - a hand-played session.
 
 **How to rebuild it:** `tools/crossing_d/package.sh <output folder>`.
-It needs Godot 4.5.1's free export templates in the template folder.
+It writes the one Windows zip, the same build in two parts, and the
+Linux zip. It needs Godot 4.5.1's free export templates in the template
+folder.
+
+The parts sent are the tested `0cf577c6` executable, cut in two. Only
+the README and the no-enemies launcher were refreshed, so the launcher
+now says "join first" if the game is not joined yet.
