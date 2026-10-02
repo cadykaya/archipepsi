@@ -3423,6 +3423,23 @@ Four follow-ups, each its own commit on the same repair branch.
 
 **Next: HOLD** for the remaining visual decisions.
 
+### Delivered, 2026-10-02 — the combined Crossing's readability kit (Batch 063). STOPPED.
+
+It's on `claude/archipepsi-art-crossing-kit-2026-10-02`, review pending.
+Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
+* **What it is:** a floor lever on two hinges, a raceway (run, inside,
+  outside, turn, terminal) and three accent strips.
+* **How it was built:** every part at 32 texels/m, and the rebuild is
+  byte-identical.
+* **The owner's interaction meanings** are recorded in `ART_BIBLE.md`
+  with their overlaps against the locked palette. No library colour
+  changed.
+* **Not done:** a landmark or room dressing, for lack of Dess's brief;
+  integration, which is Prod's; audio, which is Wisp's.
+
+**Next: STOP** until the owner decides the palette questions and the
+Crossing brief exists.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

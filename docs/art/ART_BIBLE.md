@@ -145,6 +145,33 @@ is **reserved for telegraphs**, so a windup is the only orange an enemy ever
 shows. Orange trim on an enemy body spends the one colour that has to mean
 "an attack is coming" on decoration.
 
+### Owner ruling, 2026-10-02: interaction meanings (recorded, not yet reconciled)
+
+> "Locked visual meanings: Orange: destructible objects, including enemies.
+> Blue: movement features. Green: electrical power. Yellow-and-black:
+> hazards."
+
+The text above this note is the earlier lock, kept as the record. This
+ruling overlaps it, measured against `assets/art_palette.json` at the hexes
+the owner played (Wisp's `interaction_palette.gd`):
+
+| New meaning | Hex | Nearest locked role (hue distance) |
+|---|---|---|
+| power (green) | `#55e078` | `identity` (Epsilon), 30°; `signal`, 39°. Both are inside this section's 45° rule. |
+| destructible (orange) | `#f48a36` | `hazard` ("this will hurt you"), 11° |
+| hazards (yellow and black) | `#f4cf46` | `send` (the Check's beam), 3° |
+| movement (blue) | `#3266ee` | `signal`, 49° |
+
+Batch 063 applies the new meanings **kit-locally**. No library colour has
+changed (FU-4).
+
+Three questions are open for the owner:
+- What colour is Epsilon now?
+- Does the Check's yellow beam stay?
+- Does `signal` teal still mean "you can use this"?
+
+*Arty — 2026-10-02*
+
 ---
 
 ## 1. The target, stated so it can be failed
