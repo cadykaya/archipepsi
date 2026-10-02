@@ -194,6 +194,15 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-02: the combined Crossing's readability kit (Batch 063) is
+  DELIVERED; STOP.** It's on `claude/archipepsi-art-crossing-kit-2026-10-02`:
+  a floor lever, a power raceway and three accent strips, under the owner's
+  2026-10-02 colour meanings applied kit-locally.
+  * Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
+  * Proposal: not integrated. No bespoke pieces until Dess's Crossing
+    brief exists.
+  * Flagged for the owner: the meanings overlap the locked palette
+    (`ART_BIBLE.md`), and Wisp's stairs use a stale wall texture.
 * **2026-09-28: a read-only audit of what art is in the game** (asked by
   the owner): `docs/art/reports/2026-09-28-art-vs-game.md`.
   * The game loads only `godot/content`: 6 fixtures, 12 shells, the
