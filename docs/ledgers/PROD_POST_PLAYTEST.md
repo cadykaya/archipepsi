@@ -6780,3 +6780,67 @@ every launch except this playtest's.
   unpacked tree (PASS), and both launcher modes. No shipped file
   changed.
 - Not played by hand, and not run on Windows.
+
+## Crossing D review build (owner brief, 2026-10-02)
+
+**The brief:** the playable side of ONE small combined Crossing. Knot's
+connected, open exploration; Playground's grapple, launch pads and rails;
+and purposeful, clearly communicated puzzle interactions. Each room is
+budgeted around its main activity. The first combat comparison is at
+existing HP and damage.
+- Reuse what exists. Review Wisp's repairs rather than copying the
+  prototype.
+- Preserve AP identity and progression.
+- No mandatory dash, Forge, economy, generator rewrite or new major
+  systems.
+- Work on a separate branch. Check Dess's and Arty's deliverables before
+  depending on them, and flag conflicts.
+- Spend $0. Do not merge or release.
+- Deliver a runnable review build with a fresh-folder Windows launch
+  check, then stop.
+
+**Teammates' deliverables, checked through the remote:**
+- **Dess's room brief D-17** arrived on the 0.4 head (`a266d5da`, 05:50
+  UTC) while the review was under way. It is the room spec built here.
+- **Arty's bounded visual kit** had no push. The build uses existing
+  production art only.
+
+**Where it is:**
+- Branch `wip/crossing-d-review`, on the concourse branch `6e357390`.
+- Commits `c1dea387` (the rooms and the isolation), `433c83a1` (presets,
+  packaging, draft report), `8c295c48` (the lift by presence, the hall's
+  signs), `1dafb24f` (the release console wrapper) and `0cf577c6` (the
+  start-up line to stderr).
+- The build is `0cf577c6`.
+
+**Shared code** (inert unless `--crossing-d`, or the export's
+`crossing_review` feature, is present):
+- The four isolation guards (`BridgeClient._ready`,
+  `PlayerSettings.save_to_disk`, `Favourites._save` and
+  `EquipmentSeen._save`) ask `ReviewIsolation.active()`, the concourse
+  playtest or Crossing D, instead of `RoomPlaytest.requested()`.
+- `main.gd` gains the scenario branch before `boot()`.
+- The Makefile gains `godot-crossing-d`.
+- `test_ci_coverage.NOT_A_SUITE` names it, with its reason.
+
+**Verified:**
+- **Suites** at `433c83a1` (later commits touch only the Crossing's own
+  files):
+  - `make test`: 2313 passed.
+  - Green: boot, chambers, integration, menu-shell (45), reload (20),
+    concourse-pier and crossing-d.
+- **The live check** passes 137 checks (populated) and 105 (empty Yard).
+  It ran in the source tree, in the exported Linux build, and in the
+  Windows executable under Wine. Each build was unpacked from its zip
+  into a fresh folder whose path has a space.
+- **Isolation**, on all three: 0 connection attempts to a stand-in
+  bridge. The player's three files were byte-identical, and the control
+  connects.
+- **The documented Windows double-click, under Wine 9.0**, for both the
+  executable and the no-enemies `.bat`:
+  - it starts with no import step;
+  - Vulkan Forward+;
+  - still running at 50 s;
+  - screenshots taken;
+  - 0 connections.
+- **Not played by hand, and not run on Windows.**

@@ -193,6 +193,15 @@ func _ready() -> void:
 		switch.disconnected = "--disconnected" in user_args
 		add_child(switch)
 		return
+	# CROSSING D, THE REVIEW BUILD (D-17), by name or as the exported
+	# review executable (`crossing_review`), for the reasons above: four
+	# authored rooms, not a Zone, no campaign -- and `BridgeClient` has
+	# already declined to connect (`ReviewIsolation`).
+	if CrossingD.requested():
+		add_child(CrossingD.new())
+		if CrossingDCheck.requested():
+			add_child(CrossingDCheck.new())
+		return
 	boot()
 	# THE STAGE 3A SHOWCASE, and only when an operator asks for it by
 	# name. Without `--playtest3a` this branch does nothing at all and
