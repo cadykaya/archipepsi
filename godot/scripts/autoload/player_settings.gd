@@ -160,9 +160,9 @@ func apply_bindings() -> void:
 # is not a fact about a multiworld.
 
 func save_to_disk() -> void:
-	# An isolated playtest reads the player's settings but never writes
-	# them (`RoomPlaytest`): a change there lasts for that session only.
-	if RoomPlaytest.requested():
+	# An isolated review build reads the player's settings but never
+	# writes them (`ReviewIsolation`): a change lasts for that session only.
+	if ReviewIsolation.active():
 		return
 	var config := ConfigFile.new()
 	for name: String in values:

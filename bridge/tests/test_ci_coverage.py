@@ -63,7 +63,14 @@ NOT_A_SUITE = {"godot-import", "godot-integration",
                # minutes. It lives on the playtest's review branch and is
                # run by hand; the room is `pending` and ordinary Zones
                # never build it.
-               "godot-concourse-pier"}
+               "godot-concourse-pier",
+               # THE SAME, FOR CROSSING D'S REVIEW BUILD (owner brief,
+               # 2026-10-02; Dess's D-17 rooms). `godot-crossing-d` holds
+               # the bridge's port with a stand-in listener while both
+               # yards' live checks play the four rooms, a few minutes;
+               # it lives on the review branch and is run by hand. The
+               # Crossing is not a Zone and no campaign builds it.
+               "godot-crossing-d"}
 
 
 #: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the

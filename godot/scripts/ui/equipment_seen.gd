@@ -75,8 +75,8 @@ static func _load() -> void:
 
 
 static func _save() -> void:
-	# Read, never written, by an isolated playtest (`RoomPlaytest`).
-	if RoomPlaytest.requested():
+	# Read, never written, by an isolated review build (`ReviewIsolation`).
+	if ReviewIsolation.active():
 		return
 	if not _persist:
 		return

@@ -48,14 +48,15 @@ func _ready() -> void:
 	# connection and takes what is legitimately delivered while the pause
 	# interface is open; snapshots, notifications and refusals still arrive.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	# THE CONCOURSE-PIER PLAYTEST NEVER CONNECTS, and it is decided here,
+	# AN ISOLATED REVIEW BUILD NEVER CONNECTS -- the concourse-pier
+	# playtest and Crossing D (`ReviewIsolation`) -- and it is decided here,
 	# before any socket exists: an autoload is ready before the main scene
 	# runs a line. A campaign bridge left running on this machine must not
 	# hear its exits, timings or kills, nor push a snapshot that moves the
 	# player. So nothing is opened and `_process` (the retry) never runs:
 	# `online` stays false and every intent takes the ordinary offline
 	# path, dropped with a warning. Every other launch is unchanged.
-	if RoomPlaytest.requested():
+	if ReviewIsolation.active():
 		isolated = true
 		set_process(false)
 		return
