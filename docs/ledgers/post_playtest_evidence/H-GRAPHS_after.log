@@ -1,0 +1,124 @@
+# godot-signal-verbs on the final runtime, 2026-09-25T16:09:42Z
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- THE HELD ROUTE (D-07): a plate driving a shutter
+     GDScript backtrace (most recent call first):
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 23)
+  ok: with nothing on the plate the shutter is shut
+  ok: HOLD_SIGNAL on the empty plate opens the shutter (applied)
+  ok: and the plate itself still reads empty: its verified value is OFF (false)
+  ok: after its 3.0s the verb expires and the shutter shuts again (standing 1, then 0)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  ok: INVERT on the shutter's own input opens it too (applied)
+     GDScript backtrace (most recent call first):
+  ok: and it shuts when that expires (standing 1 before)
+  -- THE LATCHED ROUTE: plate -> LATCH -> shutter
+     GDScript backtrace (most recent call first):
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 23)
+  ok: HOLD_SIGNAL on the plate never sets the recorded LATCH (N-15): latched [], announced [], shutter shut true
+  ok: HOLD_SIGNAL on the shutter's input holds the way open (applied)
+  ok: and when it expires the way shuts, with nothing recorded (latched [], announced [])
+  ok: a LATCH cannot take HOLD_SIGNAL (§14.3), and nothing changed: held (LATCH) cannot take HOLD_SIGNAL (§14.3)
+  ok: a LATCH cannot take INVERT (§14.3), and nothing changed: held (LATCH) cannot take INVERT (§14.3)
+     GDScript backtrace (most recent call first):
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 23)
+  ok: a rebuilt room carries no verb and no latch it did not earn (standing 0)
+  -- EX50-033: plate -> NOT, bolt -> LATCH, OR -> shutter
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: with the crate parked, the plate is unloaded and the shutter open
+  ok: INVERT on the NOT turns it over: the shutter shuts (applied)
+  ok: and opens again when the verb expires (standing 1 before)
+  ok: the crate on the plate holds the shutter shut
+  ok: BRIDGE from the plate into the OR: the crate that holds the shutter shut now holds it open (applied)
+  ok: and the bridge comes down when it expires: shut again (standing 1 before)
+  ok: a BRIDGE from the OR back into the NOT would close a cycle, and is refused with nothing changed (§19.7): a BRIDGE from open to unloaded would close a cycle (§19.7)
+  ok: a LATCH is no BRIDGE's destination, nor a shutter's input its source (§14.3): bolt (LATCH) cannot be a BRIDGE's destination (§14.3) / shutter (ACTUATOR) cannot be a BRIDGE's source (§14.3)
+  ok: HOLD_SIGNAL on the bolt lever never throws the bolt (N-15): bolted false, announced []
+  ok: the real lever still throws the bolt, once (["bolt"])
+  ok: CUT on the thrown bolt reports it OFF: the shutter shuts (applied)
+  ok: and the record is untouched: still thrown, announced once, verified ON
+  ok: when the CUT expires the thrown bolt holds the way open again (standing 1 before)
+  -- EX50-021: receiver -> TIMER (8 s), release -> LATCH, OR
+  ok: at rest, no window and no release: the shutter is shut
+  ok: a TIMER cannot take INVERT (§14.3): window (TIMER) cannot take INVERT (§14.3)
+  ok: HOLD_SIGNAL on the TIMER opens the window (applied)
+  ok: and holds it past the TIMER's own eight seconds
+  ok: then the hold expires and the window shuts (standing 1 before)
+  ok: PROBE reveals the release LATCH -- its value, its input, its predicate -- and changes nothing ({ "id": "release", "kind": "LATCH", "value": false, "verified": false, "verb": "", "inputs": [{ "id": "release_lever", "value": false }], "predicate": "LATCH, not set" })
+  ok: an unknown verb, a duration of 0 and a node that is not there are refused: ["\'SHOUT\' is not a signal verb", "a signal verb lasts a positive number of seconds", "\'no_such_node\' is not part of minor\'s machine"]
+GODOT SIGNAL VERBS OK (32 checks, 0 notes)

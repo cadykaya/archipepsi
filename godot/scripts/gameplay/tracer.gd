@@ -32,5 +32,7 @@ static func spawn(parent: Node, from: Vector3, to: Vector3, color: Color,
 		var up := Vector3.UP if absf(dir.dot(Vector3.UP)) < 0.99 \
 				else Vector3.RIGHT
 		tracer.look_at_from_position(tracer.global_position, to, up)
-	var timer := tracer.get_tree().create_timer(lifetime)
+	# PAUSES WITH THE WORLD (H-PAUSE): a SceneTree timer runs through a
+	# pause unless it is told not to.
+	var timer := tracer.get_tree().create_timer(lifetime, false)
 	timer.timeout.connect(tracer.queue_free)

@@ -1,0 +1,106 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+p3a: room c001       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c006       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_passing_platforms mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_002 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  ok: zone_002 hosts EX50-011: ["c025:Chamber_c025", "c024:Chamber_c024"]
+  -- c025 (Chamber_c025), as built, nothing operated
+  ok: c025 holds its Check
+  NOTE: c025: 7210 standable cells, 5814 reached from the arrival with the base kit, 0 claim the Check (547 ms)
+  ok: c025: the census walks the room (5814 cells reached)
+  ok: c025: NO CLAIM BEFORE THE ROOM IS SOLVED -- 0 reached cell(s) claim the Check, in the hosted room's own frame: []
+  ok: c025: control -- from beside the Check (eye (56.200001, 37.400002, 121.099998)) the same test claims it
+  -- c025: what the room says
+  ok: c025: each of its 13 controls reads as what it does, e.g. ["[E] CALL SHUTTLE EAST -- TO THE GALLERY", "[E] CALL SHUTTLE WEST", "[E] HOLD SHUTTLE WHERE IT IS"]; wrong: []
+  ok: c025: nothing prints an order of operations (22 signs and labels read; any that do: [])
+  ok: c025: the gate says what opens it: ["GALLERY GATE\nOPEN WHILE THE SHUTTLE IS DOCKED"]
+  ok: c025: G is glass on its three open sides, with its gate where the shuttle docks and its stair cut still closed: ["WestSouth", "WestNorth", "OverGate", "North", "SouthWest", "SouthEast", "StairCut"]
+  ok: c025: the Check is in sight from the arrival, through nothing but glass (through ["GalleryGate"])
+  -- c025: G, as built, from the arrival
+  ok: c025: G is NOT reached from the arrival with the base kit, the room as built (5814 cells reached; on G: [])
+  NOTE: c025: 0 shelf cell(s) reached from the arrival as built
+  -- c025: the shuttle opens the gallery
+  ok: c025: as built, the shuttle at its west berth and the gallery gate shut
+     GDScript backtrace (most recent call first):
+  ok: c025: 'CALL SHUTTLE EAST' pulled at A's board; the shuttle crossed to G in 14.4 s, and the gate stayed shut all the way (most open 0.00)
+  ok: c025: docked at G, the gate opens (1.6 s)
+  ok: c025: with the shuttle docked and the gate open, nothing the base kit reaches from the arrival claims the Check (5817 cells reached; claims from: [])
+  ok: c025: 'CALL SHUTTLE WEST' pulled at A's board; the shuttle left G and the gate shut behind it (1.6 s)
+     GDScript backtrace (most recent call first):
+  ok: c025: and the shuttle is back at its west berth, the room as built
+  -- c025: an arrival anywhere on G releases the way back
+     GDScript backtrace (most recent call first):
+  ok: c025: the first arrival on G releases the service stair (at (13.250000, 4.000000, -0.350000), 2.6 m from the old goal plate; arrivals that did not: [])
+  ok: c025: and the stair, signed ["STAIR DOWN TO ARRIVAL"] at its head, walks back down to A ((13.000000, 0.000000, -9.600000))
+  -- c025: the gate never shuts on a body
+     GDScript backtrace (most recent call first):
+  ok: c025: the shuttle called back to G from A's board, the stair climbed, and the player standing in the open gate ((11.700000, 4.000000, 0.900000))
+  ok: c025: 'SEND SHUTTLE WEST' pulled on G from the doorway; the shuttle left and the gate was refused its closure 4 time(s), never below 1.00 open, costing 0 health and moving the player 0.00 m
+  ok: c025: stepping out onto G, the gate shuts behind the shuttle
+  -- c025: the gate comes back with its shuttle
+  ok: c025: restored docked at G, the gate is open in the same frame; restored at the west berth, it is shut (true, true)
+p3a: room c001       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c006       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_passing_platforms mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_002 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  -- c025: movement assistance, the room as built (V-10)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  NOTE: c025 mobility: 27132 blinks (11395 moved), 18 flights, 2 arrived on G (by blink 0, double jump 0, grapple 2)
+  NOTE: c025: after the sweep the stair is released, by an arrival on G
+  ok: c025: V-10 -- no blink, double jump or grapple puts the Check in claim reach from anywhere but G (27132 blinks (11395 moved), 18 flights, 2 arrived on G (by blink 0, double jump 0, grapple 2)); off-G claims: []
+GODOT PASSING HOSTED OK (24 checks, 4 notes)
+rc=0

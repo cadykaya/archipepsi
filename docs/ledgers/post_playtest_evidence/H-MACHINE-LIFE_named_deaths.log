@@ -1,0 +1,99 @@
+# the lifecycle run naming each enemy death and its last seconds.
+# Filtered: 270 lines of per-build 'p3a:' selection census and engine WARNING/backtrace lines (the offline bridge's dropped intents) removed.
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  LEFT (candidate round 1): c006/melee#0@537827226039 melee from (-76.181465, 1.530941, 105.430771) in c006, now (-76.438232, -0.635726, 104.313362) in none, post (-75.940002, 1.530000, 105.600006)
+      0.21s (-76.200005, 1.500000, 105.400002) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      0.47s (-76.400002, 1.500000, 105.200005) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      0.72s (-76.400002, 1.500000, 104.900002) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      0.97s (-76.400002, 1.500000, 104.700005) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      1.21s (-76.400002, 1.200000, 104.500000) job=patrol ret=false floor=false dead=false player=(0.0, 0.0, 1.6)
+      1.46s (-76.400002, -0.600000, 104.300003) job=patrol ret=false floor=false dead=false player=(0.0, 0.0, 1.6)
+  LEFT (passing round 2): c023/scuttler#1@1539393467811 scuttler from (20.102530, 34.555721, 213.490036) in none, now (18.691511, 28.455721, 213.747528) in none, post (20.336252, 36.670002, 213.376251)
+      0.19s (20.100000, 34.600002, 213.500000) job=patrol ret=false floor=false dead=false player=(0.0, 0.0, 1.6)
+      0.45s (19.400000, 32.299999, 213.600006) job=patrol ret=false floor=false dead=false player=(0.0, 0.0, 1.6)
+      0.69s (18.700001, 28.500000, 213.699997) job=patrol ret=false floor=false dead=false player=(0.0, 0.0, 1.6)
+
+  -- AT THE HUB, after each round (round 1 is the fresh one)
+    Main._zone_defeats                           base 0  1  2  2  2  2
+    Main._zone_resume                            base 0  2  2  2  2  2
+    ProcTextures._cache                          base 0  2  2  2  2  2
+    ThemeMaterials._cache                        base 4  10  10  10  10  10
+    ThemePack._cache                             base 4  10  10  10  10  10
+    Tones._enemy_cache                           base 0  1  1  1  1  1
+    objects                                      base 2954  3020  3020  3020  3020  3020
+    resources                                    base 234  238  238  238  238  238
+    (42 more counters read the same every time; the nodes: 578  578  578  578  578)
+
+  -- IN CANDIDATE, after its operations, each round
+    Main._zone_defeats                           0  1  2  2  2
+    Main._zone_resume                            0  2  2  2  2
+    nodes                                        5710  5747  5747  5747  5747
+    objects                                      12745  12806  12808  12806  12808
+    (55 more counters read the same every time; the nodes: 5710  5747  5747  5747  5747)
+
+  -- IN PASSING, after its operations, each round
+    Main._zone_defeats                           1  1  2  2  2
+    Main._zone_resume                            1  2  2  2  2
+    group damageable                             88  87  87  87  87
+    group enemies                                27  26  26  26  26
+    nodes                                        6074  6063  6063  6063  6063
+    objects                                      13453  13431  13431  13426  13427
+    (52 more counters read the same every time; the nodes: 6074  6063  6063  6063  6063)
+  ok: the readings are live: the candidate Zone holds 5710 nodes, the Hub 578
+  ok: at the Hub, rounds 2-5: every counter reads what round 2 read (50 counters)
+FAIL: in candidate, rounds 2-5: every counter reads what round 2 read (59 counters): objects [12806, 12808, 12806, 12808]; Main._zone_defeats [1, 2, 2, 2]
+FAIL: in passing, rounds 2-5: every counter reads what round 2 read (58 counters): objects [13431, 13431, 13426, 13427]; Main._zone_defeats [1, 2, 2, 2]
+
+  -- WHAT THE OPERATIONS DID IN CANDIDATE, each round
+    round 1: {"by type":{"enemy_defeated":1,"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":["@CharacterBody3D@4702 member 'c006/melee#0' died at (-78.350479, -30.155714, 103.517113) (room none), 16.9 s in"],"pulls":1,"respawned":2,"sent":5,"state changes":1,"verdict":"ACCEPTED"}
+    round 2: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 3: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 4: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 5: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+  ok: candidate, round 1: the layout is accepted (ACCEPTED)
+  ok: candidate, round 1: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 1: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 2: the layout is accepted (ACCEPTED)
+  ok: candidate, round 2: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 2: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 3: the layout is accepted (ACCEPTED)
+  ok: candidate, round 3: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 3: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 4: the layout is accepted (ACCEPTED)
+  ok: candidate, round 4: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 4: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 5: the layout is accepted (ACCEPTED)
+  ok: candidate, round 5: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 5: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 3 sends what round 2 sent: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1} (round 2: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1})
+  ok: candidate, round 4 sends what round 2 sent: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1} (round 2: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1})
+  ok: candidate, round 5 sends what round 2 sent: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1} (round 2: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1})
+
+  -- WHAT THE OPERATIONS DID IN PASSING, each round
+    round 1: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 2: {"by type":{"carrier_rested":4,"enemy_defeated":1,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":["@CharacterBody3D@19335 member 'c023/scuttler#1' died at (16.325794, -30.444298, 214.179260) (room none), 54.3 s in"],"pulls":1,"respawned":2,"sent":8,"state changes":1,"verdict":"ACCEPTED"}
+    round 3: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 4: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 5: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+  ok: passing, round 1: the layout is accepted (ACCEPTED)
+  ok: passing, round 1: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 1: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 2: the layout is accepted (ACCEPTED)
+  ok: passing, round 2: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 2: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 3: the layout is accepted (ACCEPTED)
+  ok: passing, round 3: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 3: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 4: the layout is accepted (ACCEPTED)
+  ok: passing, round 4: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 4: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 5: the layout is accepted (ACCEPTED)
+  ok: passing, round 5: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 5: 1 lever pull(s) sent 1 zone_state_selected
+FAIL: passing, round 3 sends what round 2 sent: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1} (round 2: 8 {"carrier_rested":4,"enemy_defeated":1,"layout_result":1,"room_entered":1,"zone_state_selected":1})
+FAIL: passing, round 4 sends what round 2 sent: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1} (round 2: 8 {"carrier_rested":4,"enemy_defeated":1,"layout_result":1,"room_entered":1,"zone_state_selected":1})
+FAIL: passing, round 5 sends what round 2 sent: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1} (round 2: 8 {"carrier_rested":4,"enemy_defeated":1,"layout_result":1,"room_entered":1,"zone_state_selected":1})
+  ok: the candidate has a zone-state lever to pull (1)
+GODOT MACHINE LIFE TESTS: 5 failures in 41 checks
+make: *** [Makefile:1416: godot-machine-life] Error 1

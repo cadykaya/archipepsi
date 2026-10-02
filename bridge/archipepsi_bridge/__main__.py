@@ -84,8 +84,24 @@ def main() -> None:
              "composed. Retired families stay in the schema and any "
              "Zone already holding one still plays. Use a separate save "
              "slot; the diagnostic launcher's --quiet does.")
+    parser.add_argument(
+        "--candidate", default=None, metavar="STEPS",
+        help="OPT-IN CANDIDATE GENERATION PROFILE (O05-13): after each "
+             "Zone's graph is composed and proved, run the supported "
+             "relationship composers on it -- 'all', or a comma list of "
+             "zone_state, transport, latched_route, minors, and the option "
+             "consumables (the consumable slot, offered to this profile's "
+             "Echo requests only). Each step emits or declines "
+             "by name (logged, and recorded under <save dir>/candidate/). "
+             "Off by default: without this flag every Zone is composed "
+             "exactly as it always was. Use a separate save slot.")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
+    from .candidate import parse as parse_candidate
+    try:
+        candidate_steps = parse_candidate(args.candidate)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
@@ -98,7 +114,8 @@ def main() -> None:
         provider_name=provider_name,
         save_dir=args.save_dir,
         archive_dir=args.archive_dir,
-        quiet_generation=args.quiet_generation)
+        quiet_generation=args.quiet_generation,
+        candidate_steps=candidate_steps)
     server = BridgeServer(engine, ap_default=args.ap,
                           mock_config=MOCK_SCALES[args.mock_scale],
                           **({} if args.port is None
@@ -209,6 +226,18 @@ def _quiet_line(args) -> str:
             "unaffected)\n")
 
 
+def _candidate_line(engine) -> str:
+    """Said out loud when on, silent when off, like `_quiet_line`."""
+    steps = getattr(engine, "candidate_steps", ())
+    options = getattr(engine, "candidate_options", ())
+    if not steps and not options:
+        return ""
+    return ("    generation  CANDIDATE PROFILE (opt-in): "
+            + ", ".join(steps + options) + "\n"
+            "                each step emits or declines per Zone; see "
+            "<save dir>/candidate/\n")
+
+
 def _announce(engine, server, provider_name: str, args) -> None:
     """Four lines, before the event loop starts.
 
@@ -242,6 +271,7 @@ def _announce(engine, server, provider_name: str, args) -> None:
         f"    epsilon     {epsilon}\n"
         f"    saves       {save_dir}\n"
         f"{_quiet_line(args)}"
+        f"{_candidate_line(engine)}"
         f"{_zone_line(args, provider_name)}",
         flush=True)
     if not save_dir.exists():

@@ -1,0 +1,120 @@
+# first run, on the runtime before the legality trim and the merge refinement
+HG-1 [signal_graph.gd] a recorded LATCH set from the live track (a verb sets it)
+    CAUGHT -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: HOLD_SIGNAL on the bolt lever never throws the bolt (N-15): bolted true, announced ["bolt"]
+      FAIL: HOLD_SIGNAL on the plate never sets the recorded LATCH (N-15): latched ["held"], announced ["held"], shutter shut false
+      FAIL: and when it expires the way shuts, with nothing recorded (latched ["held"], announced ["held"])
+HG-2 [signal_graph.gd] §14.3 ignored: a TIMER takes INVERT
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a TIMER cannot take INVERT (§14.3): 
+HG-3 [signal_graph.gd] a BRIDGE that closes a cycle is not refused
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a BRIDGE from the OR back into the NOT would close a cycle, and is refused with nothing changed (§19.7): 
+      FAIL: a LATCH is no BRIDGE's destination, nor a shutter's input its source (§14.3): bolt (LATCH) cannot be a BRIDGE's destination (§14.3) / shutter (ACTUATOR) cannot be a BRIDGE's source (§14.3)
+HG-4 [signal_graph.gd] a verb never expires
+    CAUGHT -- 16 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CUT on the thrown bolt reports it OFF: the shutter shuts (applied)
+      FAIL: HOLD_SIGNAL on the bolt lever never throws the bolt (N-15): bolted false, announced []
+      FAIL: PROBE reveals the release LATCH -- its value, its input, its predicate -- and changes nothing ({ "id": "release", "kind": "LATCH", "value": false, "verified": false, "verb": "", "inputs": [{ "id": "release_lever", "value": false }], "predicate": "LATCH, not set" })
+      FAIL: a BRIDGE from the OR back into the NOT would close a cycle, and is refused with nothing changed (§19.7): a BRIDGE from open to unloaded would close a cycle (§19.7)
+      FAIL: a LATCH cannot take HOLD_SIGNAL (§14.3), and nothing changed: held (LATCH) cannot take HOLD_SIGNAL (§14.3)
+      FAIL: a LATCH cannot take INVERT (§14.3), and nothing changed: held (LATCH) cannot take INVERT (§14.3)
+      FAIL: a LATCH is no BRIDGE's destination, nor a shutter's input its source (§14.3): bolt (LATCH) cannot be a BRIDGE's destination (§14.3) / shutter (ACTUATOR) cannot be a BRIDGE's source (§14.3)
+      FAIL: after its 3.0s the verb expires and the shutter shuts again (standing 1, then 1)
+      FAIL: an unknown verb, a duration of 0 and a node that is not there are refused: ["\'SHOUT\' is not a signal verb", "a signal verb lasts a positive number of seconds", "\'no_such_node\' is not part of minor\'s machine"]
+      FAIL: and it shuts when that expires (standing 2 before)
+      FAIL: and opens again when the verb expires (standing 1 before)
+      FAIL: and the bridge comes down when it expires: shut again (standing 2 before)
+      FAIL: and when it expires the way shuts, with nothing recorded (latched [], announced [])
+      FAIL: the crate on the plate holds the shutter shut
+      FAIL: then the hold expires and the window shuts (standing 1 before)
+      FAIL: when the CUT expires the thrown bolt holds the way open again (standing 3 before)
+HG-5 [signal_graph.gd] a BRIDGE carries nothing into its destination
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: BRIDGE from the plate into the OR: the crate that holds the shutter shut now holds it open (applied)
+HG-6 [signal_graph.gd] CUT on a latch clears the record
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and the record is untouched: still thrown, announced once, verified ON
+      FAIL: when the CUT expires the thrown bolt holds the way open again (standing 1 before)
+HG-7 [signal_graph.gd] the verified track reads the verbs too
+    CAUGHT -- 4 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: HOLD_SIGNAL on the bolt lever never throws the bolt (N-15): bolted true, announced ["bolt"]
+      FAIL: HOLD_SIGNAL on the plate never sets the recorded LATCH (N-15): latched ["held"], announced ["held"], shutter shut false
+      FAIL: and the plate itself still reads empty: its verified value is OFF (true)
+      FAIL: and when it expires the way shuts, with nothing recorded (latched ["held"], announced ["held"])
+HG-8 [signal_graph.gd] PROBE changes the machine
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: PROBE reveals the release LATCH -- its value, its input, its predicate -- and changes nothing ({ "id": "release", "kind": "LATCH", "value": false, "verified": false, "verb": "CUT", "inputs": [{ "id": "release_lever", "value": false }], "predicate": "LATCH, not set" })
+      FAIL: an unknown verb, a duration of 0 and a node that is not there are refused: ["\'SHOUT\' is not a signal verb", "a signal verb lasts a positive number of seconds", "\'no_such_node\' is not part of minor\'s machine"]
+HG-9 [signal_graph.gd] §14.3 ignored: a LATCH takes HOLD_SIGNAL
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a LATCH cannot take HOLD_SIGNAL (§14.3), and nothing changed: 
+      FAIL: a LATCH cannot take INVERT (§14.3), and nothing changed: held (LATCH) cannot take INVERT (§14.3)
+
+9 of 9 sabotages caught
+
+# HG-2 and HG-9 rerun on the trimmed table
+HG-2 [signal_graph.gd] §14.3 ignored: a TIMER takes INVERT
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a TIMER cannot take INVERT (§14.3): 
+HG-9 [signal_graph.gd] §14.3 ignored: a LATCH takes HOLD_SIGNAL
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a LATCH cannot take HOLD_SIGNAL (§14.3), and nothing changed: 
+      FAIL: a LATCH cannot take INVERT (§14.3), and nothing changed: held (LATCH) cannot take INVERT (§14.3)
+
+2 of 2 sabotages caught
+
+# all nine, on the final runtime
+HG-1 [signal_graph.gd] a recorded LATCH set from the live track (a verb sets it)
+    CAUGHT -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: HOLD_SIGNAL on the bolt lever never throws the bolt (N-15): bolted true, announced ["bolt"]
+      FAIL: HOLD_SIGNAL on the plate never sets the recorded LATCH (N-15): latched ["held"], announced ["held"], shutter shut false
+      FAIL: and when it expires the way shuts, with nothing recorded (latched ["held"], announced ["held"])
+HG-2 [signal_graph.gd] §14.3 ignored: a TIMER takes INVERT
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a TIMER cannot take INVERT (§14.3): 
+HG-3 [signal_graph.gd] a BRIDGE that closes a cycle is not refused
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a BRIDGE from the OR back into the NOT would close a cycle, and is refused with nothing changed (§19.7): 
+      FAIL: a LATCH is no BRIDGE's destination, nor a shutter's input its source (§14.3): bolt (LATCH) cannot be a BRIDGE's destination (§14.3) / shutter (ACTUATOR) cannot be a BRIDGE's source (§14.3)
+HG-4 [signal_graph.gd] a verb never expires
+    CAUGHT -- 16 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CUT on the thrown bolt reports it OFF: the shutter shuts (applied)
+      FAIL: HOLD_SIGNAL on the bolt lever never throws the bolt (N-15): bolted false, announced []
+      FAIL: PROBE reveals the release LATCH -- its value, its input, its predicate -- and changes nothing ({ "id": "release", "kind": "LATCH", "value": false, "verified": false, "verb": "", "inputs": [{ "id": "release_lever", "value": false }], "predicate": "LATCH, not set" })
+      FAIL: a BRIDGE from the OR back into the NOT would close a cycle, and is refused with nothing changed (§19.7): a BRIDGE from open to unloaded would close a cycle (§19.7)
+      FAIL: a LATCH cannot take HOLD_SIGNAL (§14.3), and nothing changed: held (LATCH) cannot take HOLD_SIGNAL (§14.3)
+      FAIL: a LATCH cannot take INVERT (§14.3), and nothing changed: held (LATCH) cannot take INVERT (§14.3)
+      FAIL: a LATCH is no BRIDGE's destination, nor a shutter's input its source (§14.3): bolt (LATCH) cannot be a BRIDGE's destination (§14.3) / shutter (ACTUATOR) cannot be a BRIDGE's source (§14.3)
+      FAIL: after its 3.0s the verb expires and the shutter shuts again (standing 1, then 1)
+      FAIL: an unknown verb, a duration of 0 and a node that is not there are refused: ["\'SHOUT\' is not a signal verb", "a signal verb lasts a positive number of seconds", "\'no_such_node\' is not part of minor\'s machine"]
+      FAIL: and it shuts when that expires (standing 2 before)
+      FAIL: and opens again when the verb expires (standing 1 before)
+      FAIL: and the bridge comes down when it expires: shut again (standing 2 before)
+      FAIL: and when it expires the way shuts, with nothing recorded (latched [], announced [])
+      FAIL: the crate on the plate holds the shutter shut
+      FAIL: then the hold expires and the window shuts (standing 1 before)
+      FAIL: when the CUT expires the thrown bolt holds the way open again (standing 3 before)
+HG-5 [signal_graph.gd] a BRIDGE carries nothing into its destination
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: BRIDGE from the plate into the OR: the crate that holds the shutter shut now holds it open (applied)
+HG-6 [signal_graph.gd] CUT on a latch clears the record
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and the record is untouched: still thrown, announced once, verified ON
+      FAIL: when the CUT expires the thrown bolt holds the way open again (standing 1 before)
+HG-7 [signal_graph.gd] the verified track reads the verbs too
+    CAUGHT -- 4 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: HOLD_SIGNAL on the bolt lever never throws the bolt (N-15): bolted true, announced ["bolt"]
+      FAIL: HOLD_SIGNAL on the plate never sets the recorded LATCH (N-15): latched ["held"], announced ["held"], shutter shut false
+      FAIL: and the plate itself still reads empty: its verified value is OFF (true)
+      FAIL: and when it expires the way shuts, with nothing recorded (latched ["held"], announced ["held"])
+HG-8 [signal_graph.gd] PROBE changes the machine
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: PROBE reveals the release LATCH -- its value, its input, its predicate -- and changes nothing ({ "id": "release", "kind": "LATCH", "value": false, "verified": false, "verb": "CUT", "inputs": [{ "id": "release_lever", "value": false }], "predicate": "LATCH, not set" })
+      FAIL: an unknown verb, a duration of 0 and a node that is not there are refused: ["\'SHOUT\' is not a signal verb", "a signal verb lasts a positive number of seconds", "\'no_such_node\' is not part of minor\'s machine"]
+HG-9 [signal_graph.gd] §14.3 ignored: a LATCH takes HOLD_SIGNAL
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a LATCH cannot take HOLD_SIGNAL (§14.3), and nothing changed: 
+      FAIL: a LATCH cannot take INVERT (§14.3), and nothing changed: held (LATCH) cannot take INVERT (§14.3)
+
+9 of 9 sabotages caught

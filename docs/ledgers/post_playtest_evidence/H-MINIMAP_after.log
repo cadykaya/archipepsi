@@ -1,0 +1,72 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_unweighted_switch mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+  -- the shapes are the built level
+  ok: every room is drawn as its built envelope (25 of 25)
+  ok: e:c004:c005 turns: its drawn path strays 4.6 m from the line between its ends, through 11 points (44.1 m along)
+  ok: and every point of it is the built chain's, in order (11 of 11)
+  -- entering a room marks it and reports it
+  ok: c002 is on the map the moment the player stands in it: ["c001", "c002"]
+  ok: and `room_entered` for c002 went once: [{ "type": "room_entered", "zone_id": "zone_001", "room_id": "c002" }]
+  ok: walking back in does not send it again
+  ok: a snapshot whose map lacks it resends it: ["c002"]
+  ok: and once the bridge's map shows it, nothing is resent: []
+  -- the room you are in is named
+  ok: the label reads the bridge's name for c002: 'Arena 1' (expected 'Arena 1')
+  ok: and it is not the save's id
+  -- nothing undiscovered is drawn
+  ok: 5 of 26 rooms drawn, all discovered or walked; none beyond: []
+  ok: every connector drawn is one the bridge lists (7)
+  -- the green circuit
+  ok: carrying the cell: the door is a P blocker in its circuit: blocked P ["state:cell_power"]
+  ok: its mark sits on the connector through the door
+  ok: drawn in its circuit's colour, which no other circuit in the Zone shares -- not the green key's, not the span's: []
+  ok: and the colours are the Zone's, the same every time they are asked for
+  ok: five circuits get the palette's five colours, in declared order
+  ok: installed: the bridge's map opens it, and the map follows: open
+  -- a reversible closure comes back
+  ok: the span reads open lowered and blocked put back: open, blocked
+  -- where you are and which way you face
+  ok: the player is the centre of the plate: (118.0, 118.0)
+  ok: north-up, at 3.2 px a metre
+  -- floors
+  ok: c001's floor is its arrival height (0.0)
+  ok: c021's floor is its arrival height (0.0)
+  ok: c009's floor is its arrival height (31.6)
+  NOTE: standing heights in the candidate Zone span 32.6 m
+  ok: a 1 m step is the same floor; 3 m up or down is another
+  -- what the plate draws
+  ok: every character on the map is in the font it is drawn in (7 strings typed, and the name 'Corridor 1'); missing: []
+  ok: from c001, 14 rooms are on other floors and 14 floor marks are drawn, as shapes
+  ok: a room above is marked pointing up, one below pointing down
+  -- the ways back
+  ok: every way back the bridge lists is a ring where its device stands (8 listed, 8 placed, 8 drawn)
+  ok: and none is drawn before the bridge lists it: 0 of the Zone's 8, with five rooms found
+
+GODOT MINIMAP OK (30 checks, 1 notes)

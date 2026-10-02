@@ -1,0 +1,1706 @@
+{
+ "schema_version": 7,
+ "zone_id": "zone_001",
+ "display_name": "Relay 001: Bomb Rush Cyberfunk",
+ "target_game": "Bomb Rush Cyberfunk",
+ "theme": "neon_transit",
+ "theme_pack": null,
+ "designer_note": "Deterministic fallback zone.",
+ "featured_echo_ids": [],
+ "chambers": [
+  {
+   "id": "c001",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [
+    {
+     "tag": "moving_platform",
+     "at": [
+      0.18,
+      0.3
+     ],
+     "note": null
+    },
+    {
+     "tag": "powered_door",
+     "at": [
+      0.82,
+      0.3
+     ],
+     "note": null
+    },
+    {
+     "tag": "bounce_pad",
+     "at": [
+      0.18,
+      0.5
+     ],
+     "note": null
+    }
+   ],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c001:c002",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": null,
+   "depart_edge": "e:c001:c002",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "timed_run",
+     "element_count": 2,
+     "time_limit": 8.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 15.0,
+   "width": 7.9,
+   "enemies": []
+  },
+  {
+   "id": "c002",
+   "flavor": null,
+   "reward_location_id": 89100076,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c001:c002",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c002:c003",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "USED",
+     "edge_id": "e:c002:c018",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c001:c002",
+   "depart_edge": "e:c002:c003",
+   "keys": [
+    {
+     "key_id": "red",
+     "colour": "red"
+    },
+    {
+     "key_id": "gold",
+     "colour": "gold"
+    }
+   ],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "target_challenge",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "target_challenge",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 13.8,
+   "depth": 15.8,
+   "wall_height": 4.9,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "artillery",
+     "count": 5
+    }
+   ],
+   "elevation": {
+    "kind": "gallery",
+    "rise": 2.01,
+    "coverage": 0.27,
+    "side": "left",
+    "access": "ramp"
+   }
+  },
+  {
+   "id": "c003",
+   "flavor": null,
+   "reward_location_id": 89100089,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c002:c003",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c003:c004",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c002:c003",
+   "depart_edge": "e:c003:c004",
+   "keys": [
+    {
+     "key_id": "blue",
+     "colour": "blue"
+    }
+   ],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 3,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "pressure_routing",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 3,
+   "gap_size": 2.31,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c004",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c003:c004",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c004:c005",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c003:c004",
+   "depart_edge": "e:c004:c005",
+   "keys": [
+    {
+     "key_id": "green",
+     "colour": "green"
+    }
+   ],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": "shell_corner_left",
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 6.0,
+   "width": 6.0,
+   "enemies": []
+  },
+  {
+   "id": "c005",
+   "flavor": null,
+   "reward_location_id": 89100019,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c004:c005",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c005:c006",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "LOCKED",
+     "edge_id": "e:c005:c014",
+     "key_id": "blue",
+     "colour": "blue"
+    }
+   ],
+   "arrive_edge": "e:c004:c005",
+   "depart_edge": "e:c005:c006",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "switch_sequence",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 19.3,
+   "depth": 17.0,
+   "wall_height": 6.0,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "bulwark",
+     "count": 2
+    }
+   ],
+   "elevation": {
+    "kind": "pit",
+    "rise": 1.66,
+    "coverage": 0.32,
+    "side": "left",
+    "access": "ramp"
+   }
+  },
+  {
+   "id": "c006",
+   "flavor": null,
+   "reward_location_id": 89100042,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c005:c006",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c006:c007",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c005:c006",
+   "depart_edge": "e:c006:c007",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "target_challenge",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "target_challenge",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": "shell_hall_transit",
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 40.4,
+   "depth": 59.2,
+   "wall_height": 39.6,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "melee",
+     "count": 1
+    }
+   ],
+   "elevation": null
+  },
+  {
+   "id": "c007",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c006:c007",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c007:c008",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c006:c007",
+   "depart_edge": "e:c007:c008",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "target_challenge",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": "shell_corner_left",
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 6.0,
+   "width": 6.0,
+   "enemies": []
+  },
+  {
+   "id": "c008",
+   "flavor": null,
+   "reward_location_id": 89100147,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c007:c008",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c008:c009",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c007:c008",
+   "depart_edge": "e:c008:c009",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "timed_run",
+     "element_count": 2,
+     "time_limit": 8.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 4,
+   "gap_size": 2.08,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c009",
+   "flavor": null,
+   "reward_location_id": 89100093,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c008:c009",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c009:c010",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "USED",
+     "edge_id": "e:c009:c011",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c008:c009",
+   "depart_edge": "e:c009:c010",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 15.6,
+   "depth": 20.4,
+   "wall_height": 4.6,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "bulwark",
+     "count": 1
+    }
+   ],
+   "elevation": {
+    "kind": "gallery",
+    "rise": 2.19,
+    "coverage": 0.39,
+    "side": "left",
+    "access": "ramp"
+   }
+  },
+  {
+   "id": "c010",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c009:c010",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c010:c013",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c009:c010",
+   "depart_edge": "e:c010:c013",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [],
+   "shell_id": "shell_corner_right",
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 6.0,
+   "width": 6.0,
+   "enemies": []
+  },
+  {
+   "id": "c011",
+   "flavor": null,
+   "reward_location_id": 89100110,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c009:c011",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "LOCKED",
+     "edge_id": "e:c011:c012",
+     "key_id": "red",
+     "colour": "red"
+    }
+   ],
+   "arrive_edge": "e:c009:c011",
+   "depart_edge": "e:c011:c012",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 12.4,
+   "depth": 21.5,
+   "wall_height": 5.5,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "diver",
+     "count": 5
+    }
+   ],
+   "elevation": {
+    "kind": "gallery",
+    "rise": 1.64,
+    "coverage": 0.34,
+    "side": "left",
+    "access": "ramp"
+   }
+  },
+  {
+   "id": "c012",
+   "flavor": null,
+   "reward_location_id": 89100139,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c011:c012",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c011:c012",
+   "depart_edge": null,
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "timed_run",
+     "element_count": 5,
+     "time_limit": 20.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 3,
+   "gap_size": 1.73,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c013",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c010:c013",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c013:c016",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c010:c013",
+   "depart_edge": "e:c013:c016",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [],
+   "shell_id": "shell_corner_left",
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 6.0,
+   "width": 6.0,
+   "enemies": []
+  },
+  {
+   "id": "c014",
+   "flavor": null,
+   "reward_location_id": 89100097,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c005:c014",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "LOCKED",
+     "edge_id": "e:c014:c015",
+     "key_id": "green",
+     "colour": "green"
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "LOCKED",
+     "edge_id": "e:c014:c017",
+     "key_id": "gold",
+     "colour": "gold"
+    }
+   ],
+   "arrive_edge": "e:c005:c014",
+   "depart_edge": null,
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "target_challenge",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "timed_run",
+     "element_count": 4,
+     "time_limit": 16.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 27.2,
+   "depth": 23.8,
+   "wall_height": 8.0,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "melee",
+     "count": 7
+    },
+    {
+     "archetype": "brute",
+     "count": 1
+    }
+   ],
+   "elevation": null
+  },
+  {
+   "id": "c015",
+   "flavor": null,
+   "reward_location_id": 89100055,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c014:c015",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c014:c015",
+   "depart_edge": null,
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 23.7,
+   "depth": 10.1,
+   "wall_height": 4.6,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "artillery",
+     "count": 2
+    }
+   ],
+   "elevation": null
+  },
+  {
+   "id": "c016",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c013:c016",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c016:c019",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c013:c016",
+   "depart_edge": "e:c016:c019",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "timed_run",
+     "element_count": 4,
+     "time_limit": 16.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": "shell_corner_right",
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 6.0,
+   "width": 6.0,
+   "enemies": []
+  },
+  {
+   "id": "c017",
+   "flavor": null,
+   "reward_location_id": 89100051,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c014:c017",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c014:c017",
+   "depart_edge": null,
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 3,
+   "gap_size": 1.73,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c018",
+   "flavor": null,
+   "reward_location_id": 89100005,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c002:c018",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "USED",
+     "edge_id": "e:c018:c020",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "USED",
+     "edge_id": "e:c018:c021",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c002:c018",
+   "depart_edge": null,
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "target_challenge",
+     "element_count": 3,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 17.9,
+   "depth": 14.7,
+   "wall_height": 5.2,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "beacon",
+     "count": 4
+    }
+   ],
+   "elevation": null
+  },
+  {
+   "id": "c019",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c016:c019",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c019:c022",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c016:c019",
+   "depart_edge": "e:c019:c022",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [],
+   "shell_id": "shell_corner_left",
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 6.0,
+   "width": 6.0,
+   "enemies": []
+  },
+  {
+   "id": "c020",
+   "flavor": null,
+   "reward_location_id": 89100025,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c018:c020",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c018:c020",
+   "depart_edge": null,
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "timed_run",
+     "element_count": 3,
+     "time_limit": 12.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 16.9,
+   "depth": 19.7,
+   "wall_height": 6.9,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "ranged",
+     "count": 2
+    }
+   ],
+   "elevation": {
+    "kind": "gallery",
+    "rise": 1.71,
+    "coverage": 0.43,
+    "side": "left",
+    "access": "ramp"
+   }
+  },
+  {
+   "id": "c021",
+   "flavor": null,
+   "reward_location_id": 89100126,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c018:c021",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c018:c021",
+   "depart_edge": null,
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 5,
+   "gap_size": 1.79,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c022",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c019:c022",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c022:c023",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c019:c022",
+   "depart_edge": "e:c022:c023",
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "target_challenge",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": "shell_corner_right",
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 6.0,
+   "width": 6.0,
+   "enemies": []
+  },
+  {
+   "id": "c023",
+   "flavor": null,
+   "reward_location_id": 89100068,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c022:c023",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "ZONE_EXIT",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c022:c023",
+   "depart_edge": null,
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 18.6,
+   "depth": 18.4,
+   "wall_height": 6.7,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "beacon",
+     "count": 5
+    }
+   ],
+   "elevation": null
+  }
+ ],
+ "edges": [
+  {
+   "edge_id": "e:c001:c002",
+   "room_a": "c001",
+   "room_b": "c002",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c002:c003",
+   "room_a": "c002",
+   "room_b": "c003",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": "route_shutter",
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c003:c004",
+   "room_a": "c003",
+   "room_b": "c004",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c004:c005",
+   "room_a": "c004",
+   "room_b": "c005",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c005:c006",
+   "room_a": "c005",
+   "room_b": "c006",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c006:c007",
+   "room_a": "c006",
+   "room_b": "c007",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c007:c008",
+   "room_a": "c007",
+   "room_b": "c008",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c008:c009",
+   "room_a": "c008",
+   "room_b": "c009",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c009:c010",
+   "room_a": "c009",
+   "room_b": "c010",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c010:c013",
+   "room_a": "c010",
+   "room_b": "c013",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c013:c016",
+   "room_a": "c013",
+   "room_b": "c016",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c016:c019",
+   "room_a": "c016",
+   "room_b": "c019",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c019:c022",
+   "room_a": "c019",
+   "room_b": "c022",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c022:c023",
+   "room_a": "c022",
+   "room_b": "c023",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c009:c011",
+   "room_a": "c009",
+   "room_b": "c011",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "p:c011:start",
+   "room_a": "c011",
+   "room_b": "c001",
+   "direction": "A_TO_B",
+   "realization": "TRAVERSAL_ONLY",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c011:c012",
+   "room_a": "c011",
+   "room_b": "c012",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "p:c012:start",
+   "room_a": "c012",
+   "room_b": "c001",
+   "direction": "A_TO_B",
+   "realization": "TRAVERSAL_ONLY",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c005:c014",
+   "room_a": "c005",
+   "room_b": "c014",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "p:c014:start",
+   "room_a": "c014",
+   "room_b": "c001",
+   "direction": "A_TO_B",
+   "realization": "TRAVERSAL_ONLY",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c014:c015",
+   "room_a": "c014",
+   "room_b": "c015",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "p:c015:start",
+   "room_a": "c015",
+   "room_b": "c001",
+   "direction": "A_TO_B",
+   "realization": "TRAVERSAL_ONLY",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c014:c017",
+   "room_a": "c014",
+   "room_b": "c017",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "p:c017:start",
+   "room_a": "c017",
+   "room_b": "c001",
+   "direction": "A_TO_B",
+   "realization": "TRAVERSAL_ONLY",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c002:c018",
+   "room_a": "c002",
+   "room_b": "c018",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "p:c018:start",
+   "room_a": "c018",
+   "room_b": "c001",
+   "direction": "A_TO_B",
+   "realization": "TRAVERSAL_ONLY",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c018:c020",
+   "room_a": "c018",
+   "room_b": "c020",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "p:c020:start",
+   "room_a": "c020",
+   "room_b": "c001",
+   "direction": "A_TO_B",
+   "realization": "TRAVERSAL_ONLY",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c018:c021",
+   "room_a": "c018",
+   "room_b": "c021",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "p:c021:start",
+   "room_a": "c021",
+   "room_b": "c001",
+   "direction": "A_TO_B",
+   "realization": "TRAVERSAL_ONLY",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  }
+ ],
+ "plugs": [
+  {
+   "edge_id": "p:c011:start",
+   "room_id": "c011",
+   "source_anchor": "room:c011:return",
+   "destination": "zone_start",
+   "device": "pad"
+  },
+  {
+   "edge_id": "p:c012:start",
+   "room_id": "c012",
+   "source_anchor": "room:c012:return",
+   "destination": "zone_start",
+   "device": "pad"
+  },
+  {
+   "edge_id": "p:c014:start",
+   "room_id": "c014",
+   "source_anchor": "room:c014:return",
+   "destination": "zone_start",
+   "device": "pad"
+  },
+  {
+   "edge_id": "p:c015:start",
+   "room_id": "c015",
+   "source_anchor": "room:c015:return",
+   "destination": "zone_start",
+   "device": "pad"
+  },
+  {
+   "edge_id": "p:c017:start",
+   "room_id": "c017",
+   "source_anchor": "room:c017:return",
+   "destination": "zone_start",
+   "device": "pad"
+  },
+  {
+   "edge_id": "p:c018:start",
+   "room_id": "c018",
+   "source_anchor": "room:c018:return",
+   "destination": "zone_start",
+   "device": "pad"
+  },
+  {
+   "edge_id": "p:c020:start",
+   "room_id": "c020",
+   "source_anchor": "room:c020:return",
+   "destination": "zone_start",
+   "device": "pad"
+  },
+  {
+   "edge_id": "p:c021:start",
+   "room_id": "c021",
+   "source_anchor": "room:c021:return",
+   "destination": "zone_start",
+   "device": "pad"
+  }
+ ],
+ "rail_networks": [],
+ "featured_acquisition": null,
+ "zone_state": [],
+ "transported_objects": [
+  {
+   "object_id": "counterweight",
+   "allowed_volume": [
+    "c001",
+    "c002"
+   ],
+   "home_room_id": "c002",
+   "required": false,
+   "carriable": true,
+   "mass_kg": 40.0,
+   "movement": "hand_carried"
+  }
+ ],
+ "object_consumers": [],
+ "room_graphs": [
+  {
+   "room_id": "c002",
+   "sensors": [
+    {
+     "node_id": "weight_plate",
+     "kind": "PRESSURE_PLATE",
+     "requires_class": "MEDIUM",
+     "counts_player": false,
+     "mode": null,
+     "required_tags": null,
+     "held_by": "counterweight"
+    }
+   ],
+   "nodes": [],
+   "actuators": [
+    {
+     "actuator_id": "route_shutter",
+     "driven_by": "weight_plate",
+     "operation": "command"
+    }
+   ]
+  }
+ ]
+}

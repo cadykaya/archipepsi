@@ -1,0 +1,110 @@
+[
+  {
+    "source": "ARCHIPEPSI_RIFT_DIRECTION_v0.3.1.md",
+    "included_as": "references/RIFT_DIRECTION_v0.3.1_original.md",
+    "sha256": "2f23055302e28a9ee76234039893881fc56b39aa03ffb2694fb60420e548a62e",
+    "treatment": "unchanged reference; status at original date"
+  },
+  {
+    "source": "Pasted markdown(8).md",
+    "included_as": "references/HUGE_BATCH_0_4_SCOPE_original.md",
+    "sha256": "c2caa84370d8a8228e52a5e5d79e6e715780b37de0c949fe73a890dbb267c591",
+    "treatment": "unchanged reference; status at original date"
+  },
+  {
+    "source": "Pasted markdown(9).md",
+    "included_as": "references/FIRST_MAJOR_APPROVAL_original.md",
+    "sha256": "b7d1b38e5ca3c3ad05f78887a866c249160fddc4c2c9892279cad767705800ae",
+    "treatment": "unchanged reference; status at original date"
+  },
+  {
+    "source": "ARCHIPEPSI_OVERNIGHT_05_EXECUTION.md",
+    "included_as": "references/OVERNIGHT_05_EXECUTION_original.md",
+    "sha256": "5c81f81942e30a56a5ad5624f805b66113e35e37e6b643506a6bb96e0450009d",
+    "treatment": "unchanged reference; status at original date"
+  },
+  {
+    "source": "ARCHIPEPSI_0_4_OVERNIGHT_04_MASTER.md",
+    "included_as": "references/OVERNIGHT_04_MASTER_historical.md",
+    "sha256": "18852ff949dbc12658cbdbcd273441af444e5fa35204002eca817fd64e0a2c12",
+    "treatment": "unchanged reference; status at original date"
+  },
+  {
+    "source": "ARCHIPEPSI_0_4_ARTY_OVERNIGHT_01_MASTER.md",
+    "included_as": "references/ARTY_OVERNIGHT_01_historical.md",
+    "sha256": "cdeea4da739df2ab5918ab125980a52c712dd49c1afda75bda9c3c7c3f0ff09a",
+    "treatment": "unchanged reference; status at original date"
+  },
+  {
+    "source": "ARCHIPEPSI_TOOLCHAIN_REFRESH_2026-09-22.md",
+    "included_as": "references/TOOLCHAIN_REFRESH_historical.md",
+    "sha256": "18cb56aded19df988054acef76a23093486b66e56fd2e0845141a58e4029785f",
+    "treatment": "unchanged reference; status at original date"
+  },
+  {
+    "source": "Archipepsi_Spatial_Design_Investigation.md",
+    "included_as": "references/Spatial_Design_Investigation_reference.md",
+    "sha256": "0180a4215079bffcc480d0766e7d6ec1db5710471a2883ad0a3c0a177441fe17",
+    "treatment": "unchanged reference; status at original date"
+  },
+  {
+    "source": "Archipepsi_Room_Identity_Research.md",
+    "included_as": "references/Room_Identity_Research_reference.md",
+    "sha256": "c6248247c60cc5e3e409f068ee8f8493e8fdda0d216febde314daf9ff15ab7ee",
+    "treatment": "unchanged reference; status at original date"
+  },
+  {
+    "source": "ARCHIPEPSI_OVERNIGHT_05_FULL_EXECUTION.zip::03_READY_QUEUE.md",
+    "included_as": "references/OV05_QUEUE_pristine.md",
+    "sha256": "b907791dd4e2e60bb2db8580aca090bfc67af51d5dffe8d20a6093510de1d019",
+    "treatment": "unchanged reference"
+  },
+  {
+    "source": "ARCHIPEPSI_OVERNIGHT_05_FULL_EXECUTION.zip::04_READY_QUEUE.json",
+    "included_as": "references/OV05_QUEUE_pristine.json",
+    "sha256": "93fdef3885381af895c355b9d2ff2ca92cfc2b5acccf02d5144d6ede380f1a76",
+    "treatment": "unchanged reference"
+  },
+  {
+    "source": "ARCHIPEPSI_OVERNIGHT_05_FULL_EXECUTION.zip::original_minor_specs/EX50-011.md",
+    "included_as": "references/EX50-011_original.md",
+    "sha256": "bd27368a631b4cf551884267f6d330a5c8de246e56d6417019578016ad3b1fff",
+    "treatment": "unchanged reference"
+  },
+  {
+    "source": "ARCHIPEPSI_OVERNIGHT_05_FULL_EXECUTION.zip::original_minor_specs/EX50-021.md",
+    "included_as": "references/EX50-021_original.md",
+    "sha256": "a6306df1bb4c3aa9e57e61b2788a8e87232cfdc8fc64667bcc812df24e451708",
+    "treatment": "unchanged reference"
+  },
+  {
+    "source": "ARCHIPEPSI_OVERNIGHT_05_FULL_EXECUTION.zip::original_minor_specs/EX50-033.md",
+    "included_as": "references/EX50-033_original.md",
+    "sha256": "910b532a3040a9c6ef742ae0f40cc5a6c535d558b1becea8fe6e78378426ec8c",
+    "treatment": "unchanged reference"
+  },
+  {
+    "source": "archipepsi-art-2026-09-22-ALL.zip::README.md",
+    "included_as": "references/ARTY_4093ded_README.md",
+    "sha256": "7295980bc84f8385be067fe435fef4b8c868361305e9124a23c02894cd872fd1",
+    "treatment": "unchanged historical art delivery; later D-11 supersedes its namespace blocker"
+  },
+  {
+    "source": "archipepsi-art-2026-09-22-ALL.zip::docs/art/theme-packs/COVERAGE.md",
+    "included_as": "references/ARTY_4093ded_COVERAGE.md",
+    "sha256": "3b9f67f8d49326165af117af201eeea0539b46220b0a3cc00168ca14c66ef486",
+    "treatment": "unchanged historical art delivery; later D-11 supersedes its namespace blocker"
+  },
+  {
+    "source": "archipepsi-art-2026-09-22-ALL.zip::docs/art/reports/2026-09-22-course-candidate.md",
+    "included_as": "references/ARTY_course_candidate_report.md",
+    "sha256": "6ea36f7c4872348a134530daedde7713879fec19a34a26c5eb789f2768dc70e7",
+    "treatment": "unchanged historical art delivery; later D-11 supersedes its namespace blocker"
+  },
+  {
+    "source": "archipepsi-art-2026-09-22-ALL.zip::docs/art/reports/2026-09-22-glyph-toolchain-trial.md",
+    "included_as": "references/ARTY_GLYPH_trial_report.md",
+    "sha256": "41ed6c412a3a786aa222695c6fe3b94109041b6fecff9d35f6b5006e37c66eaa",
+    "treatment": "unchanged historical art delivery; later D-11 supersedes its namespace blocker"
+  }
+]

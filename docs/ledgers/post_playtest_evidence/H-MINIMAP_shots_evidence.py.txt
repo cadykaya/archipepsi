@@ -1,0 +1,93 @@
+"""H-MINIMAP evidence images, made so they cannot lie about colour.
+
+The first evidence copies were palette-reduced whole, and the reduction
+merged the red key's blocker and the route shutter's magenta one into a
+single pink: the render had them distinct, the evidence did not.
+
+Now:
+- each full frame is palette-reduced (256 colours, no dithering) to keep
+  the repository small;
+- each crop of the map is 2x nearest-neighbour and LOSSLESS, because the
+  crop is where a reader compares circuit colours;
+- every output is checked against its raw render: two raw colours that
+  are clearly different (RGB distance > 40) must not come out as one
+  colour inside the map's plate. A merge fails the script.
+
+Usage: python3 mm_shots_evidence.py <raw shots dir> <evidence dir>
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+from PIL import Image
+
+PLATE = 236          # Minimap.SIZE
+MARGIN = 18          # Minimap.MARGIN
+LABEL = 26           # the name above the plate
+CROP = 270           # plate plus its label, with a little border
+DISTINCT = 40.0
+
+
+def plate_box(size: tuple[int, int]) -> tuple[int, int, int, int]:
+    w, h = size
+    x0, y0 = w - MARGIN - PLATE, h - MARGIN - PLATE
+    return x0, y0, x0 + PLATE, y0 + PLATE
+
+
+def crop_box(size: tuple[int, int]) -> tuple[int, int, int, int]:
+    x0, y0, _, _ = plate_box(size)
+    left, top = x0 - 16, y0 - LABEL
+    return left, top, left + CROP, top + CROP
+
+
+def merges(raw: Image.Image, out: Image.Image,
+           box: tuple[int, int, int, int]) -> list[str]:
+    """Raw colours, clearly apart, that the output shows as one."""
+    seen: dict[tuple, tuple] = {}
+    bad: list[str] = []
+    for y in range(box[1], box[3]):
+        for x in range(box[0], box[2]):
+            a = raw.getpixel((x, y))[:3]
+            b = out.getpixel((x, y))[:3]
+            # Only saturated colours carry meaning here (circuits, the
+            # player); the greys and the world behind the plate do not.
+            if max(a) - min(a) < 90:
+                continue
+            first = seen.setdefault(b, a)
+            if sum((i - j) ** 2 for i, j in zip(first, a)) ** 0.5 > DISTINCT:
+                bad.append(f"{first} and {a} both became {b} at ({x},{y})")
+                seen[b] = a
+    return bad
+
+
+def main() -> int:
+    raw_dir, out_dir = Path(sys.argv[1]), Path(sys.argv[2])
+    out_dir.mkdir(parents=True, exist_ok=True)
+    failures = 0
+    for path in sorted(raw_dir.glob("minimap_*.png")):
+        raw = Image.open(path).convert("RGB")
+        reduced = raw.quantize(colors=256, method=Image.Quantize.FASTOCTREE,
+                               dither=Image.Dither.NONE)
+        reduced.save(out_dir / path.name, optimize=True)
+        box = crop_box(raw.size)
+        crop = raw.crop(box)
+        crop = crop.resize((crop.width * 2, crop.height * 2),
+                           Image.Resampling.NEAREST)
+        crop.save(out_dir / f"zoom_{path.name}", optimize=True)
+        full = merges(raw, reduced.convert("RGB"), plate_box(raw.size))
+        again = Image.open(out_dir / f"zoom_{path.name}").convert("RGB")
+        small = again.resize((CROP, CROP), Image.Resampling.NEAREST)
+        zoom = merges(raw.crop(box), small, (0, 0, CROP, CROP))
+        print(f"{path.name}: full frame {len(full)} merge(s), "
+              f"crop {len(zoom)} merge(s)")
+        for line in (full + zoom)[:5]:
+            print("   ", line)
+        failures += len(full) + len(zoom)
+    print("no colour merged" if failures == 0
+          else f"{failures} merged colour(s)")
+    return 0 if failures == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

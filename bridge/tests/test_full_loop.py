@@ -41,10 +41,31 @@ so.
 
 from __future__ import annotations
 
+import pytest
+
 import archipepsi_bridge.transactions as TX
 
-from .conftest import connected_engine, drain, enter_zone, make_engine, run
+from .conftest import drain, enter_zone, make_engine, run
 from archipepsi_bridge.mock_ap import MockAPBackend, MockServerState
+from archipepsi_bridge.schemas.protocol import CampaignSave
+
+#: The loop runs three ways (D-01, `docs/D14_SELF_ADDRESSED_ECHO_PROD.md`
+#: §6). The default seed's first Zone holds none of this slot's own items,
+#: so on it "one Echo per Check" and "one per foreign Check" are the same
+#: number and prove nothing about D-01; `MockSeed-3`'s holds one (an
+#: Epsilon Coin), and a campaign saved without the policy is the legacy
+#: variant.
+LOOPS = {
+    "default-seed": (None, False),
+    "own-item": ("MockSeed-3", False),
+    "legacy": ("MockSeed-3", True),
+}
+
+
+def _backend(engine, seed, server_state):
+    if seed is None:
+        return MockAPBackend(engine, server_state=server_state)
+    return MockAPBackend(engine, seed_name=seed, server_state=server_state)
 
 
 async def _generate_and_enter(engine):
@@ -60,11 +81,24 @@ async def _generate_and_enter(engine):
     return zone
 
 
-def test_the_full_loop_claims_echoes_equips_and_survives_a_reload(tmp_path):
+@pytest.mark.parametrize("loop", list(LOOPS))
+def test_the_full_loop_claims_echoes_equips_and_survives_a_reload(tmp_path,
+                                                                  loop):
+    seed, legacy = LOOPS[loop]
+
     async def body():
         server_state = MockServerState()
-        engine, backend = await connected_engine(
-            tmp_path, server_state=server_state)
+        engine = make_engine(tmp_path)
+        backend = _backend(engine, seed, server_state)
+        engine.backend = backend
+        await backend.connect("", "Skyiah", "")
+        await drain()
+        if legacy:
+            # Saved before the policy existed: the field is absent, so it
+            # loads off (D14 §3).
+            raw = engine.save.model_dump(mode="json")
+            raw.pop("self_addressed_echoes")
+            engine._apply(CampaignSave.model_validate(raw))
 
         snap = engine.snapshot()
         assert snap.ap_connected and len(snap.scouted) == 30, "scout failed"
@@ -84,12 +118,23 @@ def test_the_full_loop_claims_echoes_equips_and_survives_a_reload(tmp_path):
         assert snap.hub.mode in ("ZONE_AVAILABLE", "WAITING_FOR_AP"), \
             snap.hub.mode
 
-        # ONE ECHO PER FOREIGN CHECK, AND NOT ONE PER CHECK. A Check that
-        # resolves to this slot's own item interprets nothing.
+        # ONE ECHO PER CHECK in a new campaign (D-01): the player's own
+        # item yields one too. A LEGACY campaign keeps one per foreign
+        # Check, and its own item interprets nothing. This assertion
+        # encoded historical B-1 ("one per foreign Check, not one per
+        # Check"); changing it is the D-01 ruling, not a weakened test.
         foreign = [loc for loc in zone.allocated_location_ids
                    if not backend.data.scouts[loc].recipient_is_self]
-        assert len(snap.interpretations) == len(foreign), (
-            f"{len(foreign)} foreign checks but "
+        own = [loc for loc in zone.allocated_location_ids
+               if backend.data.scouts[loc].recipient_is_self]
+        if seed is not None:
+            assert own, f"{seed}'s first Zone no longer holds an own item"
+        expected = (foreign if legacy
+                    else list(zone.allocated_location_ids))
+        assert sorted(i.source_location_id for i in snap.interpretations) \
+            == sorted(expected), (
+            f"{len(expected)} Checks should interpret "
+            f"({len(own)} own, legacy={legacy}) but "
             f"{len(snap.interpretations)} interpretations")
 
         actions = snap.mechanics.actions
@@ -105,7 +150,7 @@ def test_the_full_loop_claims_echoes_equips_and_survives_a_reload(tmp_path):
         # QUIT AND RELOAD: fresh engine, same save dir, same mock server
         # truth. Nothing may be counted twice on the way back in.
         engine2 = make_engine(tmp_path)
-        backend2 = MockAPBackend(engine2, server_state=server_state)
+        backend2 = _backend(engine2, seed, server_state)
         engine2.backend = backend2
         await backend2.connect("", "Skyiah", "")
         await drain()

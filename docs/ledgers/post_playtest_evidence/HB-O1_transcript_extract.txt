@@ -1,0 +1,85 @@
+# HB-O1 on the lost container: what the session transcript holds of its
+# first verification. godot-bombs and godot-carry ran on the original
+# HB-O1 commit (4ab34ad, lost); the sabotage run that followed was the
+# command the container loss killed (exit 137 at 16:12 UTC). Below,
+# verbatim, each command and what it printed. The rebuild's own runs are
+# HB-O1_bombs_after.log, HB-O1_carry_after.log, HB-O1_sabotages.log and
+# HB-O1_bombs_live.log.
+
+===== 2026-09-26T16:08:06.944Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; mkdir -p $S/hbo1; cd $S/wt-bombs && timeout 300 make godot-import > $S/hbo1/import.log 2>&1; echo "import exit $?"; timeout 600 make godot-bombs > $S/hbo1/HB-O1_bombs_after.log 2>&1; echo "bombs exit $?"; grep -E "^FAIL|^  --|GODOT BOMBS|SCRIPT ERROR|Parse Error" $S/hbo1/HB-O1_bombs_after.log | head -40
+----- output
+import exit 0
+bombs exit 0
+  -- PROVENANCE: a Bomb Bag the campaign made, not one given
+  -- THE KEY ON THE HUD: none, owned, carried, empty
+  -- PRESSING THE KEY in each state
+  -- THE ARRIVAL: the card, and a word about the key
+  -- THE ARRIVAL, LIVE ORDER: the card before the snapshot
+  -- FIRST SIGHT: a campaign that already owns it is not news
+  -- EQUIPPING IT from the equipment wall
+  -- A REFUSED USE: said once, in the engine's words
+  -- A GRANTED USE: Q under the claim's card, EQUIPMENT closed
+  -- THE REFILL: spent, then the next Zone
+  -- A HELD PRESS: said, not lost
+GODOT BOMBS OK (49 checks)
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T16:08:53.354Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; awk '/-- A GRANTED USE/,/-- THE REFILL/' $S/hbo1/HB-O1_bombs_after.log | cut -c1-230; awk '/-- A HELD PRESS/,/GODOT BOMBS/' $S/hbo1/HB-O1_bombs_after.log | cut -c1-230
+----- output
+  -- A GRANTED USE: Q under the claim's card, EQUIPMENT closed
+  ok: the earlier cards have been read
+  ok: the claim's card is still up when EQUIPMENT closes, as it was in the owner's run ('SENT TO SAGE')
+  ok: …and holds nothing: the card is not modal (held by [])
+  ok: …and takes no mouse movement anywhere on screen, so mouse look under it reaches the game (0 point(s) taken: [])
+  ok: the F3 readout and the navigation schematic, open over it, take none either (0 point(s) taken: [])
+  ok: Q under the card asks the bridge for a use, and nothing is thrown before the answer (awaiting 1, thrown 0, held by [])
+  ok: …and the card makes way beside it: its hold is cut short, not the press
+  ok: the engine's answer throws exactly one Bomb Bag (1 thrown; the key's runtime holds 'Bomb Bag'; sent ["authorize_consumable", "use_consumable"])
+  ok: …and reports that one use ([{ "type": "use_consumable", "component_id": "act_l89100140", "use_index": 1, "generation": 6 }])
+  ok: the key counts it: 2 / 3 (▸ Q     Bomb Bag  2 / 3)
+  ok: nothing is refused (heard [])
+  ok: the next card follows in full: a press cuts one card short and throws none of the rest away ('EPSILON ECHO ACQUIRED' after 'SENT TO SAGE')
+  -- THE REFILL: spent, then the next Zone
+  -- A HELD PRESS: said, not lost
+  ok: Q under the layout hold asks for nothing and says why: 'Hold on: this Zone's layout is still being checked.' (heard ["Hold on: this Zone\'s layout is still being checked."])
+  ok: …once on screen, however often it is pressed (1)
+  ok: a walk key held down since before the hold is told too (heard ["Hold on: this Zone\'s layout is still being checked."])
+  ok: under a menu's hold a press asks for nothing and adds nothing: the open menu is its explanation (heard [])
+  ok: with every hold gone, Q asks for a use again (awaiting 1, cooldown 0.00)
+
+GODOT BOMBS OK (49 checks)
+
+===== 2026-09-26T16:09:01.122Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; cd $S/wt-bombs && timeout 600 make godot-carry > $S/hbo1/HB-O1_carry_after.log 2>&1; echo "carry exit $?"; grep -E "^FAIL|PULSE|Mobility is blocked|Static Pulse does not fire|GODOT CARRY|SCRIPT ERROR" $S/hbo1/HB-O1_carry_after.log | head
+----- output
+carry exit 0
+  ok: the Static Pulse does not fire while carrying (0 shots)
+  ok: …and says so, once for a press held down 40 frames: ["PULSE BLOCKED WHILE CARRYING"]
+  ok: Mobility is blocked, and says so: ["MOBILITY BLOCKED WHILE CARRYING"]
+GODOT CARRY TESTS OK (33 checks, 1 notes)
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T16:09:44.517Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; cd $S && HB_TREE=$S/wt-bombs python3 $S/hbo1/HB-O1_runner.py --dry && rm -f $S/hbo1/HB-O1_sabotages.log
+----- output
+RO-1 anchors ok (main.gd, reveal.gd)
+RO-2 anchors ok (reveal.gd)
+RO-3 anchors ok (main.gd)
+RO-4 anchors ok (reveal.gd)
+RO-5 anchors ok (player.gd)
+RO-6 anchors ok (hud.gd)
+RO-7 anchors ok (player.gd)
+RO-8 anchors ok (player.gd)
+RO-9 anchors ok (debug_overlay.gd)
+RO-10 anchors ok (player.gd)
+RO-11 anchors ok (player.gd)
+RO-C1 anchors ok (reveal.gd)
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T16:09:49.182Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; cd $S && HB_TREE=$S/wt-bombs timeout 1500 python3 $S/hbo1/HB-O1_runner.py > $S/hbo1/HB-O1_sabotages.log 2>&1; echo "runner exit $?" >> $S/hbo1/HB-O1_sabotages.log; grep -E "^RO|CAUGHT|CONTROL|sabotages caught|runner exit|SETUP" $S/hbo1/HB-O1_sabotages.log | cut -c1-200
+----- output
+Exit code 137
+

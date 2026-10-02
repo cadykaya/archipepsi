@@ -1,0 +1,258 @@
+"""P14's composer: a room-graph latch opening a route on a real Zone.
+
+**The same discipline as D-8's `cross_room.compose_zone_state`, and for
+the same reasons.** It is a step a caller takes, never a default:
+wiring it into `topology.apply` would change every Zone the campaign
+composes, and the runtime half -- `ClassPlate` honouring
+`counts_player`, the shutter placed across the named doorway -- is
+Prod's and not finished. A default that emitted this today would ship a
+door the engine cannot yet open.
+
+**It is derived, not hardcoded.** Handed a Zone the campaign really
+composed, it picks the edge from that Zone's own structure -- the spine
+order, which edges are real doorways, which already carry a gate.
+Nothing here names a room.
+
+**And it declines rather than emitting something broken.** Every
+candidate goes through the real `Zone` schema (which refuses an
+object-only plate, a held requirement, a latch that seals the way, a
+latch that sets on build) and then through `topology.reachability`
+(which refuses a trigger behind the route it opens, and anything that
+strands). If nothing passes, the Zone comes back unchanged with the
+reason.
+
+**D-07 retired what it used to emit** (owner ruling, 2026-09-24):
+"Pressure plates are held sensors [...] If a puzzle needs a permanent
+change, use a visibly different permanent control such as a lever". D-10
+chose a `MEDIUM` plate that counted the player, a `LATCH` and a shutter:
+step on it once and walk through. Three entry points now share one
+search:
+
+  `compose_latched_route`         the production step: a LEVER, a
+                                  `LATCH` and the shutter (D13 1c) --
+                                  pull it once and walk through. The
+                                  engine places the lever by a measured
+                                  floor search (Prod's `2346261`).
+  `compose_held_route`            D13 1d: a plate held down by its
+                                  declared weight, open only while held.
+                                  An explicit step, never a default.
+  `compose_legacy_step_once_route` the retired plate chain, kept ONLY to
+                                  regenerate M-1's legacy fixture and to
+                                  seed its replay suite. No production
+                                  path calls it, a test says so, and
+                                  `validate_zone` refuses its output at
+                                  acceptance (D13 1a).
+
+M-1: a Zone saved with the plate chain loads and plays as saved. That is
+the model validators' business, and they did not change.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from .schemas.zone import Zone
+from .topology import reachability
+
+#: Room-local ids; the graph is room-local by construction, so they
+#: cannot collide with anything in another room.
+PLATE_ID = "step_plate"
+LEVER_ID = "route_lever"
+LATCH_ID = "held"
+SHUTTER_ID = "route_shutter"
+
+#: WHERE A CONTROL MAY STAND (P5-11): rooms with open floor. A
+#: `platform_path` is islands over a kill pit and a `tower` is floors over
+#: a drop, and a corridor is a lane -- its floor is the way through, and
+#: the engine's clear-floor search keeps 2.6 m from everything placed.
+#: P14's own played acceptance stands its plate in an arena. A lever
+#: needs the same floor: the engine refuses a spot with anything solid
+#: over its footprint or no clear side to stand at (`2346261`).
+_PLATE_ROOM_TYPES = ("arena", "treasure_room")
+
+#: Prefer a control that is not in the entrance itself -- a latch at
+#: spawn is set before the player knows it is there -- and fall back to
+#: the entrance only if nothing further in is legal.
+_PREFER_FROM = 1
+
+
+@dataclass(frozen=True)
+class LatchedRoute:
+    zone: Zone
+    #: `None` when nothing was emitted.
+    edge_id: str | None
+    note: str
+
+    @property
+    def emitted(self) -> bool:
+        return self.edge_id is not None
+
+
+def _step_once_graph(room_id: str) -> dict:
+    """D-10's plate chain, which D-07 retired. Legacy input only."""
+    return {
+        "room_id": room_id,
+        "sensors": [{"node_id": PLATE_ID, "kind": "PRESSURE_PLATE",
+                     "requires_class": "MEDIUM", "counts_player": True}],
+        "nodes": [{"node_id": LATCH_ID, "kind": "LATCH",
+                   "inputs": [PLATE_ID]}],
+        "actuators": [{"actuator_id": SHUTTER_ID, "driven_by": LATCH_ID}],
+    }
+
+
+def _lever_graph(room_id: str) -> dict:
+    """D-07's permanent control (D13 1c): one pull, one pulse, into the
+    LATCH that holds the shutter open for good."""
+    return {
+        "room_id": room_id,
+        "sensors": [{"node_id": LEVER_ID, "kind": "PULSE_BUTTON"}],
+        "nodes": [{"node_id": LATCH_ID, "kind": "LATCH",
+                   "inputs": [LEVER_ID]}],
+        "actuators": [{"actuator_id": SHUTTER_ID, "driven_by": LATCH_ID}],
+    }
+
+
+def compose_latched_route(zone: Zone) -> LatchedRoute:
+    """The production step: `lever -> LATCH -> shutter` on one legal
+    doorway, or the Zone unchanged with the reason."""
+    return _compose(zone, _lever_graph, "lever and latch")
+
+
+def compose_legacy_step_once_route(zone: Zone) -> LatchedRoute:
+    """M-1's LEGACY input: the retired `plate -> LATCH -> shutter`.
+
+    For the legacy fixture (`make latched-route-fixture`) and the replay
+    suite that seeds from it (`tools/compose_latched_route.py`) only.
+    """
+    return _compose(zone, _step_once_graph, "plate and latch")
+
+
+def _held_graph(room_id: str) -> dict:
+    """D13 1d: an object-only plate held down by its weight, driving the
+    shutter directly -- open only while the weight rests on it."""
+    return {
+        "room_id": room_id,
+        "sensors": [{"node_id": HELD_PLATE_ID, "kind": "PRESSURE_PLATE",
+                     "requires_class": "MEDIUM", "counts_player": False,
+                     "held_by": WEIGHT_ID}],
+        "nodes": [],
+        "actuators": [{"actuator_id": SHUTTER_ID,
+                       "driven_by": HELD_PLATE_ID}],
+    }
+
+
+#: The held route's plate and its weight: a 40 kg MEDIUM hand carry,
+#: homed beside its plate, never allowed across the door it holds.
+HELD_PLATE_ID = "weight_plate"
+WEIGHT_ID = "counterweight"
+WEIGHT_KG = 40.0
+
+
+def _add_weight(raw: dict, near: str, far: str) -> bool:
+    """Home the weight in the plate's room; its volume is that room and
+    one plain near-side neighbour, never the far side. False if the room
+    has no such neighbour."""
+    order = [c["id"] for c in raw["chambers"]]
+    locked = {d.get("edge_id") for c in raw["chambers"]
+              for d in c.get("doors", ()) if d.get("usage") == "LOCKED"}
+    neighbours = sorted(
+        (e["room_b"] if e["room_a"] == near else e["room_a"]
+         for e in raw["edges"]
+         if near in (e["room_a"], e["room_b"])
+         and far not in (e["room_a"], e["room_b"])
+         and e.get("realization", "JOINED") == "JOINED"
+         and e.get("direction", "BIDIRECTIONAL") == "BIDIRECTIONAL"
+         and not e.get("opened_by") and not e.get("requires_state")
+         and not e.get("capability") and e["edge_id"] not in locked),
+        key=order.index)
+    if not neighbours:
+        return False
+    raw["transported_objects"] = [*raw.get("transported_objects", []), {
+        "object_id": WEIGHT_ID, "allowed_volume": [neighbours[0], near],
+        "home_room_id": near, "carriable": True, "mass_kg": WEIGHT_KG}]
+    return True
+
+
+def compose_held_route(zone: Zone) -> LatchedRoute:
+    """D13 1d: `plate -> shutter` held open by a declared weight.
+
+    An explicit step for a fixture and Prod's acceptance (H-PRESSURE-R),
+    never a default: whether the engine builds and plays it is Prod's to
+    show. The same search as the latch route, the same room rules.
+    """
+    return _compose(zone, _held_graph, "held plate and its weight",
+                    extra=_add_weight)
+
+
+def _compose(zone: Zone, graph_for, what: str, extra=None) -> LatchedRoute:
+    """Put the chain `graph_for(room)` builds on one legal doorway.
+    `extra(raw, near, far)` may add to a candidate, or reject it."""
+    if zone.room_graphs or any(e.opened_by for e in zone.edges):
+        return LatchedRoute(zone, None,
+                            "the Zone already declares a room graph or a "
+                            "machine-opened edge; this step does not stack")
+    order = {c.id: i for i, c in enumerate(zone.chambers)}
+    # ONE CONTROL PER ROOM (O05-13, P5-11). A room already holding another
+    # relationship's control -- a Zone-state setter, a carried object's
+    # home, the socket it goes into -- has spent the clear floor a control
+    # needs. In the candidate profile's first played combination the
+    # lever took c002's floor and the engine refused this plate by name
+    # ("no clear floor for sensor 'step_plate'"). Declined here, where the
+    # room is chosen, instead of being left for the engine to refuse.
+    kinds = {c.id: c.type for c in zone.chambers}
+    arrive = {c.id: c.arrive_edge for c in zone.chambers}
+    from .transport_route import _off_the_floor, _socket_heights
+    heights = _socket_heights()
+    occupied = ({v.setter.room_id for v in zone.zone_state if v.setter}
+                | {o.home_room_id for o in zone.transported_objects}
+                | {c.room_id for c in zone.object_consumers})
+    candidates = []
+    for index, edge in enumerate(zone.edges):
+        if edge.realization != "JOINED":
+            continue          # a plug has no doorway for a shutter to cross
+        if edge.capability or edge.requires_state:
+            continue          # one gate per edge
+        if edge.room_a not in order or edge.room_b not in order:
+            continue
+        near, far = sorted((edge.room_a, edge.room_b), key=order.__getitem__)
+        if near in occupied:
+            continue          # one control per room
+        if kinds.get(near) not in _PLATE_ROOM_TYPES:
+            continue          # a control needs clear walkable floor
+        # AND THE DOOR IT OPENS ON THE CONTROL'S FLOOR (P5-8's rule): a
+        # shutter 28 m over the control, across a launch arc, is not the
+        # consequence a player working it can see.
+        if _off_the_floor(zone, near, {edge.edge_id}
+                          | ({arrive[near]} if arrive.get(near) else set()),
+                          heights):
+            continue
+        candidates.append((order[near] < _PREFER_FROM, order[near], index,
+                           near, far))
+    refusals = []
+    base = zone.model_dump()
+    for _, _, index, near, far in sorted(candidates):
+        raw = {**base, "edges": [dict(e) for e in base["edges"]]}
+        raw["edges"][index]["opened_by"] = SHUTTER_ID
+        raw["room_graphs"] = [graph_for(near)]
+        if extra is not None and not extra(raw, near, far):
+            refusals.append(f"{raw['edges'][index]['edge_id']}: no room "
+                            "for what the route needs beside it")
+            continue
+        try:
+            candidate = Zone.model_validate(raw)
+        except ValueError as exc:
+            refusals.append(f"{raw['edges'][index]['edge_id']}: {exc}")
+            continue
+        verdict = reachability(candidate)
+        if not verdict.ok:
+            refusals.append(f"{raw['edges'][index]['edge_id']}: "
+                            + "; ".join(verdict.errors))
+            continue
+        edge_id = raw["edges"][index]["edge_id"]
+        return LatchedRoute(
+            candidate, edge_id,
+            f"{what} in '{near}', shutter across '{edge_id}' "
+            f"into '{far}'; reachable before the route it opens")
+    return LatchedRoute(
+        zone, None,
+        "no doorway in this Zone can carry the route legally"
+        + (f": {refusals[0]}" if refusals else " (no candidate edges)"))

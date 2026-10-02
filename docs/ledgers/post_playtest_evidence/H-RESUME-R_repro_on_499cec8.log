@@ -1,0 +1,149 @@
+rm -rf /home/user/archipepsi/.resume-saves /home/user/archipepsi/.resume-saves-legacy
+cd bridge && ARCHIPEPSI_SAVE_DIR=/home/user/archipepsi/.resume-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for seed (port already serving?)"; exit 1; }; godot-bin/godot --headless --path godot -- --resume-live=seed --resume-save-dir=/home/user/archipepsi/.resume-saves > /tmp/archipepsi-resume-seed.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|restored|legacy|GODOT RESUME)" /tmp/archipepsi-resume-seed.log; if grep -qE "SCRIPT ERROR|String formatting error" /tmp/archipepsi-resume-seed.log; then echo "-- a runtime error was raised in seed"; exit 1; fi; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-resume-seed.log; exit $STATUS; fi
+2026-09-24 21:41:15,749 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-24 21:41:15,751 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-24 21:41:15,765 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:15,765 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:15,765 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:15,765 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:15,765 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:15,768 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (499cec8ee9d1*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /home/user/archipepsi/.resume-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+    (no campaign there yet; it is created on first connect)
+
+2026-09-24 21:41:15,832 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-24 21:41:15,832 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-24 21:41:22,940 websockets.server INFO connection open
+2026-09-24 21:41:22,940 archipepsi.server INFO client connected (1 total)
+2026-09-24 21:41:22,954 archipepsi.mock_ap WARNING mock room not written to /home/user/archipepsi/.resume-saves/1b7b4f118d2f3db5__Skyiah.mock_room: [Errno 2] No such file or directory: '/home/user/archipepsi/.resume-saves/1b7b4f118d2f3db5__Skyiah.mock_room.tmp'
+2026-09-24 21:41:22,954 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-24 21:41:22,957 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-24 21:41:23,068 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:23,068 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:23,069 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:23,069 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:23,069 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:23,074 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:23,426 archipepsi.campaign INFO zone zone_001: candidate zone_state EMITTED: control in 'c002', consequence in 'c003', gating 'e:c002:c003'
+2026-09-24 21:41:23,426 archipepsi.campaign INFO zone zone_001: candidate transport EMITTED: 'power_cell' at home in 'c004', carried c004 -> c005, installed in 'c005', opening 'e:c005:c006'
+2026-09-24 21:41:23,426 archipepsi.campaign INFO zone zone_001: candidate latched_route EMITTED: plate and latch in 'c009', shutter across 'e:c009:c010' into 'c010'; reachable before the route it opens
+2026-09-24 21:41:23,426 archipepsi.campaign INFO zone zone_001: candidate minors EMITTED: EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100055 moved into the minor, at its objective; it records minor_c024/bolt; EX50-021 Counterfire Arcade built as 'c025' behind the dead end 'c020' (its 'side_right' doorway); 'c020''s Check 89100025 moved into the minor, at its objective; it records minor_c025/release; EX50-011 declined: no dead end can take it ('c024' is itself a minor; 'c025' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c005' already holds the 'cell_power' setter; and 8 more)
+2026-09-24 21:41:23,471 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/home/user/archipepsi/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-24 21:41:23,473 archipepsi.server INFO client disconnected (0 left)
+  ok: the served Zone's c005 declares two bulwarks (2)
+seeded: zone_001 with c005's two bulwarks
+GODOT RESUME LIVE SEED OK (1 checks, 0 notes)
+cd bridge && ARCHIPEPSI_SAVE_DIR=/home/user/archipepsi/.resume-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for partial (port already serving?)"; exit 1; }; godot-bin/godot --headless --path godot -- --resume-live=partial --resume-save-dir=/home/user/archipepsi/.resume-saves > /tmp/archipepsi-resume-partial.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|restored|legacy|GODOT RESUME)" /tmp/archipepsi-resume-partial.log; if grep -qE "SCRIPT ERROR|String formatting error" /tmp/archipepsi-resume-partial.log; then echo "-- a runtime error was raised in partial"; exit 1; fi; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-resume-partial.log; exit $STATUS; fi
+2026-09-24 21:41:24,175 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-24 21:41:24,177 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-24 21:41:24,190 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:24,191 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:24,191 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:24,191 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:24,191 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:24,193 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (499cec8ee9d1*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /home/user/archipepsi/.resume-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-24 21:41:24,257 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-24 21:41:24,257 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-24 21:41:31,205 websockets.server INFO connection open
+2026-09-24 21:41:31,206 archipepsi.server INFO client connected (1 total)
+2026-09-24 21:41:31,220 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-24 21:41:31,223 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations
+2026-09-24 21:41:36,885 archipepsi.campaign INFO zone zone_001 layout committed (a0fd3773f065fe12)
+2026-09-24 21:41:42,597 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/home/user/archipepsi/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-24 21:41:42,598 archipepsi.server INFO client disconnected (0 left)
+  ok: c005 holds its two bulwarks on the first entry
+played: c005's station online; (no member identity) killed; the bridge holds <null>
+  ok: one bulwark left alive in c005
+GODOT RESUME LIVE PARTIAL OK (2 checks, 0 notes)
+cp -r /home/user/archipepsi/.resume-saves /home/user/archipepsi/.resume-saves-legacy
+python3 tools/strip_encounter_record.py /home/user/archipepsi/.resume-saves-legacy
+stripped the per-enemy record from 0 Zone(s) in .resume-saves-legacy
+-- restart: both processes new, only the save crosses --
+cd bridge && ARCHIPEPSI_SAVE_DIR=/home/user/archipepsi/.resume-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for partial_restore (port already serving?)"; exit 1; }; godot-bin/godot --headless --path godot -- --resume-live=partial_restore --resume-save-dir=/home/user/archipepsi/.resume-saves > /tmp/archipepsi-resume-partial_restore.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|restored|legacy|GODOT RESUME)" /tmp/archipepsi-resume-partial_restore.log; if grep -qE "SCRIPT ERROR|String formatting error" /tmp/archipepsi-resume-partial_restore.log; then echo "-- a runtime error was raised in partial_restore"; exit 1; fi; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-resume-partial_restore.log; exit $STATUS; fi
+2026-09-24 21:41:43,244 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-24 21:41:43,249 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-24 21:41:43,263 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:43,263 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:43,263 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:43,263 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:43,263 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-24 21:41:43,266 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (499cec8ee9d1*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /home/user/archipepsi/.resume-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-24 21:41:43,341 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-24 21:41:43,341 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-24 21:41:50,360 websockets.server INFO connection open
+2026-09-24 21:41:50,360 archipepsi.server INFO client connected (1 total)
+2026-09-24 21:41:50,375 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-24 21:41:50,378 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations
+2026-09-24 21:41:56,056 archipepsi.campaign INFO zone zone_001 layout committed (a0fd3773f065fe12)
+2026-09-24 21:42:06,625 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/home/user/archipepsi/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-24 21:42:06,626 archipepsi.server INFO client disconnected (0 left)
+restored: 2 bulwark(s) in c005 at control; the player in 'c005' AT THE STATION; nearest living 3.0 m; strikes during the build 0, in the next 5 s 0 (0.0 damage)
+FAIL: the bulwark killed before the restart stays dead: 2 alive in c005, not 2
+  ok: nothing struck the player while the Zone was being built (0)
+FAIL: the resumed player is not put among the living: at c005's arrival, not its station, 3.0 m from the survivor
+played: (no member identity) killed; the bridge holds <null>
+GODOT RESUME LIVE PARTIAL_RESTORE: 2 failures in 3 checks
+restored: 2 bulwark(s) in c005 at control; the player in 'c005' AT THE STATION; nearest living 3.0 m; strikes during the build 0, in the next 5 s 0 (0.0 damage)
+FAIL: the bulwark killed before the restart stays dead: 2 alive in c005, not 2
+  ok: nothing struck the player while the Zone was being built (0)
+FAIL: the resumed player is not put among the living: at c005's arrival, not its station, 3.0 m from the survivor
+played: (no member identity) killed; the bridge holds <null>
+GODOT RESUME LIVE PARTIAL_RESTORE: 2 failures in 3 checks
+make: *** [Makefile:999: godot-resume-live] Error 1
+rc=2

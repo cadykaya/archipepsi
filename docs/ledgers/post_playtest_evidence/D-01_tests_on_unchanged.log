@@ -1,0 +1,40 @@
+# test_self_echo_integration.py on the UNCHANGED code (a2115b6), 2026-09-25T13:22:19Z
+FFF..FFFF                                                                [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert False is True
+     +  where False = CampaignSave(save_version=1, schema_version=8, seed_name='MockSeed-3', team=0, slot_id=1, slot_name='Skyiah', epsilon_...d=None, completed_zone_count=0, zone_history=(), shop=ShopState(stock=(), created_after_zone_count=0), goal_sent=False).self_addressed_echoes
+     +    where CampaignSave(save_version=1, schema_version=8, seed_name='MockSeed-3', team=0, slot_id=1, slot_name='Skyiah', epsilon_...d=None, completed_zone_count=0, zone_history=(), shop=ShopState(stock=(), created_after_zone_count=0), goal_sent=False) = <archipepsi_bridge.campaign.CampaignEngine object at 0x7ff89ccb97d0>.save
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_self_echo_integration.py:128: AssertionError: assert False is True
+E   AssertionError: the own Check yielded no Echo
+    assert None is not None
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_self_echo_integration.py:147: AssertionError: the own Check yielded no Echo
+E   AttributeError: 'NoneType' object has no attribute 'display_name'
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_self_echo_integration.py:186: AttributeError: 'NoneType' object has no attribute 'display_name'
+E   AssertionError: no Echo, fallback or otherwise
+    assert None is not None
+------------------------------ Captured log call -------------------------------
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_self_echo_integration.py:245: AssertionError: no Echo, fallback or otherwise
+E   AssertionError: minted 0 times
+    assert 0 == 1
+     +  where 0 = <built-in method count of list object at 0x7ff89ccccfc0>('echo_89100006')
+     +    where <built-in method count of list object at 0x7ff89ccccfc0> = [].count
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_self_echo_integration.py:281: AssertionError: minted 0 times
+E   assert None is not None
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_self_echo_integration.py:298: assert None is not None
+E   AssertionError: []
+    assert 0 == 3
+     +  where 0 = len([])
+     +    where [] = <function test_own_checks_confirmed_elsewhere_wait_in_the_foreign_queue.<locals>.go.<locals>.granted at 0x7ff89cc536a0>(<archipepsi_bridge.campaign.CampaignEngine object at 0x7ff89cb31990>)
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_self_echo_integration.py:335: AssertionError: []
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED bridge/tests/test_self_echo_integration.py::test_a_foreign_check_is_unchanged
+PASSED bridge/tests/test_self_echo_integration.py::test_a_legacy_card_is_delivered_to_you_and_nothing_more
+FAILED bridge/tests/test_self_echo_integration.py::test_a_new_campaign_is_created_with_the_policy_on
+FAILED bridge/tests/test_self_echo_integration.py::test_an_own_check_yields_one_echo_and_its_original_once
+FAILED bridge/tests/test_self_echo_integration.py::test_the_card_says_delivered_to_you_then_the_echo
+FAILED bridge/tests/test_self_echo_integration.py::test_a_failing_provider_falls_back_under_the_same_id
+FAILED bridge/tests/test_self_echo_integration.py::test_a_crash_before_the_append_is_granted_once_on_reload
+FAILED bridge/tests/test_self_echo_integration.py::test_a_written_echo_is_never_asked_for_again
+FAILED bridge/tests/test_self_echo_integration.py::test_own_checks_confirmed_elsewhere_wait_in_the_foreign_queue
+7 failed, 2 passed in 0.36s

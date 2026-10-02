@@ -1,0 +1,19 @@
+rev dc66f2fdb6cc4b22c828aeba35a0a91a6cc6ced9
+start 14:43:02
+1	godot-integration	0	160	   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)	2 errors
+2	godot-integration-quiet	0	159	   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)	2 errors
+3	godot-integration-variant-live	0	31	INFO QUIET GENERATION: zone zone_001 asks for 720 of the 1000 this campaign would normally spend, and offers switch_sequ	0 errors
+4	godot-candidate-live	0	312	GODOT CANDIDATE LIVE NEXT_FINAL OK (8 checks, 1 notes)	8 errors
+5	godot-consumable-live	0	44	GODOT CONSUMABLE LIVE TESTS OK (1 notes)	1 errors
+6	godot-consumable-restart	0	41	GODOT CONSUMABLE LIVE TESTS OK (1 notes)	0 errors
+7	godot-latched-route-live	0	85	GODOT LATCHED LIVE RESTORE OK (13 checks, 1 notes)	0 errors
+8	godot-lever-route-live	0	82	make[1]: Leaving directory '/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05'	0 errors
+9	godot-transport-live	0	172	GODOT TRANSPORT LIVE RESTORE OK (12 checks, 0 notes)	0 errors
+10	godot-reversible-live	0	87	GODOT REVERSIBLE LIVE RESTORE OK (6 checks, 0 notes)	0 errors
+11	godot-resume-live	0	103	GODOT RESUME LIVE LEGACY OK (6 checks, 0 notes)	5 errors
+12	godot-ordinary-live	0	35	GODOT RELOAD TESTS OK (10 checks)	2 errors
+13	godot-reload	0	60	GODOT RELOAD TESTS OK (20 checks)	0 errors
+14	godot-zone-audit	0	26	GODOT ZONE AUDIT OK	0 errors
+end 15:06:19
+tree_at_end  M docs/ledgers/PROD_POST_PLAYTEST.md  M godot/tests/fixtures/placement/captures.json  M godot/tests/fixtures/placement/exhausted.json  M godot/tests/fixtures/placement/no_evidence.json  M godot/tests/fixtures/placement/repaired.json  M godot/tests/fixtures/placement/supported.json ?? docs/ledgers/post_playtest_evidence/D-01_after.log ?? docs/ledgers/post_playtest_evidence/D-01_before.log ?? docs/ledgers/post_playtest_evidence/D-01_full_loop_on_unchanged.log ?? docs/ledgers/post_playtest_evidence/D-01_repro_test.py.txt ?? docs/ledgers/post_playtest_evidence/D-01_sabotage_runner.py.txt ?? docs/ledgers/post_playtest_evidence/D-01_sabotages.log ?? docs/ledgers/post_playtest_evidence/D-01_tests_on_unchanged.log ?? docs/ledgers/post_playtest_evidence/D-5_after.log ?? docs/ledgers/post_playtest_evidence/D-5_before.log ?? docs/ledgers/post_playtest_evidence/D-5_sabotage_runner.py.txt ?? docs/ledgers/post_playtest_evidence/D-5_sabotages.log 
+DONE

@@ -1,0 +1,20 @@
+D10-1 [rail_networks.gd] the margins tripled (0.5 -> 1.5 m)
+    CAUGHT by "the composer's rule" -- exit 2; restored byte for byte: True
+      FAIL: the composer's rule (both spans 22 m or more) is broken: 22 x 22 takes 57 of 72
+        22	22	57	72	outside the room 16110, on the track 8280, not clear 1884, within the base kit's reach 186	79
+        24	24	72	72	-	89
+        26	26	72	72	-	94
+        28	28	72	72	-	102
+        28	20	63	72	outside the room 10782, on the track 4230, not clear 2580, within the base kit's reach 876	94
+        28	16	48	72	outside the room 25776, on the track 7344, not clear 4869, within the base kit's reach 882, off the floor 9	81
+D10-2 [rail_networks.gd] the search three times coarser (1 -> 3 m)
+    CAUGHT by "the composer's rule" -- exit 2; restored byte for byte: True
+      FAIL: the composer's rule (both spans 22 m or more) is broken: 22 x 22 takes 51 of 72; 24 x 24 takes 69 of 72
+        22	22	51	72	outside the room 2016, on the track 1365, not clear 576, within the base kit's reach 156, off the floor 3	64
+        24	24	69	72	outside the room 372, on the track 225, not clear 96, within the base kit's reach 75	74
+        26	26	72	72	-	80
+        28	28	72	72	-	83
+        28	20	63	72	outside the room 747, on the track 558, not clear 387, within the base kit's reach 252	75
+        28	16	42	72	outside the room 2880, on the track 1170, not clear 975, within the base kit's reach 375	64
+
+2 of 2 sabotages caught

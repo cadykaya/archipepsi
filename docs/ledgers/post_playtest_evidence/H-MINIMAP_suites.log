@@ -1,0 +1,161 @@
+H-MINIMAP: the Zone-heavy suites against room_entered (21 suites, one at a time, in wt-cp2)
+Batch 11:26-11:54 UTC. room_entered (and its resend) was in place for every suite.
+The MM-F3/MM-F4 repairs landed mid-batch: zone_controller.gd 11:35:40 (plug_positions),
+minimap_model.gd 11:35:57, minimap.gd 11:36:30. Suites started before 11:35:40 ran the code
+without those repairs; latched-route (11:35:51) straddled them; transport onward ran the final
+product code. The repairs touch no intent.
+
+godot-rail-junction: exit=0 GODOT RAIL JUNCTION OK (140 checks)
+godot-affordance: exit=0 GODOT AFFORDANCE TESTS OK
+godot-activity: exit=0 GODOT ACTIVITY TESTS OK
+godot-lab: exit=0 GODOT LAB TESTS OK
+godot-resume: exit=0 GODOT RESUME TESTS OK (12 checks, 0 notes)
+godot-minor-claim: exit=0 GODOT MINOR CLAIM TESTS OK (17 checks, 4 notes)
+godot-test: exit=0 GODOT CHAMBER TESTS OK
+godot-integration: exit=0 GODOT INTEGRATION OK
+godot-reload: exit=0 GODOT RELOAD TESTS OK (20 checks)
+godot-zone-state: exit=0 GODOT ZONE STATE OK (60 checks, 3 notes)
+godot-latched-route: exit=0 GODOT LATCHED ROUTE TESTS OK (73 checks, 4 notes)
+godot-transport: exit=0 GODOT TRANSPORT TESTS OK (106 checks, 6 notes)
+godot-reversible: exit=0 GODOT REVERSIBLE TESTS OK (32 checks, 0 notes)
+godot-hud: exit=0 GODOT HUD TESTS OK
+godot-boot: exit=0 GODOT BOOT TESTS OK
+godot-menu-shell: exit=0 GODOT MENU SHELL OK (23 checks, 2 notes)
+godot-equipment-face: exit=0 GODOT EQUIPMENT FACE OK (107 checks, 1 notes)
+godot-minimap: exit=0 GODOT MINIMAP OK (30 checks, 1 notes)
+godot-counterfire-hosted: exit=0 GODOT COUNTERFIRE HOSTED OK (25 checks, 1 notes)
+godot-flyer-room: exit=0 GODOT FLYER ROOM OK (7 checks, 0 notes)
+godot-combat-fairness: exit=0 GODOT COMBAT FAIRNESS OK (50 checks, 0 notes)
+
+===== make godot-rail-junction (started 11:26:36)
+  ok: the skiff leaves for S2 without them
+  ok: S3 has a forward control within reach
+  ok: the player can see it from the island, saw TargetBody:<StaticBody3D#584232994699>
+  ok: and one shot brings the skiff back to them (4.1 s)
+  MEASURED 140 check(s), 2 note(s)
+GODOT RAIL JUNCTION OK (140 checks)
+===== make godot-affordance (started 11:28:35)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+GODOT AFFORDANCE TESTS OK
+===== make godot-activity (started 11:28:57)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+GODOT ACTIVITY TESTS OK
+===== make godot-lab (started 11:29:36)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+GODOT LAB TESTS OK
+===== make godot-resume (started 11:29:57)
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+  ok: one death, one report, under its declared identity: [{ "type": "enemy_defeated", "zone_id": "zone_001", "member": "c005/bulwark#1" }]
+  ok: and it is remembered for a Hub return before the snapshot
+GODOT RESUME TESTS OK (12 checks, 0 notes)
+===== make godot-minor-claim (started 11:30:21)
+  ok: c024: NO CROSSING FROM THE CARRIAGE IN TRANSIT -- ridden and jumped at 14 points of its travel, nothing LIGHTENED; reached G from: []
+  -- c024: the return, after an alternate arrival and after the bolt
+  ok: c024: ALTERNATE ARRIVAL, crossing shut, nothing pulled: the arrival floor is reached from G (the return gap)
+  ok: c024: the HOLD-OPEN BOLT pulled by hand on G: the stair is down (8 steps) and the bolt stays thrown, saying so: 'BOLT HELD -- CROSSING OPEN, RETURN STAIR DOWN'
+  ok: c024: and the crossing is held open with the carriage still on the weighbridge; the arrival floor is reached from G
+GODOT MINOR CLAIM TESTS OK (17 checks, 4 notes)
+===== make godot-test (started 11:32:06)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+chambers: doorway 2.4 m, brute 1.8 m, clearance 0.30 a side
+    spiral: laid out
+GODOT CHAMBER TESTS OK
+===== make godot-integration (started 11:32:34)
+  ok: at least one shop purchase completed
+  ok: coins were genuinely spent
+GODOT INTEGRATION OK
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+ERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools12BucketMediumE
+ERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools11BucketSmallE
+===== make godot-reload (started 11:34:27)
+  ANCHORS: 48 recorded anchor(s) compared with what this build instantiated; worst gap 0.000 m
+          SAME BUILD, so this is present determinism and NOT evidence about a save written by another build; see docs/RETURN_ANCHOR_PERSISTENCE.md
+  ok: the manifest's anchors could be compared with the instantiated ones
+  ok: this build reinstantiates its own committed anchors where it recorded them (worst 0.000 m)
+  ok: the player walked from 'c005' through the doorway they had already opened and into 'c014': they are at (35.12038, 1.530131, 54.90002) and it is [P: (35.51, 0.53, 41.3), S: (23.8, 9.0, 27.2)] (9 frames, 3.5 m from its arrival)
+GODOT RELOAD TESTS OK (20 checks)
+===== make godot-zone-state (started 11:35:25)
+p3a: zone zone_state mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the object is carrying a Status while it is carried
+  ok: what the save carries is the room: { "cell": "c003" }
+  ok: ...and ONLY the room -- there is no field a Status could ride in: { "cell": "c003" }
+
+GODOT ZONE STATE OK (60 checks, 3 notes)
+===== make godot-latched-route (started 11:35:51)
+  ok: CONTROL: the arena is cleared the same way: 5 of 5 down in 11.7 s, 27 shots / 25 landed; walked in 11.0 m for 0 hp, stood with every gun within 4.8 m (minimum range 8 m) for 0 hp
+  ok: CONTROL: standing on the plate satisfies it
+  ok: CONTROL: and while the player stands there the way opens (openness 1.00)
+  ok: CONTROL: with nothing to hold it, stepping off shuts the way again (goal 0.00, openness 0.00)
+  ok: CONTROL: and the walk into c003 is stopped at the door (ended (-18.599081, 1.100943, 24.688370), 1.8 m from it, this side, 0 death(s))
+GODOT LATCHED ROUTE TESTS OK (73 checks, 4 notes)
+===== make godot-transport (started 11:37:56)
+  ok: picked up LIGHTENED: no walking penalty (1.00)
+  ok: the same body carried over the threshold into c005 (5.0 s on)
+  ok: on the far side it is still LIGHTENED: light, factor 1.00
+  ok: nothing about the Status was sent to be saved
+  ok: it ran out on its own clock (8.0 s after the hit): MEDIUM again, 40 kg, factor 0.85
+GODOT TRANSPORT TESTS OK (106 checks, 6 notes)
+===== make godot-reversible (started 11:44:31)
+  ok: an unrelated snapshot leaves it pending
+  ok: a refusal naming another state leaves it alone
+  ok: REFUSED: put back to the campaign's value (stowed), the lever says so: "[E] SPAN_ALIGNMENT -> LOWERED   (now STOWED · REFUSED)"
+  ok: and the doorway and the lamp follow it back
+  ok: putting it back is not a new selection: nothing was sent
+GODOT REVERSIBLE TESTS OK (32 checks, 0 notes)
+===== make godot-hud (started 11:46:19)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- LOADOUT: one row per slot, each with a real keycap
+GODOT HUD TESTS OK
+===== make godot-boot (started 11:46:40)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+GODOT BOOT TESTS OK
+===== make godot-menu-shell (started 11:47:01)
+  ok: the bridge client runs through it: the AP world is not paused
+  ok: and the interface itself still turns while the world is still
+  ok: closing it releases its own claim only: another owner's pause holds (["test_other_owner"])
+  ok: once nobody holds it the world runs on: 102 frames, the body fell 2.52 m, the timer fired
+
+GODOT MENU SHELL OK (23 checks, 2 notes)
+===== make godot-equipment-face (started 11:47:30)
+  -- an empty supply off its key
+  ok: a spent spare is not offered, and says a Zone refills it
+  ok: its tile reads 0/3
+  ok: the same supply ON its key at 0 / 3 stays, and can come off
+
+GODOT EQUIPMENT FACE OK (107 checks, 1 notes)
+===== make godot-minimap (started 11:47:57)
+  ok: a room above is marked pointing up, one below pointing down
+  -- the ways back
+  ok: every way back the bridge lists is a ring where its device stands (8 listed, 8 placed, 8 drawn)
+  ok: and none is drawn before the bridge lists it: 0 of the Zone's 8, with five rooms found
+
+GODOT MINIMAP OK (30 checks, 1 notes)
+===== make godot-counterfire-hosted (started 11:48:18)
+  ok: c025: on the flank again, through a fresh window
+  ok: c025: the SERVICE RELEASE pulled on the flank: the shutter held open and its stair down (12 steps)
+  ok: c025: the release STAYS THROWN and says so: 'RELEASE THROWN -- SHUTTER HELD OPEN, STAIR DOWN'
+  ok: c025: down the release's stair onto the gallery ((8.300000, 1.000000, 7.500000))
+  ok: c025: and back to where the room was entered (1.2 m off)
+GODOT COUNTERFIRE HOSTED OK (25 checks, 1 notes)
+===== make godot-flyer-room (started 11:53:01)
+  ok: all 5 divers are alive when the player arrives
+  ok: c011, the player standing on the floor: the divers WAIT -- 0 dives, 0 impacts in 5 s
+  ok: c011, waiting reads as watching: 5 of 5 divers have noticed the player and hold their eye at the watching level
+  ok: c011, the player jumping: leaving the ground draws dives and they land (5 dives, 4 impacts, 48.0 damage)
+  ok: c011 cleared with the Static Pulse aimed at the divers' bodies: 5 of 5 killed, counted from enemy_died; kill_all satisfied: true
+GODOT FLYER ROOM OK (7 checks, 0 notes)
+===== make godot-combat-fairness (started 11:53:46)
+  ok: diver: a wall raised across its committed dive stops it -- 0 impacts, though its body ends 1.50 m from the player's (contact is 1.6 m)
+  ok: diver, airborne player behind a wall: no dive, nothing lands (0, 0)
+  ok: diver, player jumping 30 m away: no dive (0)
+  ok: diver: WAITING READS AS WATCHING, not as idle -- its eye burns at 2.40 with the player noticed, 1.08 with no one there
+  ok: diver: committing, its eye flares (6.24)
+GODOT COMBAT FAIRNESS OK (50 checks, 0 notes)

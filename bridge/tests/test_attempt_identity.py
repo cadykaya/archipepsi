@@ -39,6 +39,7 @@ from pydantic import TypeAdapter
 
 from .conftest import connected_engine, drain, run
 from .test_amalgam_end_to_end import (_movable, _place, _placement,
+                                      _unmovable,
                                       _zone_with_branches)
 
 _ADAPTER = TypeAdapter(ClientMessage)
@@ -176,4 +177,36 @@ def test_a_client_that_sends_no_attempt_behaves_as_before(tmp_path):
         rec = engine.save.zone_by_id(zid)
         assert rec.layout_refusals == 1, (
             "a client with no attempt field is read exactly as before")
+    run(go())
+
+
+def test_a_genuine_new_failure_still_charges_its_own_attempt(tmp_path):
+    """THE DIRECTION THAT MATTERS MORE than discarding a stale result.
+
+    A discriminator that quietly swallows real failures keeps a broken
+    Zone alive forever instead of exhausting it. A second attempt that
+    really fails costs a second refusal — identical content or not.
+
+    Restored after a merge dropped it: resolving a conflicted test file
+    wholesale to the other lane's side took this with it, and the file
+    stayed green because what was lost was a test rather than a caller.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        stuck = _unmovable(zone)
+        await _send(engine, zid,
+                    _placement(_place(zone), zone, stuck, "NO_CANDIDATE"),
+                    proposal_id=layout.proposal_digest(zone), attempt=0)
+        rec = engine.save.zone_by_id(zid)
+        assert rec.layout_refusals == 1, "the first failure was not charged"
+
+        replacement = rec.zone
+        await _send(engine, zid,
+                    _placement(_place(replacement), replacement,
+                               _unmovable(replacement), "NO_CANDIDATE"),
+                    proposal_id=layout.proposal_digest(replacement),
+                    attempt=1)
+        assert engine.save.zone_by_id(zid).layout_refusals == 2, (
+            "a real second failure was swallowed by the discriminator")
     run(go())

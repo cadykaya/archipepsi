@@ -134,6 +134,76 @@ jobs:
           make godot-return-placement
           make godot-build-failure
           make godot-exit-reach
+          make godot-passenger-carry
+          make godot-rail-carrier
+          make godot-rail-junction
+          make godot-passing-platforms
+          make godot-counterfire
+          make godot-counterfire-hosted
+          make godot-mass-class
+          make godot-unweighted
+          make godot-target-facing
+          make godot-rail-zone
+          make godot-rail-gantry
+          make godot-rail-network
+          make godot-gantry-census
+          make godot-enemy-footing
+          make godot-machine-life
+          make godot-bombs
+          make godot-zone-state
+          make godot-roster
+          make godot-actuator
+          make godot-constraints
+          make godot-archive
+          make godot-consumable
+          make godot-encounter
+          make godot-signal-graph
+          make godot-signal-verbs
+          make godot-latched-route
+          make godot-theme-pack
+          make godot-carry
+          make godot-transport
+          make godot-held-route
+          make godot-reversible
+          make godot-verb-runtime
+          make godot-status-family
+          make godot-status-kinetic
+          make godot-combat-fairness
+          make godot-flyer-room
+          make godot-resume
+          make godot-minor-claim
+          make godot-menu-shell
+          make godot-equipment-face
+          make godot-minimap
+          make godot-map-face
+          make godot-journal-face
+
+      - name: One consumable charge, from a keypress to the save
+        run: make godot-consumable-live
+
+      - name: A charge spent by a process that then dies
+        run: make godot-consumable-restart
+
+      - name: The latch route through a real bridge and a restart
+        run: make godot-latched-route-live
+
+      - name: The lever route (D-07) through a real bridge and a restart
+        run: make godot-lever-route-live
+
+      - name: A carried cell through a real bridge and two restarts
+        run: make godot-transport-live
+
+      - name: A reversible lever through a real bridge and a restart
+        run: make godot-reversible-live
+
+      - name: The whole candidate profile in one Zone, and a restart
+        run: make godot-candidate-live
+
+      - name: The Bomb Bag the campaign gives, claimed, carried and thrown, live
+        run: make godot-bombs-live
+
+      - name: An encounter resumed as it was left, through a real bridge and restarts
+        run: make godot-resume-live
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

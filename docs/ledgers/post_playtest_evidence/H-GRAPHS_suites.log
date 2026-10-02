@@ -1,0 +1,8 @@
+# regression suites on the final runtime
+== godot-signal-graph: GODOT SIGNAL GRAPH TESTS OK (61 checks, 0 notes)
+== godot-counterfire: GODOT COUNTERFIRE OK (59 checks, 2 notes)
+== godot-unweighted: GODOT UNWEIGHTED OK (70 checks, 2 notes)
+== godot-counterfire-hosted: GODOT COUNTERFIRE HOSTED OK (25 checks, 1 notes)
+== godot-latched-route: GODOT LATCHED ROUTE TESTS OK (73 checks, 4 notes)
+== godot-held-route: GODOT HELD ROUTE OK (33 checks, 1 notes)
+== godot-signal-graph after the legality trim: GODOT SIGNAL GRAPH TESTS OK (61 checks, 0 notes)

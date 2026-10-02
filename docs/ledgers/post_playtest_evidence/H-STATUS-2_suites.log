@@ -1,0 +1,1092 @@
+=== make godot-status-family (18:59:08)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- ROOTED: no step of its own, the attack kept, a knock taken
+  ok: rooted mid-stride, a melee enemy sheds its momentum in 0.15 m and then takes no step (0.0001 m in 1.5 s), while an unrooted one closes 5.99 m
+  ok: attacks continue: the player steps into its reach and takes 6.0, and it struck without stepping (0.000 m)
+  ok: and a knock still moves it: 0.31 m from an 8 m/s knock
+  -- ANCHORED: no step, no knock, and FIXED to the verbs
+  ok: anchored mid-stride, it stops where it is: 0.0000 m in 1.5 s
+  ok: immune to impulse: the same 8 m/s knock moves the anchored one 0.0000 m and the rooted one 0.31 m
+  ok: to the verbs, an anchored enemy is FIXED (fixed); a rooted one and a plain one are still unmodelled (actor_mass_unmodelled, actor_mass_unmodelled); HOLD is the actor rule either way (actor_rule)
+  ok: attacks continue: the player in its reach takes 6.0
+  -- EXPIRY: rooted for a second, then walking
+  ok: for its 1.0 s it takes no step (0.000 m once stopped); expired, it closes 2.81 m in the next second
+  -- A CHARGE AND A DIVE, held: the attack where it stands
+  ok: a rooted charger's rush goes nowhere (0.000 m) and still ends in its recovery, while an unrooted one's carries 14.94 m
+  ok: a rooted diver's dive happens where it hangs (0.000 m); an unrooted one's carries 2.33 m
+  -- A FLYER HELD, AND A BULWARK THAT STILL TURNS
+  ok: a rooted drifter stays where it hangs (0.000 m in 2 s, body y 3.12): it neither drifts nor falls, while an unrooted one drifts 1.92 m
+  ok: a metre below its station, the rooted drifter stays there (0.000 m back up in 1.5 s), while an unrooted one climbs 0.90 m back
+  ok: a rooted bulwark still turns to meet the player (92°) and takes no step (0.000 m)
+  -- THE REAL PATH: an on-hit `rooted`, fired in a declared arena
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] _track_chamber (res://scripts/gameplay/zone_controller.gd:2180)
+         [2] _process (res://scripts/gameplay/zone_controller.gd:2189)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_status mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] send_layout_result (res://scripts/gameplay/zone_controller.gd:1851)
+         [2] _publish_layout (res://scripts/gameplay/zone_controller.gd:1665)
+  ok: the declared arena laid out with its player and one melee
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _authored_projectile (res://scripts/content/content_instantiator.gd:597)
+         [1] projectile_visual (res://scripts/content/content_instantiator.gd:579)
+         [2] _ready (res://scripts/gameplay/echo_projectile.gd:73)
+         [3] _launch (res://scripts/gameplay/echo_runtime.gd:787)
+         [4] _projectile (res://scripts/gameplay/echo_runtime.gd:756)
+         [5] activate (res://scripts/gameplay/echo_runtime.gd:318)
+         [6] press_slot (res://scripts/gameplay/player.gd:595)
+         [7] _physics_process (res://scripts/gameplay/player.gd:945)
+  ok: closing at 1.00 m per quarter-second from 10.6 m, the melee is hit (23.0/24.0) and rooted by the Echo's own on-hit Status; it sheds its stride in 0.16 m and then takes no step: 0.0001 m in the next second
+  NOTE: the Echo here is injected (`set_equipped`); the bridge admits its on-hit `rooted`, and no provider emits one yet
+GODOT STATUS FAMILY OK (15 checks, 1 notes)
+=== exit 0
+=== make godot-stats (18:59:54)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+GODOT STATS TESTS OK
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+     at: cleanup (core/object/object.cpp:2514)
+=== exit 0
+=== make godot-mass-class (19:00:17)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- VOCABULARY: the pinned thresholds, at their edges
+  ok: 0.000 kg is light
+  ok: 29.999 kg is light
+  ok: 30.000 kg is medium
+  ok: 119.999 kg is medium
+  ok: 120.000 kg is heavy
+  ok: 399.999 kg is heavy
+  ok: 400.000 kg is fixed
+  ok: 5000.000 kg is fixed
+  ok: and a thing that cannot be manipulated is FIXED whatever it weighs -- §10.2's second clause
+  ok: one step down from HEAVY is MEDIUM
+  ok: and nothing falls off the bottom of the ladder
+  ok: 'at least HEAVY' admits FIXED and refuses MEDIUM
+  -- PLATE: what a class sensor is actually reading
+  ok: an empty HEAVY plate is not satisfied
+  ok: a 200 kg crate is HEAVY
+  ok: and it satisfies the plate
+  ok: the plate can say what it requires and what it sees: { "requires": "heavy", "classes": ["heavy"], "counts_player": false, "satisfied": true }
+  -- DEBRIS: three of the wrong class are still wrong
+  ok: 300 kg of MEDIUM debris does not make a HEAVY plate
+  ok: while the same mass is 300 kg against a 120 kg summed threshold -- the two sensors disagree by design
+  -- PLAYER: standing on it is not an occupant
+  ok: the player is standing on the plate at y=0.12
+  ok: and the plate is not satisfied by them
+  ok: they are not even counted as an occupant
+  -- PLAYER: only a plate that opts in counts them
+  ok: counts_player=false: the player is standing on the plate at y=0.12
+  ok: counts_player=true: the player is standing on the plate at y=0.12
+  ok: the player's class is MEDIUM, which this plate wants (medium)
+  ok: off (the default): the player is no occupant and the plate is not satisfied ({ "satisfied": false, "occupants": 0, "class": "medium" })
+  ok: on: the same body satisfies the same plate ({ "satisfied": true, "occupants": 1, "class": "medium" })
+  ok: and a plate is object-only unless it is declared otherwise
+  -- CONTROL: class moves, kilograms do not, and the crate is still a step
+  ok: both sensors are held: class HEAVY, 200 kg summed
+  ok: the crate now reads MEDIUM
+  ok: while its mass is still 200 kg -- the kilograms did not move
+  ok: the CLASS plate has released
+  ok: and the SUMMED-KILOGRAM sensor has not, reading 200 kg still
+  ok: a body dropped on the lightened crate comes to rest on its top at y=1.10, not through it
+  ok: and the crate has not moved, shrunk or fallen: its top is still at 1.11
+  NOTE: the class was lowered by the REAL `lightened` Status, applied through `ManipulableBody.apply_status` -> `StatusEffects` -> `MassClass.read`. No stand-in: the support declaration `lightened: (object,)` and this effect landed together
+  -- CONVERSE: kilograms move, class does not, plate holds
+  ok: the class plate is held
+  ok: 50 kg lighter and the crate is still HEAVY
+  ok: so the class plate does NOT release -- which is the feedback §6 says a player must be able to tell from a broken spell
+  ok: while the summed sensor's reading fell from 200 to 150 kg
+  -- EPHEMERAL: the class comes back and the plate re-reads
+  ok: the plate released
+  ok: the class came back on its own
+  ok: and the plate is held again
+  ok: the plate announced exactly one release and one re-read, got [false, true]
+  -- BOUNDARY: a kind is supported ON something, not merely at all
+  ok: the export says `lightened` is implemented on ["object"]
+  ok: `lightened` on a `self` target is refused
+  ok: ...leaving no active state: []
+  ok: ...and no `status_applied` event: []
+  ok: `burning` on an `object` target is refused -- it is implemented on actors and nothing has implemented it on a crate
+  ok: ...with no event
+  ok: `lightened` on an `object` target is accepted
+  ok: ...and announces exactly that: ["lightened"]
+  -- IMPULSE: doubled; FORCE: untouched, and that is the contract
+  ok: the lightened crate takes impulses at x2.0 against x1.0
+  ok: the same impulse moves it 2.00 times as fast (22.97 vs 11.49 m/s)
+  ok: the same continuous force moves both alike: 0.681 and 0.681 m/s
+  -- ELIGIBILITY: the class opens the door, it never shuts it
+  ok: a 200 kg HEAVY crate is refused by a 120 kg envelope
+  ok: lightened, the same crate is eligible -- and its mass is still 200 kg
+  ok: a body at exactly 120.0 kg is still pushable, as it was before the class was read at all
+  ok: ...even though its class is HEAVY -- the two vocabularies disagree at this number and the kilograms still decide
+  -- WIND: reaches objects now, and only light enough ones
+  ok: the lightened crate rises: 3.00 -> 13.05
+  ok: the HEAVY one is not moved by air and falls: 3.00 -> 0.49
+
+GODOT MASS CLASS OK (59 checks, 1 notes)
+=== exit 0
+=== make godot-unweighted (19:00:57)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- THE ROOM, as §2 and §4 describe it
+  ok: plate, shutter, crate, applicator, bolt, drive and goal
+  ok: the crate is 200 kg
+  ok: ...which reads heavy
+  ok: the plate requires HEAVY or heavier
+  ok: §4: the crate is parked, so the plate is OFF
+  ok: §4: ...and the shutter is open
+  -- THE CONTRADICTION: 1.9 m, from two different floors
+  ok: from the floor, a jump reaches 1.333 m and the sill is 1.90 m
+  ok: ...and it is above a step-up of 1.00 m too, so there is no walking bypass
+  ok: from the crate top at 1.00 m, a jump reaches 2.333 m
+  ok: the guide rails are no step: 0.45 m, and a jump from them reaches 1.783 m, under the sill
+  NOTE: margin from the crate top is 0.433 m
+  -- PLACING THE STEP CLOSES THE ROUTE
+  ok: BEFORE: the shutter is open
+  ok: DURING: the plate reads one occupant, ["heavy"]
+  ok: ...and is satisfied
+  ok: ...counting the crate and not the player (§3)
+  ok: AFTER: the shutter is shut, openness 0.000
+  -- CLASS VERSUS KILOGRAMS, through the real Status
+  ok: the route is closed to begin with
+  ok: the Status is on a real StatusEffects at target `object`
+  ok: ...and `lightened` is actually active on it
+  ok: THE KILOGRAMS DO NOT MOVE: still 200.0 kg
+  ok: THE CLASS DOES: HEAVY -> medium, one step
+  ok: the plate stops being satisfied without the crate moving
+  ok: and the shutter opens, openness 1.000
+  -- COLLISION IS UNTOUCHED: the step is still a step
+  ok: the crate top stays at 0.990 m
+  ok: a ray from above stops on it before AND while lightened
+  ok: ...while the class is medium, so the change is semantic only
+  -- THE APPROVED PHYSICAL EFFECT, on this crate
+  ok: an impulse moves it 0.1957 m/s, and 0.3913 m/s lightened (x2.00)
+  ok: ...on the same 200 kg, so it is the SCALING that changed
+  -- THROUGH EXPIRY: the window shuts by itself
+  ok: open while the Status runs
+  ok: after 8.0 s the Status has expired
+  ok: ...the crate reads heavy again
+  ok: ...the plate is satisfied again, with nothing having moved
+  ok: ...and the shutter has shut, openness 0.000
+  ok: the bolt was never touched
+  -- §9: THE BOLT IS PERMANENT AND THE STATUS IS NOT
+  ok: the crossing is open
+  ok: the bolt is engaged
+  ok: ...and the fixed return stair now exists (0 -> 8 steps)
+  ok: the Status has expired
+  ok: ...and the plate is satisfied again
+  ok: AND THE SHUTTER IS STILL OPEN: the bolt outranks the plate
+  ok: ...and the stair is still there
+  -- THE CHAIN: the contract's graph, run by the shared runtime
+  ok: the room's plate, bolt lever and shutter are bound to the contract's declared ids, the shutter driven by 'open'
+  ok: the declared nodes, in order: ["NOT", "LATCH", "OR"]
+  ok: at rest the graph reads OPEN and the crossing is open
+  ok: the crate on the plate: plate ON, NOT OFF, OR OFF, and the graph shut the crossing
+  ok: a second pull fires nothing more: the LATCH fired 1 time(s), the room engaged 1
+  ok: the bolt's one-tick pulse set the LATCH, and the OR holds the crossing open with the plate still loaded
+  ok: and on the next tick the pulse is gone -- the lever reads OFF -- while the LATCH still holds the crossing open
+  ok: §11's control: the plate sensor is declared and left unbound
+  -- A REFUSED APPLICATION CHANGES NOTHING
+  ok: 'burning' on an object is refused, not stored
+  ok: 'anchored' on an object is refused, not stored
+  ok: 'slippery' on an object is refused, not stored
+  ok: ...and no success event was emitted: []
+  ok: the crate still reads heavy
+  ok: the plate and the shutter are exactly as they were
+  -- §11's CONTROL: the plate's output goes nowhere
+  ok: the room is built with the link cut
+  ok: the shutter starts open, as before
+  ok: the plate IS satisfied: the sensor is not what was cut
+  ok: ...AND THE SHUTTER DID NOT CLOSE -- the expected response fails, which is what the control is for
+  ok: ...and releasing it changes nothing either, because nothing downstream is listening
+  -- THE COMPLETE ROUTE, walked
+  ok: arrival A is below the sill, at 0.00 m
+  ok: the SERVICE DRIVE lever is reachable and pulls
+  ok: the step is placed, and the crossing has closed
+  ok: the shot has line of sight to the applicator, and sees the applicator
+  ok: ...and the applicator fired (1 trigger(s))
+  ok: ...and the crate is carrying `lightened`
+  ok: the crossing has opened
+  ok: the player is STANDING on the crate top, feet at 0.99 m
+  ok: the player is through the doorway at z 6.88
+  ok: the HOLD-OPEN BOLT is pulled
+  ok: THE GOAL IS REACHED, on foot, from arrival A
+  NOTE: route completed with the Status expiring behind the player: `lightened` active at the goal = true
+
+GODOT UNWEIGHTED OK (70 checks, 2 notes)
+=== exit 0
+=== make godot-verb-runtime (19:02:44)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- PUSH: one impulse, force over mass, along the aim
+  ok: 700 N on 40 kg is 17.50 m/s (the verb says 17.50)
+  ok: and the body moves away from the eye at 17.12 m/s
+  ok: once, not held: half a second on it has slowed to 8.87 m/s
+  -- PULL: toward the eye along the same ray
+  ok: 1400 N on 50 kg is 28 m/s, back along the aim (27.39 m/s)
+  -- the ceilings: 30 m/s, and 14 m/s up
+  ok: 2600 N on 10 kg would be 260 m/s; it is 30.0
+  ok: aimed steeply up (26 m/s of it upward), it leaves at 14.0 m/s vertically
+  ok: and the body's own vertical speed is 13.22 m/s
+  -- Design 2's acceptance items 5, 28 and 7
+  ok: item 5: PUSH at 700 N on a 120 kg object is 5.83 m/s +/- 0.01 (5.8333)
+  ok: item 28: `ab_physics_light` moves 120.0 kg and refuses 120.1 kg (too_heavy)
+  ok: item 7: over 10,000 random verbs, angles and masses (8235 applied, the second half lightened), nothing leaves faster than 14.0000 m/s upward or 30.0000 m/s overall
+  -- lightened: twice the impulse, and HEAVY let in
+  ok: 100 kg: 7.0 m/s plain, 14.0 lightened
+  ok: 150 kg against a 120 kg limit: refused (too_heavy), then admitted lightened at 9.33 m/s
+  -- §14.2: every refusal named, nothing moved
+  ok: HOLD is not an impulse verb: refused as not_an_impulse_verb, and it has not moved (0.000 m/s sideways)
+  ok: a profile §14.3 does not name: refused as unknown_profile, and it has not moved (0.000 m/s sideways)
+  ok: aimed at nothing (§12.3: it spends nothing): refused as no_target
+  ok: 21 m against the light profile's 20: refused as out_of_reach, and it has not moved (0.000 m/s sideways)
+  ok: and the strong profile's 28 m reaches it
+  ok: 130 kg against a 120 kg limit: refused as too_heavy, and it has not moved (0.000 m/s sideways)
+  ok: a bolted 20 kg bracket is FIXED: refused as fixed, and it has not moved (0.000 m/s sideways)
+  ok: 450 kg is FIXED, whatever the profile: refused as fixed, and it has not moved (0.000 m/s sideways)
+  ok: a required object responds by default (Design 2 §4.8)
+  ok: and not once `physics_permitted` is false: refused as not_permitted, and it has not moved (0.000 m/s sideways)
+  ok: a wall between eye and body: refused as no_line_of_sight, and it has not moved (0.000 m/s sideways)
+  ok: the player is never a target: refused as never_the_player
+  ok: an enemy: §14.3 divides by a mass no enemy has here: refused as actor_mass_unmodelled
+  ok: scenery is not manipulable: refused as not_manipulable
+  -- HOLD: to 3.5 m at up to 8 m/s, then kept there
+  ok: a 40 kg crate 7 m out is held, at the default 3.5 m
+  ok: it travels there and is not placed: at the hold point after 28 ticks, never over 7.827 m/s or 0.130 m in one tick
+  ok: item 8: held at `hold_distance` +/- 0.1 m for 2 s (worst 0.000 m), gravity suspended
+  ok: item 9: the distance adjusts only within 1.5-6.0 m (asked 10 and 0.5, given 6.0 and 1.5)
+  ok: set to 5.5 m, the body travels out and is held there (5.50 m)
+  ok: the caster steps 4 m aside: the body follows, never more than 0.130 m in a tick, and is held again after 30 ticks
+  ok: released by input: gravity is its own again and it falls to the floor (0.39 m up)
+  -- HOLD: stopped by the floor, never by an actor
+  ok: looking steeply down, the hold point is -1.43 m under the floor; the crate stops against the floor and rests on it (centre 0.400 m; 0.4 is resting; lowest at impact 0.399 m, one tick's travel is 0.133 m)
+  ok: an enemy stands at the hold point: the crate goes into it and is held there (after 7 ticks), and the enemy is not moved
+  ok: released inside the enemy, it falls through without being thrown out (0.00 m/s sideways at most): the exception holds while they overlap
+  ok: once apart, both exceptions go, and the finished hold with them
+  ok: §14.2 for HOLD: an enemy (actor_rule), 130 kg on the light profile (too_heavy), the player (never_the_player)
+  -- HOLD: the release list
+  ok: range x 1.5: held with the body about 28 m away, released past 30 m (["out_of_range"])
+  ok: line of sight: a wall for 20 ticks is not enough and the count starts again, then 30 ticks of it release the hold (0.5 s is 30)
+  ok: a 200 N rope it hangs on breaks, and the hold lets go with it (after 10 ticks)
+  ok: the target destroyed: released (["target_gone"])
+  ok: a second HOLD on the held body releases the first (§31.2)
+  ok: the caster leaves the world, as a Zone exit takes it: released, gravity restored (["caster_gone"])
+  ok: the caster dies: released, gravity restored (["death"])
+  -- ALIGN: a turn over 0.3 s, then 2.5 s without rotating
+  ok: item 10: it turns 0.700 rad to the nearest axis-aligned orientation over 19 ticks (0.3 s is 18) -- 0.359 rad still to go at tick 9 -- and arrives within 0.0015 rad
+  ok: it holds that orientation for 149 ticks (2.5 s is 150), never more than 0.0015 rad off, through an off-centre knock
+  ok: while translation carries on as it would have: it fell 15.3 m, never more than 0.000 m from a twin falling without ALIGN, and the knock moved it along at 0.98 m/s
+  ok: then its own locks are given back: the same knock now turns it (0.730 rad)
+  ok: §14.2: ALIGN on an enemy is refused by the actor rule
+  -- SETTLE: calm, asleep next tick; machinery, actors, FIXED and a withheld required object left alone
+  ok: the three moving crates are settled; left alone and named: 450 kg (fixed), a withheld required object (not_permitted), a winch's load (driven_by_machinery); one 9.5 m out is not in the volume
+  ok: and everything left alone keeps moving: the crate outside 2.79, 450 kg 2.78, the withheld object 2.78 m/s, the load rising at 1.50 m/s under its winch, the enemy's own velocity untouched
+  ok: item 20: the three are zeroed on the call and asleep on the next tick, and half a second on they have moved 0.0000 m (the solver's reading one step after the stop: 0.085 m/s)
+  ok: refused: a centre 26 m away (out_of_reach), a wall before the centre (no_line_of_sight), a profile §14.3 does not name (unknown_profile)
+  -- SETTLE in mid-air: what the letter of the contract does
+  ok: a falling crate in mid-air is settled like any other
+  NOTE: asleep with nothing under it, it has fallen 0.003 m in 1 s: the forced sleep holds it in the air until something wakes it
+  -- item 21: no verb moves the player
+  ok: item 21: 7998 aimed verbs all refused as never the player, 2002 SETTLE volumes around it never touched it, and it has moved 0.0000 m
+  -- PIN: 260 kg held in the air for exactly 6 s, bearing 140 kg
+  ok: item 13: 260 kg pinned on `ab_pin_brief` does not move (0.0000 m) for 359 physics frames (6.0 s is 360), then the pin expires
+  ok: and 140 kg rests on it, not through it: 0.640 m above its centre (0.65 is resting), moving at 0.000 m/s
+  ok: unpinned, it falls (0.55 m), frozen no longer
+  ok: refused: 300 kg on a 260 kg profile (too_heavy), an enemy (actor_mass_unmodelled: §14.2 admits PIN on one, and its mass limit reads a mass no enemy has here)
+  ok: `max_pinned` is 2 on `ab_pin_brief`: a third pin releases the oldest (["max_pinned"])
+  -- TETHER: two activations, a rope 1.05 of the span
+  ok: item 11: a beam's underside and a crate 9 m below it make a ROPE of 9.453 m (x1.05), breakable at the profile's 2500 N
+  ok: item 12: 15.0 m against a 14 m `max_length` fails on the second activation (too_long), and the spent first is not refunded: a retry is refused as spent and no rope is made
+  ok: refused at the first activation: an enemy (actor_rule), the player (never_the_player), a point past 22 m (out_of_reach)
+  ok: EPHEMERAL: a save takes the rope out of the solver
+  ok: `concurrent` is 2 on `ab_tether_light`: a third rope releases the oldest (["concurrent"])
+  ok: a tied crate destroyed takes its rope, and the caster's death takes the rest (["target_gone", "death"])
+  -- ROTATE: a hinge driven to its limit, a free body spun
+  ok: item 17: seen from above, a hinged valve turns to its 1.2 rad limit (past 1.15 after 29 ticks, never beyond 1.200) and sits there, still driven: 0.0000 rad of wander in a second
+  ok: a free body spins at 2.41 rad/s about the view axis
+  ok: §14.2: a FIXED body with no hinge is refused (fixed); a 500 kg one on a hinge is ROTATE's, by its axis; an enemy is refused (actor_rule)
+  -- relations: exclusive per object, three at once, oldest out
+  ok: item 23: pinning the held crate releases the HOLD (["hold superseded"]); one relation, not two
+  ok: item 22: a pin, a tether and a hold are three; a fourth relation releases the oldest (["pin max_relations"])
+  ok: `RULE_RELATION_COUNT` raises the cap (+1 is 4) and never past 6 (+9 is 6)
+  -- ATTACH / DETACH: one welded body, and both given back
+  ok: item 14: two 95 kg GIRDERs are one body of 190 kg, class heavy; the held one left the hand for the weld (["attached"])
+  ok: and it moves as one: a push on the root carries the welded girder's own hull 0.24 m
+  ok: item 15: four GIRDERs are one chain of 4 (380 kg); a fifth is refused (chain_full) and stays in the hand
+  ok: item 16: DETACH gives the girder back at its world transform (0.0000 m off), its own hull back under its own name, both bodies at rest, and the root 285 kg
+  ok: and the rest of the chain is untouched (3 on the root)
+  ok: a player with no DETACH Echo undoes their own newest weld with `interact` (prompt DETACH)
+  ok: an authored weld is not undone by `interact`: the player's own goes, the authored one stays
+  ok: refused: WOOD at a METAL point (wrong_material), a body of no declared material (no_material), a point past 4 m (point_out_of_reach), an occupied point (occupied), nothing held (not_held)
+  ok: DETACH on a constraint breaks the breakable one and refuses the unbreakable (unbreakable)
+  -- the mass fields: kilograms scaled, never stacked, given back
+  ok: item 18: LIGHTEN_FIELD at 0.35 makes a 320 kg BALLAST 112.0 kg, class medium -- in kilograms, with no Status on it
+  ok: "immovable until it is lightened": the light profile's PUSH refuses it (too_heavy) and then admits it, and the field itself moved nothing (0.0000 m)
+  ok: item 19: an ANCHOR_FIELD laid over it wins, and does not stack: 800 kg (320 x 2.5, not 112 x 2.5 = 280) on every one of 12 ticks (800 to 800), class fixed on all of them -- which does not drop it from the field, whose eligibility reads its own 320 kg
+  ok: the later one gone, the earlier one -- still running -- has it again: 112.0 kg
+  ok: item 18: and on expiry after 599 physics frames (10 s is 600) it is exactly 320.0 kg again, class heavy
+  ok: a Status steps the class and a field scales the kilograms: 100 kg lightened reads light; in the field it is 35 kg, derived MEDIUM stepped to light; out of it, 100 kg again with the Status still on it
+  ok: a volume, not a snapshot: a crate outside it is 20 kg, carried in it is 7 kg, and carried out, its own 20 kg again
+  ok: left alone in the volume: a 450 kg body, FIXED by its own kilograms (450.0 kg), and a 40 kg required object whose package withholds physics (40.0 kg)
+  ok: refused: a LIGHTEN_FIELD on the anchoring profile (wrong_direction), a centre 25 m off (out_of_reach), a wall before it (no_line_of_sight), and a field §14.1 does not name (not_a_field)
+  ok: a weld under a field keeps its kilograms: two girders welded in a LIGHTEN_FIELD are 66.5 kg (190 x 0.35); the field gone, 190; detached, 95 and 95
+  -- the mass fields, read by a class plate and a kilogram plate
+  ok: a field changes the kilograms and the class follows them: two 320 kg BALLASTs hold a HEAVY class plate and a 150 kg kilogram plate (true/true); in a LIGHTEN_FIELD each is 112 kg, MEDIUM, and BOTH let go (class false, kilograms false); the field gone, both hold again (true, true)
+  ok: EX50-033 §6, kilograms without a class: 380 kg in the field is 133 kg and still heavy, so the class plate HOLDS (true) while the kilogram plate lets go (true) -- the field did not release it; after it, (true, true)
+  ok: a Status steps the class and keeps the kilograms: `lightened` on the same 320 kg BALLASTs reads medium, so the class plate lets go while the kilogram plate, still reading 320 kg, holds; the Status gone, both hold
+GODOT VERB RUNTIME OK (95 checks, 1 notes)
+=== exit 0
+=== make godot-physics (19:04:03)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  ok: a dropped body came to rest within 300 frames (it is at (0.0, 0.494, 0.0), moving at 0.0001 m/s)
+  ok: it rests on the floor at y 0.494, and the floor's top is 0.0
+  ok: a host built at the envelope qualifies as a provider
+  ok: the push resolved rather than refusing: ''
+  ok: 700 N moved 120 kg by 2.16 m, which is the envelope doing what it promises
+  ok: and the body came back to rest afterwards
+  ok: a 480 kg body under a 120 kg limit is refused as 'too_heavy'
+  ok: and it did not move (0.000 m)
+  ok: a body 21.0 m away under a 20.0 m reach is refused as 'out_of_reach'
+  ok: a body at exactly 20.0 m is within reach
+  ok: pushing a body toward where it already is refuses as 'no_direction'
+  ok: a bolted body is refused as 'constrained', not as too heavy
+  ok: and it did not move at all (0.0000 m)
+  ok: a bolted body reads as at rest
+  ok: the same push twice ended 0.000000 m apart, and the digest's quantum is 0.0001 m; a replay harness over this would call a solved puzzle flaky ((-0.000439, 0.490001, 3.564188) vs (-0.000439, 0.490001, 3.564188))
+  ok: a player walking into a 60 kg crate for three seconds moved it 7.28 m (from (0.0, 0.34, 0.0) to (-0.01, 0.34, 7.28)); the chain rests on this and nothing else in the build can do it
+  ok: and it went forward rather than skidding aside (7.28 m of 7.28 m)
+  ok: a 900 kg one barely moves (0.00 m), so the shove is a momentum transfer and not a teleport
+  ok: the door starts unpowered
+  ok: and a capsule does not fit through it
+  ok: walking into the crate put 60 kg on the plate, which asks for 36
+  ok: so the signal went high
+  ok: and the doorway a capsule could not fit through is open
+  ok: with the crate removed the same walk leaves the door shut (0 kg on the plate), so the crate is the cause
+  ok: and walking the same line changes nothing without it
+  ok: a walking player climbs a 0.8 m step without jumping (ended at y 0.80, on a tread the capsule's own radius cannot mount)
+  ok: and is standing on it rather than stopped at its face (z 1.90)
+  ok: and walks back down off it (y 0.00)
+  ok: the walker starts on the top tread (y 0.80)
+  ok: and descends the treads (y 0.40)
+  ok: and stays with the treads while it does: 1 airborne frames of 40, where a free fall down two 0.4 m treads spends 20
+  ok: the walker starts on the ledge (y 2.50)
+  ok: and walking off a 2.5 m ledge is a FALL, not a step down (24 airborne frames of 45)
+  ok: with real speed in it (9.2 m/s), so the descent rule did not quietly become adhesion
+  ok: and it ends on the floor below (y 0.00)
+  ok: a jump taken at the lip of a tread still rises (peak y 1.80, from 0.40)
+  ok: the walker starts up the ramp (y 2.38)
+  ok: and walks down it (y 0.47 from 2.38)
+  ok: with its feet on it the whole way (0 airborne frames of 45)
+  ok: a 1.4 m cover slab is not climbed by the step (y 0.00); cover that can be walked over is not cover
+  ok: a package this engine can replay was replayed: 
+  ok: 3 runs, and check 20 replays 3
+  ok: the required latch fired in every run, and the runs were [["crate_home"], ["crate_home"], ["crate_home"]]
+  ok: the provider is at exactly the envelope (700 N / 20.0 m / 120 kg)
+  ok: the evidence carries the package's own digest b42a0d5ef34c8706, and it carries b42a0d5ef34c8706
+  ok: a solution that misses is still replayable
+  ok: pushing the crate away from the region latched nothing, and the runs were [[], [], []]
+  ok: one 100 kg crate does not hold a 150 kg plate down: [[], [], []]
+  ok: a second crate beside it does: [["plate_down"], ["plate_down"], ["plate_down"]]
+  ok: a CONSTRAINT_STATE latch is refused by name: 'latch 'hinge_down' is a CONSTRAINT_STATE, and this engine observes only ["POSITION_REGION", "WEIGHT_THRESHOLD"]'
+  ok: an unknown step is refused by name: 'step 'levitate' is not a step this engine knows'
+  ok: a body at the mass limit resists with 467 N and the envelope pushes with 700 N, so §29.3.2's promise is one the substrate keeps
+  ok: and kept with room to spare: 233 N of 700 is left over, so the body accelerates rather than creeping
+  ok: and the project default of 1.0 would NOT have kept it (1176 N of resistance), which is what makes deriving one here worth doing
+  ok: the controller digest is sixteen lowercase hex characters (14a33ac1c36ddc2b)
+  ok: and it is the same twice in one build, which is what 'one per build' means
+  ok: 'res://scripts/gameplay/player.gd' is named as a movement script and could not be read; a digest over a missing file is a constant
+  ok: the digest carries the CONTENT of 'res://scripts/gameplay/player.gd', so changing what it does invalidates a measurement even when no constant moves
+  ok: 'res://scripts/gameplay/echo_runtime.gd' is named as a movement script and could not be read; a digest over a missing file is a constant
+  ok: the digest carries the CONTENT of 'res://scripts/gameplay/echo_runtime.gd', so changing what it does invalidates a measurement even when no constant moves
+  ok: it covers the controller's own numbers: version generator=1 godot=4.5.1.stable backend=DEFAULT
+tick 60
+gravity 9.8000 0.0000,-1.0000,0.0000
+capsule height=1.8000 radius=0.4000 floor_max_angle=0.7854
+const AIR_CONTROL=0.4000
+const COYOTE_TIME=0.1200
+const GRAVITY=24.0000
+const JUMP_BUFFER=0.1000
+const JUMP_VELOCITY=8.0000
+const LAUNCH_CORRECTION_SPEED=2.0000
+const MAX_VERTICAL_STEP=1.0000
+const WALK_SPEED=7.0000
+source res://scripts/gameplay/player.gd=c3d6f16a5d4b704c
+source res://scripts/gameplay/echo_runtime.gd=aa254848e1ec98e9
+  ok: a PUSH grants manipulate
+  ok: a HOLD grants it, whatever case it is written in
+  ok: and the other verbs never do, however many there are
+  ok: a host with no verbs grants nothing
+  ok: a host one newton short does not qualify
+  ok: it is told both minima it misses, and it was told 2: ["force 699 N, needs 700 N", "mass limit 119 kg, needs 120 kg"]
+  ok: a host at exactly the envelope misses nothing
+GODOT PHYSICS TESTS OK (68 checks)
+=== exit 0
+=== make godot-carry (19:06:18)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- a legal object, picked up with `interact`
+  ok: looking at it offers the pickup: "[E] PICK UP · 18 kg"
+  ok: `interact` picked it up (holding cell)
+  ok: it is carried, not inventoried: a body in the world, moved along the carry line and passed through by actors
+  ok: held 1.20 m out along the view (the pose says 1.20 m)
+  ok: turning 90° carries it round to the new view (alignment 1.000)
+  ok: and looking down lowers it (0.69 m below the carry anchor)
+  -- what carrying blocks, and what it leaves
+  ok: the Static Pulse does not fire while carrying (0 shots)
+  ok: Mobility is blocked, and says so: ["MOBILITY BLOCKED WHILE CARRYING"]
+  ok: and neither of them put the object down
+  -- walked into a wall while carrying
+  ok: carried to the start of the walk (still holding)
+  ok: the carried box never entered the wall (deepest -0.001 m past its face)
+  ok: it was held short of its pose rather than pushed through (held short)
+  NOTE: walking all the way in dropped it at the player's feet
+  -- put down with `interact`, and picked up again
+  ok: still carrying before the drop
+  ok: `interact` at nothing put it down: a body again, colliding
+  ok: at zero velocity, no throw (0.32 m/s the frame after)
+  ok: it came to rest on the floor where it was held (0.00 m of drift, y 0.34)
+  ok: and it can be picked up again
+  ok: and put down again
+  -- the same 18 kg, not carriable
+  ok: the prompt says so before the press: "CAN'T CARRY THAT"
+  ok: and `interact` refuses it with the reason: ["CAN\'T CARRY THAT"]
+  -- 60.00 kg is carriable, 60.01 kg is not
+  ok: exactly 60 kg is picked up
+  ok: just over is refused, and says by how much: ["TOO HEAVY TO CARRY · 60.01 kg (limit 60 kg)"]
+  ok: a LIGHTENED 70 kg object reads light and is still refused: the limit is kilograms (["TOO HEAVY TO CARRY · 70 kg (limit 60 kg)"])
+  -- walking speed while carrying
+  ok: a LIGHT object costs nothing (7.00 vs 7.00 m/s)
+  ok: a MEDIUM object walks at 0.85 of free speed (the rule says 0.85)
+  ok: the same 40 kg LIGHTENED reads light and walks free (1.00 of free speed)
+  -- the Archive's hold cannot drop what is carried
+  ok: carrying before the modal opens
+  ok: three `interact` presses under the modal hold dropped nothing
+  ok: and the first press after it closes puts it down
+  -- dying while carrying
+  ok: carrying again
+  ok: death put it down: still in the world, a body again
+  ok: where it was held, at rest (0.00 m), not sent home and not deleted
+GODOT CARRY TESTS OK (32 checks, 1 notes)
+=== exit 0
+=== make godot-movement (19:07:05)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+   rail_helix: worst baked turn 1.94 deg over 732 samples; the same points as segments turn 62.4 deg per corner
+   rail_helix bows 1.77 m off its control polyline
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 0.950000, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (137.000000, 0.950000, -84.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (0.000000, 61.950001, 0.000000) at (18.516403, 12.961481, 0.000000)
+p3a: launch FIRED from (12.000000, 3.950000, -40.000000) at (-0.000001, 12.961481, -18.516403)
+p3a: launch FIRED from (-55.000000, -6.050000, 18.000000) at (-18.516403, 12.961481, 0.000002)
+p3a: launch FIRED from (9.000000, 22.950001, 71.000000) at (0.000000, 12.961481, 18.516403)
+p3a: launch FIRED from (-30.000000, 11.950000, 44.000000) at (9.258202, 12.961481, -16.035675)
+GODOT MOVEMENT TESTS OK
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+     at: cleanup (core/object/object.cpp:2514)
+=== exit 0
+=== make godot-rules (19:07:29)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+GODOT RULES TESTS OK
+=== exit 0
+=== make godot-lab (19:07:52)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+GODOT LAB TESTS OK
+=== exit 0
+=== make godot-affordance (19:08:15)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+WARNING: intent 'grant_local_reward' dropped: bridge offline
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] collect (res://scripts/gameplay/local_reward.gd:123)
+         [2] _a_local_reward_reports_itself_once (res://tests/affordance_driver.gd:568)
+WARNING: intent 'grant_local_reward' dropped: bridge offline
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] collect (res://scripts/gameplay/local_reward.gd:123)
+         [2] _pull_pickup (res://scripts/gameplay/echo_runtime.gd:1197)
+         [3] _pull_pickup_cannot_reach_an_ap_reward (res://tests/affordance_driver.gd:636)
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+GODOT AFFORDANCE TESTS OK
+=== exit 0
+=== make godot-rail-gantry (19:08:38)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- THE DECLARATION BECOMES THE MEASURED GANTRY
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone built: 
+  ok: the network was not refused: []
+  ok: one junction (1)
+  ok: the control is not the ground lever at the arrival ((-6.500000, 3.075000, 26.400000); the ground spot is (-4.200000, 0.000000, 20.000000))
+  ok: a gantry was built for span s0
+  ok: with its deck, post, plate and ring
+  ok: the deck's top stands 2.90 m above the floor (measured: 2.9)
+  ok: the plate is 6.20 m up (measured: 6.2)
+  ok: the plate hangs over the deck's near lip (2.00 m from its centre, half the deck is 2.00)
+  ok: the control stands on the deck ((0.000000, 0.375000, 0.000000) in the deck's frame)
+  ok: and all of it is in c002, the room that declared it
+  ok: the track passes 3.08 m from the deck; the carrier is 3.40 m wide
+  ok: a jump from the carrier tops out at 2.35 m, under the deck
+  -- THE BASE KIT CANNOT REACH IT (played)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  NOTE: from 0.0 m back, jumping 0.7 m short of the lip: left the floor 0.51 m short, peaked 0.70 m
+  NOTE: from 1.0 m back, jumping 0.7 m short of the lip: left the floor 0.57 m short, peaked 0.70 m
+  NOTE: from 1.0 m back, jumping 2.7 m short of the lip: left the floor 2.45 m short, peaked 1.40 m
+  ok: no jump at the lip puts the base kit on the deck (3 of 3 attempts jumped where they meant to; peak 1.40 m; the deck is at 2.9)
+  ok: a standing jump peaks at 1.40 m, the apex the reach field uses (1.40)
+  ok: at the top of a jump beside the lip (eye 3.00 m) the probe finds the lever on 13 frame(s), and it does not move
+  ok: and what it says there is why: 'REACHED FROM THE GANTRY'
+  ok: the base kit cannot operate the control from the floor
+  -- THE PROVEN GRAPPLE REACHES IT, AND THE LEVER WORKS (played)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the hookshot is aimed at the gantry's plate
+  ok: the mobility key fires the hookshot
+    pulled from 0.00 m to 2.90 m (peak 3.98), floor 0.00
+  ok: the pull puts the player on the deck (2.90 m up)
+  ok: the lever is in reach from the deck
+  ok: and offered there: '[E] ALIGN S0'
+  ok: and pulling it starts the span (done true, travelling true)
+  ok: the span commissions under its declared latch ["yard/s0_latch"]
+  -- A GROUND SPAN IS UNCHANGED
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: 'ground': the lever stands at the arrival, and no gantry
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: undeclared: the lever stands at the arrival, and no gantry
+  -- A ROOM THE GANTRY DOES NOT FIT IS REFUSED BY NAME
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: a 5 m arena: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': the plate needs 6.8 m of height and the room has 5.0 m
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: an 8 x 8 arena: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': no position in the room takes the measured gantry (196 tried: 190 outside the room, 6 on the track)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: two gantries in c002: refused by name, nothing built, the Zone still up -- span 's1' puts its gantry in room 'c002', which already holds span 's0''s; the measured gantry stands one to a room
+  -- A STEP TO THE DECK IS MEASURED
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the bare arena takes a gantry: 
+  ok: and the base kit cannot reach its deck
+  ok: a gallery the base kit climbs to, a metre from the deck, is refused: a jump from a surface 2.0 m up, 3.0 m from the deck, lands on it 2.9 m up
+  ok: and the room does not put its gantry there: moved to (-23.000000, 2.700000, 18.900000)
+  ok: the same block 1.3 m up is not -- a jump from it tops out at 2.70 m (the control): passed
+  ok: a crate in the column the pull climbs moves the gantry: to (-19.500000, 0.000000, 18.900000)
+  -- THE RULES ON A BARE FLOOR
+  ok: across a gap in the floor, neither the approach nor the post stands over it: approach (-3.100000, 0.000000, 2.400000), deck (0.400000, 2.700000, 2.400000)
+  ok: a bare floor takes a gantry: 
+  ok: a track through the chosen deck moves it off: the new deck is 2.50 m from the track, the carrier needs 2.10
+  ok: on a bare floor, a gallery up a 1.38 m step, a metre from the deck, is within the base kit's reach: a jump from a surface 2.0 m up, 5.0 m from the deck, lands on it 2.9 m up
+  ok: and at 1.3 m it is not (the control): passed
+
+GODOT RAIL GANTRY OK (41 checks, 3 notes)
+=== exit 0
+=== make godot-rail-junction (19:09:19)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- SHAPE: a latch the bridge would refuse
+  ok: a well-formed junction has nothing to refuse, got []
+  ok: the package names itself
+  ok: and declares the latch the manifest must carry, got [{ "latch_id": "span_aligned", "kind": "CONSTRAINT_STATE", "detail": "span locked home across link 1" }]
+  ok: the latch's global identity is package-qualified
+  ok: a package id the bridge's pattern refuses is caught here
+  ok: two spans sharing one latch id are indistinguishable, and saying so is this method's job
+  -- CHAIN: lever -> span -> lock -> latch -> crossable
+  ok: the span starts stowed
+  ok: and the carrier is standing at S2
+  ok: S2 to S3 is refused
+  ok: for want of track, got ["no_link"]
+  ok: the interact probe finds the lever
+  ok: and offers it by name, got '[E] ALIGN THE SPAN'
+  ok: pressing it throws the lever
+  ok: and the span starts travelling
+  ok: the span is part way across (23%)
+  ok: and is not track yet
+  ok: no latch has fired, got []
+  ok: the carrier is still refused
+  ok: for want of track, got ["no_link"]
+  ok: the span locks home
+  ok: and fires its latch, once, got ["s2_junction/span_aligned"]
+  ok: the link it spans is commissioned
+  ok: and the same command that was refused now travels
+  ok: reaching S3
+  -- REPORTED: the client sends `latch_fired`
+  ok: one intent, got 1
+  ok: with exactly the fields the bridge reads, got { "type": "latch_fired", "zone_id": "zone_01", "package_id": "s2_junction", "latch_id": "span_aligned" }
+  ok: and the same latch twice is still one intent
+  ok: the Zone knows what it has reported, got ["s2_junction/span_aligned"]
+  ok: a Zone accepts the snapshot's latches and its own, got ["s2_junction/other", "s2_junction/span_aligned"]
+  ok: and a machine rebuilt from that union comes up repaired
+  -- RE-ENTRY: the repair is recomputed, not replayed
+  ok: one span is restored, got 1
+  ok: the span comes up locked
+  ok: the link comes up commissioned
+  ok: and NOTHING is reported, got []
+  ok: the lever comes back armed
+  ok: and standing up
+  ok: the carrier is parked at a dock, not where it was left
+  ok: and the railway is rideable
+  -- NOT ACCEPTED: a span mid-travel leaves nothing behind
+  ok: the span was left part way across
+  ok: nothing is restored, got 0
+  ok: the span comes back stowed
+  ok: the link comes back broken
+  ok: and the crossing is refused again, got ["no_link"]
+  -- IDENTITY: another package's latch is not this one's
+  ok: neither a foreign package nor an unknown latch restores anything, got 0
+  ok: and the link stays broken
+  -- PARKED: the carrier returns to a dock it is supported on
+  ok: the carrier is mid-segment (0.68 m)
+  ok: parking puts it on S1
+  ok: with no journey left over
+  ok: a dock this build does not have is clamped to one it does
+  NOTE: a carrier's position is not saved anywhere: `park` chooses a dock this build supports, because a carrier resumed where it was left could be standing on a span this build has not commissioned
+  -- SCENARIO: `--railway` is a place a person can stand
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: the yard's junction has nothing to refuse, got []
+  ok: six shootable controls, two per dock, got 6
+  ok: the carrier is parked at S1
+  ok: and the gap beyond S2 is not track
+  ok: every control points along the track, 6 do
+  ok: the deck's top is at the platform height (1.00)
+  ok: the player lands on the S1 platform
+  ok: at platform height (1.00 vs 1.00)
+  ok: S1 has a FORWARD control
+  ok: shooting it sends the carrier toward S2
+  ok: and it arrives at S2
+  ok: the gantry lever starts the span
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: which locks home and commissions the gap
+  ok: and the far end of the span meets S3 (0.01 m off)
+  ok: the carrier can now ride to S3
+  -- M2-mech: acquire, return, and open what you could see
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: the gantry's hook is visible from the S2 platform
+  ok: and 3.1 m above it, past anything a jump reaches
+  ok: and has not been pulled
+  ok: the player starts with nothing in the mobility slot, got ''
+  ok: the interact probe finds the pedestal
+  ok: taking it hands over the Echo
+  ok: into the mobility slot, got 'dev_hookshot'
+  ok: as the primitive the schema's own tests author
+  ok: the hookshot is aimed at the gantry's plate
+  ok: the mobility key fires the hookshot (cooldown 1.49)
+    pulled from 1.00 m to 3.90 m (peak 4.98)
+  ok: the pull puts the player on the gantry (3.90 m, lever at 4.07)
+  ok: standing on it rather than back on the dock
+  ok: the lever is in reach now
+  ok: and pulling it starts the span
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: which locks home and opens the way to S3
+  ok: one latch was accepted, got ["yard_junction/span_aligned"]
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  railway: rebuilt the yard; 1 of 1 accepted latch(es) came back
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: coming back rebuilds the railway rather than resetting it
+  ok: and the span is still home, recomputed from the latch
+  ok: while the lever stands up again: its position was never the thing that persisted
+  ok: the carrier is parked at S1, not where it was left
+  ok: and the pedestal is rebuilt -- a dev-path grant is scenery, not progress
+  ok: and the rebuild reported nothing new, got ["yard_junction/span_aligned"]
+  ok: the railway is rideable from the first command
+  ok: reaching S2
+  -- GAUNTLET: a ride with something on it
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: three shooters stand beside the first leg, got 3
+  ok: all of them alive, got 3
+  ok: and they are not all on one side of the track, got 2 side(s)
+  ok: the shield is part of the carrier, so it turns with the deck
+  ok: a shot at the deck from the shielded side stops at the carrier
+  ok: and nothing on the carrier stops a shot from the other side, which is why the rider has to move
+  ok: the first shooter is in the deck's line of fire, saw Enemy_ranged:<CharacterBody3D#357002381362>
+  ok: and a shot from the moving deck damages it (16.0 -> 10.0)
+  ok: the player comes back after 1.5 s
+  ok: on S1's platform rather than at the world origin (0.0 m from its centre)
+  -- WALKED: the whole loop on foot, nothing placed
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: walks from S1's platform onto the deck
+  ok: one pulse at the chevron rides the skiff to S2 (6.8 s)
+  ok: with the player still standing on it
+  railway: no_link -- no commissioned track leaves S2 forward
+  ok: shooting forward again is refused for want of track, got ["no_link"]
+  ok: steps off onto S2's platform
+  ok: turns onto the branch walkway
+  ok: and walks it to the pedestal
+  ok: takes the hookshot
+  ok: walks the branch back
+  ok: and stands on S2's platform again
+  ok: and pulls itself onto the gantry (3.90 m)
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: throws the lever and the span locks home (2.2 s)
+  ok: comes down onto S2's platform
+  ok: and steps back aboard
+  ok: standing on the deck rather than in the yard (1.00 m)
+  ok: and the same command that was refused rides to S3 (4.1 s)
+  -- BRACING: the same span, a different relationship
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: bracing
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: the bracing is built
+  ok: and this configuration has no gantry, no pedestal and no hook
+  ok: the junction is still well formed, got []
+  ok: and the gap beyond S2 is still not track
+  ok: it rides the raised span (4.2 m above the rail)
+  ok: the Static Pulse can reach it from S2's platform, saw TargetBody:<StaticBody3D#461776095223>
+  ok: one shot releases the span
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: it locks home and commissions the same link (2.1 s)
+  ok: under the same latch, got ["yard_junction/span_aligned"]
+  ok: reported once and only once, got ["yard_junction/span_aligned"]
+  -- WALK-AROUND: is S3 reachable on foot with the span up?
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: the span is up and the link is not commissioned
+  ok: and the player has nothing in the mobility slot
+    walked 49.3 m; ended 2.0 m from S3's platform centre at y=-25.03 (platform top 1.00)
+    on the platform: no
+  ok: S3 is NOT reachable on foot with the span up (ended 2.0 m away at y=-25.03)
+  ok: and the walk ends in the hole rather than short of it (-25.03)
+  ok: the narrowest gap round S3 is 6.0 m
+  ok: a body dropped on the far rim stands on ground (0.00 m)
+  ok: and a run-up and a jump at the island still ends in the hole (-27.21 m)
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: with the span home the link is commissioned
+  ok: and the carrier reaches S3 (10.9 s)
+  NOTE: the two are kept apart on purpose: the repair restores VEHICLE SERVICE, and because S3 stands on an island the skiff is the only way onto, that is ALSO the only access to the destination. An earlier yard had continuous ground and a stair at every dock: the repair meant the same thing then, and the scenario read as though it meant more
+  -- RECALL: stranded on S3, and calling the skiff back
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: the skiff is standing at S3
+  ok: the player is standing on S3's island (1.00 m)
+  ok: which stands over the hole, so there is nothing to walk back on
+  ok: the skiff leaves for S2 without them
+  ok: S3 has a forward control within reach
+  ok: the player can see it from the island, saw TargetBody:<StaticBody3D#593141696404>
+  ok: and one shot brings the skiff back to them (4.1 s)
+  MEASURED 140 check(s), 2 note(s)
+GODOT RAIL JUNCTION OK (140 checks)
+=== exit 0
+=== done 19:11:20

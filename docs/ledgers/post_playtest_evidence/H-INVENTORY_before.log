@@ -1,0 +1,10 @@
+REQUIREMENT R1 one item, one equippable FAILS: 2 separate rows offer to equip act_lash (Braided Lash): the creating Echo's and the upgrade-only Leather Grip's
+REQUIREMENT R2 three regions FAILS: 0 GridContainers; the wall is one scrolling list of 12 rows under a loadout bar, with no selected-item detail
+REQUIREMENT R3 an unsent equip is not silent FAILS: pressed an equip with no link: the wall's 100 texts are unchanged (send_intent returned false and nothing says so)
+REQUIREMENT R4 a sent equip shows PENDING FAILS: sent a slot_action: the wall's texts are unchanged until a snapshot arrives -- no pending state
+REQUIREMENT R5 a refused equip says why FAILS: a refusal naming slot_action:echo_a:act_bolt arrived: the wall's texts are unchanged, and none carries the bridge's reason
+REQUIREMENT R6 none owned vs owned-not-equipped FAILS: consumable key reads '[Q] | —' owning none and '[Q] | —' owning two
+REQUIREMENT R7 disconnected is shown FAILS: consumable key reads '[Q] | Cinder Charge     2 / 3 | [✕]' offline and '[Q] | Cinder Charge     2 / 3 | [✕]' online
+REQUIREMENT R8 pending authorisation is shown FAILS: consumable key reads '[Q] | Cinder Charge     2 / 3 | [✕]' idle and '[Q] | Cinder Charge     1 / 3 | [✕]' with a use awaiting the bridge: a smaller number, no word
+REQUIREMENT R9 a new item is marked FAILS: after Glow Seed arrived, no text on the wall says NEW
+EQUIPMENT REPRO: 9 of 9 requirements fail on InventoryLayer

@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:364)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.1 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+libpulse.so.0: cannot open shared object file: No such file or directory
+libpulse.so.0: cannot open shared object file: No such file or directory
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5727:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+     at: initialize (servers/audio_server.cpp:244)
+
+If you want to set size, change the anchors or consider using set_deferred().
+     at: _set_size (scene/gui/control.cpp:1476)
+     GDScript backtrace (most recent call first):
+         [0] _build_page (res://scripts/ui/menu_shell.gd:386)
+         [1] _ready (res://scripts/ui/menu_shell.gd:100)
+         [2] _run (res://tests/menu_shell_driver.gd:72)
+If you want to set size, change the anchors or consider using set_deferred().
+     at: _set_size (scene/gui/control.cpp:1476)
+     GDScript backtrace (most recent call first):
+         [0] _build_page (res://scripts/ui/menu_shell.gd:386)
+         [1] _ready (res://scripts/ui/menu_shell.gd:100)
+         [2] _run (res://tests/menu_shell_driver.gd:72)
+If you want to set size, change the anchors or consider using set_deferred().
+     at: _set_size (scene/gui/control.cpp:1476)
+     GDScript backtrace (most recent call first):
+         [0] _build_page (res://scripts/ui/menu_shell.gd:386)
+         [1] _ready (res://scripts/ui/menu_shell.gd:100)
+         [2] _run (res://tests/menu_shell_driver.gd:72)
+If you want to set size, change the anchors or consider using set_deferred().
+     at: _set_size (scene/gui/control.cpp:1476)
+     GDScript backtrace (most recent call first):
+         [0] _build_page (res://scripts/ui/menu_shell.gd:386)
+         [1] _ready (res://scripts/ui/menu_shell.gd:100)
+         [2] _run (res://tests/menu_shell_driver.gd:72)
+  ok: settings drawn: 98% of the frame is page or box, not background (rest_settings.png, 1280x720)
+  ok: equipment drawn: 98% of the frame is page or box, not background (rest_equipment.png, 1280x720)
+  ok: map drawn: 98% of the frame is page or box, not background (rest_map.png, 1280x720)
+  ok: journal drawn: 98% of the frame is page or box, not background (rest_journal.png, 1280x720)
+  ok: mid-turn drawn: 99% of the frame is page or box, not background (mid_turn_settings_to_equipment.png, 1280x720)
+
+MENU SHELL SHOTS OK (5 checks, 0 notes)

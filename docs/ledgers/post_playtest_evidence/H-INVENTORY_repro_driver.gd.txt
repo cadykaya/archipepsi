@@ -1,0 +1,250 @@
+extends Node
+## H-INVENTORY REPRODUCTION, run on the face the Equipment wall held at
+## cb8dbd6 (`InventoryLayer`, the Echo archive). Scratch: never committed.
+##
+## Each case asks one requirement of `04_3D_MENU_MAP_AND_GLYPH.md` §5 of
+## the real widget, on the real snapshot shape
+## (`tests/fixtures/equipment_snapshot.json`, generated from
+## `CampaignSnapshot`), and prints what it measured.
+
+var failing := 0
+var cases := 0
+var variants: Dictionary = {}
+
+
+func _requirement(id: String, holds: bool, measured: String) -> void:
+	cases += 1
+	if holds:
+		print("REQUIREMENT %s HOLDS: %s" % [id, measured])
+	else:
+		failing += 1
+		print("REQUIREMENT %s FAILS: %s" % [id, measured])
+
+
+func _ready() -> void:
+	# Out of `Main._ready` first: the root is still setting up its
+	# children there, and a face added to it then never gets its own.
+	await get_tree().process_frame
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/equipment_snapshot.json")
+	variants = JSON.parse_string(text)
+	await _upgrade_is_not_an_item()
+	await _the_wall_has_three_regions()
+	await _an_offline_equip_says_so()
+	await _a_sent_equip_shows_pending()
+	await _a_refusal_is_shown()
+	await _none_owned_differs_from_not_equipped()
+	await _disconnected_differs_from_connected()
+	await _pending_authorisation_is_shown()
+	await _a_new_item_is_marked()
+	print("EQUIPMENT REPRO: %d of %d requirements fail on InventoryLayer"
+			% [failing, cases])
+	get_tree().quit(0)
+
+
+func _face(variant: String) -> InventoryLayer:
+	BridgeClient.snapshot = (variants[variant] as Dictionary).duplicate(true)
+	var face := InventoryLayer.new()
+	get_tree().root.add_child(face)
+	face.open()
+	return face
+
+
+func _labels(node: Node) -> Array[String]:
+	var out: Array[String] = []
+	if node is Label:
+		out.append((node as Label).text)
+	if node is Button:
+		out.append("[%s]" % (node as Button).text)
+	for child: Node in node.get_children():
+		out.append_array(_labels(child))
+	return out
+
+
+func _drop(face: Node) -> void:
+	get_tree().root.remove_child(face)
+	face.free()
+	BridgeClient.assume_sent = false
+
+
+## §5: "Upgrade-only source events belong in history associated with the
+## resolved item, not as fake additional equippable objects."
+func _upgrade_is_not_an_item() -> void:
+	var face := _face("unequipped")
+	# Take Braided Lash off its key so its equip controls are live.
+	BridgeClient.snapshot["slots"]["echo_a"] = null
+	face.rebuild()
+	await get_tree().process_frame
+	var offers := 0
+	BridgeClient.assume_sent = true
+	for node: Node in face.find_children("*", "Button", true, false):
+		var button := node as Button
+		if button.disabled or not (button.text.begins_with("TO ")
+				or button.text.begins_with("REPLACE ")):
+			continue
+		var before := BridgeClient.sent_intents.size()
+		button.pressed.emit()
+		for intent: Dictionary in BridgeClient.sent_intents.slice(before):
+			if intent.get("component_id") == "act_lash":
+				offers += 1
+	_requirement("R1 one item, one equippable", offers == 1,
+			"%d separate rows offer to equip act_lash (Braided Lash): the "
+			% offers + "creating Echo's and the upgrade-only Leather Grip's")
+	_drop(face)
+
+
+## §5: "Three visible regions form the starting layout: equipped build,
+## owned-item grid, selected-item detail/comparison."
+func _the_wall_has_three_regions() -> void:
+	var face := _face("base")
+	await get_tree().process_frame
+	var grids := face.find_children("*", "GridContainer", true, false).size()
+	var rows := face._list.get_child_count()
+	_requirement("R2 three regions", grids > 0,
+			"%d GridContainers; the wall is one scrolling list of %d rows " \
+			% [grids, rows] + "under a loadout bar, with no selected-item "
+			+ "detail")
+	_drop(face)
+
+
+## §5: a refused equip says why; an unsent one is not silent.
+func _an_offline_equip_says_so() -> void:
+	var face := _face("base")
+	await get_tree().process_frame
+	BridgeClient.assume_sent = false
+	var before := _labels(face)
+	var pressed := false
+	for node: Node in face.find_children("*", "Button", true, false):
+		var button := node as Button
+		if not button.disabled and (button.text.begins_with("TO ")
+				or button.text.begins_with("REPLACE ")):
+			button.pressed.emit()
+			pressed = true
+			break
+	await get_tree().process_frame
+	var after := _labels(face)
+	_requirement("R3 an unsent equip is not silent",
+			pressed and before != after,
+			"pressed an equip with no link: the wall's %d texts are %s "
+			% [after.size(), "unchanged" if before == after else "changed"]
+			+ "(send_intent returned false and nothing says so)")
+	_drop(face)
+
+
+## §5: "Keep pending/refused/accepted equipment changes correlated to the
+## real authority rather than optimistically painting a success."
+func _a_sent_equip_shows_pending() -> void:
+	var face := _face("base")
+	await get_tree().process_frame
+	BridgeClient.assume_sent = true
+	var before := _labels(face)
+	for node: Node in face.find_children("*", "Button", true, false):
+		var button := node as Button
+		if not button.disabled and button.text.begins_with("REPLACE "):
+			button.pressed.emit()
+			break
+	await get_tree().process_frame
+	var after := _labels(face)
+	_requirement("R4 a sent equip shows PENDING", before != after,
+			"sent a slot_action: the wall's texts are %s until a snapshot "
+			% ("unchanged" if before == after else "changed")
+			+ "arrives -- no pending state")
+	_drop(face)
+
+
+func _a_refusal_is_shown() -> void:
+	var face := _face("base")
+	await get_tree().process_frame
+	var before := _labels(face)
+	BridgeClient._handle(JSON.stringify({"type": "error", "scope": "bridge",
+			"recoverable": true, "message": "'act_bolt' is not owned",
+			"about": "slot_action:echo_a:act_bolt"}))
+	await get_tree().process_frame
+	var after := _labels(face)
+	var said := false
+	for text: String in after:
+		if text.contains("not owned"):
+			said = true
+	_requirement("R5 a refused equip says why", said,
+			"a refusal naming slot_action:echo_a:act_bolt arrived: the "
+			+ "wall's texts are %s" % ("unchanged" if before == after
+			else "changed") + ", and none carries the bridge's reason")
+	_drop(face)
+
+
+func _consumable_row(face: InventoryLayer) -> String:
+	var rows := face._loadout.get_children()
+	# The fifth slot row is the consumable key (Constants.SLOT_NAMES).
+	var index := Constants.SLOT_NAMES.find("consumable")
+	return " | ".join(_labels(rows[index]))
+
+
+## §5: "Distinguish none owned, owned but not equipped, equipped and
+## empty, pending authorization, and disconnected."
+func _none_owned_differs_from_not_equipped() -> void:
+	var face := _face("none_owned")
+	await get_tree().process_frame
+	var none := _consumable_row(face)
+	_drop(face)
+	face = _face("unequipped")
+	await get_tree().process_frame
+	var owned := _consumable_row(face)
+	_drop(face)
+	_requirement("R6 none owned vs owned-not-equipped", none != owned,
+			"consumable key reads '%s' owning none and '%s' owning two"
+			% [none, owned])
+
+
+func _disconnected_differs_from_connected() -> void:
+	var face := _face("base")
+	await get_tree().process_frame
+	BridgeClient.assume_sent = false
+	var offline := _consumable_row(face)
+	BridgeClient.assume_sent = true
+	face.rebuild()
+	await get_tree().process_frame
+	var online := _consumable_row(face)
+	_drop(face)
+	_requirement("R7 disconnected is shown", offline != online,
+			"consumable key reads '%s' offline and '%s' online"
+			% [offline, online])
+
+
+func _pending_authorisation_is_shown() -> void:
+	var face := _face("base")
+	await get_tree().process_frame
+	var idle := _consumable_row(face)
+	BridgeClient.assume_sent = true
+	BridgeClient.reserve_consumable("act_cinder")
+	BridgeClient.authorize_consumable("act_cinder")
+	face.rebuild()
+	await get_tree().process_frame
+	var waiting := _consumable_row(face)
+	var says := waiting.to_lower().contains("wait") \
+			or waiting.to_lower().contains("pending")
+	_requirement("R8 pending authorisation is shown", says,
+			"consumable key reads '%s' idle and '%s' with a use awaiting "
+			% [idle, waiting] + "the bridge: a smaller number, no word")
+	BridgeClient._in_flight.clear()
+	_drop(face)
+
+
+## §5: "Natural acquisition should draw attention to the actual new item."
+func _a_new_item_is_marked() -> void:
+	var face := _face("base")
+	await get_tree().process_frame
+	_drop(face)
+	face = _face("acquired")
+	await get_tree().process_frame
+	var marked := false
+	for text: String in _labels(face):
+		if text.contains("Glow Seed") and text.contains("NEW"):
+			marked = true
+	var named := false
+	for text: String in _labels(face):
+		if text.contains("NEW"):
+			named = true
+	_requirement("R9 a new item is marked", marked,
+			"after Glow Seed arrived, %s text on the wall says NEW"
+			% ("some" if named else "no"))
+	_drop(face)

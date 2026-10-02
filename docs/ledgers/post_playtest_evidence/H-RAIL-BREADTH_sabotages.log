@@ -1,0 +1,138 @@
+RB-1 [actuator.gd] the route lock ignored by the switch
+    CAUGHT by "but it is committed to them, so the throw to B1 is QUEUED" -- exit 2, 12 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: …but it is committed to them, so the throw to B1 is QUEUED ('set'), never dropped
+      FAIL: …but it is committed to them, so the throw to B1 is QUEUED ('set'), never dropped
+      FAIL: …and the carrier arrives at A1, the route it was sent on
+      FAIL: …and the carrier arrives at A1, the route it was sent on
+      FAIL: 3 m beyond the points, no longer committed to them, the carrier still holds them by §21.6's distance: 'set'
+      FAIL: 3 m beyond the points, no longer committed to them, the carrier still holds them by §21.6's distance: 'set'
+      FAIL: …and the points it is committed to stay locked through the outage: a throw is QUEUED ('set')
+      FAIL: …and the points it is committed to stay locked through the outage: a throw is QUEUED ('set')
+      FAIL: power restored, it carries on to A1, the route it left on
+      FAIL: power restored, it carries on to A1, the route it left on
+      FAIL: …and a route lock holds a reset exactly as a present actor does
+      FAIL: …and a route lock holds a reset exactly as a present actor does
+RB-2 [rail_network_carrier.gd] the crossing check gone (the carrier follows its plan, not the tongue)
+    CAUGHT by "CONTROL (the lock off" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CONTROL (the lock off -- the distance rule alone): the same throw applies at once ('set'), and the carrier is stopped dead at the points (20.52 m from them): the defect RB-F1 names
+      FAIL: CONTROL (the lock off -- the distance rule alone): the same throw applies at once ('set'), and the carrier is stopped dead at the points (20.52 m from them): the defect RB-F1 names
+RB-3 [actuator.gd] a leg counted as joined while the tongue is still moving
+    CAUGHT by "until the tongue arrives, joins neither leg" -- exit 2, 10 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a throw to B1 from S applies at once ('set') and, until the tongue arrives, joins neither leg
+      FAIL: a throw to B1 from S applies at once ('set') and, until the tongue arrives, joins neither leg
+      FAIL: …so FORWARD is refused ('') and nothing moves
+      FAIL: …so FORWARD is refused ('') and nothing moves
+      FAIL: FORWARD from S is taken
+      FAIL: FORWARD from S is taken
+      FAIL: a call waiting for the points to reach A1 is CANCELLED, not fought, when a hand throws them back ('travelling to A1')
+      FAIL: a call waiting for the points to reach A1 is CANCELLED, not fought, when a hand throws them back ('travelling to A1')
+      FAIL: …reporting its states as it goes: ["executing", "executing", "completed"]
+      FAIL: …reporting its states as it goes: ["executing", "executing", "completed"]
+RB-4 [rail_network_carrier.gd] a carrier on a leg routed through points set for the other
+    CAUGHT by "BACK from B1 is refused" -- exit 2, 8 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: BACK from B1 is refused (''): it is not routed onto the other leg, and nothing moves
+      FAIL: BACK from B1 is refused (''): it is not routed onto the other leg, and nothing moves
+      FAIL: …the points are thrown behind it, and released it may not go back through them: the track behind it ends at the tongue ('')
+      FAIL: …the points are thrown behind it, and released it may not go back through them: the track behind it ends at the tongue ('')
+      FAIL: …set back, BACK is taken
+      FAIL: …set back, BACK is taken
+      FAIL: …and it returns to S
+      FAIL: …and it returns to S
+RB-5 [rail_network_carrier.gd] commissioning not read by the walk
+    CAUGHT by "the points set for A1 but S-A1 not commissioned" -- exit 2, 8 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the points set for A1 but S-A1 not commissioned: FORWARD is refused ('') and nothing moves
+      FAIL: the points set for A1 but S-A1 not commissioned: FORWARD is refused ('') and nothing moves
+      FAIL: …and a call from A2, beyond it, is refused before anything moves ('the carrier is travelling to A1; call again when it stops')
+      FAIL: …and a call from A2, beyond it, is refused before anything moves ('the carrier is travelling to A1; call again when it stops')
+      FAIL: …while the other leg runs: aligning one leg can never lay the other, and missing one blocks only it
+      FAIL: …while the other leg runs: aligning one leg can never lay the other, and missing one blocks only it
+      FAIL: …and FORWARD from S now reaches A1
+      FAIL: …and FORWARD from S now reaches A1
+RB-6 [actuator.gd] REPRO RB-F2: the reset row as it was
+    CAUGHT by "a reset is QUEUED like any throw" -- exit 2, 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: with an actor 4 m from the junction, a reset is QUEUED like any throw and the tongue stays put (t 0.00, branch 1)
+      FAIL: with an actor 4 m from the junction, a reset is QUEUED like any throw and the tongue stays put (t 0.00, branch 1)
+      FAIL: …and applies once the rail is clear (t 0.00)
+      FAIL: …and applies once the rail is clear (t 0.00)
+      FAIL: …and a route lock holds a reset exactly as a present actor does
+      FAIL: …and a route lock holds a reset exactly as a present actor does
+RB-7 [rail_carrier.gd] REPRO RB-F3: the ordered carrier's request as it was
+    CAUGHT by "with no power, a travel command is refused" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: with no power, a travel command is refused and the carrier does not move (offset 17.924 m)
+      FAIL: with no power, a travel command is refused and the carrier does not move (offset 17.924 m)
+RB-8 [rail_network_carrier.gd] a restore that throws instead
+    CAUGHT by "nothing is reported" -- exit 2, 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the points come back set for B1, the tongue already there
+      FAIL: the points come back set for B1, the tongue already there
+      FAIL: …and nothing is reported: a restore is not a throw and not a journey
+      FAIL: …and nothing is reported: a restore is not a throw and not a journey
+      FAIL: a setting restores by leg index as well as by the leg's dock
+      FAIL: a setting restores by leg index as well as by the leg's dock
+RB-9 [rail_network_carrier.gd] no clearance rule at layout
+    CAUGHT by "a leg dock inside the points' clearance is refused by name" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a leg dock inside the points' clearance is refused by name ('')
+      FAIL: a leg dock inside the points' clearance is refused by name ('')
+RB-10 [rail_network_carrier.gd] a call that does not set the points it needs
+    CAUGHT by "calls the carrier from each" -- exit 2, 14 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a call waiting for the points to reach A1 is CANCELLED, not fought, when a hand throws them back ('the points at p were thrown to B1 while the call waited')
+      FAIL: a call waiting for the points to reach A1 is CANCELLED, not fought, when a hand throws them back ('the points at p were thrown to B1 while the call waited')
+      FAIL: a player at each of the five docks calls the carrier from each of the other four: 10 of 20 arrive, no step longer than 0.175 m (largest 0.129 m), no turn over 3.0 deg a frame (largest 1.86) ["T->A2 (cancelled: the points at p were thrown to B1 while the call waited)", "T->B1 (cancelled: the points a
+      FAIL: a player at each of the five docks calls the carrier from each of the other four: 10 of 20 arrive, no step longer than 0.175 m (largest 0.129 m), no turn over 3.0 deg a frame (largest 1.86) ["T->A2 (cancelled: the points at p were thrown to B1 while the call waited)", "T->B1 (cancelled: the points a
+      FAIL: from B1 to A2 -- another branch -- it stops only where the route turns back, at S, and runs through A1 without stopping (stops: ["S"])
+      FAIL: from B1 to A2 -- another branch -- it stops only where the route turns back, at S, and runs through A1 without stopping (stops: ["S"])
+      FAIL: …reporting its states as it goes: ["executing", "queued", "cancelled"]
+      FAIL: …reporting its states as it goes: ["executing", "queued", "cancelled"]
+      FAIL: every dock calls the carrier from every other: 12 of 42 arrive through one set of points or both, no step over 0.175 m (largest 0.129 m), no turn over 3.0 deg a frame (largest 1.71) ["T1->M (cancelled: the points at p1 were thrown to A while the call waited, turn 0.0)", "T1->S2 (cancelled: the point
+      FAIL: every dock calls the carrier from every other: 12 of 42 arrive through one set of points or both, no step over 0.175 m (largest 0.129 m), no turn over 3.0 deg a frame (largest 1.71) ["T1->M (cancelled: the points at p1 were thrown to A while the call waited, turn 0.0)", "T1->S2 (cancelled: the point
+      FAIL: T1 to T2 crosses both sets of points and M in one run (stops: [])
+      FAIL: T1 to T2 crosses both sets of points and M in one run (stops: [])
+      FAIL: …and B1's CALL lever brings it over from A2
+      FAIL: …and B1's CALL lever brings it over from A2
+RB-11 [rail_network_carrier.gd] the points AT the fork dock
+    CAUGHT by "the Y network lays out" -- exit 2, 18 failing check(s), 16 script error(s); restored byte for byte: True
+      FAIL: the Y network lays out (["dock \'S\' stands 0.5 m from points \'p\', inside the 10.0 m clearance: a carrier parked there would hold the points and nobody could throw them"])
+      FAIL: the Y network lays out (["dock \'S\' stands 0.5 m from points \'p\', inside the 10.0 m clearance: a carrier parked there would hold the points and nobody could throw them"])
+      FAIL: a leg dock inside the points' clearance is refused by name ('line 0: control points 1 and 2 are 0.500 m apart; under 0.50 m they give the curve no direction')
+      FAIL: a leg dock inside the points' clearance is refused by name ('line 0: control points 1 and 2 are 0.500 m apart; under 0.50 m they give the curve no direction')
+      FAIL: the points set for A1 but S-A1 not commissioned: FORWARD is refused ('carrier: dock 'S' stands 0.5 m from points 'p', inside the 10.0 m clearance: a carrier parked there would hold the points and nobody could throw them') and nothing moves
+      FAIL: the points set for A1 but S-A1 not commissioned: FORWARD is refused ('carrier: dock 'S' stands 0.5 m from points 'p', inside the 10.0 m clearance: a carrier parked there would hold the points and nobody could throw them') and nothing moves
+      FAIL: …and a call from A2, beyond it, is refused before anything moves ('carrier: dock 'S' stands 0.5 m from points 'p', inside the 10.0 m clearance: a carrier parked there would hold the points and nobody could throw them')
+      FAIL: …and a call from A2, beyond it, is refused before anything moves ('carrier: dock 'S' stands 0.5 m from points 'p', inside the 10.0 m clearance: a carrier parked there would hold the points and nobody could throw them')
+      FAIL: a player at each of the five docks calls the carrier from each of the other four: 0 of 20 arrive, no step longer than 0.175 m (largest 0.000 m), no turn over 3.0 deg a frame (largest 0.00) ["T->S (refused: carrier: dock \'S\' stands 0.5 m from points \'p\', inside the 10.0 m clearance: a carrier par
+      FAIL: a player at each of the five docks calls the carrier from each of the other four: 0 of 20 arrive, no step longer than 0.175 m (largest 0.000 m), no turn over 3.0 deg a frame (largest 0.00) ["T->S (refused: carrier: dock \'S\' stands 0.5 m from points \'p\', inside the 10.0 m clearance: a carrier par
+      FAIL: from B1 to A2 -- another branch -- it stops only where the route turns back, at S, and runs through A1 without stopping (stops: [])
+      FAIL: from B1 to A2 -- another branch -- it stops only where the route turns back, at S, and runs through A1 without stopping (stops: [])
+      FAIL: …reporting its states as it goes: ["refused"]
+      FAIL: …reporting its states as it goes: ["refused"]
+      FAIL: two switches whose legs meet at M lay out (["dock \'S1\' stands 0.5 m from points \'p1\', inside the 10.0 m clearance: a carrier parked there would hold the points and nobody could throw them", "dock \'S2\' stands 0.5 m from points \'p2\', inside the 10.0 m clearance: a carrier parked there would ho
+      FAIL: two switches whose legs meet at M lay out (["dock \'S1\' stands 0.5 m from points \'p1\', inside the 10.0 m clearance: a carrier parked there would hold the points and nobody could throw them", "dock \'S2\' stands 0.5 m from points \'p2\', inside the 10.0 m clearance: a carrier parked there would ho
+      FAIL: a CALL lever at each of the five docks and a POINTS lever at the fork
+      FAIL: a CALL lever at each of the five docks and a POINTS lever at the fork
+RB-12 [rail_points.gd] a tongue that does not move (a flag, not track)
+    CAUGHT by "the tongue MOVED" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the tongue MOVED -- it swung 0.0 deg onto B1's leg and locked there: the track changed, not a flag
+      FAIL: the tongue MOVED -- it swung 0.0 deg onto B1's leg and locked there: the track changed, not a flag
+RB-14 [rail_network_carrier.gd] the deck faces each line in turn (no carry-over)
+    CAUGHT by "every dock calls the carrier from every other" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every dock calls the carrier from every other: 18 of 42 arrive through one set of points or both, no step over 0.175 m (largest 0.129 m), no turn over 3.0 deg a frame (largest 179.23) ["T1->S2 (completed: the carrier is at S2, turn 179.2)", "T1->B (completed: the carrier is at B, turn 179.2)", "T1->
+      FAIL: every dock calls the carrier from every other: 18 of 42 arrive through one set of points or both, no step over 0.175 m (largest 0.129 m), no turn over 3.0 deg a frame (largest 179.23) ["T1->S2 (completed: the carrier is at S2, turn 179.2)", "T1->B (completed: the carrier is at B, turn 179.2)", "T1->
+RB-15 [rail_path.gd] REPRO RB-F5: the rail sampler as it was
+    CAUGHT by "201 straight, level rails" -- exit 2, 4 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: two switches whose legs meet at M lay out (["line 0: the curve pitches 90.0 degrees 99% along, past the 75 a rider can hold"])
+      FAIL: two switches whose legs meet at M lay out (["line 0: the curve pitches 90.0 degrees 99% along, past the 75 a rider can hold"])
+      FAIL: 201 straight, level rails from 30 to 32 m: none refused (4) and no sampled segment of no length (4; shortest 0.00000 m)
+      FAIL: 201 straight, level rails from 30 to 32 m: none refused (4) and no sampled segment of no length (4; shortest 0.00000 m)
+RB-13 [rail_network_carrier.gd] a leg leaves its points toward its dock, not along the heel
+    CAUGHT by "every leg starts where the heel ends" -- exit 2, 10 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every leg starts where the heel ends (0.0000 m) and in the direction it arrives (43.45 deg): a change of line at the points is neither a jump nor a jolt
+      FAIL: every leg starts where the heel ends (0.0000 m) and in the direction it arrives (43.45 deg): a change of line at the points is neither a jump nor a jolt
+      FAIL: …and the carrier arrives at A1, changing line at the points with no step longer than 0.175 m (largest 0.129 m) and no turn of the deck over 3.0 deg in a frame (largest 43.71)
+      FAIL: …and the carrier arrives at A1, changing line at the points with no step longer than 0.175 m (largest 0.129 m) and no turn of the deck over 3.0 deg in a frame (largest 43.71)
+      FAIL: …and now it runs to B1 and stands on B1's track (0.000 m off it): the carrier follows the tongue
+      FAIL: …and now it runs to B1 and stands on B1's track (0.000 m off it): the carrier follows the tongue
+      FAIL: a player at each of the five docks calls the carrier from each of the other four: 4 of 20 arrive, no step longer than 0.175 m (largest 0.130 m), no turn over 3.0 deg a frame (largest 44.17) ["T->A1 (completed: the carrier is at A1)", "T->A2 (completed: the carrier is at A2)", "T->B1 (completed: the 
+      FAIL: a player at each of the five docks calls the carrier from each of the other four: 4 of 20 arrive, no step longer than 0.175 m (largest 0.130 m), no turn over 3.0 deg a frame (largest 44.17) ["T->A1 (completed: the carrier is at A1)", "T->A2 (completed: the carrier is at A2)", "T->B1 (completed: the 
+      FAIL: every dock calls the carrier from every other: 8 of 42 arrive through one set of points or both, no step over 0.175 m (largest 0.130 m), no turn over 3.0 deg a frame (largest 43.03) ["T1->A (completed: the carrier is at A, turn 43.0)", "T1->M (completed: the carrier is at M, turn 43.0)", "T1->S2 (co
+      FAIL: every dock calls the carrier from every other: 8 of 42 arrive through one set of points or both, no step over 0.175 m (largest 0.130 m), no turn over 3.0 deg a frame (largest 43.03) ["T1->A (completed: the carrier is at A, turn 43.0)", "T1->M (completed: the carrier is at M, turn 43.0)", "T1->S2 (co
+
+15 of 15 sabotages caught

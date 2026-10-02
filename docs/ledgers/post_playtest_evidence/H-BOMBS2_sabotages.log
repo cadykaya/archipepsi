@@ -1,0 +1,28 @@
+SL-1 [main.gd, claim] the arrival points at nothing (HB-F2's word about the key)
+    CAUGHT by "one word points at the key" -- exit 1, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: one word points at the key (heard ["EPSILON COIN RECEIVED"])
+SL-2 [reveal.gd, claim] REPRO: the card is drawn once, before the Echo is known (HB-F5)
+    CAUGHT by "the card shows the Bomb Bag and its slot" -- exit 1, 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: timed out waiting for the Bomb Bag's card says what it is
+      FAIL: the card shows the Bomb Bag and its slot (EPSILON ECHO ACQUIRED | Bomb Bag | Three of them. Lob one, count, regret nothing.)
+      FAIL: one word points at the key (heard [])
+SL-3 [player.gd, claim] Q asks the bridge for nothing
+    CAUGHT by "Q: one authorisation asked" -- exit 1, 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: timed out waiting for the bomb thrown
+      FAIL: timed out waiting for its use reported
+      FAIL: Q: one authorisation asked, one Bomb Bag thrown after the answer, one use reported (sent []; at the press: held by [], card false, menu false, paused false, slot 'act_l89100161', state ready, cooldown 0.00, runtime is the player's own: true; said after it: [])
+SL-4 [campaign.py, claim] the bridge hears the request and grants nothing
+    CAUGHT by "Q: one authorisation asked" -- exit 1, 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: timed out waiting for the bomb thrown
+      FAIL: timed out waiting for its use reported
+      FAIL: Q: one authorisation asked, one Bomb Bag thrown after the answer, one use reported (sent ["authorize_consumable"]; at the press: held by [], card false, menu false, paused false, slot 'act_l89100161', state ready, cooldown 0.00, runtime is the player's own: true; said after it: [])
+SL-5 [transitions.py, refill] entering a new Zone refills nothing
+    CAUGHT by "entering it refilled the supply" -- exit 1, 5 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: timed out waiting for the supply refilled
+      FAIL: entering it refilled the supply (generation 7 -> 7): 'Q     Bomb Bag  Mk 3  0 / 3  EMPTY'
+      FAIL: timed out waiting for the bomb thrown
+      FAIL: timed out waiting for its use reported
+      FAIL: Q: one authorisation asked, one Bomb Bag thrown after the answer, one use reported (sent []; at the press: held by [], card false, menu false, paused false, slot 'act_l89100161', state equipped_empty, cooldown 0.00, runtime is the player's own: true; said after it: ["Empty. It stays on Q, and entering a Zone refills it."])
+
+5 of 5 sabotages caught
+runner exit 0

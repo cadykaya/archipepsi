@@ -1,0 +1,17 @@
+# re-measured on wt-bombs (34d0aad)
+zone_004_d2bf871d5f29.json: BUILD FAILED: branch room 'c015' off 'c013' could not be placed clear of the 66 room(s) already standing
+zone_005_ed6d6b265524.json: LAYOUT_REFUSED (controller 9b650b6f501d3ee7)
+    door 'c005/side_right' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+zone_006_3f7da9f7dcae.json: LAYOUT_REFUSED (controller 9b650b6f501d3ee7)
+    door 'c005/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+    door 'c017/side_right' is USED and the engine measured it as solid; the declaration and the geometry disagree
+    door 'c021/entry' is USED and the engine measured it as solid; the declaration and the geometry disagree
+zone_009_ba9ae1a2ad50.json: LAYOUT_REFUSED (controller 9b650b6f501d3ee7)
+    door 'c006/side_left' is USED and the engine measured it as solid; the declaration and the geometry disagree
+    door 'c018/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+zone_010_64b65729399d.json: LAYOUT_REFUSED (controller 9b650b6f501d3ee7)
+    chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_011_2431cc0dd8fc.json: BUILD FAILED: the exit room could not be placed clear of the 70 room(s) before it
+zone_012_06041737245b.json: LAYOUT_REFUSED (controller 9b650b6f501d3ee7)
+    door 'c018/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+    chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes

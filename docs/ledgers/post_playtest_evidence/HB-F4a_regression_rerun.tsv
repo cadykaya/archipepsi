@@ -1,0 +1,8 @@
+# godot-build-failure godot-room-contract godot-reload godot-candidate-live godot-resume-live on ce2852a (+ working tree changes), 08:32 UTC
+target	exit	seconds	result
+godot-build-failure	0	17	GODOT RELOAD TESTS OK (6 checks)
+godot-room-contract	0	129	GODOT ROOM CONTRACT TESTS OK
+godot-reload	0	50	GODOT RELOAD TESTS OK (20 checks)
+godot-candidate-live	0	285	GODOT CANDIDATE LIVE NEXT_FINAL OK (8 checks, 1 notes)
+godot-resume-live	0	85	GODOT RESUME LIVE LEGACY OK (6 checks, 0 notes)
+RERUN DONE

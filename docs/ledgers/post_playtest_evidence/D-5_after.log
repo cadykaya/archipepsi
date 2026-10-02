@@ -1,0 +1,25 @@
+# test_featured_grant.py on 2c4d721 + the D-5 change, 2026-09-25T13:52:16Z
+..........                                                               [100%]
+==================================== PASSES ====================================
+_______ test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own] _______
+------------------------------ Captured log call -------------------------------
+_____ test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[foreign] _____
+------------------------------ Captured log call -------------------------------
+______ test_the_fallback_provider_still_hands_over_a_working_grapple[own] ______
+------------------------------ Captured log call -------------------------------
+____ test_the_fallback_provider_still_hands_over_a_working_grapple[foreign] ____
+------------------------------ Captured log call -------------------------------
+_________ test_an_echo_that_would_not_fold_is_repaired_never_appended __________
+------------------------------ Captured log call -------------------------------
+=========================== short test summary info ============================
+PASSED bridge/tests/test_featured_grant.py::test_the_provider_is_told_the_function_and_only_for_that_check
+PASSED bridge/tests/test_featured_grant.py::test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own]
+PASSED bridge/tests/test_featured_grant.py::test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[foreign]
+PASSED bridge/tests/test_featured_grant.py::test_an_echo_that_supplies_it_is_kept_as_written[own]
+PASSED bridge/tests/test_featured_grant.py::test_an_echo_that_supplies_it_is_kept_as_written[foreign]
+PASSED bridge/tests/test_featured_grant.py::test_the_same_enemy_pull_elsewhere_is_accepted
+PASSED bridge/tests/test_featured_grant.py::test_the_fallback_provider_still_hands_over_a_working_grapple[own]
+PASSED bridge/tests/test_featured_grant.py::test_the_fallback_provider_still_hands_over_a_working_grapple[foreign]
+PASSED bridge/tests/test_featured_grant.py::test_the_requirements_echo_reads_as_its_item
+PASSED bridge/tests/test_featured_grant.py::test_an_echo_that_would_not_fold_is_repaired_never_appended
+10 passed in 0.31s

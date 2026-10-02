@@ -1,0 +1,77 @@
+# H-PASSING: the hosted room as it stood (zone_002/c025, captured from the real bridge by godot-candidate-live's next phase; branch at b09845b + the new driver)
+# godot-bin/godot --headless --path godot -- --passing-hosted --passing-zone=<capture>   (census before the headroom cap)
+  ok: zone_002 hosts EX50-011: ["c025:Chamber_c025", "c024:Chamber_c024"]
+  -- c025 (Chamber_c025), as built, nothing operated
+  ok: c025 holds its Check
+  NOTE: c025: 7240 standable cells, 5814 reached from the arrival with the base kit, 233 claim the Check (476 ms)
+  ok: c025: the census walks the room (5814 cells reached)
+FAIL: c025: NO CLAIM BEFORE THE ROOM IS SOLVED -- 233 reached cell(s) claim the Check, in the hosted room's own frame: ["stand (9.900001, 1.000000, 13.900001) +1.33 m", "stand (10.500000, 1.000000, 13.300000) +1.33 m", "stand (10.200000, 1.000000, 13.900001) +1.33 m", "stand (9.300000, 1.000000, 14.800000) +1.33 m", "stand (10.800000, 1.000000, 13.300000) +1.33 m", "stand (10.500000, 1.000000, 13.900001) +1.33 m"]
+FAIL: c025: PLAYED -- walked from the arrival to stand at (9.900001, 1.000000, 14.000000) (the room's frame), hopped and looked: the prompt read '[E] CLAIM CHECK 047' and 1 claim(s) went out before the room was solved
+  ok: c025: control -- from beside the Check (eye (56.200001, 37.400002, 121.099998)) the same test claims it
+  -- c025: G, as built, from the arrival
+  ok: c025: G is NOT reached from the arrival with the base kit, the room as built (5814 cells reached; on G: [])
+  NOTE: c025: 0 shelf cell(s) reached from the arrival as built
+  -- c025: an arrival anywhere on G releases the way back
+FAIL: c025: the first arrival on G releases the service stair (released at (12.525000, 4.000000, 4.500000); arrivals that did not: [(13.2, 4.0, 5.3), (13.2, 4.0, -0.3), (11.65, 4.0, 5.3)])
+  ok: c025: and the stair walks back down to A ((12.500000, 0.000000, -9.500000))
+GODOT PASSING HOSTED TESTS: 3 failures in 9 checks
+
+# --passing-only=place: the Check moved over 45 spots on G, the census (hop capped at the headroom) re-taken at each (room frame)
+PLACE reward now at (12.799999, 3.999998, 4.900002) (room frame)
+PLACE (11.850000, 4.000000, -0.400000) claims 215 control true
+PLACE (11.850000, 4.000000, 0.300000) claims 121 control true
+PLACE (11.850000, 4.000000, 1.000000) claims 128 control true
+PLACE (11.850000, 4.000000, 1.700000) claims 130 control true
+PLACE (11.850000, 4.000000, 2.400000) claims 147 control true
+PLACE (11.850000, 4.000000, 3.100000) claims 163 control true
+PLACE (11.850000, 4.000000, 3.800000) claims 171 control true
+PLACE (11.850000, 4.000000, 4.500000) claims 173 control true
+PLACE (11.850000, 4.000000, 5.200000) claims 218 control true
+PLACE (12.350000, 4.000000, -0.400000) claims 180 control true
+PLACE (12.350000, 4.000000, 0.300000) claims 76 control true
+PLACE (12.350000, 4.000000, 1.000000) claims 85 control true
+PLACE (12.350000, 4.000000, 1.700000) claims 98 control true
+PLACE (12.350000, 4.000000, 2.400000) claims 110 control true
+PLACE (12.350000, 4.000000, 3.100000) claims 126 control true
+PLACE (12.350000, 4.000000, 3.800000) claims 127 control true
+PLACE (12.350000, 4.000000, 4.500000) claims 118 control true
+PLACE (12.350000, 4.000000, 5.200000) claims 183 control true
+PLACE (12.850000, 4.000000, -0.400000) claims 135 control true
+PLACE (12.850000, 4.000000, 0.300000) claims 41 control true
+PLACE (12.850000, 4.000000, 1.000000) claims 51 control true
+PLACE (12.850000, 4.000000, 1.700000) claims 65 control true
+PLACE (12.850000, 4.000000, 2.400000) claims 74 control true
+PLACE (12.850000, 4.000000, 3.100000) claims 80 control true
+PLACE (12.850000, 4.000000, 3.800000) claims 80 control true
+PLACE (12.850000, 4.000000, 4.500000) claims 76 control true
+PLACE (12.850000, 4.000000, 5.200000) claims 134 control true
+PLACE (13.350000, 4.000000, -0.400000) claims 101 control true
+PLACE (13.350000, 4.000000, 0.300000) claims 25 control true
+PLACE (13.350000, 4.000000, 1.000000) claims 32 control true
+PLACE (13.350000, 4.000000, 1.700000) claims 36 control true
+PLACE (13.350000, 4.000000, 2.400000) claims 43 control true
+PLACE (13.350000, 4.000000, 3.100000) claims 45 control true
+PLACE (13.350000, 4.000000, 3.800000) claims 45 control true
+PLACE (13.350000, 4.000000, 4.500000) claims 43 control true
+PLACE (13.350000, 4.000000, 5.200000) claims 90 control true
+PLACE (13.850000, 4.000000, -0.400000) claims 77 control true
+PLACE (13.850000, 4.000000, 0.300000) claims 10 control true
+PLACE   from (10.500000, 1.000000, 0.300000) eye (10.500000, 3.900000, 0.300000) rise 1.33
+PLACE   from (10.500000, 1.000000, 0.900000) eye (10.500000, 3.900000, 0.900000) rise 1.33
+PLACE   from (10.800000, 1.000000, 0.300000) eye (10.800000, 3.900000, 0.300000) rise 1.33
+PLACE   from (10.800000, 1.000000, 0.900000) eye (10.800000, 3.900000, 0.900000) rise 1.33
+PLACE   from (10.800000, 1.000000, 1.500000) eye (10.800000, 3.900000, 1.500000) rise 1.33
+PLACE   from (10.800000, 1.000000, 0.600000) eye (10.800000, 3.900000, 0.600000) rise 1.33
+PLACE (13.850000, 4.000000, 1.000000) claims 13 control true
+PLACE (13.850000, 4.000000, 1.700000) claims 16 control true
+PLACE (13.850000, 4.000000, 2.400000) claims 16 control true
+PLACE   from (10.800000, 1.000000, 0.900000) eye (10.800000, 3.900000, 0.900000) rise 1.33
+PLACE   from (10.500000, 1.000000, 1.500000) eye (10.500000, 3.900000, 1.500000) rise 1.33
+PLACE   from (10.800000, 1.000000, 1.500000) eye (10.800000, 3.900000, 1.500000) rise 1.33
+PLACE   from (10.500000, 1.000000, 2.700000) eye (10.500000, 3.900000, 2.700000) rise 1.33
+PLACE   from (10.800000, 1.000000, 2.700000) eye (10.800000, 3.900000, 2.700000) rise 1.33
+PLACE   from (10.800000, 1.000000, 0.600000) eye (10.800000, 3.900000, 0.600000) rise 1.33
+PLACE (13.850000, 4.000000, 3.100000) claims 17 control true
+PLACE (13.850000, 4.000000, 3.800000) claims 19 control true
+PLACE (13.850000, 4.000000, 4.500000) claims 19 control true
+PLACE (13.850000, 4.000000, 5.200000) claims 49 control true

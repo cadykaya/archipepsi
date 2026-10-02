@@ -1,0 +1,53 @@
+RO-1 [main.gd, reveal.gd; make godot-bombs] REPRO: the card is modal again and does not see a press
+    CAUGHT by "Q under the card asks the bridge for a use" -- exit 2, 9 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: …and holds nothing: the card is not modal (held by ["modal"])
+      FAIL: Q under the card asks the bridge for a use, and nothing is thrown before the answer (awaiting 0, thrown 0, held by ["modal"])
+      FAIL: …and the card makes way beside it: its hold is cut short, not the press
+      FAIL: the engine's answer throws exactly one Bomb Bag (0 thrown; the key's runtime holds 'Bomb Bag'; sent [])
+      FAIL: …and reports that one use ([])
+      FAIL: the next card follows in full: a press cuts one card short and throws none of the rest away ('SENT TO SAGE' after 'SENT TO SAGE')
+      FAIL: Q under the layout hold asks for nothing and says why: 'Hold on: this Zone's layout is still being checked.' (heard [])
+      FAIL: …once on screen, however often it is pressed (0)
+      FAIL: a walk key held down since before the hold is told too (heard [])
+RO-2 [reveal.gd; make godot-bombs] the card's controls keep their default mouse filters
+    CAUGHT by "and takes no mouse movement anywhere on screen" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: …and takes no mouse movement anywhere on screen, so mouse look under it reaches the game (145 point(s) taken: [(32.0, 32.0), (2.0, 3.555556), (2.0, 10.66667), (2.0, 17.77778)])
+      FAIL: the F3 readout and the navigation schematic, open over it, take none either (145 point(s) taken: [(32.0, 32.0), (2.0, 3.555556), (2.0, 10.66667), (2.0, 17.77778)])
+RO-3 [main.gd; make godot-bombs] Q merely closes the card: modal, and a press dismisses it
+    CAUGHT by "Q under the card asks the bridge for a use" -- exit 2, 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: …and holds nothing: the card is not modal (held by ["modal"])
+      FAIL: Q under the card asks the bridge for a use, and nothing is thrown before the answer (awaiting 0, thrown 0, held by ["modal"])
+      FAIL: the engine's answer throws exactly one Bomb Bag (0 thrown; the key's runtime holds 'Bomb Bag'; sent [])
+      FAIL: …and reports that one use ([])
+      FAIL: Q under the layout hold asks for nothing and says why: 'Hold on: this Zone's layout is still being checked.' (heard [])
+      FAIL: …once on screen, however often it is pressed (0)
+RO-4 [reveal.gd; make godot-bombs] a press cuts the card short and throws the queue away
+    CAUGHT by "the next card follows in full" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the next card follows in full: a press cuts one card short and throws none of the rest away ('SENT TO SAGE' after 'SENT TO SAGE')
+RO-5 [player.gd; make godot-bombs] a press the layout hold stops is lost without a word
+    CAUGHT by "Q under the layout hold asks for nothing and says why" -- exit 2, 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: Q under the layout hold asks for nothing and says why: 'Hold on: this Zone's layout is still being checked.' (heard [])
+      FAIL: …once on screen, however often it is pressed (0)
+      FAIL: a walk key held down since before the hold is told too (heard [])
+RO-6 [hud.gd; make godot-bombs] said on every press, a column of it
+    CAUGHT by "once on screen, however often it is pressed" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: …once on screen, however often it is pressed (4)
+RO-7 [player.gd; make godot-bombs] a walk key held down since before the hold is not told
+    CAUGHT by "a walk key held down since before the hold is told too" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a walk key held down since before the hold is told too (heard [])
+RO-8 [player.gd; make godot-bombs] a menu's own hold is told too, over the open menu
+    CAUGHT by "under a menu's hold a press asks for nothing and adds nothing" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: under a menu's hold a press asks for nothing and adds nothing: the open menu is its explanation (heard ["Hold on: the controls are held (modal)."])
+RO-9 [debug_overlay.gd; make godot-bombs] the F3 readout's panel keeps its default mouse filter
+    CAUGHT by "the F3 readout and the navigation schematic, open over it, take none either" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the F3 readout and the navigation schematic, open over it, take none either (113 point(s) taken: [(32.0, 32.0), (10.0, 10.66667), (10.0, 17.77778), (10.0, 24.88889)])
+RO-10 [player.gd; make godot-carry] REPRO: the Static Pulse blocked while carrying says nothing
+    CAUGHT by "and says so, once for a press held down 40 frames" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: …and says so, once for a press held down 40 frames: []
+RO-11 [player.gd; make godot-carry] …said on every frame the button is down
+    CAUGHT by "and says so, once for a press held down 40 frames" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: …and says so, once for a press held down 40 frames: ["PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYING", "PULSE BLOCKED WHILE CARRYI
+RO-C1 [reveal.gd; make godot-bombs] CONTROL: a faster fade is still a card making way
+    CONTROL HOLDS -- exit 0, 0 failing check(s), 0 script error(s); restored byte for byte: True
+
+11 of 11 sabotages caught; 1 of 1 controls hold

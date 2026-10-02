@@ -1,0 +1,17 @@
+RC-1 [zone_builder.gd] REPRO: no door is owed a branch
+    CAUGHT by "every door candidate zone_006 assigns measures a hole" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every door candidate zone_006 assigns measures a hole (39 holes; solid: ["c017/side_right", "c021/entry"])
+      FAIL: no join's connector stands inside another join's (70 pieces; crossing: ["e:c015:c018 x e:c017:c021", "e:c015:c018 x e:c017:c021"])
+RC-2 [zone_builder.gd] a branch's own branches are not owed when they queue
+    CAUGHT by "every door candidate zone_006 assigns measures a hole" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every door candidate zone_006 assigns measures a hole (39 holes; solid: ["c017/side_right", "c021/entry"])
+      FAIL: no join's connector stands inside another join's (70 pieces; crossing: ["e:c015:c018 x e:c017:c021", "e:c015:c018 x e:c017:c021"])
+RC-3 [zone_builder.gd] CONTROL: an owed door is a preference, dropped by the fallback
+    CONTROL BROKEN -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every door candidate zone_006 assigns measures a hole (39 holes; solid: ["c017/side_right", "c021/entry"])
+      FAIL: no join's connector stands inside another join's (70 pieces; crossing: ["e:c015:c018 x e:c017:c021", "e:c015:c018 x e:c017:c021"])
+RC-4 [zone_builder.gd] the owed box ignores the socket's turn
+    NOT CAUGHT by "every door candidate zone_006 assigns measures a hole" -- exit 0, 0 failing check(s), 0 script error(s); restored byte for byte: True
+
+2 of 3 sabotages caught; 0 of 1 controls hold
+runner exit 1

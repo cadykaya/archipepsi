@@ -1,0 +1,33 @@
+# godot-test godot-room godot-zone-audit godot-graphs godot-activity godot-legible godot-traverse godot-exit-reach godot-return-placement godot-build-failure godot-affordance godot-physics godot-movement godot-content godot-encounter godot-theme-pack godot-integration godot-integration-quiet godot-integration-variant-live godot-reload godot-latched-route-live godot-lever-route-live godot-transport-live godot-reversible-live godot-ordinary-live godot-candidate-live godot-resume-live godot-bombs-live godot-consumable-live godot-consumable-restart on ce2852a (+ working tree changes), 07:56 UTC
+target	exit	seconds	result
+godot-test	0	20	GODOT CHAMBER TESTS OK
+godot-room	0	17	GODOT ROOM TESTS OK
+godot-zone-audit	0	20	GODOT ZONE AUDIT OK
+godot-graphs	0	127	GODOT GRAPH TESTS OK
+godot-activity	0	34	GODOT ACTIVITY TESTS OK
+godot-legible	0	17	GODOT LEGIBILITY TESTS OK
+godot-traverse	0	57	GODOT TRAVERSE TESTS OK (37 checks)
+godot-exit-reach	0	27	GODOT EXIT REACH OK (85 checks)
+godot-return-placement	0	17	GODOT RETURN PLACEMENT OK
+godot-build-failure	2	16	GODOT RELOAD FAILED (1 of 1 checks)
+godot-affordance	0	18	GODOT AFFORDANCE TESTS OK
+godot-physics	0	131	GODOT PHYSICS TESTS OK (68 checks)
+godot-movement	0	17	GODOT MOVEMENT TESTS OK
+godot-content	0	16	GODOT CONTENT TESTS OK
+godot-encounter	0	82	GODOT ENCOUNTER TESTS OK (51 checks, 2 notes)
+godot-theme-pack	0	17	GODOT THEME PACK TESTS OK (30 checks, 0 notes)
+godot-integration	0	101	GODOT INTEGRATION OK
+godot-integration-quiet	0	100	GODOT INTEGRATION OK
+godot-integration-variant-live	0	25	GODOT INTEGRATION OK
+godot-reload	0	52	GODOT RELOAD TESTS OK (20 checks)
+godot-latched-route-live	0	73	GODOT LATCHED LIVE RESTORE OK (13 checks, 1 notes)
+godot-lever-route-live	0	70	GODOT LATCHED LIVE LEVER RESTORE OK (14 checks, 1 notes)
+godot-transport-live	0	157	GODOT TRANSPORT LIVE RESTORE OK (12 checks, 0 notes)
+godot-reversible-live	0	76	GODOT REVERSIBLE LIVE RESTORE OK (6 checks, 0 notes)
+godot-ordinary-live	0	36	GODOT RELOAD TESTS OK (10 checks)
+godot-candidate-live	2	180	FAIL: timed out waiting for the bridge accepts the layout
+godot-resume-live	2	91	FAIL: from this point the record is kept: the bridge holds exactly the members the engine saw die, [] (died ["c005/bulwark#0"]; killed here c005/bulwark#0)
+godot-bombs-live	0	130	GODOT BOMBS LIVE REFILL OK (6 checks, 2 notes)
+godot-consumable-live	0	34	GODOT CONSUMABLE LIVE TESTS OK (1 notes)
+godot-consumable-restart	0	29	GODOT CONSUMABLE LIVE TESTS OK (1 notes)
+ALL DONE

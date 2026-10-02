@@ -1,0 +1,51 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- PROVENANCE: a Bomb Bag the campaign made, not one given
+  ok: the Bomb Bag is the Echo of Check 89100140 in Zone 6, created by the provider (["CreateOperation"])
+  ok: before its Check the campaign owns no consumable; after it, exactly this one (act_l89100140)
+  ok: nothing puts it on a key for the player; the slot action does
+  -- THE KEY ON THE HUD: none, owned, carried, empty
+    none_owned   Q     —
+    acquired     Q     — Bomb Bag owned, not carried
+    carried      Q     Bomb Bag  3 / 3
+    spent        Q     Bomb Bag  0 / 3  EMPTY
+  ok: owning a Bomb Bag that is on no key reads differently from owning none ('  Q     —' / '  Q     — Bomb Bag owned, not carried')
+  ok: …and names what is owned
+  ok: carried, the key shows its count (  Q     Bomb Bag  3 / 3)
+  ok: empty, it shows 0 / 3 and reads as empty (  Q     Bomb Bag  0 / 3  EMPTY)
+  -- PRESSING THE KEY in each state
+  ok: none_owned: pressing the key says why nothing happened ('No consumable owned yet' expected, heard ["No consumable owned yet. One arrives as an Echo, like any other item."])
+  ok: none_owned: …and pressing it three more times does not stack it (1 on screen)
+  ok: acquired: pressing the key says why nothing happened ('You own 1 consumable' expected, heard ["Nothing on Q. You own 1 consumable: pick one to carry. Open EQUIPMENT [Tab]."])
+  ok: acquired: …and pressing it three more times does not stack it (1 on screen)
+  ok: spent: pressing the key says why nothing happened ('Empty' expected, heard ["Empty. It stays on Q, and entering a Zone refills it."])
+  ok: spent: …and pressing it three more times does not stack it (1 on screen)
+  ok: carried with charges left: the press asks the bridge for a use and refuses nothing (awaiting 1, heard [])
+  -- THE ARRIVAL: the card, and a word about the key
+  ok: the card shows the Bomb Bag and its slot (EPSILON ECHO ACQUIRED | Bomb Bag | Three of them. Lob one, count, regret nothing. |  | Thrown: bursts for 34 damage within 4.0 m after 1.4 s | Hits leave stunned for 1.5 s | 3.0s cooldown | Slot: CONSUMABLE)
+  ok: a word points at the key it goes on, once (heard ["Bomb Bag is a consumable for Q. Put it on the key from EQUIPMENT [Tab].", "EPSILON COIN RECEIVED"])
+  ok: …and the next snapshot does not say it again
+  -- FIRST SIGHT: a campaign that already owns it is not news
+  ok: no word says it just arrived (heard [])
+  ok: …while its row still says it is owned and on no key (▸ Q     — Bomb Bag owned, not carried)
+  ok: …nor on returning to the campaign
+  -- EQUIPPING IT from the equipment wall
+  ok: the Bomb Bag's card offers EQUIP ON Q ('EQUIP ON Q')
+  ok: pressing it asks the bridge to put it on the consumable key, once ([{ "type": "slot_action", "slot": "consumable", "component_id": "act_l89100140" }])
+  ok: the engine's answer shows it on Q ('TAKE OFF Q')
+  ok: …and the HUD key counts it (▸ Q     Bomb Bag  3 / 3)
+  -- A REFUSED USE: said once, in the engine's words
+  ok: the press asks for use 1 of supply 6
+  ok: the engine's refusal is on screen once, and nothing else is (heard ["\'act_l89100140\' authorization 1 was minted against supply 6; the current supply is 7. It was refilled after the press, so this use no longer exists"])
+  ok: the refusal still counts as refused (`Player.exhausted`)
+  ok: …and the charge is back: nothing launched (3 left)
+  -- A GRANTED USE: the press, the engine's answer, the bomb
+  ok: the press asks, and nothing is thrown before the answer
+  ok: the engine's answer throws exactly one Bomb Bag (1 thrown; the key's runtime holds 'Bomb Bag'; sent ["authorize_consumable", "use_consumable"])
+  ok: …and reports that one use ([{ "type": "use_consumable", "component_id": "act_l89100140", "use_index": 1, "generation": 6 }])
+  ok: the key counts it: 2 / 3 (▸ Q     Bomb Bag  2 / 3)
+  ok: nothing is refused (heard [])
+  -- THE REFILL: spent, then the next Zone
+  ok: spent reads EMPTY on the key, and entering Zone zone_007 refills it ('▸ Q     Bomb Bag  0 / 3  EMPTY' -> '▸ Q     Bomb Bag  Mk 5  3 / 3')
+
+GODOT BOMBS OK (34 checks)

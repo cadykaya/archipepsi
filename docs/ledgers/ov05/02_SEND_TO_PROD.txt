@@ -1,0 +1,49 @@
+Resume for Overnight 05. I am going to bed; the attached 01_EXECUTION_PLAN.md
+is the authorized work order, not a request to return another plan.
+
+The previous latch-route/ThemePack handoff at 330c555 stands. Keep its
+successful evidence at the stated scope. Start from the actual current
+integrated branch; do not reset to the packet's reference commit.
+
+This replaces the last batch's "finish two integrations and stop" rule.
+Execute the finite ready queue, preserving playable checkpoints. When the
+first few packages pass, take the next ready package rather than ending
+with "waiting on you." There is deliberately more work than a short batch.
+Do not manufacture work to consume time or promise execution after the
+active session ends.
+
+Dess and Arty remain paused. For this run, I authorize the bounded
+Python/schema/export/test edits needed to implement the listed systems
+against their already accepted contracts. Record the exact shared seams
+and source rules before editing, then hand changes back clearly for Dess's
+later review. This is one-writer integration, not authority to invent
+AP/economy policy, reinterpret legacy statuses, redesign her systems or
+migrate original saves. Resolve ownership if another lane actually resumes.
+
+Main priorities: real hand carry; physical cross-room object delivery and
+consumer; correct recovery/restart; a reversible branch-to-machine
+consequence; the actual claim/Echo/equip/return Blindside loop; and the
+three existing minors in game context. Then continue the specified graph,
+manipulation, Status, machinery, consumable, encounter and producer work.
+The attached readiness order and reserve are part of the assignment.
+
+A blocker belongs to its child task. Keep only the genuinely unsupported
+requirement unavailable; move to independent ready work. No fifth setpiece,
+new asset catalogue, story implementation, tooling upgrade or automatic
+art approval. Arty stays paused.
+
+Use focused verification while developing and a full frozen integrated
+run at the meaningful/final candidate checkpoint, not after every tiny
+commit. Keep actual input, world effect, authoritative state and restart
+proofs distinct from direct-handler/fixture tests. Preserve raw logs but
+keep intermediate narration short. No parallel writers or repeated full
+runs on the same mutable checkout.
+
+Leave a launchable candidate, a short owner route and separate answers,
+a tested/pushed revision map, and the exact remaining queue. Stop for actual
+resource/session limits, interruption, exhausted ready work or final
+verification/handoff—not merely because the first two features are done.
+
+Protected comparisons, review refs and original saves stay untouched.
+No new credentials, spending, heartbeat, watchers, PR subscriptions,
+remote-CI polling, scheduled check-ins or automatic re-arming.

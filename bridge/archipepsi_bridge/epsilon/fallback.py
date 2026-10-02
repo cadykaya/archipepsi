@@ -215,11 +215,15 @@ def _content_room(rng, index: int, lean: bool, step: float,
     if index % 2 and count:
         # `kill_all` with nothing to kill is not a legal objective, so a
         # Zone already at its enemy ceiling gets a traversal room here.
+        # BOUND ONCE. Calling `_arena_shape` twice would draw different
+        # numbers from `rng` and the room would not be the room the
+        # eligibility was computed for.
+        shape = _arena_shape(rng, lean)
         return {
             "id": f"c{index:03d}", "type": "arena",
-            **_arena_shape(rng, lean),
+            **shape,
             "objective": "kill_all",
-            "enemies": [{"archetype": rng.choice(["melee", "ranged"]),
+            "enemies": [{"archetype": rng.choice(_eligible_roles(shape)),
                          "count": count}]}
     return {
         "id": f"c{index:03d}", "type": "platform_path",
@@ -289,11 +293,12 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
     for index, loc in enumerate(locations):
         kind = ("arena", "platform_path", "arena")[index % 3]
         if kind == "arena":
+            shape = _arena_shape(rng, lean)
             chambers.append({
                 "id": f"c{len(chambers) + 1:03d}", "type": "arena",
-                **_arena_shape(rng, lean),
+                **shape,
                 "objective": "kill_all",
-                "enemies": [{"archetype": rng.choice(["melee", "ranged"]),
+                "enemies": [{"archetype": rng.choice(_eligible_roles(shape)),
                              "count": rng.randint(1, 2 if lean else 5)}],
                 "reward_location_id": loc.location_id})
         else:
@@ -437,7 +442,7 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
                  "activities": [candidate]}))):
             acts.append(candidate)
             return True
-        enemies, _ = totals()
+        enemies, brutes = totals()
         groups = target.setdefault("enemies", [])
         count = rng.randint(2, 4)
         if (target["type"] != "corridor"
@@ -445,9 +450,31 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
                 and enemies + count <= enemy_cap
                 and chamber_enemies(target) + count
                 <= C.MAX_ENEMIES_PER_CHAMBER
-                and would_fit(V.ENEMY_VALUE["melee"] * count)):
-            groups.append({"archetype": rng.choice(["melee", "ranged"]),
-                           "count": count})
+                ):
+            # CHARGE THE ROLE THAT IS PLACED. This scored every group at
+            # melee's price and then placed a melee OR a ranged, so half
+            # the groups in a Zone were undercharged by a point before
+            # ten roles made the spread wider.
+            #
+            # AND CHOOSE AMONG THE ROLES THAT FIT. An earlier cut picked
+            # first and gave up if the price did not fit, which pushed
+            # the builder onto the retry loop -- `test_fallback_scale`
+            # caught it by name. Affordability is a third gate beside
+            # geometry and pricing, not a coin toss after the choice.
+            # THE BRUTE CAP IS A REAL RULE AND THE FILLER HAS TO SEE IT.
+            # Before this, a brute reached a Zone only through the
+            # landmark recipe, exactly once. Making it one choice among
+            # ten in the ordinary filler put seven in a 700-point Zone
+            # against a limit of four -- `test_fallback_scale` caught it
+            # as a reroll, which is what that suite is for.
+            affordable = [
+                r for r in _eligible_roles(
+                    target, allow_brute=brutes + count <= brute_cap)
+                if would_fit(V.enemy_value(r) * count)]
+            if not affordable:
+                return False
+            role = rng.choice(affordable)
+            groups.append({"archetype": role, "count": count})
             return True
         return False
 
@@ -654,6 +681,40 @@ MAX_CORRIDOR_WIDTH = 10.0
 #: the variety is in some rooms having one and some not. Not low either,
 #: because a feature the owner meets twice in a Zone cannot be judged.
 BAND_CHANCE = 0.55
+
+
+def _eligible_roles(shape: dict, *, allow_brute: bool = False
+                    ) -> tuple[str, ...]:
+    """Roles this room can hold AND the budget can score.
+
+    P08.2. The composer used to pick from a hard-coded
+    `["melee", "ranged"]` while ten roles had envelopes and behaviour.
+    Two gates, both read from data rather than chosen here:
+    `constants.roles_that_fit` for the geometry, and
+    `content_value.COMPOSABLE_ENEMY_ROLES` for whether a price exists.
+
+    A room whose dimensions are not known falls back to the two roles
+    that fit anything -- not to "all of them", because guessing upward
+    is how a drifter ends up in a crawlspace.
+
+    **`brute` is not ordinary filler, and the default says so.** It is
+    the boss-scale role the landmark recipe places BY NAME, once, which
+    is why it has a Zone-wide cap that nothing else has. Making it one
+    choice among ten put seven in a 700-point Zone against a limit of
+    four; `test_fallback_scale` caught that as a reroll, which is what
+    that suite exists for. A caller that has counted the brutes already
+    placed may pass `allow_brute=True`.
+    """
+    width = shape.get("width")
+    depth = shape.get("depth")
+    height = shape.get("wall_height")
+    if None in (width, depth, height):
+        return ("melee", "ranged")
+    fits = set(C.roles_that_fit(width, depth, height))
+    if not allow_brute:
+        fits.discard("brute")
+    eligible = tuple(r for r in V.COMPOSABLE_ENEMY_ROLES if r in fits)
+    return eligible or ("melee",)
 
 
 def _arena_shape(rng, lean: bool) -> dict:
@@ -979,6 +1040,33 @@ def _primary(request: EchoGenerationRequest, *, archetype: str, cooldown: float,
     }]}
 
 
+def _consumable(
+        request: EchoGenerationRequest, *, charges: int, cooldown: float,
+        initiator: dict, modifiers: list[dict], description: str,
+        tags: list[str]) -> dict:
+    """One CREATE, one Action in the consumable slot, with its charges.
+
+    The schema ties the two together (`ActionComponent`: charges exactly
+    when the slot is `consumable`), and the stage gate admits the slot
+    only when the request advertised it.
+    """
+    src = request.source
+    return {**_common(request, description, tags), "operations": [{
+        "op": "create",
+        "component": {
+            "kind": "action",
+            "component_id": MG.component_id_for("act", src.location_id),
+            "display_name": _clamp(src.item_name, C.MAX_TEXT_LEN),
+            "description": _clamp(description, C.MAX_TEXT_LEN),
+            "slot": "consumable",
+            "charges": charges,
+            "cooldown": cooldown,
+            "primitive": initiator,
+            "modifiers": modifiers,
+        },
+    }]}
+
+
 def _primary_and_resource(
         request: EchoGenerationRequest, *, archetype: str, cooldown: float,
         initiator: dict, resource: dict, description: str,
@@ -1147,32 +1235,132 @@ _UPGRADE_LADDER = (
 
 
 def _family_of_summary(summary) -> str:
-    """What makes two components "the same thing" for evolution.
+    """The verb (or stat) an owned component has, as a key.
 
-    ECHOES §11: ancestry is semantic, not textual — *Hookshot* and
-    *Longshot* are one grapple because they resolve to the same verb, not
-    because their names rhyme. The request's `detail` carries that verb
-    for an action and the stat for a trait, which is exactly the key.
+    NECESSARY FOR A SEQUEL, NEVER SUFFICIENT. An upgrade lands on a field
+    the owned component has, so the new item must resolve to the same
+    verb; but the owner's direction (2026-09-23) is that "sharing an
+    Action primitive does not establish that two items are the same
+    family" -- a Bomb Bag is not a better Boomerang because both are
+    lobbed. What makes two items one thing is how their SOURCES read
+    (`reading_of`, below).
     """
     if summary.kind not in ("action", "trait"):
         return ""
     return f"{summary.kind}:{summary.detail}"
 
 
-def _as_sequel(interpretation: dict, request: EchoGenerationRequest):
-    """Turn a CREATE into an UPGRADE when the campaign already owns the
-    family — the *Hookshot → Longshot* rule, ECHOES §11.
+#: WHAT THIS PROVIDER READS AN ITEM AS, by its name, in the order it tries
+#: them: `(reading, words, unless)`. The keyword half of
+#: `_fallback_echo_create`'s rules, held here so the rules that BUILD an
+#: item and the question "is this the same kind of thing as that" cannot
+#: disagree. A rule's budget condition stays in the rule: it decides what
+#: gets built, not what the item is.
+_READINGS: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
+    ("scattergun", ("conference call", "shotgun"), ()),
+    ("gun", ("gun", "rifle", "pistol", "cannon", "blaster", "bow"), ()),
+    ("blade", ("sword", "blade", "knife", "dagger", "axe"), ()),
+    ("polearm", ("spear", "lance", "pike", "halberd", "trident"), ()),
+    ("hammer", ("hammer", "mallet", "stomp", "smash", "quake"), ()),
+    ("mana", ("magic", "mana", "ether", "spell", "meter", "essence"), ()),
+    ("stamina", ("stamina", "vigor", "endurance", "breath"), ()),
+    ("staff", ("staff", "wand", "charge", "rod", "focus"), ()),
+    ("burst", ("smg", "burst", "repeater", "machine", "uzi"), ()),
+    ("teleport", ("teleport", "warp", "blink", "recall", "portal"), ()),
+    ("glider", ("glider", "glide", "parachute", "sail", "umbrella"), ()),
+    ("jet", ("jet", "thruster", "rocket boot", "booster", "jump"), ()),
+    ("climb", ("claw", "gecko", "climb", "wall", "gauntlet"),
+     ("clawshot",)),
+    ("parry", ("parry", "riposte", "counter", "deflect"), ()),
+    ("marker", ("compass", "map", "marker", "flag", "beacon"), ()),
+    ("grapple", ("hook", "grapple", "chain", "longshot", "clawshot"), ()),
+    ("boots", ("boot", "shoe", "skate", "rep", "sprint"), ()),
+    ("wings", ("wing", "feather", "cape", "cap"), ()),
+    ("shield", ("shield", "armor", "armour", "guard"), ()),
+    ("heal", ("estus", "potion", "flask", "food", "heart", "heal",
+              "shard"), ()),
+    ("core", ("star", "orb", "battery", "cell", "core", "dynamo"), ()),
+    ("explosive", ("bomb", "grenade", "mine", "explosive"), ()),
+    ("rocket", ("rocket", "missile", "cannonball", "mortar"), ()),
+)
+_READING = {key: (words, unless) for key, words, unless in _READINGS}
+
+
+def _reads(name: str, reading: str) -> bool:
+    """Does the lowercased `name` read as `reading`?"""
+    words, unless = _READING[reading]
+    return (any(w in name for w in words)
+            and not any(w in name for w in unless))
+
+
+def reading_of(item_name: str, source_game: str = "") -> str:
+    """What this provider reads `item_name` as, or "" for nothing specific.
+
+    "" is the fallback's default -- a thrown or passive thing picked by a
+    hash of the name -- and it names no kind of thing. Two items nothing
+    specific reads are NOT related by that: the Restoration Wine and the
+    Revelation Scroll the default renders as the same lob are a wine and a
+    scroll. `source_game` is part of the signature because a provider's
+    reading may use it; this one reads names alone.
+    """
+    name = item_name.lower()
+    for reading, _, _ in _READINGS:
+        if _reads(name, reading):
+            return reading
+    return ""
+
+
+#: HOW BIG AN UPGRADE HAS TO BE (owner direction, 2026-09-23: "An upgrade
+#: must produce a meaningful, visible change"). This provider's reading of
+#: "meaningful": a quarter of the field's current value, or the ladder's
+#: own step where that is larger. A change too small to see is not an
+#: upgrade, and the item is created instead. A tuning constant of this
+#: provider, not a rule of the game -- a model provider judges its own.
+_MEANINGFUL = 0.25
+
+
+def _meaningful_delta(current: float, step: float) -> float:
+    """The smallest change this provider calls meaningful, to the cent and
+    rounded AWAY from zero -- rounded to the nearest, 25% of a 2.25 s
+    cooldown is 0.56, which is less than a quarter."""
+    size = max(abs(step), abs(current) * _MEANINGFUL)
+    size = math.ceil(size * 100.0 - 1e-9) / 100.0
+    return size if step > 0 else -size
+
+
+def _as_sequel(interpretation: dict, request: EchoGenerationRequest,
+               reading=reading_of):
+    """Turn a CREATE into an UPGRADE when the player already owns THIS
+    KIND OF THING -- the *Hookshot -> Longshot* rule (ECHOES §11), as the
+    owner directed it on 2026-09-23:
+
+    - a similar item is an opportunity to upgrade OR to create, and
+      similarity never forces a merge;
+    - sharing an Action primitive does not make two items one family;
+    - an upgrade is a meaningful, visible change that keeps what the
+      owned item is useful for, and a substantial trade-off is a new item
+      rather than an involuntary replacement.
+
+    So a sequel needs three things, and the verb is only the first:
+
+    1. the same verb or stat (`_family_of_summary`) -- without it the
+       upgrade has no field to land on;
+    2. the same READING of the two sources: the new item and the item
+       that made the owned component read as the same kind of thing
+       (`reading`, this provider's own; `reading_of` for the fallback).
+       An item nothing specific reads is related to nothing;
+    3. the same slot: a consumable does not upgrade a weapon, nor a weapon
+       a consumable, and each keeps its function.
+
+    Then the change must be meaningful (`_meaningful_delta`) and inside
+    the field's bounds, or there is no sequel and the CREATE stands.
 
     Works from the REQUEST, not from the fold: a provider sees what it is
     given and nothing else, and the fallback is a provider. Everything it
-    needs is in `player_state.owned_components` — the family key, and the
-    bounds each field still has room inside.
-
-    Returns None when there is nothing to evolve, when the item is not a
-    single-component interpretation, or when every rung of the ladder
-    would leave the target's declared range. In all three cases the caller
-    keeps its ordinary CREATE, so this can only make the fallback richer,
-    never invalid.
+    needs is in `player_state.owned_components` -- the verb, the origin,
+    the slot, and the bounds each field still has room inside. Returns
+    None whenever it cannot land, so the caller keeps its ordinary CREATE
+    and this can only make the fallback richer, never invalid.
     """
     operations = interpretation.get("operations", [])
     if len(operations) != 1 or operations[0].get("op") != "create":
@@ -1183,16 +1371,28 @@ def _as_sequel(interpretation: dict, request: EchoGenerationRequest):
     primitive = component.get("primitive")
     family = (f"action:{primitive['type']}" if primitive
               else f"trait:{component.get('stat')}")
+    kind_of_thing = reading(request.source.item_name,
+                            request.source.source_game)
+    if not kind_of_thing:
+        return None
+    slot = str(component.get("slot") or "") \
+        if component["kind"] == "action" else ""
 
     for owned in request.player_state.owned_components:
         if _family_of_summary(owned) != family:
             continue
+        if not owned.origin or reading(owned.origin,
+                                       owned.origin_game) != kind_of_thing:
+            continue
+        if owned.slot != slot:
+            continue
         headroom = {field: (current, low, high)
                     for field, current, low, high in owned.upgradable}
-        for field, delta in _UPGRADE_LADDER:
+        for field, step in _UPGRADE_LADDER:
             if field not in headroom:
                 continue
             current, low, high = headroom[field]
+            delta = _meaningful_delta(current, step)
             if not (low <= current + delta <= high):
                 continue
             return {
@@ -1342,23 +1542,43 @@ def fallback_echo(request: EchoGenerationRequest, *,
 
     S6. Every outcome below is a fresh CREATE, which is what made a
     26-Check campaign twenty-six unrelated things. Running the answer
-    through `_as_sequel` first means an item whose verb the campaign
-    already owns evolves it instead — *Longshot* after *Hookshot* is one
-    grapple at Mk II, exactly as ECHOES §11 describes, and the archive's
-    provenance chain becomes something real play produces rather than
-    something only a fixture ever showed.
+    through `_as_sequel` first means an item that reads as a kind of thing
+    the player already owns, in the same slot and on the same verb,
+    evolves it instead -- *Longshot* after *Hookshot* is one grapple at
+    Mk II, as ECHOES §11 describes -- while an item that merely shares a
+    verb is its own thing (owner direction, 2026-09-23).
     """
     interpretation = _fallback_echo_create(request, mechanics=mechanics)
     return _read_and_label(as_disposition(interpretation, request), request)
 
 
+def featured_fallback(requirement, request: EchoGenerationRequest) -> dict:
+    """H-QUALIFY (D-5, step 4): the Echo a featured Check falls back to.
+
+    Its function is the requirement's own proven floors, and its name and
+    text come from the item (`featured.fallback_interpretation`, Dess's).
+    The §15 reading is stamped on last, as on every deterministic Echo
+    (`_read_and_label`): the requirement's Echo carries no concepts of its
+    own, and an Echo without them is refused by `reading_errors` -- so
+    without this step the one fallback that must always hold would raise.
+    """
+    from ..schemas import featured as F
+    echo = F.fallback_interpretation(
+        requirement, location_id=request.source.location_id,
+        item_name=request.source.item_name,
+        source_game=request.source.source_game,
+        recipient_name=request.source.recipient_name)
+    return _read_and_label(echo.model_dump(mode="json"), request)
+
+
 def as_disposition(interpretation: dict, request: EchoGenerationRequest, *,
-                   enhancement: bool = True) -> dict:
+                   enhancement: bool = True, reading=reading_of) -> dict:
     """The strongest claim this interpretation can make on what is already
     owned, or the interpretation unchanged.
 
     Tried most-specific first. A sequel is the strongest claim (the
-    campaign owns this exact verb already); an enhancement is next (it
+    player owns this kind of thing already, on this verb, in this slot);
+    an enhancement is next (it
     owns something the element can attach to); a confluence is last,
     because it fires on a budget condition rather than on a reading. Each
     returns None when it cannot land, so the ordinary CREATE survives and
@@ -1376,11 +1596,12 @@ def as_disposition(interpretation: dict, request: EchoGenerationRequest, *,
     as both `cold` and `beam`, and letting the generic enhancement (cold,
     so chill an owned weapon) outrank the specific shape (a beam and the
     charge it burns) swallowed every elemental item and put
-    `beam_sustained` back out of reach. Sequel still applies, because
-    owning the same verb is a fact about identity rather than a rival
-    reading; confluence still applies, because it is about capacity.
+    `beam_sustained` back out of reach. Sequel still applies, judged by
+    the caller's own `reading` of the two sources (mock's catalog reads
+    items its own way); confluence still applies, because it is about
+    capacity.
     """
-    return (_as_sequel(interpretation, request)
+    return (_as_sequel(interpretation, request, reading)
             or (_as_enhancement(interpretation, request)
                 if enhancement else None)
             or _as_confluence(interpretation, request)
@@ -1416,13 +1637,13 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
     """
     name = request.source.item_name.lower()
 
-    def has(*words: str) -> bool:
-        return any(w in name for w in words)
+    def reads(reading: str) -> bool:
+        return _reads(name, reading)
 
     def room(**counts: int) -> bool:
         return _budget_room(mechanics, request=request, **counts)
 
-    if has("conference call", "shotgun"):
+    if reads("scattergun"):
         return _primary(
             request, archetype="weapon", cooldown=1.2,
             initiator={"type": "hitscan_damage", "damage": 12.0, "pellets": 12,
@@ -1431,14 +1652,14 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
                        {"type": "knockback_target", "force": 8.0}],
             description="A ridiculous scattergun. The recoil is a travel plan.",
             tags=["shotgun", "recoil", "mobility"])
-    if has("gun", "rifle", "pistol", "cannon", "blaster", "bow"):
+    if reads("gun"):
         return _primary(
             request, archetype="weapon", cooldown=0.6,
             initiator={"type": "hitscan_damage", "damage": 10.0, "pellets": 1,
                        "spread_degrees": 2.0, "range": 40.0},
             description="A straightforward sidearm, reinterpreted from static.",
             tags=["weapon"])
-    if has("sword", "blade", "knife", "dagger", "axe"):
+    if reads("blade"):
         # Was a 6-metre hitscan, because in S1 there was nothing else a
         # sword could be. It is a sword now.
         return _primary(
@@ -1447,7 +1668,7 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
                        "arc_degrees": 110.0},
             description="Short reach, serious opinion.",
             tags=["melee", "weapon"])
-    if has("spear", "lance", "pike", "halberd", "trident"):
+    if reads("polearm"):
         return _primary(
             request, archetype="weapon", cooldown=0.9,
             initiator={"type": "melee_thrust", "damage": 34.0, "reach": 4.2},
@@ -1457,15 +1678,14 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
             description="Reach beats width, and a pierced guard stays "
                         "pierced.",
             tags=["melee", "weapon", "status"])
-    if has("hammer", "mallet", "stomp", "smash", "quake"):
+    if reads("hammer"):
         return _primary(
             request, archetype="weapon", cooldown=3.5,
             initiator={"type": "slam_ground", "damage": 32.0, "radius": 5.0,
                        "descent_force": 20.0},
             description="Only works from up there. Bring yourself down hard.",
             tags=["melee", "slam"])
-    if has("magic", "mana", "ether", "spell", "meter", "essence") \
-            and room(resources=1):
+    if reads("mana") and room(resources=1):
         return _primary_and_resource(
             request, archetype="weapon", cooldown=0.5,
             initiator={"type": "charge_shot", "min_damage": 5.0,
@@ -1479,8 +1699,7 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
             },
             description="A meter and something that spends it.",
             tags=["magic", "resource", "linked"], powers=12.0)
-    if has("stamina", "vigor", "endurance", "breath") \
-            and room(resources=1):
+    if reads("stamina") and room(resources=1):
         return _primary_and_resource(
             request, archetype="mobility", cooldown=1.2,
             initiator={"type": "dash", "force": 13.0},
@@ -1494,14 +1713,14 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
             },
             description="Borrowed wind, spent a lungful per dash.",
             tags=["stamina", "resource", "linked"], powers=15.0)
-    if has("staff", "wand", "charge", "rod", "focus"):
+    if reads("staff"):
         return _primary(
             request, archetype="weapon", cooldown=0.5,
             initiator={"type": "charge_shot", "min_damage": 6.0,
                        "max_damage": 38.0, "charge_time": 1.1, "speed": 30.0},
             description="Hold it. It gets angrier. Let go.",
             tags=["charge", "weapon"])
-    if has("smg", "burst", "repeater", "machine", "uzi"):
+    if reads("burst"):
         return _primary(
             request, archetype="weapon", cooldown=0.9,
             initiator={"type": "burst_fire", "damage": 7.0, "shots": 4,
@@ -1509,20 +1728,20 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
                        "range": 35.0},
             description="Four opinions in rapid succession.",
             tags=["burst", "weapon"])
-    if has("teleport", "warp", "blink", "recall", "portal"):
+    if reads("teleport"):
         return _primary(
             request, archetype="mobility", cooldown=2.5,
             initiator={"type": "blink", "range": 14.0, "clearance": 0.4},
             description="You are looking at somewhere. Now you are there.",
             tags=["blink", "mobility"])
-    if has("glider", "glide", "parachute", "sail", "umbrella"):
+    if reads("glider"):
         return _primary(
             request, archetype="mobility", cooldown=0.6,
             initiator={"type": "glide", "fall_speed": 2.0,
                        "forward_speed": 10.0},
             description="Hold it and the fall becomes a decision.",
             tags=["glide", "mobility"])
-    if has("jet", "thruster", "rocket boot", "booster", "jump"):
+    if reads("jet"):
         return _primary(
             request, archetype="mobility", cooldown=1.2,
             initiator={"type": "double_jump", "force": 8.0, "extra_jumps": 1},
@@ -1531,21 +1750,20 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
     # "clawshot" is a grapple that happens to contain "claw", and the
     # generic bucket would otherwise swallow it before the specific one
     # below ever ran. Specificity beats generality in a name mapper.
-    if has("claw", "gecko", "climb", "wall", "gauntlet") \
-            and not has("clawshot"):
+    if reads("climb"):
         return _primary(
             request, archetype="mobility", cooldown=0.8,
             initiator={"type": "wall_kick", "force": 12.0,
                        "outward_fraction": 0.45},
             description="Walls are just floors you have not argued with.",
             tags=["wall", "mobility"])
-    if has("parry", "riposte", "counter", "deflect"):
+    if reads("parry"):
         return _primary(
             request, archetype="tool", cooldown=2.0,
             initiator={"type": "parry", "window": 0.35},
             description="A short window and a lot of confidence.",
             tags=["parry", "defense"])
-    if has("compass", "map", "marker", "flag", "beacon"):
+    if reads("marker"):
         return _primary(
             request, archetype="tool", cooldown=1.0,
             initiator={"type": "place_marker", "duration": 120.0},
@@ -1555,33 +1773,32 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
     # is: this maps names to verbs, and those names mean grapple. It is
     # also what makes ECHOES §11's own example — Hookshot → Longshot →
     # Clawshot as one grapple — reachable from the shipped fallback.
-    if has("hook", "grapple", "chain", "longshot", "clawshot"):
+    if reads("grapple"):
         return _primary(
             request, archetype="mobility", cooldown=2.0,
             initiator={"type": "grapple_to_surface", "range": 25.0,
                        "pull_force": 15.0},
             description="Latch onto geometry and get yanked there.",
             tags=["grapple", "mobility"])
-    if has("boot", "shoe", "skate", "rep", "sprint"):
+    if reads("boots"):
         return _primary(
             request, archetype="mobility", cooldown=2.0,
             initiator={"type": "dash", "force": 12.0},
             description="A burst of borrowed momentum.",
             tags=["dash", "mobility"])
-    if has("wing", "feather", "cape", "cap"):
+    if reads("wings"):
         return _passive(
             request,
             effects=[{"type": "modify_gravity", "multiplier": 0.6}],
             description="Gravity applies to you less than it used to.",
             tags=["float", "passive"])
-    if has("shield", "armor", "armour", "guard"):
+    if reads("shield"):
         return _primary(
             request, archetype="tool", cooldown=12.0,
             initiator={"type": "shield", "amount": 40.0, "duration": 8.0},
             description="A temporary layer of somebody else's protection.",
             tags=["shield", "defense"])
-    if has("estus", "potion", "flask", "food", "heart", "heal", "shard") \
-            and room(resources=1, rules=1):
+    if reads("heal") and room(resources=1, rules=1):
         # S4: the drink kept its button, and gained an economy — three
         # charges a Zone, one of which spends ITSELF when you are about to
         # die. The first fallback outcome where a rule, a cost and a
@@ -1637,8 +1854,7 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
                     "strength": 1.0,
                 },
             ])
-    if has("star", "orb", "battery", "cell", "core", "dynamo") \
-            and room(resources=1, rules=2):
+    if reads("core") and room(resources=1, rules=2):
         # A pure economy, no button at all: kills feed the cell, and a full
         # cell discharges itself into a shield. Exercises the edge-derived
         # events end to end in the shipped campaign.
@@ -1693,14 +1909,31 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
                     "cooldown": 2.0,
                 },
             ])
-    if has("bomb", "grenade", "mine", "explosive"):
+    if reads("explosive"):
+        # O05-11.3: A BAG OF THEM, WHEN THE SLOT IS OFFERED. Only a request
+        # that advertises the consumable slot (the candidate profile's
+        # `consumables`) gets this reading; every other request gets the
+        # weapon below, exactly as before. The same lob and blast, so the
+        # consumable is this item, counted: three of it, and a stun on
+        # what the blast catches -- real damage and a supported Status
+        # (`stunned` on an enemy).
+        if "consumable" in request.allowed.get("slots", ()):
+            return _consumable(
+                request, charges=3, cooldown=3.0,
+                initiator={"type": "arc_lob", "damage": 34.0, "radius": 4.0,
+                           "launch_force": 17.0, "fuse": 1.4},
+                modifiers=[{"type": "apply_status_on_hit",
+                            "status": "stunned", "duration": 1.5,
+                            "magnitude": 1.0}],
+                description="Three of them. Lob one, count, regret nothing.",
+                tags=["explosive", "consumable"])
         return _primary(
             request, archetype="weapon", cooldown=3.0,
             initiator={"type": "arc_lob", "damage": 34.0, "radius": 4.0,
                        "launch_force": 17.0, "fuse": 1.4},
             description="Lob it, count, regret nothing.",
             tags=["explosive", "weapon"])
-    if has("rocket", "missile", "cannonball", "mortar"):
+    if reads("rocket"):
         return _primary(
             request, archetype="weapon", cooldown=3.0,
             initiator={"type": "projectile_damage", "damage": 22.0,

@@ -1,0 +1,200 @@
+"""D-01 sabotages: break one rule, confirm a named failure, restore.
+
+Same protocol as the CP4 runners: each row edits one file in the wt-d01
+work tree, runs the tests named for it, records every failing test, and
+restores the file byte for byte (sha256 checked). A row is CAUGHT only
+when the test it names is among the failures.
+
+Python rows run the bridge tests. The two LIVE rows run
+`make godot-integration` (a whole campaign through a live mock bridge)
+and read its FAIL lines; run them only when no other Godot suite or
+bridge is running (`python3 d01_sabotage.py D01-G1 D01-G2`).
+"""
+from __future__ import annotations
+
+import hashlib
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+#: The Python rows ran on wt-d01 (D-01 alone, before its rebase onto the
+#: CP4 checkpoint); the live rows on wt-d05 (D-01 rebased, with D-5).
+TREE = Path(os.environ.get("D01_TREE",
+                           Path(__file__).resolve().parent / "wt-d01"))
+CAMPAIGN = "bridge/archipepsi_bridge/campaign.py"
+TX = "bridge/archipepsi_bridge/transactions.py"
+REVEAL = "godot/scripts/ui/reveal.gd"
+
+FAST = ["tests/test_self_echo_integration.py",
+        "tests/test_self_echo_boundaries.py", "tests/test_full_loop.py"]
+SOAK = ["tests/test_campaign_soak.py::"
+        "test_a_whole_campaign_holds_together_on_any_seed"]
+
+YIELDS = '''        return (not scout.recipient_is_self
+                or self.save.self_addressed_echoes)'''
+SWEEP = '''            if not self.yields_echo(loc):
+                continue'''
+GRANT_GUARDS = '''        echo_id = f"echo_{location_id}"
+        if save.interpretation_by_id(echo_id) is not None:
+            return echo_id
+        async with self._echo_lock:              # one at a time
+            if self.save.interpretation_by_id(echo_id) is not None:
+                return echo_id
+'''
+
+# (id, what, file, old, new, tests, the failure that must be among them)
+ROWS = [
+    ("D01-1", "a new campaign created with the policy off", CAMPAIGN,
+     "                self_addressed_echoes=True)",
+     "                self_addressed_echoes=False)",
+     FAST, "test_a_new_campaign_is_created_with_the_policy_on"),
+    ("D01-2", "the old filter back: an own item never yields an Echo",
+     CAMPAIGN, YIELDS, "        return not scout.recipient_is_self",
+     FAST + SOAK, "test_an_own_check_yields_one_echo_and_its_original_once"),
+    ("D01-3", "the policy ignored: a legacy campaign's own item yields one",
+     CAMPAIGN, YIELDS, "        return True",
+     FAST, "test_a_legacy_campaign_mints_nothing_for_its_own_item"),
+    ("D01-4", "the sweep keeps the old filter (a lost own grant never "
+     "resumes)", CAMPAIGN, SWEEP,
+     '''            scout = self.ap.scouts.get(loc)
+            if scout is None or scout.recipient_is_self:
+                continue''',
+     FAST, "test_a_crash_before_the_append_is_granted_once_on_reload"),
+    ("D01-5", "own Checks confirmed elsewhere skip the lazy budget",
+     CAMPAIGN,
+     '''            if loc in interacted:
+                await grant_and_announce(loc)''',
+     '''            if loc in interacted or self.ap.scouts[loc].recipient_is_self:
+                await grant_and_announce(loc)''',
+     FAST, "test_own_checks_confirmed_elsewhere_wait_in_the_foreign_queue"),
+    ("D01-6", "the own card without its Echo half", TX,
+     "        if echo is not None:\n            lines += [",
+     "        if echo is not None and not scout.recipient_is_self:\n"
+     "            lines += [",
+     FAST, "test_the_card_says_delivered_to_you_then_the_echo"),
+    ("D01-7", "the own card without the Echo's id (the reveal cannot show "
+     "its effects)", TX,
+     '''        await engine._notify(kind, title, lines, location_id=location_id,
+                             echo_id=echo_id)''',
+     '''        await engine._notify(kind, title, lines, location_id=location_id,
+                             echo_id=None if scout.recipient_is_self
+                             else echo_id)''',
+     FAST, "test_the_card_says_delivered_to_you_then_the_echo"),
+    ("D01-8", "the own card as a reveal 'SENT TO' the player", TX,
+     '''            kind, title = "check_confirmed", "CHECK CONFIRMED"
+            lines = [scout.item_name, "Delivered to you."]''',
+     '''            kind = "reveal"
+            title = f"SENT TO {scout.recipient_name.upper()}"
+            lines = [scout.item_name, scout.recipient_game]''',
+     FAST, "test_the_card_says_delivered_to_you_then_the_echo"),
+    ("D01-9", "a written Echo asked for again (grant not idempotent)",
+     CAMPAIGN, GRANT_GUARDS,
+     '''        echo_id = f"echo_{location_id}"
+        async with self._echo_lock:              # one at a time
+''',
+     FAST, "test_a_failing_provider_falls_back_under_the_same_id"),
+]
+
+LIVE_ROWS = [
+    ("D01-G1", "the card shows an Echo's effects only on a foreign reveal",
+     REVEAL,
+     '''	var echo_id: Variant = note.get("echo_id")
+	if echo_id != null:''',
+     '''	var echo_id: Variant = note.get("echo_id")
+	if echo_id != null and note.get("kind") == "reveal":''',
+     "the real card shows both halves"),
+    ("D01-G2", "the old filter back, played live: an own item yields "
+     "nothing", CAMPAIGN, YIELDS,
+     "        return not scout.recipient_is_self",
+     "your own) ->"),
+]
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _apply(rel, old, new):
+    path = TREE / rel
+    original = path.read_bytes()
+    text = original.decode("utf-8")
+    if text.count(old) != 1:
+        return None, None, f"SETUP ERROR: anchor found {text.count(old)} " \
+                           f"times in {rel}"
+    path.write_bytes(text.replace(old, new).encode("utf-8"))
+    return path, original, None
+
+
+def main() -> int:
+    only = set(sys.argv[1:])
+    lines, caught, total = [], 0, 0
+    for rid, what, rel, old, new, tests, expect in ROWS:
+        if only and rid not in only:
+            continue
+        total += 1
+        path, original, error = _apply(rel, old, new)
+        if error:
+            lines.append(f"{rid} {error}")
+            continue
+        before = hashlib.sha256(original).hexdigest()
+        try:
+            out = subprocess.run(
+                [sys.executable, "-m", "pytest", "-q", "-p",
+                 "no:cacheprovider", "--tb=line", *tests],
+                cwd=TREE / "bridge", capture_output=True, text=True,
+                timeout=1200)
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        failed = sorted({l.split("::", 1)[1].split(" ")[0]
+                         for l in out.stdout.splitlines()
+                         if l.startswith("FAILED ")})
+        hit = any(expect in f for f in failed)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} by {expect} "
+                     f"-- {len(failed)} failing test(s); restored byte for "
+                     f"byte: {restored}")
+        for f in failed:
+            lines.append(f"      FAILED {f}")
+        for l in out.stdout.splitlines():
+            if ": AssertionError" in l or "Error:" in l:
+                lines.append(f"        {l.split('/tests/')[-1][:220]}")
+    for rid, what, rel, old, new, expect in LIVE_ROWS:
+        if rid not in only:
+            continue
+        total += 1
+        path, original, error = _apply(rel, old, new)
+        if error:
+            lines.append(f"{rid} {error}")
+            continue
+        before = hashlib.sha256(original).hexdigest()
+        try:
+            out = subprocess.run(["make", "godot-integration"], cwd=TREE,
+                                 capture_output=True, text=True, timeout=1500)
+            log = out.stdout + out.stderr
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        fails = sorted({l[6:] for l in log.splitlines()
+                        if l.startswith("FAIL: ")})
+        # Godot's own error lines only: the make recipe echoes its gate,
+        # `grep -q "SCRIPT ERROR" ...`, and that text is not an error.
+        errors = sum(1 for l in log.splitlines()
+                     if l.lstrip().startswith("SCRIPT ERROR"))
+        hit = any(expect in f for f in fails)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} -- "
+                     f"{len(fails)} failing check(s), {errors} script "
+                     f"error(s); restored byte for byte: {restored}")
+        for f in fails:
+            lines.append(f"      FAIL: {f[:300]}")
+    lines.append(f"\n{caught} of {total} sabotages caught")
+    print("\n".join(lines))
+    return 0 if caught == total else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

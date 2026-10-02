@@ -1,0 +1,21 @@
+# layout walk, fixed tree wt-hbf4 at 34d0aad, 04:56 UTC
+zone_001 [e2dd51ae74e3]: ACCEPTED (487 ms, layout_state ACCEPTED), 15 Checks
+zone_002 [83cab638c71e]: ACCEPTED (496 ms, layout_state ACCEPTED), 15 Checks
+zone_003 [86832f692325]: ACCEPTED (396 ms, layout_state ACCEPTED), 15 Checks
+zone_004 [d2bf871d5f29]: BUILD FAILED (2496 ms): branch room 'c015' off 'c013' could not be placed clear of the 66 room(s) already standing
+zone_004 [d2bf871d5f29]: BUILD FAILED (2515 ms): branch room 'c015' off 'c013' could not be placed clear of the 66 room(s) already standing
+zone_004 [d2bf871d5f29]: BUILD FAILED (2439 ms): branch room 'c015' off 'c013' could not be placed clear of the 66 room(s) already standing
+zone_004: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_005 [ed6d6b265524]: ACCEPTED (419 ms, layout_state ACCEPTED), 15 Checks
+zone_006 [8d06d02b2925]: ACCEPTED (262 ms, layout_state ACCEPTED), 4 Checks
+zone_007 [592c0a232235]: ACCEPTED (443 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100161, 89100392, 89100413]
+zone_008 [3e6768297297]: BUILD FAILED (2609 ms): room 'c016' could not be placed clear of the 60 room(s) before it
+zone_008 [3e6768297297]: BUILD FAILED (2679 ms): room 'c016' could not be placed clear of the 60 room(s) before it
+zone_008 [3e6768297297]: BUILD FAILED (2864 ms): room 'c016' could not be placed clear of the 60 room(s) before it
+zone_008: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_009 [229f0fb0bfe7]: ACCEPTED (456 ms, layout_state ACCEPTED), 15 Checks
+zone_010 [a864eb6e24ae]: ACCEPTED (729 ms, layout_state ACCEPTED), 15 Checks
+zone_011 [7d750be066b5]: ACCEPTED (687 ms, layout_state ACCEPTED), 15 Checks
+zone_012 [ef6e612a5354]: ACCEPTED (465 ms, layout_state ACCEPTED), 15 Checks
+FIRST BOMB BAG: ('zone_007', [89100161, 89100392, 89100413])
+exit 0

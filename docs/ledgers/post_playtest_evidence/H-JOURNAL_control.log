@@ -1,0 +1,196 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_hub (res://scripts/main.gd:633)
+       [6] _on_snapshot (res://scripts/main.gd:451)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:178)
+       [8] _ready (res://tests/journal_repro_driver.gd:56)
+       [9] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_hub (res://scripts/main.gd:633)
+       [6] _on_snapshot (res://scripts/main.gd:451)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:178)
+       [8] _ready (res://tests/journal_repro_driver.gd:56)
+       [9] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_hub (res://scripts/main.gd:633)
+       [6] _on_snapshot (res://scripts/main.gd:451)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:178)
+       [8] _ready (res://tests/journal_repro_driver.gd:56)
+       [9] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:472)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:178)
+       [6] _ready (res://tests/journal_repro_driver.gd:56)
+       [7] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:472)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:178)
+       [6] _ready (res://tests/journal_repro_driver.gd:56)
+       [7] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:472)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:178)
+       [6] _ready (res://tests/journal_repro_driver.gd:56)
+       [7] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:654)
+       [8] _ready (res://tests/journal_repro_driver.gd:60)
+       [9] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:654)
+       [8] _ready (res://tests/journal_repro_driver.gd:60)
+       [9] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:654)
+       [8] _ready (res://tests/journal_repro_driver.gd:60)
+       [9] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] consumable_state (res://scripts/ui/equipment_query.gd:577)
+       [3] _slot_row (res://scripts/ui/equipment_face.gd:456)
+       [4] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [5] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [6] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [7] open (res://scripts/ui/equipment_face.gd:212)
+       [8] _open_menu (res://scripts/main.gd:654)
+       [9] _ready (res://tests/journal_repro_driver.gd:60)
+       [10] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] use_lines (res://scripts/ui/equipment_query.gd:391)
+       [3] _paint_detail (res://scripts/ui/equipment_face.gd:673)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:383)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:654)
+       [8] _ready (res://tests/journal_repro_driver.gd:60)
+       [9] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _paint_actions (res://scripts/ui/equipment_face.gd:764)
+       [3] _paint_detail (res://scripts/ui/equipment_face.gd:694)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:383)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:654)
+       [8] _ready (res://tests/journal_repro_driver.gd:60)
+       [9] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:819)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] open (res://scripts/ui/equipment_face.gd:212)
+       [6] _open_menu (res://scripts/main.gd:654)
+       [7] _ready (res://tests/journal_repro_driver.gd:60)
+       [8] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:819)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] open (res://scripts/ui/equipment_face.gd:212)
+       [6] _open_menu (res://scripts/main.gd:654)
+       [7] _ready (res://tests/journal_repro_driver.gd:60)
+       [8] _frames (res://tests/journal_repro_driver.gd:23)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:819)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] open (res://scripts/ui/equipment_face.gd:212)
+       [6] _open_menu (res://scripts/main.gd:654)
+       [7] _ready (res://tests/journal_repro_driver.gd:60)
+       [8] _frames (res://tests/journal_repro_driver.gd:23)
+REQUIREMENT J1 the journal lists the real objectives HOLDS: the Zone's name 'Relay 001: Bomb Rush Cyberfunk' and its Checks (x of 15) on the journal wall; it says: ["JOURNAL", "OBJECTIVES", "In Relay 001: Bomb Rush Cyberfunk", "Checks here: 2 of 15 confirmed", "Toward the finale: 10 of 24 Checks", "WHAT YOU DID HERE", "Picked up the blue key.", "Picked up the red key.", "Unlocked the blue door in Arena 2.", "Installed the power cell in Arena 2.", "Cell power: powered, set in Arena 2. Open now: Arena 2 to a way not yet walked.", "Span alignment: lowered, set in Arena 1. Open now: Arena 1 to Platform Path 1.", "STILL SHUT", "Nothing you have found is shut.", "PLACES FOUND", "Corridor 1", "Arena 1", "Platform Path 1", "Corridor 2", "Arena 2", "NOTES", "Frost Flask", "A flask that bursts cold.", "from Ice Trap (A Link to the Past)", "Cinder Charge", "A fused charge you throw.", "from Bomb Bag (Ocarina of Time)", "Scan Lens", "Marks what hides.", "from Lens of Truth (Ocarina of Time)", "Warding Loop", "Steadier hands while the bolt is on your key.", "from Mirror Shield (Ocarina of Time)", "Estus Shard", "The meter holds more.", "from Estus Shard (Dark Souls)", "Magic Meter", "A reserve of green power.", "from Magic Upgrade (Ocarina of Time)", "Arc Bolt", "A bolt that flies straight and far.", "from Crossbow (Dark Souls)", "Sprint Coil", "A burst of speed along the ground.", "from Pegasus Boots (A Link to the Past)", "Leather Grip", "A longer cord for the lash you already carry.", "from Longshot (Ocarina of Time)", "Braided Lash", "A cord that bites, and the grip to hold it.", "from Hookshot (Ocarina of Time)"]
+REQUIREMENT J2 the journal lists what was done here HOLDS: the cell installed and the blue key/door named: true
+REQUIREMENT J3 the journal lists the places found HOLDS: 5 of the 5 rooms found are named on it: ["Corridor 1", "Arena 1", "Platform Path 1", "Corridor 2", "Arena 2"]
+REQUIREMENT J4 the journal holds the earned notes HOLDS: the latest Echo's read ('A flask that bursts cold.') on it: true
+REQUIREMENT J5 the Settings wall shows the campaign HOLDS: the seed 'JOURNALFIXTURE' and the Checks (8 of ...) on the Settings wall; it says: ["SETTINGS", "CAMPAIGN", "Seed: JOURNALFIXTURE", "Player: Pepsi", "Archipelago: mock, connected", "Epsilon: fallback", "Checks confirmed: 8 of 21", "Zones completed: 2", "Link to the bridge: down", "OPTIONS", "Mouse sensitivity: x1.00", "Field of view: 90 degrees", "Motion (view bob, menu turns): 100%", "Master volume: 100%", "Invert look up and down", "PAUSED", "RESUME", "QUIT GAME"]
+REQUIREMENT J6 the Settings wall offers the supported options HOLDS: 4 sliders and 1 toggles on the Settings wall (sensitivity, field of view, motion, volume; invert look)
+JOURNAL REPRO: 0 of 6 requirements fail

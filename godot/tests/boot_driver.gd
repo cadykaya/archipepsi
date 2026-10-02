@@ -40,7 +40,8 @@ func _run() -> void:
 
 	# Everything a view transition dereferences without checking.
 	for field: String in ["world", "tones", "menu", "hud", "resource_pool",
-			"rule_runtime", "reveal", "inventory", "shop", "pause_menu",
+			"rule_runtime", "reveal", "equipment", "shop", "pause_menu",
+			"menu_shell", "minimap", "map_face", "journal", "settings_face",
 			"debug", "station_panel", "nav"]:
 		_check(main.get(field) != null,
 				"boot() left '%s' null; anything that touches it crashes "
@@ -70,6 +71,7 @@ func _run() -> void:
 
 	await _the_menu_is_actually_on_screen(main)
 	await _every_panel_opens_in_the_middle()
+	await _the_pause_menu_opens_on_the_box(main)
 	await _the_real_consumer_handles_an_exit(main)
 	await _the_travel_panel_reaches_the_real_consumers(main)
 	_finish()
@@ -282,13 +284,15 @@ func _finish() -> void:
 ##
 ## Each is opened for real and measured. A panel is not centred because
 ## the code says CENTER; it is centred when its rect is.
+##
+## The pause menu is no longer a panel (MENU-INT): its actions are the
+## PAUSED board on the menu box's Settings wall, and the same properties
+## are asked of it where it is drawn (`_the_pause_menu_opens_on_the_box`).
 func _every_panel_opens_in_the_middle() -> void:
 	get_window().size = Vector2i(1280, 720)
 	var screen := Vector2(get_window().size)
 	var panels := {
-		"pause menu": PauseMenu.new(),
 		"shop": ShopUI.new(),
-		"Echo archive": InventoryLayer.new(),
 	}
 	for label: String in panels:
 		var ui: CanvasLayer = panels[label]
@@ -337,6 +341,71 @@ func _every_panel_opens_in_the_middle() -> void:
 					+ "the panel takes the mouse wheel and the list "
 					+ "stops scrolling down") % label)
 		ui.queue_free()
+
+## THE PAUSE MENU, OPENED AS THE GAME OPENS IT (`Main._open_menu`, what
+## Escape calls in a Zone) and measured as drawn: the box covers the
+## window and nothing shows through it (the panel's opacity); the Settings
+## wall stands in the middle -- centred when the screen points of its
+## corners are, not because the code says so; and every action on the
+## PAUSED board is on the screen, whole, so none is out of reach.
+func _the_pause_menu_opens_on_the_box(main: Node) -> void:
+	get_window().size = Vector2i(1280, 720)
+	var screen := Vector2(get_window().size)
+	var shell: MenuShell = main.get("menu_shell")
+	_check(shell != null, "there is no menu box to open")
+	if shell == null:
+		return
+	var was: int = int(main.get("view"))
+	main.set("view", 2)                     # View.ZONE: the Zone's actions
+	main.call("_open_menu", "settings")
+	for i in 240:
+		if shell.is_open() and not shell.is_turning() \
+				and shell.front() == "settings":
+			break
+		await get_tree().process_frame
+	await get_tree().process_frame
+	_check(shell.is_open() and shell.front() == "settings",
+			"Escape's path does not open the box on Settings")
+	var stage := shell.get_node("Stage") as Control
+	var covered := stage.get_global_rect()
+	_check(covered.position.distance_to(Vector2.ZERO) < 1.0
+			and covered.size.distance_to(screen) < 1.0
+			and not shell.stage().transparent_bg,
+			"the box does not cover the window opaquely (%s on %s): the "
+			% [covered, screen] + "world would show through the pause menu")
+	var page := MenuKit.PAGE
+	var corners := Rect2()
+	var first := true
+	for at: Vector2 in [Vector2.ZERO, Vector2(page.x, 0.0), Vector2(0.0, page.y),
+			page]:
+		var p := shell.screen_of("settings", at)
+		corners = Rect2(p, Vector2.ZERO) if first else corners.expand(p)
+		first = false
+	var offset := corners.get_center() - screen / 2.0
+	_check(corners.size.x > 1.0 and corners.size.y > 1.0
+			and absf(offset.x) < 2.0 and absf(offset.y) < 2.0,
+			"the Settings wall is %s off centre -- its corners span %s on "
+			% [offset, corners] + "a %s screen" % screen)
+	var on_screen := Rect2(Vector2(-1.0, -1.0), screen + Vector2(2.0, 2.0))
+	for action: String in [PauseMenu.RESUME, PauseMenu.RETURN_TO_HUB,
+			PauseMenu.ABANDON, PauseMenu.QUIT]:
+		var drawn := shell.kit.display(action)
+		var rect := Rect2()
+		for w: Dictionary in shell.words_on_screen():
+			if str(w["text"]) == drawn:
+				var r: Array = w["rect"]
+				rect = Rect2(r[0], r[1], r[2], r[3])
+				break
+		_check(rect.size.x > 1.0 and on_screen.encloses(rect),
+				"%s is not on the screen whole (%s on %s)" % [action, rect,
+				screen])
+	main.call("_close_menu")
+	for i in 240:
+		if not shell.is_open():
+			break
+		await get_tree().process_frame
+	main.set("view", was)
+
 
 func _scrolls_under(node: Node) -> Array[ScrollContainer]:
 	var out: Array[ScrollContainer] = []

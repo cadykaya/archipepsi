@@ -71,6 +71,7 @@ func _run() -> void:
 	_every_built_collider_matches_the_envelope_contract()
 	_the_envelope_table_covers_the_whole_approved_family()
 	await _a_telegraph_derives_from_the_real_attack_state()
+	await _every_telegraphing_attack_has_a_resolution()
 	await _presentation_can_never_move_the_hitbox()
 	_the_telegraph_attachment_point_is_the_contract()
 	await _a_broken_promise_is_reported_rather_than_timed_out()
@@ -2104,3 +2105,116 @@ func _a_built_room_is_painted_from_the_pack() -> void:
 			+ "with the exported pack, not only falling back (%d "
 			% authored + "authored, %d procedural)" % fell_back)
 	root.free()
+
+
+## H2 / F-14: THE TELEGRAPH SEAM IS ARCHETYPE-AGNOSTIC, AND THE RANGED
+## ARCHETYPE USES IT.
+##
+## `godot-counterfire` reported "the ranged archetype's windup: none" as
+## a finding: it fired the instant its cooldown allowed, from anywhere
+## inside its reach, with nothing to see first. Only the brute
+## telegraphed -- and structurally only the brute COULD, because the
+## countdown's resolution called `_slam` unconditionally. Any other
+## attack that opened a windup would have resolved into the brute's
+## slam.
+##
+## Two things are asserted here and they are different: that every kind
+## with a declared window has a resolution (the seam), and that the
+## ranged archetype declares one (the repair).
+func _every_telegraphing_attack_has_a_resolution() -> void:
+	# THE SEAM. A kind in the table with nothing to become is a windup
+	# that plants an enemy and then does nothing to the player, which is
+	# worse than no telegraph at all.
+	for kind: Variant in Enemy.TELEGRAPH_SECONDS:
+		var archetype := str(kind)
+		var window := float(Enemy.TELEGRAPH_SECONDS[archetype])
+		_check(window > 0.0,
+				"'%s' declares a telegraph window of %.2f s"
+				% [archetype, window])
+	_check(Enemy.TELEGRAPH_SECONDS.has("ranged"),
+			"the RANGED archetype declares a window: F-14 was that it "
+			+ "did not")
+	_check(not Enemy.TELEGRAPH_SECONDS.has("melee"),
+			"melee declares none, which is a decision and not the same "
+			+ "gap: its reach is a body-length and a windup there is a "
+			+ "mob standing next to you doing nothing")
+
+	# THE REPAIR, on a real enemy: committing must plant it and must NOT
+	# fire yet.
+	var enemy := Enemy.create("ranged", "concrete_facility")
+	add_child(enemy)
+	var started: Array = []
+	var finished_kinds: Array = []
+	enemy.telegraph_started.connect(
+			func(kind: String, seconds: float) -> void:
+				started.append([kind, seconds]))
+	enemy.telegraph_finished.connect(
+			func(kind: String, completed: bool) -> void:
+				finished_kinds.append([kind, completed]))
+	enemy._begin_telegraph("aim", float(Enemy.TELEGRAPH_SECONDS["ranged"]))
+	_check(started.size() == 1 and str(started[0][0]) == "aim",
+			"a ranged enemy telegraphs `aim`: %s" % str(started))
+	_check(enemy.is_telegraphing(),
+			"...and is telegraphing while it does")
+
+	# AND THE RESOLUTION IS MEASURED THROUGH THE COUNTDOWN, which is
+	# where the defect actually was.
+	#
+	# The first cut of this case called `_resolve_telegraph` directly and
+	# passed with the dispatch reverted to the old unconditional
+	# `_slam()` -- a test that exercised the new function while leaving
+	# the call site it was written for uncovered. So the windup is run
+	# DOWN by `_physics_process`, exactly as a committed shot is, and
+	# what the countdown produces is what is counted.
+	var mark := Player.create()
+	add_child(mark)
+	mark.global_position = enemy.global_position - Vector3(0.0, 0.0, 6.0)
+	await get_tree().physics_frame
+	var hp_before := mark.hp
+	var before := _shots_in_flight()
+	enemy._windup = 0.02
+	for _i in 6:
+		await get_tree().physics_frame
+	_check(_shots_in_flight() > before,
+			"the countdown resolving `aim` puts a projectile in the "
+			+ "world (%d -> %d)" % [before, _shots_in_flight()])
+	# THE DEFECT THIS DISPATCH REPLACED: the countdown called `_slam`
+	# unconditionally, so a ranged enemy's windup could only ever have
+	# become the BRUTE's melee slam -- landing damage at the brute's
+	# reach on a player six metres away.
+	_check(is_equal_approx(mark.hp, hp_before),
+			"...and does not slam a player 6 m away (%0.f -> %0.f HP)"
+			% [hp_before, mark.hp])
+	# THE PROMISE WAS KEPT, which is not the same as "it has stopped
+	# telegraphing": a gunner whose cooldown is up opens its NEXT aim on
+	# the same frame, so asking `is_telegraphing()` here reads the new
+	# one and fails for a reason that is the machine working.
+	_check(finished_kinds.size() >= 1
+			and str(finished_kinds[0][0]) == "aim"
+			and bool(finished_kinds[0][1]),
+			"...and reported `aim` COMPLETED, not abandoned: %s"
+			% str(finished_kinds))
+
+	mark.free()
+	enemy.free()
+	await get_tree().process_frame
+
+## Every enemy projectile currently in the scene.
+##
+## `EnemyProjectile` is an inner class that adds ITSELF to the current
+## scene, so this looks where it actually lands and identifies it by the
+## two fields only a projectile has -- the same way `counterfire_driver`
+## finds it. Searching by node name found nothing, because an inner
+## class does not name its instances after itself.
+func _shots_in_flight() -> int:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return 0
+	var n := 0
+	for child in scene.get_children():
+		var area := child as Area3D
+		if area == null:
+			continue
+		if area.get("speed") != null and area.get("direction") != null:
+			n += 1
+	return n

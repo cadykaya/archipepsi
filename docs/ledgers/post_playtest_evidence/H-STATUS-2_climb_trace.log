@@ -1,0 +1,10 @@
+# HS2-F1 trace: the anchored walk speed removed (HS2-1), two probes
+# printed in _climb_a_step_the_law_promises for the anchored player only.
+# Tree: wt-status at the H-STATUS-2 commit candidate; player.gd restored after.
+
+    120 TRACE climb: on the floor true, blocked ahead false
+     60 TRACE climb: on the floor true, blocked ahead true
+     31 TRACE lift: 0.496 m
+     29 TRACE lift: 0.500 m
+      2 FAIL: pressing forward: a free player climbs the 0.5 m step (0.50 m) and shoves the crate 7.69 m; anchored, it climbs 0.0035 m and shoves 0.000 m
+      1 GODOT STATUS KINETIC: 1 failures in 35 checks

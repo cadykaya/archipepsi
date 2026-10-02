@@ -18,6 +18,8 @@ Units: metres, seconds, metres/second. Angles in degrees.
 
 from __future__ import annotations
 
+import functools
+
 import hashlib
 import math
 import random
@@ -1057,12 +1059,377 @@ STATIC_PULSE_COOLDOWN = 0.35
 STATIC_PULSE_RANGE = 40.0
 STATIC_PULSE_DPS = STATIC_PULSE_DAMAGE / STATIC_PULSE_COOLDOWN   # ~17.1
 
+#: WHAT A ROLE DOES, and the declaration that it does anything at all.
+#:
+#: `ENEMY_ARCHETYPES` is DERIVED from this table below, so a role gains
+#: behaviour and becomes placeable in the same edit. It used to be a
+#: hand-written tuple of three beside a ten-role envelope table, which is
+#: the same transcription defect the status vocabulary had: two lists for
+#: one fact and nothing keeping them in step.
+#:
+#: The seven added for OV04 P06 take their identities from the approved
+#: roster's own one-line briefs (`docs/art/ART_REVIEW.md`), which are the
+#: recovered specification and not new design:
+#:
+#:   charger    one telegraphed rush
+#:   bulwark    cannot be fought frontally
+#:   drifter    (flyer) owns the ceiling
+#:   diver      (flyer) contests the grapple arc
+#:   scuttler   costs attention
+#:   artillery  indirect, denies ground
+#:   beacon     makes everything near it worse
+#:
+#: TUNING IS PROVISIONAL AND SAYS SO. The numbers below are chosen to
+#: make each role's shape legible against the Static Pulse's ~17 DPS;
+#: they are not playtested, and the package that authorised them says
+#: missing tuning may be provisional while missing behaviour may not.
 ENEMY_STATS = {
     "melee":  {"hp": 24.0,  "damage": 6.0,  "cooldown": 1.0, "speed": 4.0, "reach": 2.0},
     "ranged": {"hp": 16.0,  "damage": 8.0,  "cooldown": 2.0, "speed": 0.0, "reach": 40.0},
     "brute":  {"hp": 120.0, "damage": 18.0, "cooldown": 1.6, "speed": 2.2, "reach": 2.5},
+    # Commits to a straight rush and cannot steer during it, so its
+    # damage is high and its recovery is the opening.
+    "charger": {"hp": 40.0, "damage": 14.0, "cooldown": 3.0, "speed": 3.0, "reach": 14.0},
+    # Slow, heavy, and armoured from the front: see `FRONTAL_ARMOUR`.
+    #
+    # The turn rate, the commit and the recovery that make its back
+    # reachable are `BULWARK_TURN_RATE_DEG_S` and its two companions
+    # below -- named constants rather than a fourth key in here, because
+    # the opening is three numbers that only mean anything together and
+    # `bulwark_opening()` states the arithmetic they produce.
+    "bulwark": {"hp": 90.0, "damage": 10.0, "cooldown": 1.8, "speed": 1.6,
+                "reach": 2.4},
+    # Holds the ceiling and fires down. Never descends to the floor.
+    "drifter": {"hp": 44.0, "damage": 7.0,  "cooldown": 2.2, "speed": 2.4, "reach": 22.0},
+    # Waits high and dives when the player leaves the ground.
+    "diver":   {"hp": 20.0, "damage": 12.0, "cooldown": 2.8, "speed": 7.0, "reach": 18.0},
+    # Cheap, fast, low damage: it costs attention rather than health.
+    "scuttler": {"hp": 12.0, "damage": 3.0, "cooldown": 0.8, "speed": 6.5, "reach": 1.8},
+    # Lobs at where you ARE, slowly, so the ground it denies is leavable.
+    "artillery": {"hp": 30.0, "damage": 16.0, "cooldown": 3.4, "speed": 0.0, "reach": 34.0},
+    # Does almost nothing itself; makes its neighbours worse.
+    "beacon":  {"hp": 36.0, "damage": 2.0,  "cooldown": 2.0, "speed": 1.2, "reach": 2.0},
 }
+
+#: How much of a frontal hit a `bulwark` shrugs off. Its brief is "cannot
+#: be fought frontally", so the number has to be big enough that trying
+#: is visibly the wrong answer rather than merely slower.
+BULWARK_FRONTAL_ARMOUR = 0.85
+#: How wide the shielded arc is, as a dot product against its facing.
+#: 0.35 is a touch over 110 degrees total -- a shield, not a full front.
+BULWARK_SHIELD_DOT = 0.35
+
+#: HOW THE SHIELD IS GOT AROUND, WITH THE BASE KIT AND NOTHING ELSE.
+#:
+#: "Cannot be fought frontally" is only a brief if the other side is
+#: reachable. A bulwark that tracked the player instantly would keep its
+#: shield between them forever, and the role would read as "immune" --
+#: which is why an Echo requirement is not the answer here: this enemy
+#: is in the ORDINARY, UNGATED pool and has to offer counterplay to a
+#: player carrying the guaranteed kit.
+#:
+#: So it turns at a bounded rate, commits to a swing, and is helpless
+#: afterwards. `bulwark_opening()` states the arithmetic those three
+#: numbers produce rather than leaving it to be discovered in play.
+#:
+#: **PROVISIONAL, and the played acceptance is OPEN.** These are chosen
+#: against the brief and the geometry; a stationary DPS comparison and a
+#: synthetic front/back damage check are neither of them proof. What
+#: closes this row is a continuous fight with real movement and attacks,
+#: reaching `kill_all` completion, in the engine.
+BULWARK_TURN_RATE_DEG_S = 90.0
+#: The windup, during which it cannot turn: the telegraph.
+BULWARK_COMMIT_SECONDS = 0.5
+#: Helpless afterwards, and this is the whole opening.
+BULWARK_RECOVERY_SECONDS = 0.9
+
+
+def bulwark_opening(walk_speed: float | None = None,
+                    reach: float | None = None) -> dict:
+    """What those three numbers actually give the player, in degrees.
+
+    A player circling a bulwark at contact range has an angular speed
+    the bulwark's turn rate has to be measured against -- comparing a
+    metres-per-second to a degrees-per-second is how "it turns slowly"
+    becomes a claim nobody checked.
+
+    `strafing` is the same figure under a 0.8 allowance, because a
+    player circling while shooting is not moving at full walk speed and
+    this lane does not know the engine's real strafe factor. It is a
+    MARGIN, not a mechanic: the tuning is chosen so the opening survives
+    it, and the played run is what measures the truth.
+    """
+    walk = WALK_SPEED if walk_speed is None else walk_speed
+    r = ENEMY_STATS["bulwark"]["reach"] if reach is None else reach
+    player = math.degrees(walk / r)
+    shield_half = math.degrees(math.acos(BULWARK_SHIELD_DOT))
+    gain = player - BULWARK_TURN_RATE_DEG_S
+    no_turn = BULWARK_COMMIT_SECONDS + BULWARK_RECOVERY_SECONDS
+    return {
+        "player_deg_s": player,
+        "shield_half_deg": shield_half,
+        #: Positive means the player out-circles it by movement alone,
+        #: without waiting for a swing. Zero or less means the shield
+        #: never leaves the player's face and the role is immune.
+        "net_gain_deg_s": gain,
+        "seconds_to_clear_shield": (shield_half / gain
+                                    if gain > 0.0 else math.inf),
+        "no_turn_seconds": no_turn,
+        #: While it is committed it does not turn at all, so the player
+        #: gains the whole angle rather than the difference.
+        "degrees_swept_committed": no_turn * player,
+        "degrees_swept_committed_strafing": no_turn * player * 0.8,
+    }
+
+#: What a `beacon` does to every eligible enemy inside its radius, and
+#: the radius. Applied as the ordinary `empowered` Status through the
+#: ordinary boundary, so it cleanses, expires and reads like any other.
+BEACON_RADIUS = 12.0
+BEACON_MAGNITUDE = 0.5
+BEACON_REFRESH = 1.0
+
+#: How long a `charger` commits, and how far it carries.
+CHARGER_RUSH_SECONDS = 1.1
+CHARGER_RUSH_SPEED = 13.0
+#: How long it is helpless after one, which is the whole counterplay.
+CHARGER_RECOVERY_SECONDS = 1.4
+
+#: The height a flyer holds above the floor beneath it.
+FLYER_HOVER_Y = 4.2
+#: How far above the ground the player counts as airborne for a `diver`.
+#:
+#: DERIVED FROM THE BASE JUMP (PT-13, 2026-09-24). The role's brief is
+#: "ignores a grounded player and commits when they leave the ground", and
+#: 1.6 m -- read by the engine as 1.8 m of clearance -- sat above the
+#: 1.33 m apex of an ordinary jump, so jumping never counted as leaving
+#: the ground and a diver outside a grapple route never attacked. Three
+#: fifths of the apex (0.8 m) is a jump's middle 0.42 s, while a step down
+#: a stair or a kerb stays grounded. `test_diver_trigger.py` holds both
+#: ends.
+DIVER_TRIGGER_HEIGHT = round(0.6 * JUMP_APEX_HEIGHT, 2)
+DIVER_DIVE_SECONDS = 0.9
+
+#: An `artillery` shell's flight time to where the player was standing.
+ARTILLERY_FLIGHT_SECONDS = 1.6
+#: How close is too close: inside this it cannot depress its barrel.
+ARTILLERY_MIN_RANGE = 8.0
+#: The blast the shell leaves where it lands.
+ARTILLERY_BLAST_RADIUS = 3.2
 ENEMY_AGGRO_RADIUS = 18.0
+
+#: WHAT A ROLE DOES WHEN NOBODY IS LOOKING (OV04 P07).
+#:
+#: Outside its aggro radius an enemy did nothing at all -- no `else`
+#: branch, so it stood exactly where it was placed until the player came
+#: within 18 m. A room full of statues that animate on a trigger reads as
+#: a room full of triggers.
+#:
+#: Four jobs, chosen so each says something true about the role rather
+#: than giving everything the same walk:
+#:
+#:   patrol  walks a beat around its post. Things that close distance.
+#:   watch   holds the post and sweeps its facing. THE FIXED-ROLE
+#:           GUNNER IS DELIBERATE: EX50-021's gunner covers a lane and
+#:           must still be covering it when the player arrives, so a
+#:           watcher never leaves its post.
+#:   tend    stays put with a slow idle turn. Support that is where it
+#:           is on purpose.
+#:   drift   a flyer circling its station.
+ENEMY_JOBS = {
+    "melee": "patrol",
+    "ranged": "watch",
+    "brute": "watch",
+    "charger": "patrol",
+    "bulwark": "watch",
+    "drifter": "drift",
+    "diver": "drift",
+    "scuttler": "patrol",
+    "artillery": "watch",
+    "beacon": "tend",
+}
+
+#: How far a patrol wanders from the post it was placed at, and how long
+#: it pauses at each end. Small on purpose: a patrol that ranged widely
+#: would walk out of the encounter it was composed into.
+ENEMY_PATROL_RADIUS = 4.5
+ENEMY_PATROL_PAUSE = 1.2
+#: How fast a job is walked, as a fraction of the role's combat speed.
+ENEMY_JOB_SPEED = 0.45
+#: How fast a watcher or tender sweeps, in radians a second.
+ENEMY_SWEEP_RATE = 0.7
+
+#: HOW LONG AN ENEMY STAYS INTERESTED after losing the player.
+#:
+#: Without this, stepping one metre outside the aggro radius switched an
+#: enemy off mid-fight and it went straight back to patrolling -- which
+#: is both trivially exploitable and reads as the enemy forgetting you
+#: while looking at you.
+ENEMY_INTEREST_SECONDS = 4.0
+#: How close to its post counts as home again.
+ENEMY_POST_TOLERANCE = 1.5
+
+# ---------------------------------------------------------------------------
+# ACTUATORS AND MACHINERY -- Amalgam 06 §21.
+#
+# TWELVE KINDS: Design 1's nine kinematic movers, pinned identically by
+# the Amalgam at §21.1, plus Design 2 §21.10's three constraint-driven
+# ones. They are declared together because §21.1's transition table is
+# explicitly "the complete answer to what happens when a signal changes
+# mid-motion, and it applies to every actuator kind" -- one contract, not
+# twelve behaviours that happen to agree.
+#
+# The engine already ships concrete machines for six of the nine
+# (`ServiceShutter`/`LockedDoor` = DOOR, `RailCarrier` = MOVING_PLATFORM,
+# `ShuttleDeck` = LIFT, `RailJunction` = RAIL_SWITCH, `LaunchSolver` =
+# LAUNCHPAD). Each was built for its own room and none of them shared a
+# transition table or a power-loss answer. `Actuator` is that shared
+# contract; the shipped machines keep their own motion curves and consult
+# it for the rules that must be the same everywhere.
+# ---------------------------------------------------------------------------
+
+#: The twelve kinds. Order follows §21.1's enum then §21.10's three, so a
+#: reader can check this list against the document line by line.
+ACTUATOR_KINDS = (
+    "DOOR",              # §21.2 -- door, gate, shutter; the interlocked one
+    "BRIDGE",            # §21.3 -- carries the player across
+    "MOVING_PLATFORM",   # §21.3 -- carries the player along
+    "LIFT",              # §21.4 -- VALUE input, `path` entries are stops
+    "PATH_MACHINE",      # §21.5 -- the general mover: cranes, pistons, walls
+    "RAIL_SWITCH",       # §21.6 -- branch change, gated on clearance
+    "LAUNCHPAD",         # §21.7 -- the runtime solves the arc
+    "HAZARD_CONTROLLER", # §21.8 -- owns whether a hazard runs, not its damage
+    "LIGHT_CONTROLLER",  # §21.9 -- lighting, which never gates progression
+    "WINCH",             # §21.10 -- shortens a ROPE/CHAIN/PULLEY constraint
+    "BRAKE",             # §21.10 -- locks a HINGE/SLIDER/SEESAW
+    "DRIVER",            # §21.10 -- applies torque to a HINGE
+)
+
+#: WHAT POWER LOSS DOES, per kind. Amalgam §21.1.1, which is Design 1's
+#: nine rows plus three the union had to add because Design 3's
+#: `POWER_OFF` made power loss "routine, player-caused and whole-room"
+#: rather than a rare authored event.
+#:
+#: Four answers, and the split is a safety argument rather than a
+#: taxonomy: `close` is safe only because §21.2's interlock makes it
+#: safe; `hold` covers everything that carries, supports or suspends the
+#: player, because there the danger IS the motion and no interlock helps;
+#: `inert` and `disable` make an unpowered room no more dangerous than a
+#: powered one; `unlit` is lighting, which by §21.9 may never gate.
+ACTUATOR_POWER_LOSS = {
+    "DOOR": "close",
+    "BRIDGE": "hold",
+    "MOVING_PLATFORM": "hold",
+    "LIFT": "hold",
+    "PATH_MACHINE": "hold",
+    "RAIL_SWITCH": "hold",
+    "LAUNCHPAD": "inert",
+    "HAZARD_CONTROLLER": "disable",
+    "LIGHT_CONTROLLER": "unlit",
+    "WINCH": "hold",     # "a rope does not lengthen because a generator stopped"
+    "BRAKE": "engage",   # fail-safe: an unpowered brake is a locked brake
+    "DRIVER": "hold",    # releases torque; the hinge locks under an implicit brake
+}
+
+#: §21.2. A blocked closure "stops and reverses to fully open, then
+#: retries after 1.0 s. It repeats indefinitely. It never crushes."
+#:
+#: The retry is the part that is easy to drop and that matters most: a
+#: door that merely stops has parked a panel in the doorway it was asked
+#: to clear, and the player standing in it gets no signal that stepping
+#: aside is what the machine is waiting for.
+SAFE_CLOSURE_RETRY_SECONDS = 1.0
+
+#: §21.6. A rail switch's change "takes effect only when no actor is on
+#: the rail within 10.0 m of the junction"; otherwise it is QUEUED and
+#: applies when the rail clears. Not refused -- queued.
+RAIL_SWITCH_CLEARANCE_M = 10.0
+
+#: §21.1's rate: `t` runs 0 -> 1 in `travel_time` seconds, linearly. The
+#: default is what an unspecified actuator gets.
+ACTUATOR_TRAVEL_SECONDS = 2.0
+#: Where `t` counts as arrived. Small enough that a stop is exact after
+#: the snap, large enough that a 60 Hz step lands inside it.
+ACTUATOR_EPSILON = 0.001
+
+#: §21.2 protects "the player or any `required = true` object". The
+#: required half needs a physical marker the interlock can read without
+#: knowing what a transported object is, so every object a Zone declares
+#: `required` joins this group when `TransportedObjects` builds it.
+#:
+#: A group rather than a property because the interlock's question is
+#: asked of whatever body is standing in a doorway -- a crate, a barrel,
+#: a rolled-in reactive prop -- and none of them share a base class.
+REQUIRED_OBJECT_GROUP = "required_object"
+
+# ---------------------------------------------------------------------------
+# CONSTRAINTS -- Amalgam §14.8 and §26.5 (pinned from Design 2).
+#
+# "This is what Design 1 deferred and Design 2 ships." A crane here is a
+# `PULLEY` with a load on one end and a `WINCH` driving it, and its cargo
+# SWINGS -- Design 1's crane was a `PATH_MACHINE` whose cargo was a child
+# transform and could not. The Amalgam calls that "the single most
+# visible difference between the two proposals in play".
+# ---------------------------------------------------------------------------
+
+#: The eight kinds and their solver treatment (§14.8). Order follows the
+#: document's table so a reader can check it line by line.
+CONSTRAINT_KINDS = (
+    "HINGE",          # single-axis rotational joint with angular limits
+    "SLIDER",         # single-axis translational joint with limits
+    "ROPE",           # distance constraint, TAUT ONLY -- resists extension
+    "CHAIN",          # same as ROPE, rendered segmented, same solver
+    "PULLEY",         # two ropes sharing a total length through a fixed point
+    "COUNTERWEIGHT",  # a PULLEY where one end carries an authored mass
+    "SEESAW",         # a HINGE, axis horizontal, pivot offset authored
+    "PENDULUM",       # a HINGE or ROPE with an authored rest and damping
+)
+
+#: WHICH KINDS THE ENGINE SOLVES ITSELF.
+#:
+#: Godot has a hinge and a slider, with real limits, and they are
+#: genuinely simulated -- so `HINGE`, `SLIDER`, `SEESAW` and a hinge
+#: `PENDULUM` use them. It has nothing for a TAUT-ONLY distance
+#: constraint (one that resists extension and not compression) or for two
+#: ropes sharing a total length, so those four are solved here, at
+#: §14.8's fixed eight iterations.
+#:
+#: The split is a fact about the substrate, not a design choice, and it
+#: is declared rather than hidden because it decides which constraints
+#: can report a force -- see `CONSTRAINT_BREAKABLE_KINDS`.
+CONSTRAINT_SOLVED_KINDS = ("ROPE", "CHAIN", "PULLEY", "COUNTERWEIGHT")
+CONSTRAINT_JOINT_KINDS = ("HINGE", "SLIDER", "SEESAW", "PENDULUM")
+
+#: §14.8: "`breakable_at` is checked once per tick against THE SOLVER'S
+#: REPORTED CONSTRAINT FORCE." Only the four this engine solves itself
+#: report one; a Godot joint does not expose its reaction, and a proxy
+#: computed from a body's velocity change would also be counting every
+#: contact it made that tick. A `breakable_at` on the other four is
+#: refused by name rather than answered with a number that is not the
+#: constraint's.
+CONSTRAINT_BREAKABLE_KINDS = CONSTRAINT_SOLVED_KINDS
+
+#: §14.8: "Solver iterations are fixed at `8` per tick. Not adaptive. A
+#: fixed iteration count is reproducible on a given build and is what
+#: makes the reference-solution replay in §23.5 check 20 meaningful."
+CONSTRAINT_SOLVER_ITERATIONS = 8
+
+#: §14.8: "Constraint chains are capped at `4` linked constraints. A
+#: pulley feeding a seesaw feeding a hinge is three."
+CONSTRAINT_CHAIN_CAP = 4
+
+#: §14.8: "Constrained objects never sleep while their constraint value
+#: is changing by more than `0.01` per tick."
+CONSTRAINT_SETTLED_DELTA = 0.01
+
+#: §14.8: "No constraint may be created at runtime except `TETHER`."
+#: Everything else is authored into the room, which is what lets §23.5
+#: check 20 replay a reference solution against a known setup.
+CONSTRAINT_RUNTIME_CREATABLE = ("ROPE",)
+
+#: Position correction per iteration, for the four solved kinds. Full
+#: correction in one step injects energy on a discrete timestep and a
+#: rope starts pumping; this is the standard Baumgarte fraction.
+CONSTRAINT_CORRECTION = 0.4
 RANGED_PROJECTILE_SPEED = 14.0
 
 
@@ -1161,8 +1528,12 @@ class EnemyEnvelope:
 #: collider cannot be built to different numbers.
 #:
 #: THIS IS NOT THE LIST OF ENEMIES A ZONE MAY CONTAIN. It is the list of
-#: roles that have an agreed physical envelope. `ENEMY_ARCHETYPES` is the
-#: placeable set, and it is smaller.
+#: roles that have an agreed physical envelope.
+#:
+#: `ENEMY_ARCHETYPES` used to be a hand-written subset of this and is now
+#: `tuple(ENEMY_STATS)`, so the two agree by construction rather than by
+#: maintenance. The note that it "is smaller" was true of three roles and
+#: is not true of ten.
 ENEMY_ENVELOPES = {
     # -- the three with behaviour, unchanged from `enemy.gd`'s literals
     "melee":     EnemyEnvelope(width=0.8, height=1.6, depth=0.8),
@@ -1183,6 +1554,46 @@ ENEMY_ENVELOPES = {
 
 #: The whole approved family, in a stable order.
 ENEMY_ROLES = tuple(ENEMY_ENVELOPES)
+
+
+@functools.lru_cache(maxsize=4096)
+def roles_that_fit(width: float, depth: float,
+                   wall_height: float) -> tuple[str, ...]:
+    """Which enemy roles a room of this size can physically hold.
+
+    P08.2. The composer picked from a hard-coded `["melee", "ranged"]`
+    (and one `brute` in the arena recipe) while ten roles had envelopes
+    and, since the roster landed, behaviour. Widening that list without
+    asking whether a role FITS would put a drifter that holds station
+    2.55 m up into a room with a 2.0 m ceiling.
+
+    Two necessary conditions, both read off `ENEMY_ENVELOPES` rather
+    than chosen here:
+
+    - **it clears the ceiling** -- `top_y` is the role's highest point
+      and what a lintel must clear, so a room whose wall is lower than
+      that cannot hold it;
+    - **it fits the floor** -- `lane_width` is the corridor width the
+      role needs, and a room narrower than that on its shorter axis
+      cannot hold it either.
+
+    **Necessary, not sufficient, and that distinction is the point.**
+    This says a role is not impossible here. It does not say the
+    encounter is good, that the spawn has line of sight, or that a
+    stationary artillery piece with a 34 m reach has anything to shoot
+    -- `ENEMY_STATS` carries `reach` but no minimum range, so the
+    "nothing at all inside 8 m" the roster brief describes lives in the
+    engine and is not a number this function may invent.
+    """
+    fits = []
+    for role in ENEMY_ROLES:
+        envelope = ENEMY_ENVELOPES[role]
+        if envelope.top_y >= wall_height:
+            continue
+        if envelope.lane_width >= min(width, depth):
+            continue
+        fits.append(role)
+    return tuple(fits)
 
 #: Roles that hold a height instead of standing on the floor. Explicit
 #: rather than inferred at each call site, because "is this a flyer" is
@@ -1362,13 +1773,30 @@ LOW_HEALTH_FRACTION = 0.33
 STAT_STACK_MIN = 0.25
 STAT_STACK_MAX = 4.0
 
-#: The four Action slots (ECHOES.md §9). Here rather than only in
+#: The five Action slots (ECHOES.md §9). Here rather than only in
 #: `echo.py` because the CLIENT binds one key per slot and builds one
 #: action runtime per slot: a slot the schema admits and no key reaches is
 #: an Action you own and cannot press, which is the failure
 #: `IMPLEMENTED_ACTION_SLOTS` exists to prevent. Exported to GDScript, so
 #: the two sides cannot disagree about how many there are.
-SLOT_NAMES = ("echo_a", "echo_b", "mobility", "utility")
+#:
+#: `consumable` is the fifth. The other four are all "a verb you always
+#: have"; nothing in the game could express "a thing you have three of",
+#: so it is the one slot whose occupant runs out.
+SLOT_NAMES = ("echo_a", "echo_b", "mobility", "utility", "consumable")
+
+#: What the keycap says, per slot. Lived in two Godot files and disagreed
+#: with nothing only because nobody had added a slot yet; it is declared
+#: once here now, and both read it.
+SLOT_KEYCAPS = {
+    "echo_a": "RMB", "echo_b": "MMB", "mobility": "SHIFT",
+    "utility": "C", "consumable": "Q",
+}
+
+#: The most uses a consumable may declare. One digit, because the HUD
+#: shows it as a counter beside the keycap and a two-digit charge count
+#: is a number nobody reads mid-fight.
+CONSUMABLE_CHARGES_MAX = 9
 
 #: Reference mid-bounds Echo, used to state the Static Pulse comparison
 #: honestly. The *bounds* permit far more; a typical Echo lands near this.
@@ -1390,8 +1818,46 @@ THEMES = (
     "temple_ruin",         # cracked sandstone, root intrusion, brass fittings
     "void_glitch",         # untextured dev surfaces, missing-texture checker
 )
+
+#: D-11. GAME-PACK IDENTITY, beside the six house families and never one
+#: of them (`docs/D11_THEME_PACK_PROD_ANSWER.md`).
+#:
+#: **Three states, kept in three places so none can be read off another:**
+#:
+#:   candidate  -- AUTHORED. Rows for the pack exist in the art lane's
+#:                 exported descriptor (`THEME_PACK_TABLE`). Authored is
+#:                 not selected: a candidate is viewable in an isolated
+#:                 review scene and nameable by no Zone.
+#:   selectable -- a Zone may NAME it. A reviewed decision, recorded here
+#:                 in source where it shows up in a diff.
+#:   approved   -- the OWNER signed it off. Only the owner's decision
+#:                 moves a pack here.
+#:
+#: A pack not listed below is a candidate at most, whatever the
+#: descriptor holds. **Empty, deliberately:** no pack has been reviewed,
+#: and nothing in composition selects one -- there is no approved
+#: selection rule, and the runtime reads a pack out of nothing but the
+#: Zone.
+THEME_PACK_STATES = ("candidate", "selectable", "approved")
+THEME_PACK_STATUS: dict[str, str] = {}
+#: The descriptor table a pack's rows live in: flat, keyed
+#: `"<pack>/<theme>/<role>"`, each row the same schema as `textures`
+#: (Prod's D-11 answer §2; the name was left to this lane to settle).
+THEME_PACK_TABLE = "pack_textures"
+#: Roles resolved from the shared material in every theme and never from
+#: authored pixels -- `hazard`, because a theme-tinted hazard stripe is
+#: one the player has to re-learn in every theme. **A pack is refused the
+#: same way a family is** (D-11 answer §3), or a game pack becomes the
+#: way round the rule. Exported so `theme_pack.gd` can read it rather
+#: than keep its own copy.
+THEME_UNIVERSAL_ROLES = ("hazard",)
 CHAMBER_TYPES = ("corridor", "arena", "platform_path", "tower", "treasure_room")
-ENEMY_ARCHETYPES = ("melee", "ranged", "brute")
+#: DERIVED, NOT TRANSCRIBED. A role with stats has behaviour; a role
+#: with only an envelope is art that cannot yet be placed. Deriving it
+#: means the two can never disagree, and `enemy.gd`'s `create` assert --
+#: "an approved art role is not yet a placeable enemy" -- keeps saying
+#: something true without anyone maintaining a second list.
+ENEMY_ARCHETYPES = tuple(ENEMY_STATS)
 OBJECTIVES = ("reach_reward", "kill_all", "platform_to_goal")
 
 THEME_BY_GAME_HINT = {

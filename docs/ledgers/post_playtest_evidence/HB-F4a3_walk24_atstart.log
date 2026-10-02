@@ -1,0 +1,28 @@
+zone_001 [e2dd51ae74e3]: ACCEPTED (504 ms, layout_state ACCEPTED), 15 Checks
+zone_002 [83cab638c71e]: ACCEPTED (438 ms, layout_state ACCEPTED), 15 Checks
+zone_003 [86832f692325]: ACCEPTED (328 ms, layout_state ACCEPTED), 15 Checks
+zone_004 [d2bf871d5f29]: ACCEPTED (1850 ms, layout_state ACCEPTED), 15 Checks
+zone_005 [84d01f563879]: ACCEPTED (245 ms, layout_state ACCEPTED), 4 Checks
+zone_006 [dcb604e77b35]: ACCEPTED (397 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100140, 89100161, 89100308, 89100392, 89100413]
+zone_007 [e259250fea63]: ACCEPTED (402 ms, layout_state ACCEPTED), 15 Checks
+zone_008 [1e2f761b817e]: BUILD FAILED (2240 ms): room 'c016' could not be placed clear of the 53 room(s) before it
+zone_008 [1e2f761b817e]: BUILD FAILED (2161 ms): room 'c016' could not be placed clear of the 53 room(s) before it
+zone_008 [1e2f761b817e]: BUILD FAILED (2433 ms): room 'c016' could not be placed clear of the 53 room(s) before it
+zone_008: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_009 [ba61ac8a9287]: ACCEPTED (375 ms, layout_state ACCEPTED), 15 Checks
+zone_010 [a2eac4f78c9f]: ACCEPTED (1283 ms, layout_state ACCEPTED), 15 Checks
+zone_011 [ab1da679c970]: ACCEPTED (962 ms, layout_state ACCEPTED), 15 Checks
+zone_012 [ce1163f5a49d]: ACCEPTED (360 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100224]
+zone_013 [f44e96887ccb]: ACCEPTED (581 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100011, 89100098, 89100182, 89100203]
+zone_014 [e7a5b270d135]: ACCEPTED (383 ms, layout_state ACCEPTED), 15 Checks
+zone_015 [d5730fd37bdd]: ACCEPTED (357 ms, layout_state ACCEPTED), 15 Checks
+zone_016 [3f533967cbea]: ACCEPTED (336 ms, layout_state ACCEPTED), 15 Checks
+zone_017 [fa3568b68e8c]: ACCEPTED (1559 ms, layout_state ACCEPTED), 15 Checks
+zone_018 [5d63ace12876]: ACCEPTED (363 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100035, 89100077, 89100350]
+zone_019 [3d536a220afd]: ACCEPTED (563 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100119, 89100245, 89100434]
+zone_020 [2cc96a487e2c]: ACCEPTED (457 ms, layout_state ACCEPTED), 15 Checks
+zone_021 [c70b8ed32ea2]: ACCEPTED (681 ms, layout_state ACCEPTED), 15 Checks
+zone_022 [938a309d7dd4]: ACCEPTED (334 ms, layout_state ACCEPTED), 15 Checks
+zone_023 [a0a10201ba42]: ACCEPTED (375 ms, layout_state ACCEPTED), 15 Checks
+zone_024 [4d78740098d8]: ACCEPTED (982 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100266, 89100329]
+FIRST BOMB BAG: ('zone_006', [89100140, 89100161, 89100308, 89100392, 89100413])

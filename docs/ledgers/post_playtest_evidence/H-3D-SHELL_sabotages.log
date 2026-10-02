@@ -1,0 +1,37 @@
+== MS-1 the pointer always reaches the first wall, whatever is in front: rc=1 GODOT MENU SHELL TESTS: 4 failures in 18 checks
+FAIL: a click in the middle of a turn, where the arriving wall's button is drawn at that moment ((556.000000, 347.000000)), presses nothing
+FAIL: a clicked text field has focus and keeps Q and E: '', still on journal
+FAIL: and the same button, clicked once the turn has come to rest, is pressed
+FAIL: the same point, with Equipment in front, presses Equipment's button and not Settings'
+  restored godot/scripts/ui/menu_shell.gd
+== MS-2 a turn is a cut to the next wall, not a turn: rc=1 GODOT MENU SHELL TESTS: 4 failures in 18 checks
+FAIL: a click in the middle of a turn, where the arriving wall's button is drawn at that moment ((640.000000, 347.000000)), presses nothing
+FAIL: and halfway round, Settings and Equipment are both in view
+FAIL: and the same button, clicked once the turn has come to rest, is pressed
+FAIL: the camera's yaw runs monotonically from 0 to 90 degrees over 1 frames (0.42 s)
+  restored godot/scripts/ui/menu_shell.gd
+== MS-3 a focused text field loses Q and E to the page turns: rc=1 GODOT MENU SHELL TESTS: 1 failures in 18 checks
+FAIL: a clicked text field has focus and keeps Q and E: '', still on journal
+  restored godot/scripts/ui/menu_shell.gd
+== MS-4 the order reversed: the left key turns right: rc=1 GODOT MENU SHELL TESTS: 5 failures in 18 checks
+FAIL: a click in the middle of a turn, where the arriving wall's button is drawn at that moment ((640.000000, 347.000000)), presses nothing
+FAIL: and the same button, clicked once the turn has come to rest, is pressed
+FAIL: the same point, with Equipment in front, presses Equipment's button and not Settings'
+FAIL: turning LEFT (Q) visits ["settings", "journal", "map", "equipment", "settings"]
+FAIL: with motion_intensity at 0 each turn is a cut, through the same walls in the same order: ["settings", "journal", "map", "equipment", "settings"]
+  restored godot/scripts/ui/menu_shell.gd
+== MS-5 clicks reach the page in the middle of a turn: rc=1 GODOT MENU SHELL TESTS: 2 failures in 18 checks
+FAIL: a click in the middle of a turn, where the arriving wall's button is drawn at that moment ((556.000000, 347.000000)), presses nothing
+FAIL: and the same button, clicked once the turn has come to rest, is pressed
+  restored godot/scripts/ui/menu_shell.gd
+== MS-6 the box drawn in the dungeon's own world: rc=1 GODOT MENU SHELL TESTS: 1 failures in 18 checks
+FAIL: the box renders in its own World3D, not the dungeon's
+  restored godot/scripts/ui/menu_shell.gd
+== MS-7 Escape does not close it: rc=1 GODOT MENU SHELL TESTS: 1 failures in 18 checks
+FAIL: Escape closes it from any wall
+  restored godot/scripts/ui/menu_shell.gd
+== MS-8 the walls face out of the box: rc=1 GODOT MENU SHELL TESTS: 2 failures in 18 checks
+FAIL: four walls, each 1.0 m from the camera at the centre and facing it squarely (wrong: ["settings at (0.000000, 0.000000, -1.000000) facing (-0.000000, 0.000000, -1.000000)", "equipment at (-1.000000, 0.000000, -0.000000) facing (-1.0000
+FAIL: the front wall faces the camera squarely (1.00000) and fills 0.86 of the view's height (meant: 0.86)
+  restored godot/scripts/ui/menu_shell.gd
+== done

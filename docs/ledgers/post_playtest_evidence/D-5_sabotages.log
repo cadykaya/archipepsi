@@ -1,0 +1,79 @@
+D05-1 [campaign.py] the provider is never told the function
+    CAUGHT by test_the_provider_is_told_the_function_and_only_for_that_check -- 1 failing test(s); restored byte for byte: True
+      FAILED test_the_provider_is_told_the_function_and_only_for_that_check
+        E   AssertionError: {89100002: None, 89100001: None}
+        test_featured_grant.py:133: AssertionError: {89100002: None, 89100001: None}
+D05-2 [base.py] the featured check not applied
+    CAUGHT by test_an_enemy_pull_is_replaced_by_the_requirements_own_echo -- 4 failing test(s); restored byte for byte: True
+      FAILED test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[foreign]
+      FAILED test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own]
+      FAILED test_the_fallback_provider_still_hands_over_a_working_grapple[foreign]
+      FAILED test_the_fallback_provider_still_hands_over_a_working_grapple[own]
+        E   AssertionError: the featured Echo does not supply the requirement
+        test_featured_grant.py:153: AssertionError: the featured Echo does not supply the requirement
+        E   AssertionError: the featured Echo does not supply the requirement
+        test_featured_grant.py:153: AssertionError: the featured Echo does not supply the requirement
+D05-3 [base.py] the generic fallback in place of the requirement's own
+    CAUGHT by test_the_fallback_provider_still_hands_over_a_working_grapple -- 4 failing test(s); restored byte for byte: True
+      FAILED test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[foreign]
+      FAILED test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own]
+      FAILED test_the_fallback_provider_still_hands_over_a_working_grapple[foreign]
+      FAILED test_the_fallback_provider_still_hands_over_a_working_grapple[own]
+        E   RuntimeError: fallback echo generator produced invalid output: ["the featured Echo must supply grapple_to_surface (grapple): 'act_l89100006' is burst_fire, not grapple_to_surface"]
+        /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/base.py:144: RuntimeError: fallback echo generator produced invalid output: ["the featured Echo 
+        E   RuntimeError: fallback echo generator produced invalid output: ["the featured Echo must supply grapple_to_surface (grapple): 'act_l89100001' is hitscan_damage, not grapple_to_surface"]
+        /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/base.py:144: RuntimeError: fallback echo generator produced invalid output: ["the featured Echo 
+        E   RuntimeError: fallback echo generator produced invalid output: ["the featured Echo must supply grapple_to_surface (grapple): 'act_l89100006' is burst_fire, not grapple_to_surface"]
+        /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/base.py:144: RuntimeError: fallback echo generator produced invalid output: ["the featured Echo 
+        E   RuntimeError: fallback echo generator produced invalid output: ["the featured Echo must supply grapple_to_surface (grapple): 'act_l89100001' is hitscan_damage, not grapple_to_surface"]
+        /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/base.py:144: RuntimeError: fallback echo generator produced invalid output: ["the featured Echo 
+D05-4 [fallback.py] the requirement's Echo left unlabelled (no concepts)
+    CAUGHT by test_the_requirements_echo_reads_as_its_item -- 5 failing test(s); restored byte for byte: True
+      FAILED test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[foreign]
+      FAILED test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own]
+      FAILED test_the_fallback_provider_still_hands_over_a_working_grapple[foreign]
+      FAILED test_the_fallback_provider_still_hands_over_a_working_grapple[own]
+      FAILED test_the_requirements_echo_reads_as_its_item
+        E   RuntimeError: fallback echo generator produced invalid output: ['concepts must not be empty: name what you read in the item (a few short lowercase words), which is stored and shown to the player']
+        /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/base.py:144: RuntimeError: fallback echo generator produced invalid output: ['concepts must not 
+        E   RuntimeError: fallback echo generator produced invalid output: ['concepts must not be empty: name what you read in the item (a few short lowercase words), which is stored and shown to the player']
+        /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/base.py:144: RuntimeError: fallback echo generator produced invalid output: ['concepts must not 
+        E   RuntimeError: fallback echo generator produced invalid output: ['concepts must not be empty: name what you read in the item (a few short lowercase words), which is stored and shown to the player']
+        /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/base.py:144: RuntimeError: fallback echo generator produced invalid output: ['concepts must not 
+        E   RuntimeError: fallback echo generator produced invalid output: ['concepts must not be empty: name what you read in the item (a few short lowercase words), which is stored and shown to the player']
+        /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/base.py:144: RuntimeError: fallback echo generator produced invalid output: ['concepts must not 
+        E   AssertionError: assert ['concepts mu...o the player'] == []
+        test_featured_grant.py:229: AssertionError: assert ['concepts mu...o the player'] == []
+D05-5 [campaign.py] the requirement read off the recipient (own Checks exempt)
+    CAUGHT by test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own] -- 2 failing test(s); restored byte for byte: True
+      FAILED test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own]
+      FAILED test_the_fallback_provider_still_hands_over_a_working_grapple[own]
+        E   AssertionError: the featured Echo does not supply the requirement
+        test_featured_grant.py:153: AssertionError: the featured Echo does not supply the requirement
+D05-6 [base.py] an Echo that would not fold is not refused
+    CAUGHT by test_an_echo_that_would_not_fold_is_repaired_never_appended -- 1 failing test(s); restored byte for byte: True
+      FAILED test_an_echo_that_would_not_fold_is_repaired_never_appended
+        E   pydantic_core._pydantic_core.ValidationError: 1 validation error for CampaignSave
+        /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/schemas/transitions.py:70: pydantic_core._pydantic_core.ValidationError: 1 validation error for Campaign
+D05-7 [campaign.py] every Check held to the featured requirement
+    CAUGHT by test_the_same_enemy_pull_elsewhere_is_accepted -- 3 failing test(s); restored byte for byte: True
+      FAILED test_a_crash_before_the_append_is_granted_once_on_reload
+      FAILED test_the_provider_is_told_the_function_and_only_for_that_check
+      FAILED test_the_same_enemy_pull_elsewhere_is_accepted
+        E   AssertionError: {89100002: 'This Echo must create or upgrade a non-consumable Action whose primitive is grapple_to_surface with pull_f...tive is grapple_to_surface with pull_force >= 14, range >= 20. Name, style and 
+        test_featured_grant.py:133: AssertionError: {89100002: 'This Echo must create or upgrade a non-consumable Action whose primitive is grapple_to_surface with pull_f...tive is grapple_to_surface with pull_force >= 14, range
+        E   AssertionError: assert (EchoInterpretation(schema_version=8, echo_id='echo_89100002', interpretation_seq=0, source_location_id=89100002, sourc....5, primitive=GrappleToSurface(type='grapple_to_surface', range=20.0, p
+        test_featured_grant.py:189: AssertionError: assert (EchoInterpretation(schema_version=8, echo_id='echo_89100002', interpretation_seq=0, source_location_id=89100002, sourc....5, primitive=GrappleToSurface(type='grapple_to
+
+7 of 7 sabotages caught
+D05-8 [requests.py] the absent requirement serialised as null in every request
+    CAUGHT by test_the_provider_is_told_the_function_and_only_for_that_check -- 3 failing test(s); restored byte for byte: True
+      FAILED TestTheLauncherGuardIsAsStrongAsThisSuite::test_it_passes_on_the_committed_baseline
+      FAILED test_the_committed_baseline_matches_its_generator
+      FAILED test_the_provider_is_told_the_function_and_only_for_that_check
+        E   AssertionError: assert 'required_function' not in {'schema_version': 8, 'source': {'location_id': 89100002, 'item_name': 'Hookshot', 'source_game': 'Ocarina of Time', '...examples_are_a_sample': False}, 'signal_keys'
+        test_featured_grant.py:138: AssertionError: assert 'required_function' not in {'schema_version': 8, 'source': {'location_id': 89100002, 'item_name': 'Hookshot', 'source_game': 'Ocarina of Time', '...examples_are_a_sample
+        E   AssertionError: the baseline no longer matches what the engine builds; re-run `make baseline` only if the change was intended
+        test_playtest_baseline.py:58: AssertionError: the baseline no longer matches what the engine builds; re-run `make baseline` only if the change was intended
+
+1 of 1 sabotages caught

@@ -1,0 +1,49 @@
+== SH-1 a held plate placed by the legacy rule again: rc=2 GODOT HELD ROUTE TESTS: 14 failures in 30 checks
+FAIL: STANDING ON THE PLATE, 1.70 m from its centre: it reads [] and the doorway stays shut (object-only)
+FAIL: looking at the weight offers ""
+FAIL: picked up with `interact`
+FAIL: PUT DOWN ON THE PLATE, 9.45 m from its centre: it reads []
+FAIL: and its resting pose was reported in c002 (0 report(s))
+FAIL: the doorway OPENS under the weight (0.00)
+FAIL: it STAYS OPEN for 5 s with the weight resting and the player at the doorway (300 frame(s) not open)
+FAIL: THROUGH: walked into c003 (ended (-18.599077, 1.100941, 24.622263))
+FAIL: the doorway is still open behind the player
+FAIL: PUT BACK: the plate reads [] and the doorway opens again
+FAIL: the reported pose is where it lies on the plate: 0 report(s), the last inf m from it ((inf, inf, inf), lying at (-14.280697, 0.290009, 20.251589))
+FAIL: standing in the open doorway, under the panel (occupied true)
+FAIL: the plate is empty and the panel was refused its closure 0 time(s) while the doorway was occupied
+FAIL: it never came down on the player: lowest 0.00 open, 92 hp (was 94), moved 0.00 m
+  restored godot/scripts/generation/room_graphs.gd
+== SH-2 a held plate at the full 2.4 m size: rc=2 GODOT HELD ROUTE TESTS: 3 failures in 3 checks
+FAIL: the held route was built: graphs 0, refusals ["room \'c002\': no clear floor for sensor \'weight_plate\' on this side of the doorway it opens -- every candidate is inside a wall margin, within 2.6 m of something the room already place
+FAIL: the held route was built: graphs 0, refusals ["room \'c002\': no clear floor for sensor \'weight_plate\' on this side of the doorway it opens -- every candidate is inside a wall margin, within 2.6 m of something the room already place
+FAIL: the held route was built: graphs 0, refusals ["room \'c002\': no clear floor for sensor \'weight_plate\' on this side of the doorway it opens -- every candidate is inside a wall margin, within 2.6 m of something the room already place
+  restored godot/scripts/generation/room_graphs.gd
+== SH-3 the declared weight is never named: rc=2 GODOT HELD ROUTE TESTS: 1 failures in 33 checks
+FAIL: and the weight says what it is for: '(no label)'
+  restored godot/scripts/gameplay/zone_controller.gd
+== SH-4 the held plate counts the player: rc=2 GODOT HELD ROUTE TESTS: 2 failures in 33 checks
+FAIL: the sensor is an object-only MEDIUM plate ({ "requires": "medium", "classes": [], "counts_player": true, "satisfied": false })
+FAIL: STANDING ON THE PLATE, 0.06 m from its centre: it reads ["medium"] and the doorway stays shut (object-only)
+  restored godot/scripts/generation/room_graphs.gd
+== SH-5 the panel stays open once opened (a latch in disguise): rc=2 GODOT HELD ROUTE TESTS: 3 failures in 33 checks
+FAIL: and the doorway SHUTS: held, never latched (1.00 open)
+FAIL: the plate is empty and the panel was refused its closure 0 time(s) while the doorway was occupied
+FAIL: stepped out of the doorway: it SHUTS (1.00 open)
+  restored godot/scripts/gameplay/service_shutter.gd
+== SH-6 the interlock does not watch the player: rc=2 GODOT HELD ROUTE TESTS: 3 failures in 33 checks
+FAIL: standing in the open doorway, under the panel (occupied false)
+FAIL: the plate is empty and the panel was refused its closure 0 time(s) while the doorway was occupied
+FAIL: it never came down on the player: lowest 0.00 open, 100 hp (was 100), moved 0.54 m
+  restored godot/scripts/gameplay/service_shutter.gd
+ M .github/workflows/integration.yml
+ M Makefile
+ M docs/ledgers/PROD_POST_PLAYTEST.md
+ M godot/scripts/gameplay/zone_controller.gd
+ M godot/scripts/generation/room_graphs.gd
+ M godot/scripts/main.gd
+ M godot/tests/fixtures/placement/captures.json
+?? godot-bin
+?? godot/tests/held_route_driver.gd
+?? godot/tests/held_route_driver.gd.uid
+SAB-DONE

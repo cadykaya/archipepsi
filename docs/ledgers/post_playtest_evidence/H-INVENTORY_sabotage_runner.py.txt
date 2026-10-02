@@ -1,0 +1,279 @@
+"""H-INVENTORY sabotages: break one rule, confirm a named failure, restore.
+
+Each row edits one file in the wt-cp2 work tree, runs the suite that
+should notice, records the FAIL lines, and restores the file byte for
+byte (sha256 checked). A sabotage that passes is reported as such.
+"""
+from __future__ import annotations
+
+import hashlib
+import subprocess
+import sys
+from pathlib import Path
+
+TREE = Path(__file__).resolve().parent / "wt-cp2"
+GODOT = [str(TREE / "godot-bin" / "godot"), "--headless", "--path",
+         str(TREE / "godot"), "--"]
+FACE = "godot/scripts/ui/equipment_face.gd"
+QUERY = "godot/scripts/ui/equipment_query.gd"
+REQ = "godot/scripts/ui/equip_requests.gd"
+SEEN = "godot/scripts/ui/equipment_seen.gd"
+SHELL = "godot/scripts/ui/menu_shell.gd"
+PROJECT = "godot/project.godot"
+FIXTURE = "godot/tests/fixtures/equipment_snapshot.json"
+
+ROWS = [
+    ("EI-1", "an equip is resolved by ANY snapshot (optimistic)", REQ,
+     '''		var landed := (want == null and holds == null) \\''',
+     '''		var landed := true or (want == null and holds == null) \\''',
+     "_pending_then_accepted", "an unrelated snapshot answers nothing"),
+    ("EI-2", "a refusal resolves the first request whatever it names", REQ,
+     '''		if str(_open[slot]["key"]) == about:''',
+     '''		if true:''',
+     "_refusals_and_a_lost_link",
+     "a refusal naming another request resolves nothing"),
+    ("EI-3", "an error with no `about` counts as a refusal", REQ,
+     '''	var about := str(err.get("about", ""))
+	if about == "":
+		return ""''',
+     '''	var about := str(err.get("about", ""))
+	if about == "":
+		for slot: Variant in _open.keys():
+			about = str(_open[slot]["key"])''',
+     "_refusals_and_a_lost_link", "an error with no `about` resolves nothing"),
+    ("EI-4", "the key paints the pending pick as held (optimistic)", FACE,
+     '''	var holds: Variant = BridgeClient.slots().get(slot)
+	var row := EquipmentQuery.item_by_id(_rows,
+			"" if holds == null else str(holds))
+	var what := Label.new()''',
+     '''	var holds: Variant = BridgeClient.slots().get(slot)
+	if requests.is_pending(slot):
+		holds = requests.pending(slot).get("component_id")
+	var row := EquipmentQuery.item_by_id(_rows,
+			"" if holds == null else str(holds))
+	var what := Label.new()''',
+     "_pending_then_accepted", "the key still shows what the bridge confirmed"),
+    ("EI-5", "an upgrade becomes an item of its own (a tile per history link)",
+     QUERY,
+     '''		row["newest_seq"] = newest
+		out.append(row)''',
+     '''		row["newest_seq"] = newest
+		out.append(row)
+		for _extra in range(provenance.size() - 1):
+			out.append(row.duplicate())''',
+     "_one_item_one_tile", "one tile per inventory item"),
+    ("EI-6", "a key filter keeps the always-on half", QUERY,
+     '''		elif slot_filter == "":
+			always.append(row)''',
+     '''		else:
+			always.append(row)''',
+     "_the_split_and_the_filter", "counted as 2 of 6"),
+    ("EI-7", "owning no consumable reads as owning one off the key", QUERY,
+     '''	if owned.is_empty():
+		return {"state": "none_owned", "count": "",''',
+     '''	if owned.is_empty() and false:
+		return {"state": "none_owned", "count": "",''',
+     "_the_consumable_key", "none owned says so"),
+    ("EI-8", "the consumable key ignores the link", FACE,
+     '''				BridgeClient.awaiting_authorization(cid) if cid != "" else 0,
+				online)''',
+     '''				BridgeClient.awaiting_authorization(cid) if cid != "" else 0,
+				true)''',
+     "_the_consumable_key", "disconnected says so"),
+    ("EI-9", "the consumable key ignores a use awaiting the bridge", FACE,
+     '''				BridgeClient.awaiting_authorization(cid) if cid != "" else 0,''',
+     '''				0,''',
+     "_the_consumable_key", "a use awaiting the bridge says so"),
+    ("EI-10", "a campaign met for the first time is all NEW", SEEN,
+     '''	var known := {}
+	for id: Variant in ids:
+		known[str(id)] = true
+	_seen[campaign] = known''',
+     '''	var known := {}
+	_seen[campaign] = known''',
+     "_a_new_item_is_marked", "marks nothing new"),
+    ("EI-11", "inspecting an item does not clear NEW", SEEN,
+     '''	(_seen[campaign] as Dictionary)[component_id] = true
+	_save()''',
+     '''	_save()''',
+     "_a_new_item_is_marked", "inspecting it is noticing it"),
+    ("EI-12", "a repaint takes focus from the search box", FACE,
+     '''func _repaint() -> void:
+	var focus_key := _focus_key()''',
+     '''func _repaint() -> void:
+	_search.release_focus()
+	var focus_key := _focus_key()''',
+     "_the_search_box_keeps_its_place", "a snapshot mid-search keeps focus"),
+    ("EI-13", "the shell forgets a text field has the keys", SHELL,
+     '''	return focus is LineEdit or focus is TextEdit''',
+     '''	return false''',
+     "_typing_is_not_playing", "the letters go into the box"),
+    ("EI-14", "the pad's A is not ui_accept (the default map)", PROJECT,
+     ''', Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"button_index":0,"pressure":0.0,"pressed":false,"script":null)
+]''',
+     '''
+]''',
+     "_keyboard_and_controller", "A chooses"),
+    ("EI-15", "the equip controls scroll with the detail (the first layout)",
+     FACE,
+     '''	var bar := HBoxContainer.new()
+	bar.name = "Actions"
+	bar.add_theme_constant_override("separation", 8)
+	_actions_box.add_child(bar)''',
+     '''	var bar := HBoxContainer.new()
+	bar.name = "Actions"
+	bar.add_theme_constant_override("separation", 8)
+	_detail.add_child(bar)''',
+     "_the_mouse", "a click on REPLACE sends it"),
+    ("EI-16", "a spent spare is offered", QUERY,
+     '''	if is_consumable(row) and equipped_in(row) == "" \\
+			and int(row.get("charges_left", 0)) <= 0:''',
+     '''	if false:''',
+     "_an_empty_spare_is_not_offered", "a spent spare is not offered"),
+    ("EI-17", "a second press is offered while the first waits", FACE,
+     '''	if requests.is_pending(home):
+		return "Waiting for the bridge's answer about %s." \\''',
+     '''	if false:
+		return "Waiting for the bridge's answer about %s." \\''',
+     "_pending_then_accepted", "a second press is not offered"),
+    ("EI-18", "the comparison runs this → now", QUERY,
+     '''		out.append("%s: %s → %s" % [_label(str(key)), _shown(str(key), va),
+				_shown(str(key), vb)])''',
+     '''		out.append("%s: %s → %s" % [_label(str(key)), _shown(str(key), vb),
+				_shown(str(key), va)])''',
+     "_pending_then_accepted", "the comparison is against what is on the key"),
+    ("EI-19", "history drops the upgrades", QUERY,
+     '''	for link: Variant in row.get("provenance", []):
+		var l: Dictionary = link
+		var op := str(l.get("operation", ""))''',
+     '''	for link: Variant in row.get("provenance", []).slice(0, 1):
+		var l: Dictionary = link
+		var op := str(l.get("operation", ""))''',
+     "_history_and_reads", "the whole chain, in order, once"),
+    ("EI-20", "arriving at the wall, nothing takes focus", FACE,
+     '''func take_focus() -> void:
+	if _grab("tile:" + _selected):''',
+     '''func take_focus() -> void:
+	return
+	if _grab("tile:" + _selected):''',
+     "_keyboard_and_controller", "the selected tile holds focus"),
+    ("EI-21", "a link lost mid-request stays pending", FACE,
+     '''	if not online:
+		requests.on_link_lost()''',
+     '''	if not online:
+		pass''',
+     "_refusals_and_a_lost_link", "a link lost mid-request is LOST"),
+]
+
+ROWS += [
+    ("EI-23", "one-sided fields are listed as differences again", QUERY,
+     '''		if (va == null or vb == null) and not KEY_FIELDS.has(key):
+			continue''',
+     '''		if false:
+			continue''',
+     "_pending_then_accepted", "a field only one kind of attack has"),
+    ("EI-24", "units may wrap away from their numbers again", FACE,
+     '''	label.text = _keep_units(text)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", 16)''',
+     '''	label.text = text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", 16)''',
+     "_the_detail_answers", "a number keeps its unit on its line"),
+]
+
+BRIDGE_ROWS = [
+    ("EI-22", "the fixture hand-edited (Cinder Charge 2 -> 3 left in base)",
+     FIXTURE),
+]
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def run_face(case: str) -> str:
+    out = subprocess.run(GODOT + ["--equipment-face",
+                                  f"--equipment-only={case}"],
+                         capture_output=True, text=True, timeout=600,
+                         cwd=TREE)
+    return out.stdout + out.stderr
+
+
+def main() -> int:
+    lines = []
+    caught = 0
+    only = set(sys.argv[1:])
+    rows = [r for r in ROWS if not only or r[0] in only]
+    bridge_rows = [r for r in BRIDGE_ROWS if not only or r[0] in only]
+    for rid, what, rel, old, new, case, expect in rows:
+        path = TREE / rel
+        before_bytes = path.read_bytes()
+        before = sha(path)
+        text = before_bytes.decode("utf-8")
+        if text.count(old) != 1:
+            lines.append(f"{rid} SETUP ERROR: patch anchor found "
+                         f"{text.count(old)} times in {rel}")
+            continue
+        path.write_bytes(text.replace(old, new).encode("utf-8"))
+        try:
+            if rel == PROJECT:
+                subprocess.run(["make", "godot-import"], cwd=TREE,
+                               capture_output=True, timeout=600)
+            log = run_face(case)
+        finally:
+            path.write_bytes(before_bytes)
+            if rel == PROJECT:
+                subprocess.run(["make", "godot-import"], cwd=TREE,
+                               capture_output=True, timeout=600)
+        restored = sha(path) == before
+        fails = sorted({l[len("FAIL: "):] for l in log.splitlines()
+                        if l.startswith("FAIL: ")})
+        errors = sum(1 for l in log.splitlines() if "SCRIPT ERROR" in l)
+        hit = any(expect in f for f in fails)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    case {case}: {'CAUGHT' if hit else 'NOT CAUGHT'}"
+                     f" -- {len(fails)} failing check(s), "
+                     f"{errors} script error(s); restored byte for byte: "
+                     f"{restored}")
+        for f in fails:
+            lines.append(f"      FAIL: {f}")
+    # The fixture: the bridge's freshness test.
+    for rid, what, rel in bridge_rows:
+        path = TREE / rel
+        before_bytes = path.read_bytes()
+        before = sha(path)
+        import json
+        data = json.loads(before_bytes)
+        for item in data["base"]["inventory"]["items"]:
+            if item["component_id"] == "act_cinder":
+                item["charges_left"] = 3
+        path.write_text(json.dumps(data, indent=1, sort_keys=True) + "\n",
+                        encoding="utf-8")
+        try:
+            out = subprocess.run(
+                [sys.executable, "-m", "pytest", "-q",
+                 "tests/test_equipment_fixture.py"],
+                cwd=TREE / "bridge", capture_output=True, text=True,
+                timeout=600)
+        finally:
+            path.write_bytes(before_bytes)
+        restored = sha(path) == before
+        hit = out.returncode != 0 and "matches_its_generator" in out.stdout
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    test_equipment_fixture.py: "
+                     f"{'CAUGHT' if hit else 'NOT CAUGHT'}; restored byte "
+                     f"for byte: {restored}")
+        for l in out.stdout.splitlines():
+            if l.startswith("FAILED"):
+                lines.append(f"      {l}")
+    total = len(rows) + len(bridge_rows)
+    lines.append(f"\n{caught} of {total} sabotages caught")
+    print("\n".join(lines))
+    return 0 if caught == total else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

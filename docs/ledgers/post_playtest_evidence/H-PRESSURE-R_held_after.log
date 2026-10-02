@@ -1,0 +1,40 @@
+# make godot-held-route after the repair (cp2-runtime over 8fffca8, uncommitted), rc=0
+  -- the declaration builds: an object-only plate, its weight, its doorway shut
+  ok: nothing refused: graphs [], sockets []
+  ok: the sensor is an object-only MEDIUM plate ({ "requires": "medium", "classes": [], "counts_player": false, "satisfied": false })
+  ok: its weight is built: one 40 kg MEDIUM 'counterweight' at home in c002
+  ok: the doorway starts shut, the plate empty
+  ok: the plate says what holds it: 'LOAD PLATE -- HOLDS THE SHUTTER OPEN / WHILE THE COUNTERWEIGHT RESTS ON IT'
+  ok: and the weight says what it is for: 'COUNTERWEIGHT · 40 kg / FOR THE LOAD PLATE'
+  NOTE: the plate stands 3.4 m from its doorway; the weight's home is 8.3 m from the plate
+  -- played: the weight carried onto the plate holds the doorway open while it rests there
+  ok: c002 cleared with the base kit: 5 of 5 down in 11.5 s
+  ok: advanced along the spine to c002
+  ok: STANDING ON THE PLATE, 0.06 m from its centre: it reads [] and the doorway stays shut (object-only)
+  ok: looking at the weight offers "[E] PICK UP · 40 kg"
+  ok: picked up with `interact`
+  ok: PUT DOWN ON THE PLATE, 0.09 m from its centre: it reads ["medium"]
+  ok: and its resting pose was reported in c002 (1 report(s))
+  ok: the doorway OPENS under the weight (1.00)
+  ok: and nothing latched: the plate drives the shutter directly
+  ok: it STAYS OPEN for 5 s with the weight resting and the player at the doorway (0 frame(s) not open)
+  ok: THROUGH: walked into c003 (ended (-24.804007, 0.000206, 23.001944))
+  ok: the doorway is still open behind the player
+  ok: AND BACK: returned into c002 through the held doorway (ended (-17.104008, 0.000206, 23.000090))
+  ok: LIFTED off the plate by hand: it reads []
+  ok: and the doorway SHUTS: held, never latched (0.00 open)
+  ok: PUT BACK: the plate reads ["medium"] and the doorway opens again
+  ok: the reported pose is where it lies on the plate: 1 report(s), the last 0.000 m from it ((-16.803509, 0.419652, 25.323193), lying at (-16.803509, 0.419652, 25.323193))
+  ok: no death (0) and still exactly one weight (1)
+  -- reloaded: the weight is back on the plate and the doorway opens, with no plate state saved
+  ok: nothing latched was carried in, and nothing is latched
+  ok: one weight, restored where it was left (0.000 m off)
+  ok: the doorway OPENS because the weight is on the plate (1.00)
+  -- the weight leaves the plate with the player in the doorway: the panel holds off them
+  ok: c002 cleared with the base kit: 5 of 5 down in 11.5 s
+  ok: advanced along the spine to c002
+  ok: standing in the open doorway, under the panel (occupied true)
+  ok: the plate is empty and the panel was refused its closure 3 time(s) while the doorway was occupied
+  ok: it never came down on the player: lowest 1.00 open, 100 hp (was 100), moved 0.00 m
+  ok: stepped out of the doorway: it SHUTS (0.00 open)
+GODOT HELD ROUTE OK (33 checks, 1 notes)

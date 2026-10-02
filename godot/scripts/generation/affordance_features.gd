@@ -231,17 +231,11 @@ static func _clear_of_side_doors(z: float, chamber: Dictionary,
 static func place_all(root: Node3D, chamber: Dictionary, theme: String,
 		width: float, depth: float, height: float) -> Array:
 	var built: Array = []
-	for index in (chamber.get("features", []) as Array).size():
+	for placed: Dictionary in _placements(chamber, width, depth):
+		var index := int(placed["index"])
 		var feature: Dictionary = chamber["features"][index]
-		var tag := str(feature.get("tag", ""))
-		if not fits(width, tag, depth):
-			# Too small for THIS tag, on either axis. Dropped rather than
-			# crammed in: features are optional, and one built into a wall
-			# or across a doorway is worse than one absent.
-			continue
-		var origin := resolve_position(
-				feature.get("at", [0.5, 0.5]), width, depth, tag)
-		origin.z = _clear_of_side_doors(origin.z, chamber, depth, tag)
+		var tag := str(placed["tag"])
+		var origin: Vector3 = placed["origin"]
 		# Zone-scoped, because the bridge's idempotence key is the reward
 		# id alone. Chamber-scoped ids repeat across Zones — the fallback
 		# emits `c1` and `c3` in every one — so the second Zone's note
@@ -266,6 +260,57 @@ static func place_all(root: Node3D, chamber: Dictionary, theme: String,
 			node.set_meta("affordance_tag", tag)
 			built.append(node)
 	return built
+
+## Where each feature a chamber declares will stand: `{index, tag,
+## origin}` for every one that fits, in declaration order. `origin.z` is
+## `INF` for one no end of the room holds clear of its own side doorway,
+## which `place_all` drops loudly.
+##
+## ONE RESOLUTION, TWO READERS (HB-F4e). `place_all` builds from it, and
+## `footprints` tells the room's own props where the features will be.
+## Two copies of this arithmetic would be two answers to where a feature
+## stands.
+static func _placements(chamber: Dictionary, width: float,
+		depth: float) -> Array:
+	var out: Array = []
+	for index in (chamber.get("features", []) as Array).size():
+		var feature: Dictionary = chamber["features"][index]
+		var tag := str(feature.get("tag", ""))
+		if not fits(width, tag, depth):
+			# Too small for THIS tag, on either axis. Dropped rather than
+			# crammed in: features are optional, and one built into a wall
+			# or across a doorway is worse than one absent.
+			continue
+		var origin := resolve_position(
+				feature.get("at", [0.5, 0.5]), width, depth, tag)
+		origin.z = _clear_of_side_doors(origin.z, chamber, depth, tag)
+		out.append({"index": index, "tag": tag, "origin": origin})
+	return out
+
+## THE FLOOR EVERY FEATURE WILL OCCUPY, as `Rect2`s in the room's own
+## x/z: `FOOTPRINT`'s reach either side of where `place_all` puts it.
+##
+## Features go in after the room is built, so the room's colliding
+## props are rolled before anything says where a feature will stand.
+## Measured on the owner's zone_010 and zone_012 (HB-F4e): `temple_ruin`
+## stood a column stump inside the `c001` powered door's run, between
+## the crate and the plate. The crate stopped against it, or was pinned
+## by it before anyone pushed, and the certificate's three runs latched
+## nothing. The bridge refused both Zones, three compositions each. The
+## props ask this first.
+static func footprints(chamber: Dictionary, width: float,
+		depth: float) -> Array:
+	var out: Array = []
+	for placed: Dictionary in _placements(chamber, width, depth):
+		var origin: Vector3 = placed["origin"]
+		if not is_finite(origin.z):
+			continue
+		var reach: Dictionary = FOOTPRINT.get(str(placed["tag"]), {})
+		var half_width: float = float(reach.get("half_width", 1.2))
+		var half_depth: float = float(reach.get("half_depth", 1.2))
+		out.append(Rect2(origin.x - half_width, origin.z - half_depth,
+				2.0 * half_width, 2.0 * half_depth))
+	return out
 
 static func _build(root: Node3D, tag: String, theme: String,
 		origin: Vector3, width: float, depth: float, height: float,
@@ -509,7 +554,7 @@ static func build_rail(root: Node3D, rail: RailPath) -> Dictionary:
 	if not refusals.is_empty():
 		push_warning("rail refused: %s" % "; ".join(refusals))
 		return {"beams": beams, "lanes": lanes, "refused": refusals}
-	var path := rail.segments()
+	var path := rail_sweep_points(rail)
 	for i in path.size() - 1:
 		var a: Vector3 = path[i]
 		var b: Vector3 = path[i + 1]
@@ -544,14 +589,48 @@ static func build_rail(root: Node3D, rail: RailPath) -> Dictionary:
 		lanes.append(lane)
 	return {"beams": beams, "lanes": lanes}
 
-## Point a node's local -Z along a path segment. A no-op for the straight
-## rail the footprint currently allows, and the thing that makes a curved
-## one work without touching anything above.
+## How finely a bowed rail is swept, in metres. A box per metre follows a
+## three-metre corner to within `s^2 / 8r` = 4 cm -- well inside the
+## beam's own thickness -- without putting the two hundred boxes on a
+## twelve-metre rail that sweeping every baked sample would.
+const RAIL_SWEEP_STEP := 1.0
+
+## The points a rail's beam and its ride volumes are swept between.
+##
+## THE BEAM MUST BE WHERE THE RIDE IS. `RailPath` interpolates between
+## its control points (P3.5, Catmull-Rom), so on a curved rail the
+## control polyline is the CHORD and the ride is the ARC: sweeping the
+## control points puts the beam through the inside of every corner and
+## the rider through the air beside it. That divergence did not exist
+## when `rail_path.gd` recorded that the two "agree by construction" --
+## the curve was a polyline then. It does now.
+##
+## A STRAIGHT RAIL IS UNCHANGED, and that is the point: its curve IS its
+## control polyline, `bow()` is 0, and this returns exactly the points it
+## always returned. Every rail shipped today is two points.
+static func rail_sweep_points(rail: RailPath) -> PackedVector3Array:
+	if rail.bow() <= RAIL_BEAM_THICKNESS * 0.25:
+		return rail.segments()
+	return rail.polyline(RAIL_SWEEP_STEP)
+
+## Point a node's local -Z along a path segment, pitch included.
+##
+## The first version set `rotation.y` alone. That is EXACT for a level
+## rail -- every rail shipped today -- and it leaves a climbing one as a
+## horizontal box with a sloped ride inside it. The sign is preserved
+## from that version (local -Z along MINUS the run) so a level rail's
+## beams and lanes land in the identical orientation they always did.
 static func _aim_along(node: Node3D, from: Vector3, to: Vector3) -> void:
 	var run := to - from
 	if run.length() < 0.001:
 		return
-	node.rotation.y = atan2(run.x, run.z)
+	var up := Vector3.UP
+	# Unreachable for a validated rail (`RailPath.MAX_PITCH_DEGREES` is
+	# 75), and here so that raising that limit degrades into a rolled
+	# frame rather than an error and a zeroed basis.
+	if absf(run.normalized().dot(up)) > 0.99:
+		up = Vector3.FORWARD
+	node.basis = Basis.looking_at(-run.normalized(), up)
 
 ## An updraft with a perch. Lift only — it can carry you up, never hold
 ## you down.

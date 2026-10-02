@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- a legal object, picked up with `interact`
+  ok: looking at it offers the pickup: "[E] PICK UP · 18 kg"
+  ok: `interact` picked it up (holding cell)
+  ok: it is carried, not inventoried: a body in the world, moved along the carry line and passed through by actors
+  ok: held 1.20 m out along the view (the pose says 1.20 m)
+  ok: turning 90° carries it round to the new view (alignment 1.000)
+  ok: and looking down lowers it (0.69 m below the carry anchor)
+  -- what carrying blocks, and what it leaves
+  ok: the Static Pulse does not fire while carrying (0 shots)
+  ok: …and says so, once for a press held down 40 frames: ["PULSE BLOCKED WHILE CARRYING"]
+  ok: Mobility is blocked, and says so: ["MOBILITY BLOCKED WHILE CARRYING"]
+  ok: and neither of them put the object down
+  -- walked into a wall while carrying
+  ok: carried to the start of the walk (still holding)
+  ok: the carried box never entered the wall (deepest -0.001 m past its face)
+  ok: it was held short of its pose rather than pushed through (held short)
+  NOTE: walking all the way in dropped it at the player's feet
+  -- put down with `interact`, and picked up again
+  ok: still carrying before the drop
+  ok: `interact` at nothing put it down: a body again, colliding
+  ok: at zero velocity, no throw (0.32 m/s the frame after)
+  ok: it came to rest on the floor where it was held (0.00 m of drift, y 0.34)
+  ok: and it can be picked up again
+  ok: and put down again
+  -- the same 18 kg, not carriable
+  ok: the prompt says so before the press: "CAN'T CARRY THAT"
+  ok: and `interact` refuses it with the reason: ["CAN\'T CARRY THAT"]
+  -- 60.00 kg is carriable, 60.01 kg is not
+  ok: exactly 60 kg is picked up
+  ok: just over is refused, and says by how much: ["TOO HEAVY TO CARRY · 60.01 kg (limit 60 kg)"]
+  ok: a LIGHTENED 70 kg object reads light and is still refused: the limit is kilograms (["TOO HEAVY TO CARRY · 70 kg (limit 60 kg)"])
+  -- walking speed while carrying
+  ok: a LIGHT object costs nothing (7.00 vs 7.00 m/s)
+  ok: a MEDIUM object walks at 0.85 of free speed (the rule says 0.85)
+  ok: the same 40 kg LIGHTENED reads light and walks free (1.00 of free speed)
+  -- the Archive's hold cannot drop what is carried
+  ok: carrying before the modal opens
+  ok: three `interact` presses under the modal hold dropped nothing
+  ok: and the first press after it closes puts it down
+  -- dying while carrying
+  ok: carrying again
+  ok: death put it down: still in the world, a body again
+  ok: where it was held, at rest (0.00 m), not sent home and not deleted
+GODOT CARRY TESTS OK (33 checks, 1 notes)

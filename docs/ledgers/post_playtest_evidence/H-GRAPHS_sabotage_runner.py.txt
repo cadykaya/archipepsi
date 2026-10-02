@@ -1,0 +1,116 @@
+"""H-GRAPHS sabotages: break one rule, confirm a named failure, restore.
+
+Same protocol as the CP4 and D-01 runners: each row edits the graph
+runtime in the wt-graphs work tree, runs `godot-signal-verbs`' driver,
+records its FAIL lines, and restores the file byte for byte (sha256).
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+TREE = Path(__file__).resolve().parent / "wt-graphs"
+GODOT = [str(TREE / "godot-bin" / "godot"), "--headless", "--path",
+         str(TREE / "godot"), "--", "--signal-verbs"]
+RT = "godot/scripts/gameplay/signal_graph.gd"
+
+ROWS = [
+    ("HG-1", "a recorded LATCH set from the live track (a verb sets it)", RT,
+     """			if is_verified and bool(vals.get(str(inputs[0]), false)):""",
+     """			if bool(vals.get(str(inputs[0]), false)):""",
+     "never sets the recorded LATCH (N-15)"),
+    ("HG-2", "§14.3 ignored: a TIMER takes INVERT", RT,
+     """	"TIMER": ["PROBE", "BRIDGE_FROM", "BRIDGE_TO", "HOLD_SIGNAL", "CUT"],""",
+     """	"TIMER": ["PROBE", "BRIDGE_FROM", "BRIDGE_TO", "INVERT", "HOLD_SIGNAL", "CUT"],""",
+     "a TIMER cannot take INVERT (§14.3)"),
+    ("HG-3", "a BRIDGE that closes a cycle is not refused", RT,
+     '\t\t\tif order.size() != nodes.size():',
+     '\t\t\tif false:',
+     "would close a cycle"),
+    ("HG-4", "a verb never expires", RT,
+     """		entry["left"] = float(entry["left"]) - delta""",
+     """		entry["left"] = float(entry["left"])""",
+     "the verb expires and the shutter shuts again"),
+    ("HG-5", "a BRIDGE carries nothing into its destination", RT,
+     """		if str(edge["to"]) == id and bool(vals.get(str(edge["from"]), false)):
+			return true""",
+     """		if false:
+			return true""",
+     "BRIDGE from the plate into the OR"),
+    ("HG-6", "CUT on a latch clears the record", RT,
+     """			_split()
+			overrides[target] = {"verb": verb, "left": magnitude}""",
+     """			_split()
+			overrides[target] = {"verb": verb, "left": magnitude}
+			if verb == "CUT":
+				latched.erase(target)""",
+     "and the record is untouched"),
+    ("HG-7", "the verified track reads the verbs too", RT,
+     """		verified[id] = read
+		values[id] = _overridden(id, read)""",
+     """		verified[id] = _overridden(id, read)
+		values[id] = _overridden(id, read)""",
+     "its verified value is OFF"),
+    ("HG-8", "PROBE changes the machine", RT,
+     """			probes[target] = magnitude
+			return {"ok": true, "probe": probe(target)}""",
+     """			probes[target] = magnitude
+			_split()
+			overrides[target] = {"verb": "CUT", "left": magnitude}
+			return {"ok": true, "probe": probe(target)}""",
+     "and changes nothing"),
+    ("HG-9", "§14.3 ignored: a LATCH takes HOLD_SIGNAL", RT,
+     """	"LATCH": ["PROBE", "BRIDGE_FROM", "CUT"],""",
+     """	"LATCH": ["PROBE", "BRIDGE_FROM", "HOLD_SIGNAL", "CUT"],""",
+     "a LATCH cannot take HOLD_SIGNAL (§14.3)"),
+]
+BRIDGE_ROWS = []
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main() -> int:
+    only = set(sys.argv[1:])
+    rows = [r for r in ROWS if not only or r[0] in only]
+    lines, caught = [], 0
+    for rid, what, rel, old, new, expect in rows:
+        path = TREE / rel
+        original = path.read_bytes()
+        before = sha(path)
+        text = original.decode("utf-8")
+        if text.count(old) != 1:
+            lines.append(f"{rid} SETUP ERROR: anchor found "
+                         f"{text.count(old)} times in {rel}")
+            continue
+        path.write_bytes(text.replace(old, new).encode("utf-8"))
+        try:
+            out = subprocess.run(GODOT, capture_output=True, text=True,
+                                 timeout=900, cwd=TREE)
+            log = out.stdout + out.stderr
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        fails = sorted({l[6:] for l in log.splitlines()
+                        if l.startswith("FAIL: ")})
+        errors = sum(1 for l in log.splitlines() if "SCRIPT ERROR" in l)
+        hit = any(expect in f for f in fails)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} -- "
+                     f"{len(fails)} failing check(s), {errors} script "
+                     f"error(s); restored byte for byte: {restored}")
+        for f in fails:
+            lines.append(f"      FAIL: {f[:300]}")
+    total = len(rows)
+    lines.append(f"\n{caught} of {total} sabotages caught")
+    print("\n".join(lines))
+    return 0 if caught == total else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

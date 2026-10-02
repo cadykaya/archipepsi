@@ -1,0 +1,69 @@
+MF-1 [map_face.gd] a room gets a roof (no cutaway)
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and none has a roof: a room is its floor and a low wall (0 of 25)
+MF-2 [map_face.gd] a connector is built end to end (a straight line)
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: e:c004:c005 is built along its chain, point for point, in 3D (2 points; it climbs 0.0 m)
+MF-3 [map_face.gd] the wall colours circuits by itself (a hash of the id)
+    CAUGHT -- 4 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: all_rooms: the same 25 rooms under the same names, and the same 7 blockers in the same colours with the same letters, on both maps
+      FAIL: carried: the same 5 rooms under the same names, and the same 3 blockers in the same colours with the same letters, on both maps
+      FAIL: powered: the same 5 rooms under the same names, and the same 2 blockers in the same colours with the same letters, on both maps
+      FAIL: walked: the same 5 rooms under the same names, and the same 3 blockers in the same colours with the same letters, on both maps
+MF-4 [map_face.gd] every connector gets an indicator, open or not
+    CAUGHT -- 7 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: all_rooms: the same 25 rooms under the same names, and the same 32 blockers in the same colours with the same letters, on both maps
+      FAIL: carried: the same 5 rooms under the same names, and the same 7 blockers in the same colours with the same letters, on both maps
+      FAIL: every way back the bridge lists is a ring where it stands (0)
+      FAIL: installed: the bridge's map opens it, and the indicator is gone
+      FAIL: powered: the same 5 rooms under the same names, and the same 7 blockers in the same colours with the same letters, on both maps
+      FAIL: the span: no indicator lowered, a P indicator put back
+      FAIL: walked: the same 5 rooms under the same names, and the same 7 blockers in the same colours with the same letters, on both maps
+MF-5 [map_face.gd] every built room is shown, found or not
+    CAUGHT -- 5 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: all_rooms: the same 26 rooms under the same names, and the same 7 blockers in the same colours with the same letters, on both maps
+      FAIL: carried: the same 26 rooms under the same names, and the same 3 blockers in the same colours with the same letters, on both maps
+      FAIL: powered: the same 26 rooms under the same names, and the same 2 blockers in the same colours with the same letters, on both maps
+      FAIL: the places you know are the rooms found or walked, and nothing beyond them: ["c001", "c002", "c003", "c004", "c005", "c006", "c007", "c008", "c009", "c010", "c011", "c012", "c013", "c014", "c015", "c016", "c017", "c018", "c019", "c020", "c021", "c022", "c023", "c024", "c025", "exit"]
+      FAIL: walked: the same 26 rooms under the same names, and the same 3 blockers in the same colours with the same letters, on both maps
+MF-6 [map_face.gd] the miniature carries collision (a body per room)
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the miniature is 148 nodes of { "Node3D": 1, "MeshInstance3D": 65, "StaticBody3D": 25, "CollisionShape3D": 25, "Label3D": 32 }, none with a script; nothing else: ["StaticBody3D", "CollisionShape3D"] []
+MF-7 [map_face.gd] no cache: the same map is built again
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a changed map is built once: 9 -> 12
+      FAIL: the same map asked for again is not built again (11 builds)
+MF-8 [map_face.gd] the wall builds while the menu is closed
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and nothing is built while the menu is closed
+MF-9 [map_face.gd] the indicator does not pulse
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and it pulses (1 sizes in 0.9 s)
+MF-10 [map_face.gd] the arrow keys do not turn the map
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: Right turns the map (30 -> 30), not the page
+MF-11 [map_face.gd] one floor at a time shows every floor
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: PgUp shows your floor alone: 25 rooms, none from another
+MF-12 [map_face.gd] every floor is solid (no ghosts)
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: PgUp shows your floor alone: 11 rooms, none from another
+      FAIL: every floor shown: yours solid (25 rooms), the others ghosts (0)
+MF-13 [map_face.gd] a stick held across a page turn keeps turning the map
+    CAUGHT -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a stick still held when the page turned away turns nothing
+      FAIL: a turn to the journal and back keeps the view, the floor and the place: [158.6, 62.5, 166.4, (-57.34, 2.53, 23.0), 1, "c004"]
+      FAIL: and so do a close and a reopen
+MF-14 [map_face.gd] the view resets whenever the wall is not shown
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and so do a close and a reopen
+MF-15 [map_face.gd] a way on to an unfound room names it by its save id
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and no save id
+MF-16 [map_face.gd] the Hub keeps the last Zone's miniature
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: in the Hub the wall says there is no map here, and draws nothing
+MF-17 [map_face.gd] building the wall sends a state-setting intent
+    NOT CAUGHT -- 0 failing check(s), 0 script error(s); restored byte for byte: True
+
+16 of 17 sabotages caught

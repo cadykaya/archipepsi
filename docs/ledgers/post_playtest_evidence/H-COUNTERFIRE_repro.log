@@ -1,0 +1,47 @@
+# H-COUNTERFIRE: the hosted room as it stood (branch at b96eaf2 + the new driver), godot-bin/godot --headless --path godot -- --counterfire-hosted --counterfire-only=quick
+  ok: the played Zone hosts EX50-021: ["c025:Chamber_c025", "c024:Chamber_c024"]
+  NOTE: QUICK: the mobility sweep is skipped -- not the suite
+  -- c025: what the room says before anything is done
+FAIL: c025: the trip names what it does, and is not an unrelated emergency control: 'EMERGENCY IMPACT TRIP / SERVICE SHUTTER'
+  ok: c025: and nothing prints the answer on entry (no bait, gunner or dodge instruction): ["ARRIVAL ARCADE", "EMERGENCY IMPACT TRIP / SERVICE SHUTTER", "SERVICE ROUTE", "GALLERY"]
+  -- c025: no step from anywhere reached drops out of the world
+FAIL: c025: from 4122 cell(s) reached, no step lands on nothing (void edges, the room's frame: [(2.0, 0.0, -9.1), (2.3, 0.0, -9.1), (1.6, 0.0, -9.2), (2.4, 0.0, -9.2), (2.5, 0.0, -9.2), (3.3, 0.0, -9.2), (2.6, 0.0, -9.1), (2.9, 0.0, -9.1)])
+  -- c025: kill-first -- the gunner dead, the receiver shot by hand, the Check claimed (V-11, PT-04)
+  ok: c025: the Zone's gunner killed with the base kit: 1 of 1 down in 4.2 s, 8 hp taken, 0 death(s)
+  ok: c025: a Static Pulse from the lane side trips the receiver (1 hit(s), 0 before the fight) and the shutter opens
+  ok: c025: through the shutter inside its window (5.1 s left)
+  ok: c025: up the supported route onto the flank ((15.200000, 3.000000, -2.000000))
+  ok: c025: the Check 89100025 claimed on the flank, the gunner dead: the reward is not stranded (1 claim(s))
+  ok: c025: no death on the way (8 hp taken)
+  -- c025: back from the flank with nothing pulled
+FAIL: c025: off the flank's reach onto the gallery, nothing pulled ((9.000000, -30.500000, 7.000000))
+FAIL: c025: and back to where the room was entered (53.5 m off)
+  -- c025: what the room says while the window runs
+FAIL: c025: a Static Pulse on the receiver's face opens the window (0.0 s)
+FAIL: c025: the conduit from the receiver to the shutter LIGHTS while the window runs (0 glowing, 0 before)
+FAIL: c025: and the shutter says how long it has: 'SERVICE ROUTE' (was 'SERVICE ROUTE')
+  ok: c025: when the window closes, the conduit goes dark again
+  -- c025: which side of the receiver a shot trips it
+  ok: c025: from the arrival side, 0 shot(s) at the receiver trip it 0 time(s): the hood is steel (97 shots; tripped from [])
+  ok: c025: from the lane side, 130 of 393 shot(s) trip it
+  -- c025: the release, and the way back it lowers (R3)
+  ok: c025: on the flank again, through a fresh window
+  ok: c025: the SERVICE RELEASE pulled on the flank: the shutter held open and its stair down (12 steps)
+FAIL: c025: the release STAYS THROWN and says so: '[E] SERVICE RELEASE'
+FAIL: c025: down the release's stair onto the gallery ((8.500000, -30.500000, 7.000000))
+FAIL: c025: and back to where the room was entered (53.5 m off)
+GODOT COUNTERFIRE HOSTED TESTS: 10 failures in 23 checks
+
+# --counterfire-only=survey: the highest surface under each 0.5 m cell of the north-east corner (room frame); '.' = nothing within 44 m
+SURVEY room-frame x across (10.0 .. 17.5), z down (5.0 .. 10.0)
+SURVEY z  5.0  -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0  3.0  3.0  3.0  3.6
+SURVEY z  5.5  -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0 -0.0  3.0  3.0  3.0  3.6
+SURVEY z  6.0   1.7  1.7  1.7  1.7  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.6
+SURVEY z  6.5   1.0  1.0  1.0  1.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.6
+SURVEY z  7.0   1.0  1.0  1.0  1.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.6
+SURVEY z  7.5   1.0  1.0  1.0  1.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.6
+SURVEY z  8.0   1.0  1.0  1.0  1.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0    .
+SURVEY z  8.5   1.0  1.0  1.0  1.0  2.6    .    .    .    .    .    .    .    .    .    .    .
+SURVEY z  9.0   1.0  1.0  1.0  1.0  3.6    .    .    .    .    .    .    .    .    .    .    .
+SURVEY z  9.5   1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5
+SURVEY z 10.0   1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5  1.5

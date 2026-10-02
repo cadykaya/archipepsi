@@ -1,0 +1,561 @@
+rm -rf /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for seed (port already serving?)"; exit 1; }; /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --candidate-live=seed --candidate-save-dir=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves  > /tmp/archipepsi-candidate-seed.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" /tmp/archipepsi-candidate-seed.log; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-seed.log; exit $STATUS; fi
+2026-09-25 07:56:30,547 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:56:30,550 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 07:56:30,564 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:30,564 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:30,564 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:30,565 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:30,565 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:30,567 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f668944a9227*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+    (no campaign there yet; it is created on first connect)
+
+2026-09-25 07:56:30,639 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 07:56:30,639 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 07:56:38,685 websockets.server INFO connection open
+2026-09-25 07:56:38,685 archipepsi.server INFO client connected (1 total)
+2026-09-25 07:56:38,699 archipepsi.mock_ap WARNING mock room not written to /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves/1b7b4f118d2f3db5__Skyiah.mock_room: [Errno 2] No such file or directory: '/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves/1b7b4f118d2f3db5__Skyiah.mock_room.tmp'
+2026-09-25 07:56:38,700 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:56:38,704 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 07:56:38,833 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:38,833 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:38,833 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:38,833 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:38,833 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:38,836 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:39,242 archipepsi.campaign INFO zone zone_001: candidate zone_state EMITTED: control in 'c002', consequence in 'c003', gating 'e:c002:c003'
+2026-09-25 07:56:39,243 archipepsi.campaign INFO zone zone_001: candidate transport EMITTED: 'power_cell' at home in 'c004', carried c004 -> c005, installed in 'c005', opening 'e:c005:c006'
+2026-09-25 07:56:39,243 archipepsi.campaign INFO zone zone_001: candidate latched_route EMITTED: lever and latch in 'c009', shutter across 'e:c009:c010' into 'c010'; reachable before the route it opens
+2026-09-25 07:56:39,243 archipepsi.campaign INFO zone zone_001: candidate minors EMITTED: EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100055 moved into the minor, at its objective; it records minor_c024/bolt; EX50-021 Counterfire Arcade built as 'c025' behind the dead end 'c020' (its 'side_right' doorway); 'c020''s Check 89100025 moved into the minor, at its objective; it records minor_c025/release; EX50-011 declined: no dead end can take it ('c024' is itself a minor; 'c025' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c005' already holds the 'cell_power' setter; and 8 more)
+2026-09-25 07:56:39,319 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 07:56:39,320 archipepsi.server INFO client disconnected (0 left)
+  ok: the served Zone's zone_state are the fixture's, field for field
+  ok: the served Zone's room_graphs are the fixture's, field for field
+  ok: the served Zone's transported_objects are the fixture's, field for field
+  ok: the served Zone's object_consumers are the fixture's, field for field
+  ok: the served Zone's edges are the fixture's, field for field
+  ok: the served Zone's chambers are the fixture's, field for field
+  ok: e:c001:c002 is not gated twice
+  ok: e:c002:c003 is not gated twice
+  ok: e:c003:c004 is not gated twice
+  ok: e:c004:c005 is not gated twice
+  ok: e:c005:c006 is not gated twice
+  ok: e:c006:c007 is not gated twice
+  ok: e:c007:c008 is not gated twice
+  ok: e:c008:c009 is not gated twice
+  ok: e:c009:c010 is not gated twice
+  ok: e:c010:c013 is not gated twice
+  ok: e:c013:c016 is not gated twice
+  ok: e:c016:c019 is not gated twice
+  ok: e:c019:c022 is not gated twice
+  ok: e:c022:c023 is not gated twice
+  ok: e:c009:c011 is not gated twice
+  ok: p:c011:start is not gated twice
+  ok: e:c011:c012 is not gated twice
+  ok: p:c012:start is not gated twice
+  ok: e:c005:c014 is not gated twice
+  ok: p:c014:start is not gated twice
+  ok: e:c014:c015 is not gated twice
+  ok: p:c015:start is not gated twice
+  ok: e:c014:c017 is not gated twice
+  ok: p:c017:start is not gated twice
+  ok: e:c002:c018 is not gated twice
+  ok: p:c018:start is not gated twice
+  ok: e:c018:c020 is not gated twice
+  ok: p:c020:start is not gated twice
+  ok: e:c018:c021 is not gated twice
+  ok: p:c021:start is not gated twice
+  ok: e:c015:c024 is not gated twice
+  ok: e:c020:c025 is not gated twice
+  ok: one doorway per declared relationship: 3 declared, gated ["e:c002:c003", "e:c005:c006", "e:c009:c010"]
+  ok: the bridge recorded all 4 steps, each EMITTED: ["zone_state=EMITTED", "transport=EMITTED", "latched_route=EMITTED", "minors=EMITTED"] in /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves/candidate/zone_001.json
+seeded: zone_001 generated with the whole candidate profile
+GODOT CANDIDATE LIVE SEED OK (40 checks, 0 notes)
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for play (port already serving?)"; exit 1; }; /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --candidate-live=play --candidate-save-dir=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves  > /tmp/archipepsi-candidate-play.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" /tmp/archipepsi-candidate-play.log; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-play.log; exit $STATUS; fi
+2026-09-25 07:56:40,126 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:56:40,129 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 07:56:40,153 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:40,153 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:40,153 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:40,154 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:40,154 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:56:40,159 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f668944a9227*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-25 07:56:40,262 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 07:56:40,262 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 07:56:48,194 websockets.server INFO connection open
+2026-09-25 07:56:48,194 archipepsi.server INFO client connected (1 total)
+2026-09-25 07:56:48,210 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:56:48,216 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations
+2026-09-25 07:56:53,916 archipepsi.campaign INFO zone zone_001 layout committed (3bed395c1752eb2e)
+2026-09-25 07:57:58,065 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 07:57:58,067 archipepsi.server INFO client disconnected (0 left)
+  ok: nothing refused: zone-state [], gates [], sockets [], graphs []
+  ok: built: the lever, its gate, the cell, its socket and gate, and every route shutter the Zone declares (1 built, 1 declared)
+  ok: every gated doorway starts shut (3)
+  ok: the span lever does not stand on the route's own control (139.7 m apart)
+  ok: every declared route lever is built as a lever you pull (1 of 1 route controls; 1 declared)
+  ok: c002 cleared with the base kit: 5 of 5 down in 11.7 s
+  ok: advanced along the spine to c002
+  ok: PULLED and ACCEPTED: the snapshot holds ["span_alignment", "lowered"]
+  ok: the lever's doorway e:c002:c003 opened
+  ok: c003 cleared with the base kit: 0 of 0 down in 0.0 s
+  ok: crossed the platform path c003 on the real controller, island by island
+  ok: c004 cleared with the base kit: 0 of 0 down in 0.0 s
+  NOTE: HARNESS: 2 bulwark(s) in c005 removed through the damage path, from behind (see P5-7)
+  ok: c005 cleared with the base kit: 0 of 0 down in 0.0 s
+  ok: advanced along the spine to c005
+  ok: the cell is picked up at home in c004
+  ok: carried across the connector into c005
+  ok: at the socket: "[E] INSTALL"
+  ok: INSTALLED and ACCEPTED: cell_power powered in the snapshot
+  ok: the cell's doorway opened and the player walked into c006
+  ok: and any route branch is still shut: nothing here latched it (1)
+  ok: the lever's consequence was in c003
+played: lever lowered, cell installed; leaving for the restart
+GODOT CANDIDATE LIVE PLAY OK (21 checks, 1 notes)
+-- restart: both processes new, only the save crosses --
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for restore (port already serving?)"; exit 1; }; /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --candidate-live=restore --candidate-save-dir=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves  > /tmp/archipepsi-candidate-restore.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" /tmp/archipepsi-candidate-restore.log; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-restore.log; exit $STATUS; fi
+2026-09-25 07:57:58,819 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:57:58,821 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 07:57:58,835 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:57:58,835 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:57:58,835 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:57:58,835 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:57:58,835 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:57:58,838 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f668944a9227*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-25 07:57:58,909 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 07:57:58,909 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 07:58:06,958 websockets.server INFO connection open
+2026-09-25 07:58:06,958 archipepsi.server INFO client connected (1 total)
+2026-09-25 07:58:06,974 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:58:06,977 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations
+2026-09-25 07:58:12,784 archipepsi.campaign INFO zone zone_001 layout committed (3bed395c1752eb2e)
+2026-09-25 07:58:13,357 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 07:58:13,358 archipepsi.server INFO client disconnected (0 left)
+  ok: RESTART: the new bridge loaded the save; the Hub offers 'zone_001'
+  ok: the lever's doorway is open the moment the Zone exists
+  ok: the cell is seated, one copy, and its doorway open at load
+  ok: every route branch is still shut: restored as it was left (1)
+  ok: and nothing was announced: the restore reported nothing back
+GODOT CANDIDATE LIVE RESTORE OK (5 checks, 0 notes)
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for minor (port already serving?)"; exit 1; }; /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --candidate-live=minor --candidate-save-dir=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves  > /tmp/archipepsi-candidate-minor.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" /tmp/archipepsi-candidate-minor.log; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-minor.log; exit $STATUS; fi
+2026-09-25 07:58:14,052 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:58:14,054 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 07:58:14,067 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:14,067 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:14,068 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:14,068 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:14,068 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:14,070 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f668944a9227*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-25 07:58:14,135 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 07:58:14,135 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 07:58:22,267 websockets.server INFO connection open
+2026-09-25 07:58:22,267 archipepsi.server INFO client connected (1 total)
+2026-09-25 07:58:22,282 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:58:22,288 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations
+2026-09-25 07:58:28,090 archipepsi.campaign INFO zone zone_001 layout committed (3bed395c1752eb2e)
+2026-09-25 07:58:56,277 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 07:58:56,278 archipepsi.server INFO client disconnected (0 left)
+  ok: the Zone hosts both minors, each found in its own room by the controller: ["c025", "c024"] ["Chamber_c025", "Chamber_c024"]
+  ok: c025 is built from EX50-021's own shell
+  ok: as built: shutter shut, nothing released, no stair, no stand-in goal, and no gunner of the room's own
+  ok: the gunner is the Zone's own ranged enemy, on the gallery post (1 in the room)
+  ok: its Check stands on the flank, 3.00 m above the floor
+  ok: the minor c025 stands behind c020
+  NOTE: HARNESS STEP: placed at c020's arrival (-28.250000, 0.000000, 42.250000)
+  ok: walked from c020 into the minor c025 through the doorway the profile added (16.8 m, 0 death(s))
+  ok: standing in the lane, the Zone's gunner COMMITTED a shot at the player (nothing was pressed)
+  ok: the enemy's own projectile carried on down the lane and TRIPPED the receiver (1 hit(s))
+  ok: and the service shutter is opening
+  ok: through the shutter inside its interval (5.6 s left)
+  ok: up the supported route onto the flank, 2.96 m above the floor
+  ok: the SERVICE RELEASE pulled and ACCEPTED: 'minor_c025/release' is in the save
+  ok: at the Check: "[E] CLAIM CHECK 025"
+  ok: the minor's Check 89100025 is CONFIRMED
+played: EX50-021 in c025 -- the Zone's gunner baited, release minor_c025/release, Check 89100025 claimed
+  ok: c024 is built from the minor's own shell
+  ok: as built: bolt free, crate parked, no return stair, and no stand-in goal -- the goal is the Zone's Check
+  ok: its Check stands on the gallery, 1.90 m above the floor
+  ok: the minor c024 stands behind c015
+  NOTE: HARNESS STEP: placed at c015's arrival (-6.790002, 1.530000, 97.900002)
+  ok: c015 cleared with the base kit (0 left)
+  ok: walked from c015 into the minor c024 through the doorway the profile added (14.9 m, 0 death(s))
+  ok: the SERVICE DRIVE pulled by hand; the crate is on the HEAVY plate and the crossing has SHUT
+  ok: the shut panel stands IN the crossing (0.00 m off it)
+  ok: STANDING on the crate top, feet 0.90 m above the floor
+  ok: ...and walking at the doorway from the crate gets nowhere: 0.62 m short of the crossing
+  ok: the applicator was shot with the Static Pulse (1 trigger(s)) and the crate carries LIGHTENED
+  ok: the crossing OPENED with the crate still on the plate
+  ok: through the doorway onto the gallery
+  ok: the HOLD-OPEN BOLT pulled and ACCEPTED: 'minor_c024/bolt' is in the save
+  ok: at the Check: "[E] CLAIM CHECK 055"
+  ok: the minor's Check 89100055 is CONFIRMED
+played: EX50-033 in c024 -- bolt minor_c024/bolt, Check 89100055 claimed
+  ok: each Check claimed exactly once (2 claim intent(s) for 2 minor(s))
+GODOT CANDIDATE LIVE MINOR OK (32 checks, 2 notes)
+-- restart: both processes new, only the save crosses --
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for minor_restore (port already serving?)"; exit 1; }; /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --candidate-live=minor_restore --candidate-save-dir=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves  > /tmp/archipepsi-candidate-minor_restore.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" /tmp/archipepsi-candidate-minor_restore.log; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-minor_restore.log; exit $STATUS; fi
+2026-09-25 07:58:57,000 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:58:57,002 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 07:58:57,016 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:57,016 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:57,016 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:57,016 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:57,016 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:58:57,019 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f668944a9227*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-25 07:58:57,093 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 07:58:57,094 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 07:59:04,928 websockets.server INFO connection open
+2026-09-25 07:59:04,928 archipepsi.server INFO client connected (1 total)
+2026-09-25 07:59:04,944 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:59:04,950 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations
+2026-09-25 07:59:10,696 archipepsi.server ERROR intent layout_result failed
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 124, in dispatch
+    await self._route(ws, message)
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 195, in _route
+    await engine.handle_layout_result(m)
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/campaign.py", line 1706, in handle_layout_result
+    self._apply(T.commit_layout(self.save, intent.zone_id,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/schemas/transitions.py", line 379, in commit_layout
+    raise ValueError(
+ValueError: Zone 'zone_001' already carries layout 3bed395c1752eb2e; a committed layout is replayed, never replaced
+2026-09-25 07:59:39,345 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 07:59:39,346 archipepsi.server INFO client disconnected (0 left)
+  ok: RESTART: the new bridge loaded the save; the Hub offers 'zone_001'
+  ok: the Zone hosts both minors, each found in its own room by the controller: ["c025", "c024"] ["Chamber_c025", "Chamber_c024"]
+  ok: RESTORED before anyone acts: released, the shutter open and its fixed stair standing (12 steps)
+  ok: and the panel is physically raised clear of its doorway (0.00 m off)
+  ok: and the release is restored THROWN: 'RELEASE THROWN -- SHUTTER HELD OPEN, STAIR DOWN'
+  ok: the Check stays claimed: nothing to claim twice
+  ok: and 20 s later -- two and a half intervals -- the restored release still holds it open
+played: the restored release holds c025's shutter
+  ok: RESTORED before anyone acts: the bolt holds, the crossing is open and the return stair stands (8 steps)
+  ok: the crate is parked and LIGHTENED is gone: package-local and ephemeral, never saved
+  ok: and the panel is physically raised clear of the crossing (0.00 m off)
+  ok: the Check stays claimed: nothing to claim twice
+  ok: the minor c024 stands behind c015
+  NOTE: HARNESS STEP: placed at c015's arrival (-6.790002, 1.530000, 97.900002)
+  ok: c015 cleared with the base kit (0 left)
+  ok: walked from c015 into the minor c024 through the doorway the profile added (24.1 m, 0 death(s))
+  ok: the crate driven back onto the HEAVY plate, and the crossing STAYS OPEN: the restored bolt holds it
+played: the restored bolt holds c024's crossing
+  ok: and nothing was announced: no latch and no claim sent back
+GODOT CANDIDATE LIVE MINOR_RESTORE OK (16 checks, 1 notes)
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for next (port already serving?)"; exit 1; }; /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --candidate-live=next --candidate-save-dir=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves  > /tmp/archipepsi-candidate-next.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" /tmp/archipepsi-candidate-next.log; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-next.log; exit $STATUS; fi
+2026-09-25 07:59:40,111 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:59:40,114 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 07:59:40,136 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:40,136 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:40,137 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:40,137 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:40,137 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:40,142 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f668944a9227*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-25 07:59:40,221 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 07:59:40,221 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 07:59:48,299 websockets.server INFO connection open
+2026-09-25 07:59:48,299 archipepsi.server INFO client connected (1 total)
+2026-09-25 07:59:48,315 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 07:59:48,319 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations
+2026-09-25 07:59:54,113 archipepsi.server ERROR intent layout_result failed
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 124, in dispatch
+    await self._route(ws, message)
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 195, in _route
+    await engine.handle_layout_result(m)
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/campaign.py", line 1706, in handle_layout_result
+    self._apply(T.commit_layout(self.save, intent.zone_id,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/schemas/transitions.py", line 379, in commit_layout
+    raise ValueError(
+ValueError: Zone 'zone_001' already carries layout 3bed395c1752eb2e; a committed layout is replayed, never replaced
+2026-09-25 07:59:55,172 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:55,173 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:55,173 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:55,173 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:55,173 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:55,176 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 07:59:55,359 archipepsi.campaign INFO zone zone_002: candidate zone_state EMITTED: control in 'c002', consequence in 'c003', gating 'e:c002:c003'
+2026-09-25 07:59:55,359 archipepsi.campaign INFO zone zone_002: candidate transport declined: no placement validated: ['c002', 'c003', 'c004']: c003 is a platform_path, not a room a carried object crosses on foot; ['c003', 'c004', 'c005']: c003 is a platform_path, not a room a carried object crosses on foot; ['c004', 'c005', 'c006']: 'c005' is shell 'shell_hall_transit', whose doorways 'entry' at 0 m, 'exit' at 28 m are not one floor; a hand carry is a walk; ['c005', 'c006', 'c007']: 'c005' is shell 'shell_hall_transit', whose doorways 'entry' at 0 m, 'exit' at 28 m are not one floor; a hand carry is a walk
+2026-09-25 07:59:55,359 archipepsi.campaign INFO zone zone_002: candidate latched_route EMITTED: lever and latch in 'c006', shutter across 'e:c006:c007' into 'c007'; reachable before the route it opens
+2026-09-25 07:59:55,359 archipepsi.campaign INFO zone zone_002: candidate minors EMITTED: EX50-021 Counterfire Arcade built as 'c024' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100051 moved into the minor, at its objective; it records minor_c024/release; EX50-011 Passing Platforms built as 'c025' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100005 moved into the minor, at its objective; it records minor_c025/stair; EX50-033 declined: no dead end can take it ('c020': the Zone schema refused every free doorway (Tuple should have at most 32 items after validation, not 33 [type=too_long, input_value=[{'edge_id': 'e:c001:c002...realization': 'JOINED'}], input_type=list]); 'c024' is itself a minor; 'c025' is itself a minor; 'c002' already holds the 'span_alignment' setter; and 8 more)
+2026-09-25 08:00:01,055 archipepsi.campaign INFO zone zone_002 layout committed (2ea2ed5f33b9c37e)
+2026-09-25 08:00:20,138 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 08:00:20,139 archipepsi.server INFO client disconnected (0 left)
+  ok: back in zone_001, the Zone the campaign holds
+  ok: Escape opens the pause interface on its Settings wall, the pause menu drawn there, and the player is held
+  ok: Tab turns it to the Equipment wall, the inventory drawn there
+  ok: the pause menu's ABANDON ZONE, then CONFIRM ABANDON, pressed
+  ok: and the pause interface closes behind the abandon, the player released
+  ok: abandoned by the ordinary lifecycle: one 'abandon_zone', and the Hub offers a new Zone
+  ok: the portal designed and opened zone_002
+  ok: the bridge recorded the minors step hosting EX50-011 in zone_002: EX50-021 Counterfire Arcade built as 'c024' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100051 moved into the minor, at its objectiv
+  ok: the controller found it in its room
+  ok: c025 is built from the minor's own shell
+  ok: as built: the lift at A, the shuttle at WEST, no service stair
+  ok: its Check stands on the goal gallery G, 4.00 m up
+  ok: the minor c025 stands behind c015
+  NOTE: HARNESS STEP: placed at c015's arrival (50.750000, 31.850000, 92.399994)
+  ok: walked from c015 into the minor c025 through the doorway the profile added (20.3 m, 0 death(s))
+  ok: H EAST pulled at A by hand; the shuttle under way (1.52 m along)
+  NOTE: HARNESS STEP: the player is killed through the damage path, to exercise EX50-011 §9's death rule
+  ok: the player died before completing it, and the shuttle went home from 1.52 m by ordinary motion: largest single step 0.054 m against 0.088
+  ok: its rest at WEST was reported: ["minor_c025", "shuttle", 0.0, "WEST", false]
+  ok: the minor c025 stands behind c015
+  NOTE: HARNESS STEP: placed at c015's arrival (50.750000, 31.850000, 92.399994)
+  ok: walked from c015 into the minor c025 through the doorway the profile added (18.8 m, 0 death(s))
+  ok: H EAST, then STOP H at A as the shuttle crossed the rendezvous: HELD between its berths, 8.08 m along
+  ok: the held rest was reported with no errand: ["minor_c025", "shuttle", 8.07501983642578, "", true]
+  ok: ACCEPTED: 'minor_c025/shuttle' rests at [8.075, "", true] in the save
+  ok: and the lift's saved rest is its berth at A, unheld: [0.0, "A", false]
+  ok: left unfinished: the Check unclaimed, no service stair
+played: EX50-011 in c025 set up -- minor_c025/shuttle held at 8.075 m
+GODOT CANDIDATE LIVE NEXT OK (24 checks, 3 notes)
+-- restart: both processes new, only the save crosses --
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for next_restore (port already serving?)"; exit 1; }; /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --candidate-live=next_restore --candidate-save-dir=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves  > /tmp/archipepsi-candidate-next_restore.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" /tmp/archipepsi-candidate-next_restore.log; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-next_restore.log; exit $STATUS; fi
+2026-09-25 08:00:20,891 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 08:00:20,894 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 08:00:20,907 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:20,907 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:20,907 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:20,907 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:20,908 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:20,910 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f668944a9227*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-25 08:00:20,983 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 08:00:20,983 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 08:00:28,783 websockets.server INFO connection open
+2026-09-25 08:00:28,784 archipepsi.server INFO client connected (1 total)
+2026-09-25 08:00:28,799 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 08:00:28,806 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations
+2026-09-25 08:00:34,607 archipepsi.server ERROR intent layout_result failed
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 124, in dispatch
+    await self._route(ws, message)
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 195, in _route
+    await engine.handle_layout_result(m)
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/campaign.py", line 1706, in handle_layout_result
+    self._apply(T.commit_layout(self.save, intent.zone_id,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/schemas/transitions.py", line 379, in commit_layout
+    raise ValueError(
+ValueError: Zone 'zone_002' already carries layout 2ea2ed5f33b9c37e; a committed layout is replayed, never replaced
+2026-09-25 08:00:56,452 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 08:00:56,453 archipepsi.server INFO client disconnected (0 left)
+  ok: RESTART: the new bridge loaded the save; the Hub offers 'zone_002'
+  ok: zone_002 still hosts EX50-011
+  ok: RESTORED before the player: the shuttle HELD at 8.075 m, where the save says [8.075, "", true]
+  ok: the lift at A, which is where it was
+  ok: and it stays put -- no correction impulse, no replayed motion: 0.0000 m over a second
+  ok: a restored rest reports nothing back
+  ok: the minor c025 stands behind c015
+  NOTE: HARNESS STEP: placed at c015's arrival (50.750000, 31.850000, 92.399994)
+  ok: walked from c015 into the minor c025 through the doorway the profile added (18.6 m, 0 death(s))
+  ok: standing on the lift at A
+  ok: LAUNCH pulled on the lift's deck; it pauses at the transfer plane beside the held shuttle
+  ok: its dwell reported as a HELD rest bound for SHELF: ["minor_c025", "lift", 4.0, "SHELF", true]
+  ok: stepped across onto the restored shuttle
+  ok: H ON EAST pulled on its deck, and it carried the player to the east berth
+  ok: its rest at EAST reported: ["minor_c025", "shuttle", 21.0, "EAST", false]
+  ok: walked off onto G: the service stair released and ACCEPTED as 'minor_c025/stair'
+  ok: at the Check on G
+  ok: the minor's Check 89100005 is CONFIRMED
+  ok: and the lift, left to its schedule, came to rest at SHELF: ["minor_c025", "lift", 8.0, "SHELF", false]
+played: EX50-011 in c025 finished from the restored shuttle -- minor_c025/stair, Check 89100005
+GODOT CANDIDATE LIVE NEXT_RESTORE OK (18 checks, 1 notes)
+-- restart: both processes new, only the save crosses --
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves python3 -m archipepsi_bridge --ap=mock --epsilon=fallback --mock-scale=default --candidate=all & BRIDGE_PID=$!; sleep 2; kill -0 $BRIDGE_PID 2>/dev/null || { echo "bridge did not start for next_final (port already serving?)"; exit 1; }; /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --candidate-live=next_final --candidate-save-dir=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves  > /tmp/archipepsi-candidate-next_final.log 2>&1; STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" /tmp/archipepsi-candidate-next_final.log; if [ $STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-next_final.log; exit $STATUS; fi
+2026-09-25 08:00:57,222 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 08:00:57,226 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 08:00:57,239 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:57,239 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:57,239 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:57,239 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:57,239 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:00:57,242 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f668944a9227*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.candidate-saves
+    generation  CANDIDATE PROFILE (opt-in): zone_state, transport, latched_route, minors, consumables
+                each step emits or declines per Zone; see <save dir>/candidate/
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-25 08:00:57,310 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 08:00:57,310 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 08:01:05,230 websockets.server INFO connection open
+2026-09-25 08:01:05,230 archipepsi.server INFO client connected (1 total)
+2026-09-25 08:01:05,245 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 08:01:05,253 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations
+2026-09-25 08:01:11,017 archipepsi.server ERROR intent layout_result failed
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 124, in dispatch
+    await self._route(ws, message)
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 195, in _route
+    await engine.handle_layout_result(m)
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/campaign.py", line 1706, in handle_layout_result
+    self._apply(T.commit_layout(self.save, intent.zone_id,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/schemas/transitions.py", line 379, in commit_layout
+    raise ValueError(
+ValueError: Zone 'zone_002' already carries layout 2ea2ed5f33b9c37e; a committed layout is replayed, never replaced
+2026-09-25 08:01:18,714 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 08:01:18,715 archipepsi.server INFO client disconnected (0 left)
+  ok: RESTORED before anyone acts: the service stair stands, and G's railing is open where it lands (19 pieces)
+  ok: each carrier where it last came to rest: the shuttle at EAST, the lift at SHELF ([21.0, "EAST", false], [8.0, "SHELF", false])
+  ok: and G's glass gate stands open, its shuttle docked there (1.00 open)
+  ok: the Check stays claimed: nothing to claim twice
+  ok: the minor c025 stands behind c015
+  NOTE: HARNESS STEP: placed at c015's arrival (50.750000, 31.850000, 92.399994)
+  ok: walked from c015 into the minor c025 through the doorway the profile added (18.6 m, 0 death(s))
+  ok: walked up the service stair from A onto G, the lift at SHELF and the shuttle at EAST: feet at (12.49, 4.33, 0.23)
+  ok: and nothing was announced: no latch, claim or rest sent back
+GODOT CANDIDATE LIVE NEXT_FINAL OK (8 checks, 1 notes)
+
+real	5m2.219s
+user	2m16.502s
+sys	0m8.648s

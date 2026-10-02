@@ -1,0 +1,96 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- SHAPE: two machines, one plane, one gap
+  ok: the lift is well-formed, got []
+  ok: the shuttle is well-formed, got []
+  ok: the lift starts at the arrival floor, at 0.00
+  ok: the shuttle's deck top is the transfer plane, at 4.00
+  ok: the lift's intermediate stop IS the transfer plane
+  ok: the authored pause is 2.5 s and is declared with the stop
+  ok: the decks are 0.20 m apart at the transfer plane
+  ok: the west berth is 9.00 m from the rendezvous (paper says 9)
+  NOTE: service speed 1.5 m/s, so the run-up is about 6.0 s
+  -- GEOMETRY: no pair of positions puts the decks together
+  ok: no pair of positions overlaps (0 of 1681 sampled)
+  ok: the closest the two sweeps ever come is 0.20 m, in z
+  -- OVERLAP: how long the chance to step across lasts
+  ok: a 1 s board-and-launch leaves 2.17 s in which the shuttle is under the lift's deck AND the lift is at the transfer plane
+  NOTE: board 1 s: relative speed at the first overlapping frame 1.50 m/s; the lift is stationary for 1.7 s of it
+  ok: a 2 s board-and-launch leaves 2.68 s in which the shuttle is under the lift's deck AND the lift is at the transfer plane
+  NOTE: board 2 s: relative speed at the first overlapping frame 0.73 m/s; the lift is stationary for 2.5 s of it
+  ok: a 3 s board-and-launch leaves 1.75 s in which the shuttle is under the lift's deck AND the lift is at the transfer plane
+  NOTE: board 3 s: relative speed at the first overlapping frame 0.59 m/s; the lift is stationary for 1.5 s of it
+  ok: the parted room reports no overlap at all, got 0.00 s
+  -- DWELL: announced, declared and spent where it is claimed
+  ok: the lift announced exactly one dwell, at the transfer stop
+  ok: it held for 2.52 s of the declared 2.5 s
+  ok: and it held AT the transfer plane throughout
+  ok: then carried on to the shelf
+  -- SCHEDULE: one destination, one motion state
+  ok: five presses are one destination
+  ok: and one arrival, got 1
+  ok: the later call replaced the earlier one and nothing resumed afterwards
+  -- STOP: an old command does not restart a stopped carrier
+  ok: ten seconds after STOP the lift is still at 0.950, now 0.950
+  ok: its saved destination survives the stop
+  ok: a call while stopped is refused as 'held' and moves nothing
+  ok: but it does change where the lift goes when released -- resume follows the saved destination
+  ok: and released, it goes there from between floors
+  -- GUARDS: what the railings stop, and what catches a miss
+  ok: nothing stands between the lift's deck and the shuttle's -- the intended stepping direction is open
+  ok: the shuttle's north edge is railed
+  ok: the lift's east edge is railed
+  ok: every point of the transfer level has a floor under it (0 without)
+  ok: and the longest drop from that level is 4.10 m
+  -- MISS: how far a missed transfer falls, and what it costs
+  ok: a missed transfer lands on a floor, at y=1.00
+  ok: and not into a void
+  ok: the floor it lands on is the recovery floor (y=1.00, expected 1.00)
+  ok: the fall of 2.89 m cost 0 HP
+  NOTE: measured fall 2.89 m; this runtime applies NO fall damage at any height -- the only fatal fall is past y=-30
+  NOTE: the tallest unrailed drop in the room is the shelf's lift opening at 8.0 m, open whenever the lift is away; boarding gates and interlocks (§8) are NOT built
+  -- CONTINUOUS: A to G, walked and ridden, nothing placed
+  ok: the call lever at A was pulled
+  ok: and the shuttle left the west berth for the east
+  ok: the launch lever on the lift's own deck was pulled
+  ok: the player boarded the lift and rose with it to the transfer plane
+  ok: stepped across onto the shuttle with both machines commanded and the shuttle still moving
+  ok: and rode it to the goal gallery, reaching G
+  ok: arriving released the permanent service stair
+  ok: the railings were untouched throughout (3 colliders before, 3 after)
+  NOTE: relative speed at the transfer 1.50 m/s; the step was taken 4.98 s after the launch lever
+  -- COUNTERPART: the same timing where nothing passes
+  ok: the call lever at A was pulled
+  ok: and the shuttle left the west berth for the east
+  ok: the launch lever on the lift's own deck was pulled
+  ok: the same plan still boards the lift
+  ok: and there is nothing to step onto
+  ok: G is NOT reached, so the positive run was measuring the room and not its own commands
+  ok: and no stair is released
+  ok: the body is on the recovery floor at y=1.00
+  -- PATIENT: stop the shuttle first, then ride across
+  ok: the shuttle was called east
+  ok: and stopped near the rendezvous with a control at A
+  ok: the shuttle is standing between its berths, not at one
+  ok: the lift was launched
+  ok: the shuttle did not drift while the lift rose
+  ok: the player stepped onto a stationary shuttle
+  ok: and restarted it from the lever on its deck
+  ok: which carried them to the east berth
+  ok: the patient route reaches G as well -- the paper alternative is built, not prose
+  -- RESET: ordinary motion, and it does not undo the stair
+  ok: the lift came down at ordinary speed -- its largest single step was 0.0323 m against a ceiling of 0.0550, where relocating into the berth would have been one step of 1.70 m
+  ok: and arrived at the arrival berth
+  ok: the released service stair survived the reset
+  -- STAIR: the released service stair, walked up and down
+  ok: walked from A up the service stair onto G without a jump, the lift at A and the shuttle at WEST: feet at (12.489453, 4.333092, 0.227435)
+  ok: and back down it to A, again without a jump: feet at (12.499727, 0.000052, -9.531133)
+  -- REST: a carrier's saved rest comes back, a dwell held
+  ok: the lift stopped in its dwell reports a HELD rest bound for SHELF: ["lift", 4.0, "SHELF", true]
+  ok: restored at the transfer plane, HELD, still bound for SHELF
+  ok: and it waits: five seconds later it has not left (4.000 m)
+  ok: a visible command resumes it to its saved destination
+  ok: the shuttle restored HELD at 7.25 m, going nowhere
+
+GODOT PASSING PLATFORMS OK (70 checks, 7 notes)
+rc=0

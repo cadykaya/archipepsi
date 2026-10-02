@@ -1,0 +1,96 @@
+# the lifecycle suite on the repaired runtime (objects slack 24).
+# Filtered: 270 lines of per-build 'p3a:' selection census and engine WARNING/backtrace lines removed.
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  LEFT (passing round 5): c015/charger#0@4235827622392 charger from (43.276726, 31.850943, 98.228867) in c015, now (44.963596, 31.850943, 101.043098) in none, post (43.414181, 31.870001, 97.834023)
+      0.25s (43.299999, 31.900000, 98.200005) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      0.48s (43.500000, 31.900000, 98.500000) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      0.73s (43.700001, 31.900000, 98.700005) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      0.98s (44.000000, 31.900000, 99.000000) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      1.23s (44.200001, 31.900000, 99.200005) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      1.48s (44.400002, 31.900000, 99.500000) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      1.72s (44.600002, 31.900000, 99.700005) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      1.97s (44.900002, 31.900000, 99.900002) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      2.22s (45.000000, 31.900000, 100.200005) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      2.47s (45.000000, 31.900000, 100.400002) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      2.72s (45.000000, 31.900000, 100.599998) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      2.97s (44.900002, 31.900000, 100.800003) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      3.22s (45.000000, 31.900000, 100.900002) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+      3.47s (45.000000, 31.900000, 101.000000) job=patrol ret=false floor=true dead=false player=(0.0, 0.0, 1.6)
+
+  -- AT THE HUB, after each round (round 1 is the fresh one)
+    Main._zone_resume                            base 0  2  2  2  2  2
+    ProcTextures._cache                          base 0  2  2  2  2  2
+    ThemeMaterials._cache                        base 4  10  10  10  10  10
+    ThemePack._cache                             base 4  10  10  10  10  10
+    Tones._enemy_cache                           base 0  1  1  1  1  1
+    objects                                      base 2955  3021  3021  3021  3021  3021
+    resources                                    base 235  239  239  239  239  239
+    (43 more counters read the same every time; the nodes: 578  578  578  578  578)
+
+  -- IN CANDIDATE, after its operations, each round
+    Main._zone_resume                            0  2  2  2  2
+    nodes                                        5724  5761  5761  5761  5761
+    objects                                      12773  12834  12836  12836  12834
+    (56 more counters read the same every time; the nodes: 5724  5761  5761  5761  5761)
+
+  -- IN PASSING, after its operations, each round
+    Main._zone_resume                            1  2  2  2  2
+    objects                                      13448  13444  13451  13445  13454
+    (56 more counters read the same every time; the nodes: 6074  6074  6074  6074  6074)
+  ok: the readings are live: the candidate Zone holds 5724 nodes, the Hub 578
+  ok: at the Hub, rounds 2-5: every counter reads what round 2 read (50 counters)
+  ok: in candidate, rounds 2-5: every counter reads what round 2 read (59 counters)
+  ok: in passing, rounds 2-5: every counter reads what round 2 read (58 counters)
+
+  -- WHAT THE OPERATIONS DID IN CANDIDATE, each round
+    round 1: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 2: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 3: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 4: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 5: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+  ok: candidate, round 1: the layout is accepted (ACCEPTED)
+  ok: candidate, round 1: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 1: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 2: the layout is accepted (ACCEPTED)
+  ok: candidate, round 2: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 2: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 3: the layout is accepted (ACCEPTED)
+  ok: candidate, round 3: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 3: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 4: the layout is accepted (ACCEPTED)
+  ok: candidate, round 4: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 4: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 5: the layout is accepted (ACCEPTED)
+  ok: candidate, round 5: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 5: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 3 sends what round 2 sent: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1} (round 2: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1})
+  ok: candidate, round 4 sends what round 2 sent: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1} (round 2: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1})
+  ok: candidate, round 5 sends what round 2 sent: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1} (round 2: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1})
+
+  -- WHAT THE OPERATIONS DID IN PASSING, each round
+    round 1: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 2: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 3: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 4: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 5: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"enemies died":[],"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+  ok: passing, round 1: the layout is accepted (ACCEPTED)
+  ok: passing, round 1: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 1: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 2: the layout is accepted (ACCEPTED)
+  ok: passing, round 2: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 2: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 3: the layout is accepted (ACCEPTED)
+  ok: passing, round 3: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 3: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 4: the layout is accepted (ACCEPTED)
+  ok: passing, round 4: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 4: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 5: the layout is accepted (ACCEPTED)
+  ok: passing, round 5: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 5: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 3 sends what round 2 sent: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1} (round 2: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1})
+  ok: passing, round 4 sends what round 2 sent: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1} (round 2: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1})
+  ok: passing, round 5 sends what round 2 sent: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1} (round 2: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1})
+  ok: the candidate has a zone-state lever to pull (1)
+GODOT MACHINE LIFE OK (41 checks, 5 rounds)

@@ -1,0 +1,45 @@
+# D-01 reproduction on a2115b6 (unchanged code), 2026-09-25T13:19:13Z
+FFFFFF...                                                                [100%]
+=================================== FAILURES ===================================
+E   AssertionError: the new campaign's save has self_addressed_echoes False
+    assert False is True
+     +  where False = CampaignSave(save_version=1, schema_version=8, seed_name='MockSeed-3', team=0, slot_id=1, slot_name='Skyiah', epsilon_...e_001', completed_zone_count=0, zone_history=(), shop=ShopState(stock=(), created_after_zone_count=0), goal_sent=False).self_addressed_echoes
+     +    where CampaignSave(save_version=1, schema_version=8, seed_name='MockSeed-3', team=0, slot_id=1, slot_name='Skyiah', epsilon_...e_001', completed_zone_count=0, zone_history=(), shop=ShopState(stock=(), created_after_zone_count=0), goal_sent=False) = <archipepsi_bridge.campaign.CampaignEngine object at 0x7fb2495a1510>.save
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_zz_d01_repro.py:54: AssertionError: the new campaign's save has self_addressed_echoes False
+E   AssertionError: own Check 89100006 (Epsilon Coin) confirmed; echo_89100006 minted 0 times
+    assert 0 == 1
+     +  where 0 = <built-in method count of list object at 0x7fb2496ff680>('echo_89100006')
+     +    where <built-in method count of list object at 0x7fb2496ff680> = [].count
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_zz_d01_repro.py:70: AssertionError: own Check 89100006 (Epsilon Coin) confirmed; echo_89100006 minted 0 times
+E   AssertionError: card lines ('Epsilon Coin', 'Delivered to you.')
+    assert ('Epsilon Coi...ered to you.') == ('Epsilon Coi..., '<no echo>')
+      
+      Right contains 4 more items, first extra item: ''
+      Use -v to get more diff
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_zz_d01_repro.py:93: AssertionError: card lines ('Epsilon Coin', 'Delivered to you.')
+E   AssertionError: after a crash before the append, the reload minted echo_89100006 0 times
+    assert 0 == 1
+     +  where 0 = <built-in method count of list object at 0x7fb249575c40>('echo_89100006')
+     +    where <built-in method count of list object at 0x7fb249575c40> = [].count
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_zz_d01_repro.py:116: AssertionError: after a crash before the append, the reload minted echo_89100006 0 times
+E   AssertionError: no Echo was written to reroll
+    assert None is not None
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_zz_d01_repro.py:130: AssertionError: no Echo was written to reroll
+E   AssertionError: no Echo, fallback or otherwise
+    assert None is not None
+------------------------------ Captured log call -------------------------------
+WARNING  archipepsi.epsilon:base.py:122 zone generation invalid (zone_id: Field required; display_name: Field required; target_game: Field required; theme: Field required; chambers: Field required); attempting one repair
+WARNING  archipepsi.epsilon:base.py:138 zone repair failed (zone_id: Field required; display_name: Field required; target_game: Field required; theme: Field required; chambers: Field required); using fallback
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d01/bridge/tests/test_zz_d01_repro.py:161: AssertionError: no Echo, fallback or otherwise
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED bridge/tests/test_zz_d01_repro.py::test_C1_the_original_is_counted_exactly_once
+PASSED bridge/tests/test_zz_d01_repro.py::test_C2_a_foreign_check_is_unchanged
+PASSED bridge/tests/test_zz_d01_repro.py::test_C3_a_legacy_campaign_mints_nothing_for_its_own_item
+FAILED bridge/tests/test_zz_d01_repro.py::test_D1_a_new_campaign_is_created_with_the_policy_on
+FAILED bridge/tests/test_zz_d01_repro.py::test_D2_an_own_check_mints_one_echo_keyed_by_the_check
+FAILED bridge/tests/test_zz_d01_repro.py::test_D3_the_confirmation_says_delivered_then_the_echo
+FAILED bridge/tests/test_zz_d01_repro.py::test_D4_a_crash_before_the_append_is_granted_once_on_reload
+FAILED bridge/tests/test_zz_d01_repro.py::test_D5_a_written_echo_is_never_rerolled_on_reload
+FAILED bridge/tests/test_zz_d01_repro.py::test_D6_a_failing_provider_falls_back_under_the_same_id
+6 failed, 3 passed in 0.46s

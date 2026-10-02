@@ -1,0 +1,43 @@
+# make godot-lever-route-live on the worktree (cp2-runtime over 66af755), rc=0
+  ok: the campaign generated zone_001
+  ok: and composed it WITHOUT a room graph: the latch route is an explicit step, never a default
+seeded: zone_001 generated, not entered
+GODOT LATCHED LIVE SEED OK (2 checks, 0 notes)
+  ok: the bridge serves the composed route: a graph in 'c002', the shutter across 'e:c002:c003'
+  ok: the lever form: the Zone declares a PULSE_BUTTON and it is built as a lever
+  ok: the layout is not committed yet (verdict '', bridge 'UNCERTIFIED')
+  ok: REFUSED, before the layout is committed: graph_c002/held -> "Zone 'zone_001' has no committed layout, so no room graph in it has been built and nothing can have latched"
+  ok: and nothing was recorded: []
+  ok: ACCEPTED by the bridge, the player released untouched (holds [], 100 hp)
+  ok: the route starts shut and unlatched, its lever untouched
+  ok: the arena is cleared with the base kit: 5 of 5 down in 11.7 s, 27 shots / 25 landed; walked in 11.0 m for 0 hp, stood with every gun within 4.8 m (minimum range 8 m) for 0 hp
+  ok: THROW: the player's own interact pulls the bolt (1 pull(s))
+  ok: the Zone's own `latch_fired` went out once: { "type": "latch_fired", "zone_id": "zone_001", "package_id": "graph_c002", "latch_id": "held" }
+  ok: ACCEPTED: the snapshot carries exactly ["graph_c002/held"]
+  ok: SAVED: the save file on disk holds exactly ["graph_c002/held"]
+  ok: REFUSED, an unknown latch in the right room: graph_c002/forged -> "the signal graph in room 'c002' of Zone 'zone_001' declares no LATCH 'forged'; it declares ['held']"
+  ok: REFUSED, the right latch id in a room with no graph: graph_c001/held -> "room 'c001' in Zone 'zone_001' declares no signal graph"
+  ok: REFUSED, the prefix alone, for a room the layout never placed: graph_c099/held -> "Zone 'zone_001''s committed layout placed no room 'c099'"
+  ok: and the record is still exactly graph_c002/held, in the snapshot and on disk (["graph_c002/held"] / ["graph_c002/held"])
+  ok: the bolt STAYS THROWN and says so: 'BOLT THROWN -- THE WAY IS OPEN' (arm 1.00)
+  ok: WALKED AWAY: nobody at the lever and the way is open (1.00)
+  ok: THROUGH: walked the doorway into c003 (ended (-24.715036, 0.000870, 23.010403))
+  ok: one `latch_fired` from the Zone in the whole visit (1, and 4 forged by this driver)
+played: graph_c002/held latched and saved; leaving for the restart
+GODOT LATCHED LIVE LEVER PLAY OK (20 checks, 0 notes)
+  ok: the restarted bridge loaded the save; the Hub offers 'zone_001'
+  ok: this process remembers no latch of its own
+  ok: the lever form: the Zone declares a PULSE_BUTTON and it is built as a lever
+  ok: the bridge hands back graph_c002/held from the save
+  ok: and `Main` gave it to the Zone before setup (["graph_c002/held"])
+  ok: the graph restored the latch before it first evaluated (restored 1)
+  ok: the route is OPEN the moment the Zone exists, settled rather than opening (1.00)
+  ok: and nothing was announced: no new decision, no `latch_fired`
+  ok: the bolt is restored THROWN, never pulled in this process: 'BOLT THROWN -- THE WAY IS OPEN'
+  ok: the arena is dealt with the same way: 0 of 0 down in 0.0 s, 0 shots / 0 landed; walked in 0.0 m for 0 hp, stood with every gun within 0.0 m (minimum range 8 m) for 0 hp
+  ok: THROUGH: walked the doorway into c003 (ended (-24.792812, 0.000755, 23.036135))
+  ok: on the far side of the door plane (5.6 m past it)
+  ok: WITHOUT THE LEVER: never pulled, still thrown (0 pull(s))
+  ok: and nothing was announced on the way: the record is still exactly ["graph_c002/held"]
+  NOTE: restored route walked: portal -> c002 -> doorway -> c003, 5.6 m past the door, lever untouched, 0 death(s)
+GODOT LATCHED LIVE LEVER RESTORE OK (14 checks, 1 notes)

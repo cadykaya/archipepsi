@@ -1,0 +1,1318 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:474)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_tower_shell_built_for_other_floor_counts_is_not_used (res://tests/room_contract_driver.gd:696)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:474)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_tower_shell_built_for_other_floor_counts_is_not_used (res://tests/room_contract_driver.gd:744)
+  procedural rooms overhang their bounds by up to 0.20 m
+  authored shells overhang their envelope by up to 0.40 m (15 measured)
+  minor_counterfire_arcade PASS     surf=5  trav=0  sock=5  doors=2 mesh=68 hull=60 structural=0 measured=0
+  minor_passing_platforms  PASS     surf=4  trav=0  sock=4  doors=2 mesh=75 hull=60 structural=0 measured=0
+  minor_unweighted_switch  PASS     surf=2  trav=0  sock=2  doors=2 mesh=86 hull=33 structural=0 measured=0
+  shell_corner_left        PASS     surf=1  trav=0  sock=1  doors=2 mesh=1  hull=10 structural=0 measured=0
+  shell_corner_right       PASS     surf=1  trav=0  sock=1  doors=2 mesh=1  hull=10 structural=0 measured=0
+  shell_hall_transit       PASS     surf=12 trav=12 sock=21 doors=2 mesh=3  hull=73 structural=0 measured=0
+  shell_plenum_helix       PASS     surf=20 trav=15 sock=28 doors=2 mesh=3  hull=153 structural=0 measured=0
+  shell_span_basin         PASS     surf=6  trav=5  sock=15 doors=2 mesh=4  hull=57 structural=0 measured=0
+  shell_tower_collapsed    PASS     surf=11 trav=9  sock=16 doors=2 mesh=1  hull=21 structural=0 measured=0
+  shell_tower_gantry       PASS     surf=23 trav=21 sock=28 doors=2 mesh=1  hull=33 structural=0 measured=0
+  shell_tower_spiral       PASS     surf=12 trav=10 sock=17 doors=2 mesh=1  hull=22 structural=0 measured=0
+  shell_treasure_cache     PASS     surf=2  trav=1  sock=3  doors=2 mesh=1  hull=16 structural=0 measured=0
+  shell_treasure_coffer    PASS     surf=2  trav=1  sock=3  doors=2 mesh=1  hull=20 structural=0 measured=0
+  shell_treasure_vault     PASS     surf=2  trav=1  sock=3  doors=2 mesh=1  hull=12 structural=0 measured=0
+  shell_yard_gantry        PASS     surf=6  trav=5  sock=16 doors=2 mesh=5  hull=45 structural=0 measured=0
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+         [7] _run (res://tests/room_contract_driver.gd:101)
+         [8] _test_every_authored_shell_in_the_registry_is_measured (res://tests/room_contract_driver.gd:1012)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _test_every_shell_reports_its_apertures_once_placed (res://tests/room_contract_driver.gd:1233)
+  PLACED APERTURES 12 approved shells x 6 themes placed in a real Zone: 0 reported solid where the declaration says passable, 0 the other way
+  CHAIN c001 certified in 5.0 s of held Zone-entry time
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+         [4] _run (res://tests/room_contract_driver.gd:105)
+         [5] _test_a_room_is_entered_where_it_says_it_is (res://tests/room_contract_driver.gd:352)
+         [6] _audit_slabs (res://tests/room_contract_driver.gd:222)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:481)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_pending_shell_never_reaches_a_zone (res://tests/room_contract_driver.gd:6588)
+  shell_hall_transit       offers PASS  accepted=5 declined=0
+      + rail_route     rail_helix
+      + launch_source  launch_basin
+      + grapple_point  grapple_0
+      + grapple_point  grapple_1
+      + grapple_point  grapple_2
+  shell_plenum_helix       offers PASS  accepted=5 declined=0
+      + rail_route     rail_descent
+      + launch_source  launch_floor
+      + grapple_point  grapple_0
+      + grapple_point  grapple_1
+      + grapple_point  grapple_2
+  shell_span_basin         offers PASS  accepted=5 declined=0
+      + rail_route     rail_underdeck
+      + launch_source  launch_basin
+      + grapple_point  grapple_0
+      + grapple_point  grapple_1
+      + grapple_point  grapple_2
+  shell_yard_gantry        offers PASS  accepted=5 declined=0
+      + rail_route     rail_crane
+      + launch_source  launch_west
+      + grapple_point  grapple_0
+      + grapple_point  grapple_1
+      + grapple_point  grapple_2
+  validate_zone: hall: 0 offer(s) accepted, 1 declined -- impossible (grapple_point): nothing within 30 m under the anchor at (0.000000, 200.000000, 30.000000) is ground to leave from or arrive at
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _procedural (res://scripts/content/content_instantiator.gd:508)
+         [1] _shell (res://scripts/content/content_instantiator.gd:437)
+         [2] build_chamber (res://scripts/content/content_instantiator.gd:149)
+         [3] _test_a_chained_chamber_offers_what_it_offered_at_the_origin (res://tests/room_contract_driver.gd:1617)
+  F-2 shell_hall_transit   launch_basin   (12.000000, 0.000000, 18.000000) REFUSED
+  F-2 shell_plenum_helix   launch_floor   (0.000000, 0.500000, 6.000000) REFUSED
+  F-2 shell_plenum_helix   launch_collar  (0.000000, 28.333334, 10.000000) REFUSED
+  F-2 shell_span_basin     launch_basin   (0.000000, 0.500000, 45.000000) REFUSED
+  shell_hall_transit       declared=6 accepted=5 built=2 declined=0
+  shell_plenum_helix       declared=6 accepted=5 built=2 declined=0
+  shell_span_basin         declared=6 accepted=5 built=2 declined=0
+  shell_yard_gantry        declared=6 accepted=5 built=2 declined=0
+  offer census: declared=24 judged=20 constructed=8 declined=0
+  hall colliders: authored(shell mesh)=71 placed(composer)=2 instantiated(total)=73
+  hall placed colliders: DestructibleCover=2 ReactiveBarrel=0 ActivityElement=0 Player=0
+  ESCAPE c015 (back gallery over the exit): ok=true reached=510 
+  ESCAPE c005 (pit): ok=true reached=731 
+  ESCAPE c005 pit floor -> exit: ok=true reached=731 
+  PLAYER c015 (back gallery over the exit): arrived=true frames=66 closest=1.30 m stuck=false at (0.000000, 1.848988, 8.196282)
+  PLAYER c005 (pit): arrived=true frames=126 closest=1.36 m stuck=false at (-0.000000, 0.000830, 15.035121)
+  PLAYER c005 fell to y=-0.75
+  FLOOD c005 pit: ok=true reached=731 route=28 waypoints
+  PLAYER c005 pit escape: arrived=true legs=11/11 frames=100 final=1.21 m at (-0.203159, 0.000827, 15.211990)
+  -- CENSUS: no prop stands in an assigned side doorway
+  -- CENSUS: no prop stands on a feature's floor
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] place_all (res://scripts/generation/affordance_features.gd:248)
+         [1] _test_no_prop_stands_in_a_feature (res://tests/room_contract_driver.gd:3163)
+         [2] _run (res://tests/room_contract_driver.gd:120)
+         [3] _test_no_prop_stands_in_an_assigned_side_doorway (res://tests/room_contract_driver.gd:3016)
+    474 features across 290 corridors in 6 themes; 191 props inside them; 66 on a feature's floor, 0 in a side doorway, 0 features astray
+   GDScript backtrace (most recent call first):
+FAIL: 474 features across 290 corridors in 6 themes, measured against 191 props inside them, and no prop stands on a feature's floor or within a body's radius of it (standing: ["zone_010 c001: @StaticBody3D@73834 at x 2.55..3.65 z 2.92..4.02", "zone_010 c001: @StaticBody3D@73837 at x -3.65..-2.55 z 1.82..2.92", "zone_010 c001: @StaticBody3D@73837 at x -3.65..-2.55 z 1.82..2.92", "zone_012 c001: @StaticBody3D@73910 at x -3.65..-2.55 z 2.36..3.46", "zone_012 c001: @StaticBody3D@73910 at x -3.65..-2.55 z 2.36..3.46", "rusted_industrial feature_census_0: @StaticBody3D@76908 at x 2.78..3.62 z 2.51..3.35", "rusted_industrial feature_census_2: @StaticBody3D@77057 at x -3.87..-3.03 z 8.82..9.66", "rusted_industrial feature_census_3: @StaticBody3D@77117 at x -4.42..-3.58 z 3.42..4.26", "rusted_industrial feature_census_3: @StaticBody3D@77120 at x -4.42..-3.58 z 2.11..2.95", "rusted_industrial feature_census_3: _StaticBody3D_77120 at x -4.42..-3.58 z 2.11..2.95", "rusted_industrial feature_census_5: @StaticBody3D@77239 at x -4.07..-3.23 z 11.69..12.53", "rusted_industrial feature_census_6: @StaticBody3D@77299 at x 2.78..3.62 z 5.20..6.04", "rusted_industrial feature_census_8: @StaticBody3D@77425 at x -3.87..-3.03 z 7.88..8.72", "rusted_industrial feature_census_8: _StaticBody3D_77425 at x -3.87..-3.03 z 7.88..8.72", "rusted_industrial feature_census_9: @StaticBody3D@77492 at x 3.58..4.42 z 10.76..11.60", "rusted_industrial feature_census_9: _StaticBody3D_77492 at x 3.58..4.42 z 10.76..11.60", "rusted_industrial feature_census_10: @StaticBody3D@77565 at x -3.62..-2.78 z 2.03..2.87", "rusted_industrial feature_census_10: _StaticBody3D_77565 at x -3.62..-2.78 z 2.03..2.87", "rusted_industrial feature_census_14: @StaticBody3D@77818 at x -3.87..-3.03 z 9.21..10.05", "rusted_industrial feature_census_14: @StaticBody3D@77821 at x 3.03..3.87 z 1.87..2.71", "rusted_industrial feature_census_15: @StaticBody3D@77890 at x -4.42..-3.58 z 3.14..3.98", "rusted_industrial feature_census_15: _StaticBody3D_77890 at x -4.42..-3.58 z 3.14..3.98", "rusted_industrial feature_census_17: @StaticBody3D@78027 at x 3.23..4.07 z 5.38..6.22", "rusted_industrial feature_census_17: @StaticBody3D@78033 at x -4.07..-3.23 z 11.08..11.92", "rusted_industrial feature_census_17: _StaticBody3D_78033 at x -4.07..-3.23 z 11.08..11.92", "rusted_industrial feature_census_18: @StaticBody3D@78102 at x -3.62..-2.78 z 2.13..2.97", "rusted_industrial feature_census_24: @StaticBody3D@78448 at x 2.78..3.62 z 8.25..9.09", "rusted_industrial feature_census_24: @StaticBody3D@78451 at x 2.78..3.62 z 8.68..9.52", "rusted_industrial feature_census_24: @StaticBody3D@78454 at x -3.62..-2.78 z 2.17..3.01", "rusted_industrial feature_census_26: @StaticBody3D@78598 at x 3.03..3.87 z 3.58..4.42", "rusted_industrial feature_census_27: @StaticBody3D@78662 at x -4.42..-3.58 z 5.38..6.22", "rusted_industrial feature_census_28: @StaticBody3D@78719 at x -3.62..-2.78 z 2.08..2.92", "rusted_industrial feature_census_35: @StaticBody3D@79170 at x 3.23..4.07 z 5.56..6.40", "rusted_industrial feature_census_36: @StaticBody3D@79220 at x 2.78..3.62 z 5.93..6.77", "rusted_industrial feature_census_38: @StaticBody3D@79362 at x 3.03..3.87 z 4.56..5.40", "rusted_industrial feature_census_38: _StaticBody3D_79362 at x 3.03..3.87 z 4.56..5.40", "rusted_industrial feature_census_38: @StaticBody3D@79365 at x 3.03..3.87 z 3.79..4.63", "rusted_industrial feature_census_39: @StaticBody3D@79438 at x -4.42..-3.58 z 1.56..2.40", "rusted_industrial feature_census_41: @StaticBody3D@79570 at x 3.23..4.07 z 4.55..5.39", "rusted_industrial feature_census_41: _StaticBody3D_79570 at x 3.23..4.07 z 4.55..5.39", "rusted_industrial feature_census_46: @StaticBody3D@79891 at x -3.62..-2.78 z 3.06..3.90", "rusted_industrial feature_census_47: @StaticBody3D@79948 at x 3.23..4.07 z 5.23..6.07", "rusted_industrial feature_census_47: _StaticBody3D_79948 at x 3.23..4.07 z 5.23..6.07", "temple_ruin feature_census_0: @StaticBody3D@86067 at x 2.55..3.65 z 3.56..4.66", "temple_ruin feature_census_2: @StaticBody3D@86212 at x -3.90..-2.80 z 9.42..10.52", "temple_ruin feature_census_3: @StaticBody3D@86273 at x -4.45..-3.35 z 9.87..10.97", "temple_ruin feature_census_3: @StaticBody3D@86277 at x 3.35..4.45 z 11.06..12.16", "temple_ruin feature_census_4: @StaticBody3D@86334 at x -3.65..-2.55 z 2.80..3.90", "temple_ruin feature_census_5: @StaticBody3D@86401 at x 3.00..4.10 z 5.30..6.40", "temple_ruin feature_census_9: @StaticBody3D@86649 at x -4.45..-3.35 z 4.61..5.71", "temple_ruin feature_census_10: @StaticBody3D@86720 at x 2.55..3.65 z 5.91..7.01", "temple_ruin feature_census_13: @StaticBody3D@86915 at x 2.55..3.65 z 10.34..11.44", "temple_ruin feature_census_14: @StaticBody3D@86985 at x 2.80..3.90 z 4.30..5.40", "temple_ruin feature_census_15: @StaticBody3D@87053 at x -4.45..-3.35 z 6.05..7.15", "temple_ruin feature_census_17: @StaticBody3D@87189 at x 3.00..4.10 z 3.38..4.48", "temple_ruin feature_census_22: @StaticBody3D@87500 at x -3.65..-2.55 z 2.80..3.90", "temple_ruin feature_census_24: @StaticBody3D@87611 at x 2.55..3.65 z 6.40..7.50", "temple_ruin feature_census_26: @StaticBody3D@87754 at x 2.80..3.90 z 3.24..4.34", "temple_ruin feature_census_28: @StaticBody3D@87872 at x -3.65..-2.55 z 2.80..3.90", "temple_ruin feature_census_29: @StaticBody3D@87935 at x 3.00..4.10 z 5.10..6.20", "temple_ruin feature_census_29: @StaticBody3D@87938 at x -4.10..-3.00 z 11.26..12.36", "temple_ruin feature_census_30: @StaticBody3D@87997 at x 2.55..3.65 z 4.63..5.73", "temple_ruin feature_census_33: @StaticBody3D@88183 at x -4.45..-3.35 z 4.09..5.19", "temple_ruin feature_census_38: @StaticBody3D@88518 at x 2.80..3.90 z 1.99..3.09", "temple_ruin feature_census_39: @StaticBody3D@88587 at x 3.35..4.45 z 8.41..9.51", "temple_ruin feature_census_40: @StaticBody3D@88656 at x -3.65..-2.55 z 2.80..3.90"])
+    zone_010 c001: 1 package(s), per run [[], [], []]
+   GDScript backtrace (most recent call first):
+FAIL: zone_010 c001: its powered door's plate latches in all three runs of the certificate (1 package(s), per run [[], [], []])
+    zone_012 c001: 1 package(s), per run [[], [], []]
+   GDScript backtrace (most recent call first):
+FAIL: zone_012 c001: its powered door's plate latches in all three runs of the certificate (1 package(s), per run [[], [], []])
+    doubling back: LAYOUT_OK
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _build_once (res://scripts/generation/zone_builder.gd:2598)
+         [1] build (res://scripts/generation/zone_builder.gd:1624)
+         [2] _test_a_return_plug_lands_somewhere_a_player_fits (res://tests/room_contract_driver.gd:3594)
+         [3] _run (res://tests/room_contract_driver.gd:123)
+         [4] _test_a_spent_budget_is_a_timeout_and_not_infeasibility (res://tests/room_contract_driver.gd:3543)
+  SPAN entry_to_deck (mandatory): walked
+  SPAN deck_to_exit (mandatory): walked
+  SPAN basin_south_to_deck (optional): walked
+  SPAN basin_north_to_deck (optional): walked
+p3a: room r0         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r1         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r2         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r3         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r4         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r5         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r6         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r7         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone layout_probe mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 8)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+p3a: room r0         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r1         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r2         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r3         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r4         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r5         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r6         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room r7         shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone layout_probe mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 8)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _aim_the_unmounted (res://scripts/generation/activities.gd:414)
+         [1] aim_shot_targets (res://scripts/generation/activities.gd:302)
+         [2] _build_activities (res://scripts/content/content_instantiator.gd:387)
+         [3] build_chamber (res://scripts/content/content_instantiator.gd:167)
+         [4] _build_once (res://scripts/generation/zone_builder.gd:1967)
+         [5] build (res://scripts/generation/zone_builder.gd:1624)
+         [6] _station_census (res://tests/room_contract_driver.gd:8414)
+  -- stations, measured on 5 Zones of each variant --
+     baseline: 5 of 5 composed; 109 rooms, 96 with an activity, 49 station(s), 39 broken, 10 working
+       per Zone: 21.8 rooms, 9.8 station(s), 7.8 broken, 2.0 working
+     lower-budget: 4 of 5 composed; 88 rooms, 54 with an activity, 35 station(s), 21 broken, 14 working
+       per Zone: 22.0 rooms, 8.8 station(s), 5.2 broken, 3.5 working
+       refused: ["zone_05.json (branch room \'c012\' off \'c010\' could not be placed clear of the 55 room(s) already standing)"]
+     difference per Zone: +0.2 rooms, -5.7 with an activity, -1.1 station(s), -2.5 broken
+   GDScript backtrace (most recent call first):
+  BRANCHING 5 junction(s) ["c002", "c005", "c009", "c014", "c018"], 8 room(s) off the spine ["c011", "c012", "c014", "c015", "c017", "c018", "c020", "c021"]
+  SHELL CROSSINGS control: a stub detached by 2.0 m is not crossed (the body fell 5.87 m at the threshold)
+  SHELL CROSSINGS 30 crossed, 0 not, 0 not built
+    crossed: ["minor_counterfire_arcade/entry (3.10 m past, 0.08 m of dip)", "minor_counterfire_arcade/exit (3.11 m past, 0.08 m of dip)", "minor_passing_platforms/entry (3.10 m past, 0.08 m of dip)", "minor_passing_platforms/exit (3.11 m past, 0.08 m of dip)", "minor_unweighted_switch/entry (3.10 m past, 0.08 m of dip)", "minor_unweighted_switch/exit (3.11 m past, 0.08 m of dip)", "shell_corner_left/entry (3.10 m past, 0.08 m of dip)", "shell_corner_left/exit (3.10 m past, 0.08 m of dip)", "shell_corner_right/entry (3.10 m past, 0.08 m of dip)", "shell_corner_right/exit (3.10 m past, 0.08 m of dip)", "shell_hall_transit/entry (3.10 m past, 0.08 m of dip)", "shell_hall_transit/exit (3.10 m past, 0.08 m of dip)", "shell_plenum_helix/entry (3.10 m past, 0.08 m of dip)", "shell_plenum_helix/exit (3.11 m past, 0.08 m of dip)", "shell_span_basin/entry (3.05 m past, 0.08 m of dip)", "shell_span_basin/exit (3.11 m past, 0.08 m of dip)", "shell_tower_collapsed/entry (3.10 m past, 0.08 m of dip)", "shell_tower_collapsed/exit (3.11 m past, 0.08 m of dip)", "shell_tower_gantry/entry (3.10 m past, 0.08 m of dip)", "shell_tower_gantry/exit (3.11 m past, 0.08 m of dip)", "shell_tower_spiral/entry (3.10 m past, 0.08 m of dip)", "shell_tower_spiral/exit (3.11 m past, 0.08 m of dip)", "shell_treasure_cache/entry (3.10 m past, 0.08 m of dip)", "shell_treasure_cache/exit (3.11 m past, 0.08 m of dip)", "shell_treasure_coffer/entry (3.10 m past, 0.08 m of dip)", "shell_treasure_coffer/exit (3.11 m past, 0.08 m of dip)", "shell_treasure_vault/entry (3.10 m past, 0.08 m of dip)", "shell_treasure_vault/exit (3.11 m past, 0.08 m of dip)", "shell_yard_gantry/entry (3.10 m past, 0.08 m of dip)", "shell_yard_gantry/exit (3.10 m past, 0.08 m of dip)"]
+    NOT crossed: []
+    not built: []
+  CROSSING zone_001: 18 JOINED edges measured, 4 held behind a locked door
+    5 gridded arrival to arrival by the flood, 13 walked doorway to doorway along the committed corridor (3 of which change level by more than 1.0 m, which the flood cannot grid)
+    18 crossed, 0 not crossed
+    corridor crossings (^ = a level change the flood cannot grid): c001->c002 c003->c004^ c004->c005 c005->c006 c006->c007^ c007->c008 c008->c009^ c009->c010 c010->c013 c013->c016 c016->c019 c019->c022 c022->c023
+   GDScript backtrace (most recent call first):
+p3a: room arrival_hall shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room junction   shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room vault      shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room far_end    shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone journey mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 4)
+  JOURNEY lock shut: flood reaches the vault = false (door at (-8.000000, 0.000000, 26.000000))
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+  JOURNEY key: arrived=true legs=9/9 frames=90 final=0.44 m
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+  JOURNEY vault: entered=true legs=24/27 frames=281 at (-11.649415, 0.000940, 25.469593)
+   GDScript backtrace (most recent call first):
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+  JOURNEY onto the plug: frames=32 at (-15.239038, 0.000940, 25.903803)
+  JOURNEY held in the plug: 114 frame(s) of a 360 budget
+  JOURNEY plug: (-11.649415, 0.000940, 25.469593) -> (0.000000, 1.000000, 1.200000) (zone_start (0.000000, 0.800000, 1.200000))
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+p3a: room arrival_hall shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room junction   shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room vault      shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room far_end    shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone journey mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 4)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+  JOURNEY re-entry: locks standing=0 keys={ "red": true }
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:194)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 23)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] send_layout_result (res://scripts/gameplay/zone_controller.gd:1899)
+         [2] _publish_layout (res://scripts/gameplay/zone_controller.gd:1713)
+         [3] _certify_physics (res://scripts/gameplay/zone_controller.gd:1821)
+         [4] of_build (res://scripts/gameplay/chain_certificate.gd:141)
+         [5] of_room (res://scripts/gameplay/chain_certificate.gd:81)
+         [6] certify (res://scripts/gameplay/chain_certificate.gd:228)
+         [7] replay (res://scripts/gameplay/replay_harness.gd:78)
+  JOURNEY junction c002 (3 neighbours) -> branch c018 off side_right; doors 10.5 m apart inside a 16 x 14 m room
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] _track_chamber (res://scripts/gameplay/zone_controller.gd:2228)
+         [2] _process (res://scripts/gameplay/zone_controller.gd:2237)
+  JOURNEY interior: crossed after 57 frames (closest 3.0 m)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] _track_chamber (res://scripts/gameplay/zone_controller.gd:2228)
+         [2] _process (res://scripts/gameplay/zone_controller.gd:2237)
+  JOURNEY branch c018: entered at (-10.799544, 0.000940, 33.974236) (closest 8.4 m)
+  JOURNEY branch holds: ["an activity element", "an activity element", "an activity element", "a Check"]
+  JOURNEY return: walked out (closest 3.9 m, from (-10.799544, 0.000940, 33.974236) to (-10.846136, 0.000940, 33.814159))
+  0 shell(s) awaiting review carry findings; that is evidence, not a broken build
+  authored shells: 12 approved, 3 awaiting review
+GODOT ROOM CONTRACT TESTS: 3 failures
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+     at: cleanup (core/object/object.cpp:2514)
+make: *** [Makefile:216: godot-room-contract] Error 1
+
+real	2m19.569s
+user	0m43.047s
+sys	0m3.204s

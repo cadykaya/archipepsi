@@ -37,9 +37,14 @@ try:
         MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
-        CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
+        CampaignSave, ConsumableAuthorization, ConsumableUse,
+        EarnedLocalReward, PendingCheck,
+        ShopState,
         ShopStockItem, ZoneRecord,
     )
+    from .physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
+    from .minors import contract_for as _minor_contract
+    from .map_view import derived_discovery
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
@@ -48,9 +53,14 @@ except ImportError:  # pragma: no cover
         MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
-        CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
+        CampaignSave, ConsumableAuthorization, ConsumableUse,
+        EarnedLocalReward, PendingCheck,
+        ShopState,
         ShopStockItem, ZoneRecord,
     )
+    from physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
+    from minors import contract_for as _minor_contract
+    from map_view import derived_discovery
     from zone import Zone
 
 
@@ -147,6 +157,47 @@ def accept_zone(save: CampaignSave, zone: Zone, *,
         used_fallback=used_fallback))
 
 
+def _refill_is_due(save: CampaignSave, zone_id: str) -> bool:
+    """Whether entering `zone_id` hands back a fresh consumable supply.
+
+    **PROPOSED BY THIS LANE; NOT DECIDED BY THE OWNER.** What the owner
+    chose is "consumables refill on entering a Zone", and nothing finer.
+    Everything below — what counts as *entering*, and what a same-Zone
+    return does — is this lane's proposal, isolated in one predicate so
+    the owner can replace the policy by rewriting one function and its
+    tests rather than unpicking the spend transaction.
+
+    The rule as written: **refill when the deployment target changes.**
+    `enter_zone` is not the same thing as a deployment beginning — it
+    runs again on re-entry, on a generation retry and on a reconnect —
+    so the refill is keyed to `consumable_deployment`, the Zone the
+    current expenditure belongs to.
+
+    What that actually delivers, stated in full rather than left to be
+    discovered in play:
+
+      A -> A (re-entry, reload, Hub round trip): no refill. The trip is
+        the same deployment continued, and the alternative is a free
+        refill behind two loading screens.
+      A -> B: refill. This is what makes charges a per-Zone resource
+        rather than a per-campaign one.
+      **A -> B -> A: refills BOTH times.** Returning to A does not
+        restore what A had left — it hands over a fresh supply. So
+        Hub -> B -> A is a working restock loop at the price of one
+        extra Zone, and the same-Zone rule above closes the cheap
+        version of that loop without closing the loop.
+
+    That last line is the honest cost of a one-string rule, and it is
+    why this is a proposal rather than a ruling. PER-ZONE EXPENDITURE
+    PERSISTENCE — where what A had left waits for you while you are in B
+    — is a different policy, not a bug fix for this one: it needs a
+    record per Zone instead of one deployment id, every record has to
+    survive a save round trip, and abandoning a Zone has to decide
+    whether its record goes with it. The owner has that decision.
+    """
+    return save.consumable_deployment != zone_id
+
+
 def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     """GENERATED, DORMANT or COMPLETE -> ACTIVE. Idempotent on ACTIVE.
 
@@ -183,8 +234,34 @@ def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     # the campaign already counted. VISITING is the same experience and
     # different accounting.
     state = "VISITING" if rec.state == "COMPLETE" else "ACTIVE"
+    # CONSUMABLES REFILL ON ENTERING A ZONE (owner decision, 2026-09-22).
+    # WHICH entries count as one is `_refill_is_due` — this lane's
+    # PROPOSAL, not the owner's ruling, and the whole of it lives in that
+    # predicate together with the consequences it has not been asked to
+    # accept yet.
+    #
+    # Expenditure is tracked by component id, so swapping the supply out
+    # and back within a deployment preserves what has been spent.
+    #
+    # A refill MINTS A NEW GENERATION, and that is the only thing that
+    # ever does. A use minted against the old supply carries a number
+    # that no longer exists, so `spend_charge` refuses it on identity
+    # instead of hoping the arithmetic disagrees — which, on an old
+    # index 1 arriving at a fresh supply, it does not.
+    fresh = _refill_is_due(save, zone_id)
     return _rebuild(save,
                     zones=_replace_zone(save, zone_id, state=state),
+                    consumable_uses=() if fresh else save.consumable_uses,
+                    # A refill retires the old supply outright, so an
+                    # authorization that was outstanding against it goes
+                    # with it rather than lingering to be released
+                    # against a supply it was never minted for.
+                    consumable_authorizations=(
+                        () if fresh else save.consumable_authorizations),
+                    consumable_generation=(save.consumable_generation + 1
+                                           if fresh
+                                           else save.consumable_generation),
+                    consumable_deployment=zone_id,
                     active_zone_id=zone_id)
 
 
@@ -502,6 +579,145 @@ def _accepted_packages(rec: ZoneRecord) -> dict[str, set[str]]:
     return out
 
 
+def _accepted_graph_latches(rec: ZoneRecord, room_id: str) -> set[str]:
+    """The LATCH nodes a room graph may record, or why it may record none.
+
+    Four facts have to hold, and a `graph_<room>` name establishes none
+    of them on its own:
+
+    1. **The Zone was accepted** and this is it -- the declaration read
+       is `rec.zone`, the one the campaign accepted, not anything the
+       engine says it built.
+    2. **Its layout was committed** -- `layout_state` ACCEPTED, with a
+       manifest for this Zone. A room graph is built off the committed
+       layout, so a Zone with none has built nothing and nothing in it
+       can have latched. The same honest answer `_accepted_packages`
+       gives for physics.
+    3. **The committed layout placed that room.** The manifest's `rooms`
+       is the layout evidence: a latch in a room the layout never
+       placed is a machine nobody built.
+    4. **The accepted Zone declares a graph in that room, and it has
+       LATCH nodes.** Only those ids are recordable.
+
+    Nothing here consults a physics package, fabricates a certificate,
+    or reaches around `record_latch`: a room-graph latch is a different
+    kind of accepted fact, checked against its own evidence.
+    """
+    zone = rec.zone
+    manifest = rec.manifest or {}
+    if zone is None:
+        raise ValueError(f"Zone '{rec.zone_id}' holds no accepted Zone")
+    if rec.layout_state != "ACCEPTED" or not manifest:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' has no committed layout, so no room "
+            "graph in it has been built and nothing can have latched")
+    if manifest.get("zone_id") != rec.zone_id:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' carries a manifest for "
+            f"'{manifest.get('zone_id')}'")
+    if room_id not in (manifest.get("rooms") or {}):
+        raise ValueError(
+            f"Zone '{rec.zone_id}''s committed layout placed no room "
+            f"'{room_id}'")
+    graph = next((g for g in zone.room_graphs if g.room_id == room_id),
+                 None)
+    if graph is None:
+        raise ValueError(
+            f"room '{room_id}' in Zone '{rec.zone_id}' declares no "
+            "signal graph")
+    return {n.node_id for n in graph.nodes if n.kind == "LATCH"}
+
+
+def _accepted_minor_latches(rec: ZoneRecord, room_id: str) -> set[str]:
+    """The latches a hosted minor may record, or why it may record none."""
+    return set(_accepted_minor_contract(rec, room_id, "latched").latches)
+
+
+def _accepted_minor_contract(rec: ZoneRecord, room_id: str,
+                             happened: str):
+    """The contract of the minor hosted in that room, or why there is none.
+
+    O05-06. The graph path's four facts, with the minor's contract where
+    the graph's declaration was:
+
+    1. **The Zone was accepted**, and the declaration read is `rec.zone`.
+    2. **Its layout was committed** for this Zone.
+    3. **The committed layout placed that room** -- a latch in a room
+       the engine never built is a machine nobody built.
+    4. **The accepted Zone's chamber in that room carries a shell with a
+       minor contract**, and only that contract's latches are
+       recordable. The engine does not get to say which latches exist.
+    """
+    zone = rec.zone
+    manifest = rec.manifest or {}
+    if zone is None:
+        raise ValueError(f"Zone '{rec.zone_id}' holds no accepted Zone")
+    if rec.layout_state != "ACCEPTED" or not manifest:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' has no committed layout, so no minor in "
+            f"it has been built and nothing can have {happened}")
+    if manifest.get("zone_id") != rec.zone_id:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' carries a manifest for "
+            f"'{manifest.get('zone_id')}'")
+    if room_id not in (manifest.get("rooms") or {}):
+        raise ValueError(
+            f"Zone '{rec.zone_id}''s committed layout placed no room "
+            f"'{room_id}'")
+    chamber = next((c for c in zone.chambers if c.id == room_id), None)
+    contract = _minor_contract(getattr(chamber, "shell_id", None))
+    if contract is None:
+        raise ValueError(
+            f"room '{room_id}' in Zone '{rec.zone_id}' hosts no minor")
+    return contract
+
+
+def _accepted_rail_latches(rec: ZoneRecord, network_id: str
+                           ) -> set[str] | None:
+    """The span latches a declared railway may record; None when the
+    accepted Zone declares no railway by that id.
+
+    O05-05.1, P5-9. `RailSpan.latch_id` is "the persistence handle: a
+    commissioned span is the repair that survives leaving and coming
+    back", and the engine reports it under the NETWORK id
+    (`RailJunction.latch_fired`). A railway is neither a physics package
+    nor a room graph, so until this existed every composed span a player
+    commissioned was refused here and forgotten at the next load.
+
+    Checked against its own evidence, like the graph path: the ACCEPTED
+    Zone declares the network (`rec.zone`, not anything the engine says
+    it built); the layout is committed; the committed layout placed
+    every dock room, because `RailNetworks._one` builds nothing for a
+    network through a room it did not build; and only a span with a
+    control can latch -- one without ships commissioned and no lever is
+    ever built for it, so a report of it describes nothing a player did.
+    """
+    zone = rec.zone
+    if zone is None:
+        return None
+    net = next((n for n in zone.rail_networks
+                if n.network_id == network_id), None)
+    if net is None:
+        return None
+    manifest = rec.manifest or {}
+    if rec.layout_state != "ACCEPTED" or not manifest:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' has no committed layout, so its railway "
+            f"'{network_id}' has not been built and nothing on it can "
+            "have latched")
+    if manifest.get("zone_id") != rec.zone_id:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' carries a manifest for "
+            f"'{manifest.get('zone_id')}'")
+    placed = manifest.get("rooms") or {}
+    missing = sorted({d.room_id for d in net.docks} - set(placed))
+    if missing:
+        raise ValueError(
+            f"Zone '{rec.zone_id}''s committed layout placed no room "
+            f"'{missing[0]}', which railway '{network_id}' docks in")
+    return {s.latch_id for s in net.spans if s.control_room_id is not None}
+
+
 def record_latch(save: CampaignSave, zone_id: str, package_id: str,
                  latch_id: str) -> CampaignSave:
     """A physics latch fired. Idempotent by `package_id/latch_id`.
@@ -518,7 +734,55 @@ def record_latch(save: CampaignSave, zone_id: str, package_id: str,
     describing nothing — and monotone sets never give anything back.
     """
     def known(rec):
+        # P14. A ROOM-GRAPH LATCH, under the reserved `graph_` namespace
+        # no physics package may take. Checked against the accepted
+        # Zone's declaration and the committed layout; the physics path
+        # below is untouched.
+        if package_id.startswith(GRAPH_PACKAGE_PREFIX):
+            room_id = package_id[len(GRAPH_PACKAGE_PREFIX):]
+            latches = _accepted_graph_latches(rec, room_id)
+            if latch_id not in latches:
+                raise ValueError(
+                    f"the signal graph in room '{room_id}' of Zone "
+                    f"'{zone_id}' declares no LATCH '{latch_id}'"
+                    + (f"; it declares {sorted(latches)}" if latches
+                       else " and declares none"))
+            return
         packages = _accepted_packages(rec)
+        # A HOSTED MINOR'S LATCH (O05-06), under its own reserved
+        # namespace. A railway declared under the same name would make
+        # one report mean two things, so that is refused, not guessed.
+        if package_id.startswith(MINOR_PACKAGE_PREFIX):
+            if _accepted_rail_latches(rec, package_id) is not None:
+                raise ValueError(
+                    f"'{package_id}' in Zone '{zone_id}' names both a "
+                    "hosted minor and a rail network; neither is guessed")
+            room_id = package_id[len(MINOR_PACKAGE_PREFIX):]
+            latches = _accepted_minor_latches(rec, room_id)
+            if latch_id not in latches:
+                raise ValueError(
+                    f"the minor in room '{room_id}' of Zone '{zone_id}' "
+                    f"declares no latch '{latch_id}'; it declares "
+                    f"{sorted(latches)}")
+            return
+        # A DECLARED RAILWAY'S SPAN (O05-05.1, P5-9). One name, one
+        # meaning: `latched` is a set of `package/latch` strings and a
+        # junction restores from it by that string, so a name that is
+        # both would let a physics latch commission a span.
+        rail = _accepted_rail_latches(rec, package_id)
+        if rail is not None:
+            if package_id in packages:
+                raise ValueError(
+                    f"'{package_id}' in Zone '{zone_id}' names both a "
+                    "physics package and a rail network; neither is "
+                    "guessed")
+            if latch_id not in rail:
+                raise ValueError(
+                    f"railway '{package_id}' in Zone '{zone_id}' declares "
+                    f"no span latch '{latch_id}'"
+                    + (f"; its controlled spans latch {sorted(rail)}"
+                       if rail else " that a control commissions"))
+            return
         if package_id not in packages:
             raise ValueError(
                 f"Zone '{zone_id}' accepted no physics package "
@@ -534,6 +798,412 @@ def record_latch(save: CampaignSave, zone_id: str, package_id: str,
                    else " and declares none"))
     ref = f"{package_id}/{latch_id}"
     return _progress(save, zone_id, lambda p: p.with_latch(ref), known)
+
+
+def record_zone_state(save: CampaignSave, zone_id: str, variable_id: str,
+                      state: str) -> CampaignSave:
+    """D-8. A player operated a setter and the Zone's state changed.
+
+    **The authoritative state-update path.** The engine reports that a
+    control was worked; what becomes save data is the accepted
+    consequence, checked against the Zone the campaign actually
+    accepted — the same shape as `record_latch`, and for the same
+    reason.
+
+    Three refusals, each a different way of being wrong:
+
+    1. **The Zone declares no such variable.** Otherwise a typo becomes
+       persistent save data describing nothing.
+    2. **The variable has no such state.** A state outside its declared
+       set is a value no reader has a rule for.
+    3. **No setter can select that state.** This is the one a latch
+       analogy would miss. `states` is what the variable can HOLD;
+       `setter.selects` is what a player can PUT it in. A state that is
+       declared but unselectable is reachable only by something other
+       than a player operating a control, and §19.7 is explicit that
+       nothing else may move Zone state.
+
+    **Not monotone, and deliberately not on `latched`.** A reversible
+    variable set back is a legitimate transition, so this overwrites.
+    `ZoneProgress.macro_state` exists to hold exactly that, and the
+    resume-safety argument for the monotone sets is untouched by it.
+
+    **What this does NOT check, and the boundary matters.** It does not
+    assert the player was physically able to reach and work that
+    control. Whether Blindside's gantry is genuinely out of reach at
+    4.6 m is a measurement the engine owns; what the bridge settles is
+    that the Zone declares this control, that it can choose this state,
+    and that the route validation at acceptance already proved the
+    configuration is not self-locking.
+    """
+    def known(rec):
+        zone = rec.zone
+        declared = {v.variable_id: v for v in getattr(zone, "zone_state", ())
+                    } if zone is not None else {}
+        var = declared.get(variable_id)
+        if var is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no Zone-state variable "
+                f"'{variable_id}'"
+                + (f"; it declares {sorted(declared)}" if declared
+                   else " and declares none"))
+        if state not in var.states:
+            raise ValueError(
+                f"variable '{variable_id}' in Zone '{zone_id}' has no state "
+                f"'{state}'; it has {sorted(var.states)}")
+        if state not in var.setter.selects:
+            raise ValueError(
+                f"no control can put '{variable_id}' into '{state}'; the "
+                f"setter in room '{var.setter.room_id}' selects "
+                f"{sorted(var.setter.selects)}. Zone state changes only "
+                "when a player operates a setter (§19.7), so a state "
+                "nothing selects is one nothing could have set")
+        # O05-02. A STATE A CONSUMER OWNS IS SET BY DELIVERING ITS
+        # OBJECT, and by nothing else. The consumer IS that variable's
+        # setter -- installing the object is the interaction -- so a bare
+        # `zone_state_selected` naming it is a claim of a delivery that
+        # `record_object_consumed` would have checked, arriving by a
+        # path that checks nothing.
+        for con in getattr(zone, "object_consumers", ()):
+            if con.sets_variable == variable_id \
+                    and con.sets_state == state:
+                raise ValueError(
+                    f"'{variable_id}' = '{state}' is set by consumer "
+                    f"'{con.mechanism_id}' taking '{con.accepts}' in room "
+                    f"'{con.room_id}'; deliver the object -- it is not a "
+                    "control a message can operate")
+    return _progress(save, zone_id,
+                     lambda p: p.with_macro(variable_id, state), known)
+
+
+def record_object_transported(save: CampaignSave, zone_id: str,
+                              object_id: str, room_id: str) -> CampaignSave:
+    """P16. A transported object arrived somewhere, authoritatively.
+
+    Three refusals:
+
+    1. **The Zone declares no such object.** A room recorded against an
+       id nothing placed is save data describing nothing.
+    2. **The room is outside the object's `allowed_volume`.** §10.5's
+       volume is the composer's statement of where the object may go,
+       and accepting an arrival outside it would describe a world the
+       composer never allowed.
+    3. *(not a refusal, but the same rule)* a repeat of the room it is
+       already in is absorbed.
+
+    **Recovery is `home_room_id`, not a refusal.** P16.4's lost or
+    invalid object is put back where the declaration says it comes home
+    to, and `recover_transported_object` below is that path -- kept
+    separate so "it went somewhere illegal" and "put it back" are two
+    events rather than one silent correction.
+    """
+    def known(rec):
+        zone = rec.zone
+        declared = {o.object_id: o
+                    for o in getattr(zone, "transported_objects", ())
+                    } if zone is not None else {}
+        obj = declared.get(object_id)
+        if obj is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no transported object "
+                f"'{object_id}'"
+                + (f"; it declares {sorted(declared)}" if declared
+                   else " and declares none"))
+        if room_id not in obj.allowed_volume:
+            raise ValueError(
+                f"object '{object_id}' may not be in room '{room_id}'; its "
+                f"volume is {sorted(obj.allowed_volume)}")
+        # O05-02.4: AN INSTALLED OBJECT DOES NOT TRAVEL. Its consumer's
+        # room is the last room it was in; a report of the same room is
+        # the same fact again, anything else would describe a second copy.
+        if rec.progress.consumed(object_id) \
+                and rec.progress.object_room(object_id) != room_id:
+            raise ValueError(
+                f"'{object_id}' is installed in its consumer and does not "
+                f"move; it cannot arrive in '{room_id}'")
+    return _progress(save, zone_id,
+                     lambda p: p.with_object_in(object_id, room_id), known)
+
+
+def record_object_consumed(save: CampaignSave, zone_id: str,
+                           mechanism_id: str) -> CampaignSave:
+    """P16. A consuming mechanism took the object it was waiting for.
+
+    **The object must actually be there.** This is the check that makes
+    transport mean something: the consumer fires only when the save says
+    its object is in the consumer's own room. A mechanism that fired on
+    a message alone would let a client claim a delivery it never made,
+    and the whole carried route would be decorative.
+
+    The consequence goes through D-8's handle -- `with_macro` on the
+    declared variable -- so nothing here is a second way for one room to
+    change another.
+    """
+    def known(rec):
+        zone = rec.zone
+        consumers = {c.mechanism_id: c
+                     for c in getattr(zone, "object_consumers", ())
+                     } if zone is not None else {}
+        con = consumers.get(mechanism_id)
+        if con is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no object consumer "
+                f"'{mechanism_id}'"
+                + (f"; it declares {sorted(consumers)}" if consumers
+                   else " and declares none"))
+        # A REPEAT OF THE SAME DELIVERY IS ABSORBED BELOW; anything else
+        # about an object already taken is refused, because it would be
+        # a second consumption of one object.
+        held = rec.progress.consumed_by(con.accepts)
+        if held == mechanism_id:
+            return      # the same delivery, reported again: absorbed
+        if held is not None:
+            raise ValueError(
+                f"'{con.accepts}' is already installed in '{held}'; "
+                f"consumer '{mechanism_id}' cannot take it as well")
+        where = rec.progress.object_room(con.accepts)
+        if where != con.room_id:
+            raise ValueError(
+                f"consumer '{mechanism_id}' is in room '{con.room_id}' and "
+                f"'{con.accepts}' is "
+                + (f"in '{where}'" if where else "not anywhere yet")
+                + "; the object has to be delivered before it is consumed")
+
+    rec = _require_zone(save, zone_id)
+    # LOOK IT UP SAFELY. `next()` on an empty generator raises
+    # StopIteration before `known` ever runs, so an unknown mechanism
+    # came back as a bare traceback instead of the refusal written for
+    # it -- an error path that swallowed its own error message.
+    con = next((c for c in getattr(rec.zone, "object_consumers", ())
+                if c.mechanism_id == mechanism_id), None)
+
+    def apply(p):
+        if con is None:
+            return p        # `known` refuses first; this never runs
+        # CONSUMED, and never rebuilt loose (§30.6.1). Monotone, so the
+        # same delivery reported twice changes nothing the second time.
+        taken = p.with_consumed(con.accepts, mechanism_id)
+        if con.sets_variable is None:
+            return taken    # scenery: legal, and it changes nothing else
+        return taken.with_macro(con.sets_variable, con.sets_state)
+
+    return _progress(save, zone_id, apply, known)
+
+
+def recover_transported_object(save: CampaignSave, zone_id: str,
+                               object_id: str) -> CampaignSave:
+    """P16.4. Put a lost or unreachable object back where it comes home.
+
+    Separate from `record_object_transported` on purpose: recovery is a
+    decision about a broken situation, and folding it into the ordinary
+    arrival path would make every illegal arrival silently correct
+    itself with nothing to notice.
+    """
+    def known(rec):
+        zone = rec.zone
+        declared = {o.object_id: o
+                    for o in getattr(zone, "transported_objects", ())
+                    } if zone is not None else {}
+        if object_id not in declared:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no transported object "
+                f"'{object_id}'")
+        if rec.progress.consumed(object_id):
+            raise ValueError(
+                f"'{object_id}' is installed in its consumer; an installed "
+                "object is not lost, and recovering it would put a second "
+                "copy back home")
+
+    rec = _require_zone(save, zone_id)
+    obj = next((o for o in getattr(rec.zone, "transported_objects", ())
+                if o.object_id == object_id), None)
+
+    def apply(p):
+        if obj is None:
+            return p        # `known` refuses first; this never runs
+        # HOME, AND NO LONGER WHERE IT WAS LOST: the pose goes with it.
+        return p.with_object_in(object_id, obj.home_room_id) \
+            .without_object_pose(object_id)
+
+    return _progress(save, zone_id, apply, known)
+
+
+def record_object_settled(save: CampaignSave, zone_id: str, object_id: str,
+                          room_id: str, position: tuple[float, float, float],
+                          yaw: float) -> CampaignSave:
+    """O05-03. A transported object came to rest where the hand left it.
+
+    The same refusals as `record_object_transported` -- a declared
+    object, a room inside its volume -- plus two of its own:
+
+    - **A consumed object does not settle anywhere.** It is installed,
+      and a pose for it would describe a second copy.
+    - **A pose must be a number a room could hold.** The engine measures
+      it; the bridge has no geometry and does not pretend to, but it
+      refuses a non-finite or absurd coordinate rather than storing it.
+    """
+    import math
+
+    def known(rec):
+        zone = rec.zone
+        declared = {o.object_id: o
+                    for o in getattr(zone, "transported_objects", ())
+                    } if zone is not None else {}
+        obj = declared.get(object_id)
+        if obj is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no transported object "
+                f"'{object_id}'")
+        if room_id not in obj.allowed_volume:
+            raise ValueError(
+                f"object '{object_id}' may not rest in room '{room_id}'; "
+                f"its volume is {sorted(obj.allowed_volume)}")
+        if rec.progress.consumed(object_id):
+            raise ValueError(
+                f"'{object_id}' is installed in its consumer and rests "
+                "nowhere else")
+        if not all(math.isfinite(c) and abs(c) < 10_000.0
+                   for c in (*position, yaw)):
+            raise ValueError(
+                f"'{object_id}' reported a pose {position}/{yaw} no room "
+                "could hold")
+
+    return _progress(save, zone_id,
+                     lambda p: p.with_object_pose(object_id, room_id,
+                                                  position, yaw),
+                     known)
+
+
+def record_carrier_rested(save: CampaignSave, zone_id: str,
+                          package_id: str, carrier_id: str, t: float,
+                          destination: str, held: bool) -> CampaignSave:
+    """O05-06.2. A hosted minor's carrier came to rest; its rest is saved.
+
+    EX50-011 §9: "Carrier poses, destinations and hold states are
+    package-local. A stable save restores each at its saved pose before
+    the player." Overwritten rather than accumulated -- a carrier sent
+    back is not a replay to reject -- and refused unless every fact is
+    the accepted Zone's:
+
+    - **The package is a hosted minor's**, by the minor path's four
+      facts (`_accepted_minor_contract`): an accepted Zone, a committed
+      layout, the room placed, a contracted shell in it.
+    - **The carrier is one that contract declares.** The engine does not
+      get to say which machines exist.
+    - **The destination is one of that carrier's declared stops.** A
+      carrier that is not held is standing AT its destination, so it
+      needs one; a held carrier may have none, because a fail-safe STOP
+      clears a shuttle's errand (`RailCarrier.hold`).
+    - **The offset is a number a path could hold.** The engine measures
+      it; the bridge has no geometry and does not pretend to, but it
+      refuses a non-finite, negative or absurd offset rather than
+      storing it.
+    """
+    import math
+
+    if not package_id.startswith(MINOR_PACKAGE_PREFIX):
+        raise ValueError(
+            f"'{package_id}' is not a hosted minor's package; only a "
+            f"'{MINOR_PACKAGE_PREFIX}<room>' records a carrier")
+    room_id = package_id[len(MINOR_PACKAGE_PREFIX):]
+    ref = f"{package_id}/{carrier_id}"
+
+    def known(rec):
+        contract = _accepted_minor_contract(rec, room_id, "moved")
+        stops = contract.carrier_stops(carrier_id)
+        if stops is None:
+            raise ValueError(
+                f"the minor in room '{room_id}' ({contract.catalogue_id}) "
+                f"declares no carrier '{carrier_id}'")
+        if destination and destination not in stops:
+            raise ValueError(
+                f"carrier '{ref}' has no stop '{destination}'; its stops "
+                f"are {list(stops)}")
+        if not destination and not held:
+            raise ValueError(
+                f"carrier '{ref}' reported a rest with no stop and no "
+                "hold; a carrier that is not held stands at a stop")
+        if not (math.isfinite(t) and 0.0 <= t < 1000.0):
+            raise ValueError(
+                f"carrier '{ref}' reported an offset {t} no path could "
+                "hold")
+
+    return _progress(save, zone_id,
+                     lambda p: p.with_carrier(ref, t, destination, held),
+                     known)
+
+
+def _declared_members(rec: ZoneRecord) -> set[str]:
+    """Every encounter member the Zone DECLARES, as `room/archetype#n`.
+
+    The n-th spawn of an archetype in a room, counted across the room's
+    `enemies` groups in declaration order -- which is the order every
+    room builder lays them out in, so the engine and this agree without
+    either reading the other.
+    """
+    out: set[str] = set()
+    for ch in _chambers_of(rec):
+        seen: dict[str, int] = {}
+        for group in ch.get("enemies") or ():
+            role = str(group.get("archetype"))
+            for _ in range(int(group.get("count", 0))):
+                n = seen.get(role, 0)
+                seen[role] = n + 1
+                out.add(f"{ch.get('id')}/{role}#{n}")
+    return out
+
+
+def record_defeat(save: CampaignSave, zone_id: str,
+                  member: str) -> CampaignSave:
+    """An encounter member defeated (H-RESUME-R, owner ruling D-06).
+    Idempotent by `member`, and monotone: ordinary quit and reload are
+    not encounter resets.
+
+    **Checked against the declaration, not trusted from the client.** The
+    room must be one of this Zone's chambers, the archetype one it
+    declares there, and the ordinal inside the declared count. That is
+    consistency evidence -- the bridge cannot see the kill; the engine's
+    lifecycle is the evidence of that -- but it keeps a wrong identity
+    from becoming permanent save data.
+    """
+    def known(rec):
+        if member not in _declared_members(rec):
+            raise ValueError(
+                f"Zone '{zone_id}' declares no encounter member "
+                f"'{member}'")
+    return _progress(save, zone_id,
+                     lambda p: p.with_defeated(member), known)
+
+
+def record_room_entered(save: CampaignSave, zone_id: str,
+                        room_id: str) -> CampaignSave:
+    """H-MAP-DATA. The player entered a room, which joins the map.
+
+    Idempotent by room, and refused for a room the accepted Zone does
+    not declare: a phantom room would otherwise stay on the map forever,
+    since the record is monotone.
+
+    **A Zone with no record yet** (`visited_rooms is None`, including
+    every Zone saved before the field) starts its record with the rooms
+    the save already proves, plus this one. Those rooms are facts the
+    save holds, so recording them invents nothing, and the map never
+    shows fewer rooms than it did before the first report.
+    """
+    rec = _require_zone(save, zone_id)
+
+    def known(r):
+        rooms = {c.id for c in r.zone.chambers} if r.zone is not None \
+            else set()
+        if room_id not in rooms:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no room '{room_id}'")
+
+    def change(p):
+        proven = (derived_discovery(rec.zone, p)
+                  if p.visited_rooms is None else ())
+        return p.with_visited((*proven, room_id))
+
+    return _progress(save, zone_id, change, known)
 
 
 def record_lock(save: CampaignSave, zone_id: str, room_id: str,
@@ -837,6 +1507,229 @@ def slot_action(
     return _rebuild(save, slots=save.slots.with_slot(slot, component_id))
 
 
+def gear_action(
+    save: CampaignSave, territory: str, component_id: str | None
+) -> CampaignSave:
+    """Wear an owned piece of Gear in its territory, or clear it (D16 G1).
+
+    `slot_action`'s shape, for the same reason: the checks that matter --
+    owned, Gear, its own territory -- live in `CampaignSave`'s validator,
+    so they hold on every path that can build a save. What the piece does
+    is never written here; it is derived from its atoms when read.
+    """
+    return _rebuild(save, gear=save.gear.with_piece(territory, component_id))
+
+
+def spend_charge(save: CampaignSave, component_id: str,
+                 use_index: int, generation: int) -> CampaignSave:
+    """Spend one use of a consumable. It stays equipped when empty.
+
+    **The supply is permanently owned** (owner decision, 2026-09-22).
+    Spending the last charge does not clear the slot -- the item stays
+    selected at `0 / max`, says it is exhausted and says what refills it,
+    and the refill makes it usable again with no inventory visit. The
+    thing that is refused is USING an empty one, which is this function,
+    not holding one.
+
+    **THE TRANSACTION IS A COMPARE-AND-SWAP ON TWO THINGS: WHICH SUPPLY,
+    AND WHICH USE OF IT.** `generation` is the supply the caller was
+    looking at when it acted; `use_index` is which use of that supply
+    this is meant to be -- the first, the second. The spend is accepted
+    only if the generation is still current AND the index is the next one
+    due. What each half catches:
+
+      TWO PRESSES ON THE LAST CHARGE (index). Both mint the same index
+      because neither has seen a snapshot yet. The first moves `spent`
+      past it; the second no longer matches and is refused. At most one
+      activation succeeds.
+      A DUPLICATE OR RETRIED MESSAGE (index). Same index, already
+      consumed, same refusal -- so a retry can never spend twice or
+      replay an effect.
+      A USE MINTED BEFORE A REFILL (generation). **The index cannot
+      catch this one, which is why the generation exists.** An old use 1
+      arriving at a fresh supply IS the next index due (`1 == 0 + 1`);
+      an old use 3 is the next one due again once two legitimate new uses
+      have brought `spent` to 2. Both would eat a charge from a supply
+      they were never minted against. The generation no longer exists, so
+      both are refused on identity instead.
+
+    The Zone id could not have stood in for the generation: it is reused
+    every time you walk back in, so a use from the last visit to A would
+    still name A. Minted only by a refill, never reused.
+
+    Refuses rather than saturating. A caller that has lost count should
+    find out here, not by watching the number stay at zero.
+    """
+    charges = _consumable_charges(save, component_id)
+    # THE GENERATION IS CHECKED FIRST, and it is checked before the
+    # count, so a stale use is reported as stale rather than as bad
+    # arithmetic. Three tests in this lane have now passed for the wrong
+    # reason; a refusal that names the wrong cause is how that happens.
+    if generation != save.consumable_generation:
+        raise ValueError(
+            f"'{component_id}' use {use_index} was minted against supply "
+            f"{generation}; the current supply is "
+            f"{save.consumable_generation}. It was refilled after the "
+            f"press, so this use no longer exists")
+    # AN AUTHORIZED CHARGE IS ALREADY COUNTED, so the report that
+    # follows it settles the record rather than spending again. Without
+    # this, authorizing and then reporting the same use would take two
+    # charges for one effect -- the opposite failure to the one
+    # authorizing was introduced to close, and just as silent.
+    held = save.consumable_authorizations
+    settled = next((a for a in held
+                    if a.component_id == component_id
+                    and a.generation == generation
+                    and a.use_index == use_index), None)
+    if settled is not None:
+        return _rebuild(save, consumable_authorizations=tuple(
+            a for a in held if a is not settled))
+    spent = charges - save.charges_left(component_id)
+    if spent >= charges:
+        raise ValueError(
+            f"'{component_id}' has no charges left ({spent} of {charges})")
+    if use_index != spent + 1:
+        raise ValueError(
+            f"'{component_id}' use {use_index} is not the next one due "
+            f"({spent + 1}); a duplicate or a retry")
+    uses = tuple(u for u in save.consumable_uses
+                 if u.component_id != component_id)
+    uses += (ConsumableUse(component_id=component_id, spent=spent + 1),)
+    # THE SLOT IS NOT CLEARED. A consumable is a permanently owned
+    # refillable supply: spending the last charge leaves it selected at
+    # `0 / max` with exhausted feedback, and the refill makes the same
+    # equipped item usable again without another trip to the inventory.
+    # Only an explicit equipment change replaces it.
+    return _rebuild(save, consumable_uses=uses)
+
+
+def _consumable_charges(save: CampaignSave, component_id: str) -> int:
+    """How many charges this component has, or the refusal saying why it
+    has none. Shared by the three functions that move a charge, because
+    three copies of one lookup is three places to stop agreeing."""
+    owned = save.derive().by_id(component_id)
+    if owned is None or owned.kind != "action":
+        raise ValueError(f"'{component_id}' is not an owned Action")
+    charges = getattr(owned.component, "charges", None)
+    if charges is None:
+        raise ValueError(f"'{component_id}' is not a consumable")
+    return charges
+
+
+def authorize_consumable(save: CampaignSave, component_id: str, *,
+                         use_index: int, generation: int) -> CampaignSave:
+    """Count a charge BEFORE the client launches the effect.
+
+    **PROPOSED, NOT AGREED.** The client half is Prod's and is
+    unwritten, so this is the bridge's side of a contract that has
+    one owner per file and must have one shape. The proposal, the
+    two boundaries it distinguishes and what it asks of the client
+    are in `docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`; if the engine
+    lane prefers another accounting shape, this is the half that
+    moves.
+
+    The whole point is that this reaches the disk before anything
+    irreversible happens. `spend_charge` learns about expenditure from a
+    report, and a report is exactly what a crash loses: launch, lose the
+    report, kill the client, relaunch into the same unrefilled
+    deployment, and a report-driven bridge still believes the charge is
+    there. Retaining and retransmitting an in-memory list survives a
+    dropped socket and does not survive the process.
+
+    So `spent` moves here. The record this writes exists only so an
+    attempt that never launched can be cancelled
+    (`release_consumable_authorization`); a crash between this call and
+    the launch BURNS the charge, which is the conservative direction and
+    the cost of authorizing first.
+
+    Same compare-and-swap as the spend, checked in the same order and
+    for the same reasons -- generation before count, so a stale
+    authorization is reported as stale rather than as bad arithmetic.
+    """
+    charges = _consumable_charges(save, component_id)
+    if generation != save.consumable_generation:
+        raise ValueError(
+            f"'{component_id}' authorization {use_index} was minted "
+            f"against supply {generation}; the current supply is "
+            f"{save.consumable_generation}. It was refilled after the "
+            "press, so this use no longer exists")
+    spent = charges - save.charges_left(component_id)
+    if spent >= charges:
+        raise ValueError(
+            f"'{component_id}' has no charges left ({spent} of {charges})")
+    if use_index != spent + 1:
+        raise ValueError(
+            f"'{component_id}' authorization {use_index} is not the next "
+            f"one due ({spent + 1}); a duplicate or a retry")
+    uses = tuple(u for u in save.consumable_uses
+                 if u.component_id != component_id)
+    uses += (ConsumableUse(component_id=component_id, spent=spent + 1),)
+    held = save.consumable_authorizations + (
+        ConsumableAuthorization(component_id=component_id,
+                                generation=generation,
+                                use_index=use_index),)
+    return _rebuild(save, consumable_uses=uses,
+                    consumable_authorizations=held)
+
+
+def release_consumable_authorization(
+        save: CampaignSave, component_id: str, *, use_index: int,
+        generation: int) -> CampaignSave:
+    """Cancel an attempt that never launched, and ONLY that attempt.
+
+    **PROPOSED, NOT AGREED.** The client half is Prod's and is
+    unwritten, so this is the bridge's side of a contract that has
+    one owner per file and must have one shape. The proposal, the
+    two boundaries it distinguishes and what it asks of the client
+    are in `docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`; if the engine
+    lane prefers another accounting shape, this is the half that
+    moves.
+
+    **The defect this shape does not have.** A reservation held as one
+    entry per component is overwritten by the next press, so cancelling
+    the second forgets the first -- and the first had already launched.
+    Here an authorization is keyed by `(component, generation,
+    use_index)`, so two presses inside one cooldown are two records and
+    cancelling the later one leaves the earlier expenditure standing.
+
+    **Only the newest may be released.** Releasing an authorization that
+    is not the last one spent would leave a hole in the index sequence
+    that `use_consumable`'s "next one due" check could never fill again.
+    This is also what makes a release from a FRESH process harmless: by
+    the time such a client has pressed anything, the index it could name
+    is no longer the newest.
+
+    Whether the effect launched is a thing only the process that
+    launched it knows, so that claim is the caller's and this function
+    takes it at its word. What it refuses to do is let a claim be made
+    about an attempt the caller cannot have made.
+    """
+    charges = _consumable_charges(save, component_id)
+    held = save.consumable_authorizations
+    match = next((a for a in held
+                  if a.component_id == component_id
+                  and a.generation == generation
+                  and a.use_index == use_index), None)
+    if match is None:
+        raise ValueError(
+            f"'{component_id}' has no outstanding authorization "
+            f"{use_index} against supply {generation}; it was already "
+            "reported, already released, or never made")
+    spent = charges - save.charges_left(component_id)
+    if use_index != spent:
+        raise ValueError(
+            f"'{component_id}' authorization {use_index} is not the "
+            f"newest ({spent}); releasing it would leave a gap in the "
+            "use sequence that nothing could fill")
+    uses = tuple(u for u in save.consumable_uses
+                 if u.component_id != component_id)
+    if spent - 1 > 0:
+        uses += (ConsumableUse(component_id=component_id, spent=spent - 1),)
+    return _rebuild(
+        save, consumable_uses=uses,
+        consumable_authorizations=tuple(a for a in held if a is not match))
+
+
 def grant_local_reward(
     save: CampaignSave, reward: EarnedLocalReward
 ) -> CampaignSave:
@@ -881,11 +1774,20 @@ def grant_local_reward(
 #: Every transition, for the census test. A new one fails the suite until it
 #: is listed — the same shape as the location-field and HubMode censuses.
 TRANSITIONS = (
+    spend_charge,
+    authorize_consumable,
+    release_consumable_authorization,
     start_generation, accept_zone, enter_zone, complete_zone, abandon_zone,
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
     rollback_shop_purchase, restock_shop, append_interpretation,
-    slot_action, grant_local_reward,
+    slot_action, gear_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
+    record_defeat,
+    record_room_entered,
+    record_zone_state, record_object_transported, record_object_consumed,
+    record_object_settled,
+    record_carrier_rested,
+    recover_transported_object,
     reselect_hosts,
     commit_layout, refuse_layout,
 )

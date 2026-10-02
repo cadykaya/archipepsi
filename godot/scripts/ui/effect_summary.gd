@@ -50,9 +50,7 @@ static func component_lines(component: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	match str(component.get("kind", "")):
 		"action":
-			out.append_array(_initiator_lines(component.get("primitive", {})))
-			for modifier: Dictionary in component.get("modifiers", []):
-				out.append(_modifier_line(modifier))
+			out.append_array(action_does(component))
 			out.append("%.1fs cooldown" % float(component.get("cooldown", 0.0)))
 			out.append("Slot: %s" % str(component.get("slot", "?")).replace(
 					"_", " ").to_upper())
@@ -76,8 +74,33 @@ static func component_lines(component: Dictionary) -> Array[String]:
 					component.get("readout", "?")).replace("_", " "))
 	return out
 
+## WHAT AN ACTION DOES, without its slot or its cooldown: the primitive
+## and every modifier. The equipment face's detail puts the cooldown and
+## the key in lines of their own, and this is the rest.
+static func action_does(component: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	out.append_array(_initiator_lines(component.get("primitive", {})))
+	for modifier: Dictionary in component.get("modifiers", []):
+		var line := _modifier_line(modifier)
+		if line != "":
+			out.append(line)
+	return out
+
+## ALL TWENTY-EIGHT PRIMITIVES. Six had a line; the other twenty-two
+## answered "what does it do" with nothing, so an Arc Lob's detail said
+## its cooldown and its key and not that it throws a bomb.
 static func _initiator_lines(initiator: Dictionary) -> Array[String]:
+	var f := func(key: String) -> float: return float(initiator.get(key, 0))
 	match initiator.get("type", ""):
+		"melee_swing":
+			return ["%.0f damage swing, %.1f m reach, %.0f° arc" % [
+					f.call("damage"), f.call("reach"), f.call("arc_degrees")]]
+		"melee_thrust":
+			return ["%.0f damage thrust, %.1f m reach" % [
+					f.call("damage"), f.call("reach")]]
+		"slam_ground":
+			return ["Slams down: %.0f damage within %.1f m" % [
+					f.call("damage"), f.call("radius")]]
 		"hitscan_damage":
 			var pellets := int(initiator.get("pellets", 1))
 			if pellets > 1:
@@ -87,17 +110,66 @@ static func _initiator_lines(initiator: Dictionary) -> Array[String]:
 		"projectile_damage":
 			return ["%.0f damage projectile" % float(
 					initiator.get("damage", 0))]
+		"arc_lob":
+			return ["Thrown: bursts for %.0f damage within %.1f m after %.1f s"
+					% [f.call("damage"), f.call("radius"), f.call("fuse")]]
+		"burst_fire":
+			return ["%d shots × %.0f damage" % [
+					int(initiator.get("shots", 1)), f.call("damage")]]
+		"charge_shot":
+			return ["Hold to charge (%.1f s): %.0f to %.0f damage" % [
+					f.call("charge_time"), f.call("min_damage"),
+					f.call("max_damage")]]
+		"beam_sustained":
+			return ["Beam: %.0f damage a second" % f.call("damage_per_second")]
 		"dash":
 			return ["Dash burst (%.0f m/s)" % float(initiator.get("force", 0))]
+		"air_dash":
+			return ["Dash in the air (%.0f m/s)" % f.call("force")]
+		"double_jump":
+			var extra := int(initiator.get("extra_jumps", 1))
+			return ["%d extra jump%s in the air" % [
+					extra, "" if extra == 1 else "s"]]
+		"wall_kick":
+			return ["Kick off walls (%.0f m/s)" % f.call("force")]
+		"hover":
+			return ["Hover in the air, up to %.1f s" % f.call("max_duration")]
+		"glide":
+			return ["Glide: fall at %.1f m/s, %.0f m/s forward" % [
+					f.call("fall_speed"), f.call("forward_speed")]]
+		"blink":
+			return ["Blink up to %.0f m" % f.call("range")]
 		"grapple_to_surface":
 			return ["Grapple to surfaces within %.0f m" % float(
 					initiator.get("range", 0))]
+		"grapple_pull_target":
+			return ["Pull an enemy to you from up to %.0f m" % f.call("range")]
+		"grapple_swing":
+			return ["Swing from surfaces within %.0f m" % f.call("range")]
 		"heal_self":
 			return ["Restores %.0f HP" % float(initiator.get("amount", 0))]
 		"shield":
 			return ["%.0f shield for %.0fs" % [
 					float(initiator.get("amount", 0)),
 					float(initiator.get("duration", 0))]]
+		"block":
+			return ["Block %.0f%% of damage while held" % (
+					f.call("reduction") * 100.0)]
+		"parry":
+			return ["Parry: a %.2f s window" % f.call("window")]
+		"cleanse":
+			var count := int(initiator.get("count", 1))
+			return ["Clears %d status effect%s from you" % [
+					count, "" if count == 1 else "s"]]
+		"scan_mark":
+			return ["Marks enemies within %.0f m for %.0f s" % [
+					f.call("range"), f.call("duration")]]
+		"restore_resource":
+			return ["Restores %.0f of a resource" % f.call("amount")]
+		"pull_pickup":
+			return ["Pulls pickups within %.0f m to you" % f.call("radius")]
+		"place_marker":
+			return ["Places a marker where you aim"]
 	return []
 
 static func _modifier_line(modifier: Dictionary) -> String:
@@ -107,6 +179,10 @@ static func _modifier_line(modifier: Dictionary) -> String:
 			return "Huge recoil" if force >= 8.0 else "Kicks you backward"
 		"knockback_target":
 			return "Knocks enemies backward"
+		"apply_status_on_hit":
+			return "Hits leave %s for %.1f s" % [
+					str(modifier.get("status", "?")).replace("_", " "),
+					float(modifier.get("duration", 0))]
 	return ""
 
 static func _trait_line(component: Dictionary) -> String:

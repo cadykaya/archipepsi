@@ -15,7 +15,8 @@ from pydantic import TypeAdapter, ValidationError
 from websockets.asyncio.server import serve
 
 from . import BRIDGE_VERSION, transactions
-from .campaign import CampaignEngine, IntentError
+from .campaign import (CampaignEngine, IntentError,
+                       use_consumable_key)
 from .mock_ap import MockAPBackend
 from .schemas import constants as C
 from .schemas.protocol import BridgeError, BridgeReady, ClientMessage
@@ -23,6 +24,37 @@ from .schemas.protocol import BridgeError, BridgeReady, ClientMessage
 log = logging.getLogger("archipepsi.server")
 
 _CLIENT_ADAPTER = TypeAdapter(ClientMessage)
+
+
+def _about(m) -> str:
+    """The domain key of what an intent was about, or "" if it has none.
+
+    Only the intents a client holds an operation OPEN against need one.
+    That was `use_consumable` alone, because a spend is the only thing the
+    client subtracts from its own display before the engine has agreed.
+    O05-04 adds `zone_state_selected`: the control shows its selection as
+    PENDING until the snapshot carries it, and a refusal has to be told
+    apart from any other so the control can say it was refused, rather
+    than stay pending forever. The key is domain-derived, the house rule
+    (`zone_state_selected:<zone>:<variable>:<state>`). Every other refusal
+    is read and forgotten, and "" correctly says "unchecked" for them.
+
+    H-INVENTORY (Prod's N-11) adds `slot_action`: the Equipment wall shows
+    an equip as PENDING until a snapshot carries it, so its refusal must
+    name it -- `slot_action:<slot>:<component_id>`, with nothing after the
+    last colon for "clear this key". D16 G1's `gear_action` is the same
+    request on a territory, and is named the same way.
+    """
+    if getattr(m, "type", "") in ("use_consumable", "authorize_consumable",
+                                  "release_consumable_authorization"):
+        return use_consumable_key(m.component_id, m.generation, m.use_index)
+    if getattr(m, "type", "") == "zone_state_selected":
+        return f"zone_state_selected:{m.zone_id}:{m.variable_id}:{m.state}"
+    if getattr(m, "type", "") == "slot_action":
+        return f"slot_action:{m.slot}:{m.component_id or ''}"
+    if getattr(m, "type", "") == "gear_action":
+        return f"gear_action:{m.territory}:{m.component_id or ''}"
+    return ""
 
 
 class BridgeServer:
@@ -103,12 +135,21 @@ class BridgeServer:
         except IntentError as exc:
             await self._send(ws, BridgeError(
                 type="error", scope=exc.scope, recoverable=True,
-                message=str(exc)[:C.MAX_TEXT_LEN]))
+                message=str(exc)[:C.MAX_TEXT_LEN],
+                about=exc.about or _about(message)))
         except Exception as exc:
             log.exception("intent %s failed", message.type)
+            # A CRASH IS STILL AN ANSWER to the intent that caused it.
+            # The client is holding an operation open against this
+            # message; if the only frame it gets back is an unattributed
+            # `bridge` error, it holds it forever. The key is built from
+            # the message rather than from the handler that failed, so
+            # this path does not depend on the handler having got far
+            # enough to build one.
             await self._send(ws, BridgeError(
                 type="error", scope="bridge", recoverable=True,
-                message=f"{type(exc).__name__}: {exc}"[:C.MAX_TEXT_LEN]))
+                message=f"{type(exc).__name__}: {exc}"[:C.MAX_TEXT_LEN],
+                about=_about(message)))
 
     async def _route(self, ws, m) -> None:
         engine = self.engine
@@ -140,10 +181,27 @@ class BridgeServer:
             await transactions.buy_shop_stock(engine, m.location_id)
         elif m.type == "slot_action":
             await engine.handle_slot_action(m.slot, m.component_id)
+        elif m.type == "gear_action":
+            await engine.handle_gear_action(m.territory, m.component_id)
+        elif m.type == "authorize_consumable":
+            await engine.handle_authorize_consumable(m.component_id,
+                                                     m.use_index,
+                                                     m.generation)
+        elif m.type == "release_consumable_authorization":
+            await engine.handle_release_consumable_authorization(
+                m.component_id, m.use_index, m.generation)
+        elif m.type == "use_consumable":
+            await engine.handle_use_consumable(m.component_id,
+                                               m.use_index,
+                                               m.generation)
         elif m.type == "grant_local_reward":
             await engine.handle_grant_local_reward(m)
         elif m.type in ("key_collected", "lock_opened", "station_reached",
-                        "latch_fired"):
+                        "latch_fired", "zone_state_selected",
+                        "object_transported", "object_settled",
+                        "object_consumed", "object_recovered",
+                        "carrier_rested", "enemy_defeated",
+                        "room_entered"):
             await engine.handle_progress(m)
         elif m.type == "layout_result":
             await engine.handle_layout_result(m)
@@ -166,7 +224,10 @@ class BridgeServer:
             await engine.backend.disconnect()
             engine.backend = None
         if engine.backend is None:
-            engine.backend = MockAPBackend(engine, config=self.mock_config)
+            # KEPT BESIDE THE SAVE (P5-14), so a restarted bridge resumes
+            # the same room: confirmed Checks stay confirmed.
+            engine.backend = MockAPBackend.for_campaign(
+                engine, config=self.mock_config)
         await engine.backend.connect("", "Skyiah", "")
 
     async def _connect_ap(self, server: str, slot_name: str,

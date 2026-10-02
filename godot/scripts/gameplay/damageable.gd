@@ -19,6 +19,23 @@ extends RefCounted
 
 const GROUP := "damageable"
 
+## Anything a HOSTILE projectile is allowed to operate.
+##
+## A strictly narrower question than `GROUP`, with a declared answer, and
+## the narrowness is the point. EX50-021 turns an enemy's committed shot
+## into the input to a machine, and the shortest way to do that would be
+## to let an enemy projectile call `Damageable.hit` on whatever it
+## touches. That is not a bounded extension -- it is a change to what
+## every existing damageable node means. A gunner would break the
+## `BreakablePanel` guarding an affordance, and the capability that
+## affordance charges for would stop mattering, exactly as it once did
+## for the opposite reason.
+##
+## So a machine OPTS IN, one node at a time, and nothing that has not
+## opted in changes behaviour at all. EX50-021 §2 calls this "a declared
+## bounded extension"; this group is where the declaration lives.
+const HOSTILE_INPUT := "hostile_input"
+
 ## The damageable node behind a collider, or null.
 ##
 ## Colliders reach here from raycasts, area overlaps and group scans, so
@@ -43,6 +60,20 @@ static func hit(collider: Variant, amount: float,
 	if node == null:
 		return false
 	return bool(node.take_damage(amount, direction, knockback))
+
+## The node behind a collider that has declared it accepts hostile fire.
+##
+## Separate from `of` rather than a flag on it, because the two are asked
+## by different callers for different reasons and a boolean argument
+## would let a caller ask the wrong one by accident.
+static func hostile_input(collider: Variant) -> Node:
+	if not is_instance_valid(collider):
+		return null
+	var node := collider as Node
+	if node == null or not node.is_in_group(HOSTILE_INPUT):
+		return null
+	return node
+
 
 ## Whether this collider is specifically an enemy — for the paths that
 ## mean enemies rather than targets.

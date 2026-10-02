@@ -1,0 +1,21 @@
+# godot-boot godot-test godot-hud godot-stats godot-lab godot-archive godot-consumable godot-menu-shell godot-equipment-face godot-minimap godot-map-face godot-journal-face godot-reload godot-machine-life godot-minor-claim godot-rules godot-affordance godot-verbs godot-resume on 2a573fe (+ working tree changes), 03:12 UTC
+target	exit	seconds	result
+godot-boot	0	20	GODOT BOOT TESTS OK
+godot-test	0	27	GODOT CHAMBER TESTS OK
+godot-hud	0	20	GODOT HUD TESTS OK
+godot-stats	0	21	GODOT STATS TESTS OK
+godot-lab	0	20	GODOT LAB TESTS OK
+godot-archive	0	20	GODOT ARCHIVE OK (23 checks, 0 notes)
+godot-consumable	0	20	GODOT CONSUMABLE TESTS OK (87 checks)
+godot-menu-shell	0	29	GODOT MENU SHELL OK (23 checks, 2 notes)
+godot-equipment-face	0	27	GODOT EQUIPMENT FACE OK (107 checks, 1 notes)
+godot-minimap	0	21	GODOT MINIMAP OK (30 checks, 1 notes)
+godot-map-face	0	25	GODOT MAP FACE OK (52 checks, 1 notes)
+godot-journal-face	0	23	GODOT JOURNAL FACE OK (36 checks, 0 notes)
+godot-reload	0	59	GODOT RELOAD TESTS OK (20 checks)
+godot-machine-life	0	163	GODOT MACHINE LIFE OK (41 checks, 5 rounds)
+godot-minor-claim	0	105	GODOT MINOR CLAIM TESTS OK (17 checks, 4 notes)
+godot-rules	0	21	GODOT RULES TESTS OK
+godot-affordance	0	22	GODOT AFFORDANCE TESTS OK
+godot-verbs	0	23	GODOT VERBS TESTS OK
+godot-resume	0	24	GODOT RESUME TESTS OK (12 checks, 0 notes)

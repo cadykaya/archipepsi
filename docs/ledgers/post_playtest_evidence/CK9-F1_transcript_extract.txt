@@ -1,0 +1,327 @@
+# CK9-F1 on 841041a: what the session transcript holds of the diagnosis
+# and of the repair's first checks. The raw logs (the flyer runs, the
+# failing diagnostic clear, the room-contract and sabotage logs) were lost
+# unpushed with 841041a when the container was lost (2026-09-26 16:12
+# UTC; the session resumed at 22:27 in a new one). Below, verbatim, each
+# command run against them during the session and what it printed. The
+# evidence was regenerated on the rebuilt revisions: the other CK9-F1_*
+# files.
+
+===== 2026-09-26T15:11:47.909Z
+$ git status --short | head -3; git log --oneline -1; S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; mkdir -p $S/ck9_flyer; timeout 600 make godot-flyer-room > $S/ck9_flyer/rerun1_841041a.log 2>&1; echo "exit $?"; grep -E "^(  ok|FAIL)|GODOT FLYER|\[c011" $S/ck9_flyer/rerun1_841041a.log
+----- output
+841041a HB-F4a-3: the way on is owed the room it arrives at
+exit 0
+  ok: the played Zone's c011 declares its divers (5)
+  ok: the player stands in c011, at its arrival
+  ok: all 5 divers are alive when the player arrives
+    [c011 / grounded] telegraphs 0, dives 0, impacts 0, damage 0.0, watching 5 of 5
+  ok: c011, the player standing on the floor: the divers WAIT -- 0 dives, 0 impacts in 5 s
+  ok: c011, waiting reads as watching: 5 of 5 divers have noticed the player and hold their eye at the watching level
+    [c011 / jumping] impacts by source: { "diver": { "impacts": 3, "damage": 36.0 } }
+    [c011 / jumping] telegraphs 5, dives 5, impacts 3, damage 36.0
+  ok: c011, the player jumping: leaving the ground draws dives and they land (5 dives, 3 impacts, 36.0 damage)
+    [c011 / cleared] killed 5 of 5 in 7.0 s; player deaths 0
+  ok: c011 cleared with the Static Pulse aimed at the divers' bodies: 5 of 5 killed, counted from enemy_died; kill_all satisfied: true
+GODOT FLYER ROOM OK (7 checks, 0 notes)
+
+===== 2026-09-26T15:14:11.845Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; W=$S/wt-bombs; git -C $W checkout -q --detach 3b96bc4 && git -C $W log --oneline -1 && cd $W && cp $S/ck9_flyer/layout_probe.gd godot/ck9_probe_tool.gd && cp $S/ck9_flyer/ck9_probe_tmp.tscn godot/ck9_probe_tmp.tscn && timeout 300 godot-bin/godot --headless --path godot res://ck9_probe_tmp.tscn -- $W/godot/tests/fixtures/candidate_zone.json > $S/ck9_flyer/layout_3b96bc4.log 2>&1; echo "exit $?"; rm -f godot/ck9_probe_tool.gd godot/ck9_probe_tmp.tscn godot/ck9_probe_tool.gd.uid; git -C $W checkout -q hb-o1 && git -C $W log --oneline -1; git -C $W status --short | head; diff <(grep "^PROBE" $S/ck9_flyer/layout_3b96bc4.log) <(grep "^PROBE" $S/ck9_flyer/layout_841041a.log) && echo "LAYOUTS IDENTICAL"
+----- output
+3b96bc4 CK8 checkpoint: 92 of 92 on adfb76c; the owner's HB-O1 ruling recorded
+exit 0
+4ab34ad HB-O1 (WIP, not yet run): pickup cards are informational; a held press says why
+?? .archipelago
+?? godot-bin
+LAYOUTS IDENTICAL
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T15:15:56.843Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; for f in $S/ck9_frontier/logs/65_make_godot_flyer_room.log $S/ck9_flyer/rerun1_841041a.log $S/ck9_flyer/repeat_*.log; do echo "$(basename $f): pad_entered=$(grep -c '_on_pad_entered' $f) died_sends=$(grep -c '_on_enemy_died' $f) $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done; ls $S/../../ -d >/dev/null; grep -rn "CK5\|CK8" /dev/null; ls /home/user/archipepsi/docs/ledgers/post_playtest_evidence/ | grep -i "flyer" | head
+----- output
+65_make_godot_flyer_room.log: pad_entered=1 died_sends=1 killed 1 of 5 in 61.0 s
+rerun1_841041a.log: pad_entered=0 died_sends=5 killed 5 of 5 in 7.0 s
+repeat_1.log: pad_entered=0 died_sends=5 killed 5 of 5 in 8.0 s
+repeat_2.log: pad_entered=0 died_sends=0 
+H-FLYER-AI_c011_on_41d7a9a_runtime.log
+H-FLYER-AI_repro_on_41d7a9a.log
+H-FLYER-HIT_repro_on_6ebbc90.log
+ML-F_encounter_flyers_before.log
+
+===== 2026-09-26T15:20:20.698Z
+$ cat /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/ck9_flyer/repeat_summary.txt | tail -6
+----- output
+rev 841041acf78d tree_clean 0
+run 1 exit 0 secs 42     [c011 / jumping] telegraphs 8, dives 8, impacts 7, damage 84.0     [c011 / cleared] killed 5 of 5 in 8.0 s; player deaths 0 
+run 2 exit 2 secs 94     [c011 / jumping] telegraphs 9, dives 9, impacts 8, damage 96.0     [c011 / cleared] killed 1 of 5 in 61.1 s; player deaths 0 
+run 3 exit 2 secs 94     [c011 / jumping] telegraphs 10, dives 10, impacts 9, damage 108.0     [c011 / cleared] killed 1 of 5 in 60.8 s; player deaths 0 
+run 4 exit 2 secs 96     [c011 / jumping] telegraphs 9, dives 9, impacts 8, damage 96.0     [c011 / cleared] killed 1 of 5 in 61.1 s; player deaths 0
+
+===== 2026-09-26T15:20:41.899Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; run_probe() { local tree=$1 out=$2; cp $S/ck9_flyer/tree_probe.gd $tree/godot/ck9_probe_tool.gd && cp $S/ck9_flyer/ck9_probe_tmp.tscn $tree/godot/ck9_probe_tmp.tscn && (cd $tree && timeout 300 godot-bin/godot --headless --path godot res://ck9_probe_tmp.tscn -- $tree/godot/tests/fixtures/candidate_zone.json > $out 2>&1; echo "exit $?"); rm -f $tree/godot/ck9_probe_tool.gd $tree/godot/ck9_probe_tmp.tscn $tree/godot/ck9_probe_tool.gd.uid; }; run_probe /home/user/archipepsi $S/ck9_flyer/tree_841041a.log; W=$S/wt-bombs; git -C $W checkout -q --detach 3b96bc4 && run_probe $W $S/ck9_flyer/tree_3b96bc4.log; git -C $W checkout -q hb-o1; git -C $W log --oneline -1; git -C /home/user/archipepsi status --short | head -3; grep "TREE nodes\|TREE failed" $S/ck9_flyer/tree_*.log; diff <(grep "^TREE" $S/ck9_flyer/tree_3b96bc4.log) <(grep "^TREE" $S/ck9_flyer/tree_841041a.log) > $S/ck9_flyer/tree_diff.txt; echo "diff lines: $(wc -l < $S/ck9_flyer/tree_diff.txt)"; head -30 $S/ck9_flyer/tree_diff.txt
+----- output
+exit 0
+exit 0
+4ab34ad HB-O1 (WIP, not yet run): pickup cards are informational; a held press says why
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/ck9_flyer/tree_3b96bc4.log:TREE nodes 4761
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/ck9_flyer/tree_841041a.log:TREE nodes 4761
+diff lines: 7982
+47,48c47,48
+< TREE Chamber_c001/@AnimatableBody3D@146/@CollisionShape3D@3964 CollisionShape3D (-2.8, 0.4, 4.5)
+< TREE Chamber_c001/@AnimatableBody3D@146/@MeshInstance3D@3965 MeshInstance3D (-2.8, 0.4, 4.5)
+---
+> TREE Chamber_c001/@AnimatableBody3D@146/@CollisionShape3D@4138 CollisionShape3D (-2.8, 0.4, 4.5)
+> TREE Chamber_c001/@AnimatableBody3D@146/@MeshInstance3D@4139 MeshInstance3D (-2.8, 0.4, 4.5)
+50,52c50,52
+< TREE Chamber_c001/@Area3D@147/@CollisionShape3D@3966 CollisionShape3D (-2.8, 4.9, 4.5)
+< TREE Chamber_c001/@Area3D@147/@MeshInstance3D@3967 MeshInstance3D (-2.8, 4.9, 4.5)
+< TREE Chamber_c001/@Area3D@147/@Label3D@3968 Label3D (-2.8, 5.75, 4.5)
+---
+> TREE Chamber_c001/@Area3D@147/@CollisionShape3D@4140 CollisionShape3D (-2.8, 4.9, 4.5)
+> TREE Chamber_c001/@Area3D@147/@MeshInstance3D@4141 MeshInstance3D (-2.8, 4.9, 4.5)
+> TREE Chamber_c001/@Area3D@147/@Label3D@4142 Label3D (-2.8, 5.75, 4.5)
+77,79c77,79
+< TREE Chamber_c001/PoweredDoorChain/@Area3D@165/@CollisionShape3D@3969 CollisionShape3D (2.8, 0.9, 8.1)
+< TREE Chamber_c001/PoweredDoorChain/@Area3D@165/@MeshInstance3D@3970 MeshInstance3D (2.8, 0.9, 8.1)
+< TREE Chamber_c001/PoweredDoorChain/@Area3D@165/@Label3D@3971 Label3D (2.8, 1.75, 8.1)
+---
+> TREE Chamber_c001/PoweredDoorChain/@Area3D@165/@CollisionShape3D@4143 CollisionShape3D (2.8, 0.9, 8.1)
+> TREE Chamber_c001/PoweredDoorChain/@Area3D@165/@MeshInstance3D@4144 MeshInstance3D (2.8, 0.9, 8.1)
+> TREE Chamber_c001/PoweredDoorChain/@Area3D@165/@Label3D@4145 Label3D (2.8, 1.75, 8.1)
+81,82c81,82
+< TREE Chamber_c001/@Area3D@166/@CollisionShape3D@3972 CollisionShape3D (-2.6, 0.25, 7.5)
+< TREE Chamber_c001/@Area3D@166/@MeshInstance3D@3973 MeshInstance3D (-2.6, 0.2, 7.5)
+---
+> TREE Chamber_c001/@Area3D@166/@CollisionShape3D@4146 CollisionShape3D (-2.6, 0.25, 7.5)
+> TREE Chamber_c001/@Area3D@166/@MeshInstance3D@4147 MeshInstance3D (-2.6, 0.2, 7.5)
+84,86c84,86
+< TREE Chamber_c001/@Area3D@167/@CollisionShape3D@3974 CollisionShape3D (-2.6, 4.733, 7.5)
+
+===== 2026-09-26T15:20:53.469Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; norm() { grep "^TREE" $1 | sed -E 's/@([A-Za-z0-9_]+)@[0-9]+/@\1@/g'; }; diff <(norm $S/ck9_flyer/tree_3b96bc4.log) <(norm $S/ck9_flyer/tree_841041a.log) > $S/ck9_flyer/tree_diff_norm.txt; echo "normalised diff lines: $(wc -l < $S/ck9_flyer/tree_diff_norm.txt)"; head -40 $S/ck9_flyer/tree_diff_norm.txt
+----- output
+normalised diff lines: 0
+
+===== 2026-09-26T15:23:12.093Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; for f in $S/ck9_frontier/logs/65_make_godot_flyer_room.log $S/ck9_flyer/rerun1_841041a.log $S/ck9_flyer/repeat_*.log $S/ck9_flyer/ck8_repeats/run_*.log; do [ -s $f ] || continue; echo "$(basename $(dirname $f))/$(basename $f): $(grep -o 'jumping\] telegraphs [0-9]*, dives [0-9]*, impacts [0-9]*' $f) | $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done
+----- output
+logs/65_make_godot_flyer_room.log: jumping] telegraphs 7, dives 7, impacts 5 | killed 1 of 5 in 61.0 s
+ck9_flyer/rerun1_841041a.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 7.0 s
+ck9_flyer/repeat_1.log: jumping] telegraphs 8, dives 8, impacts 7 | killed 5 of 5 in 8.0 s
+ck9_flyer/repeat_2.log: jumping] telegraphs 9, dives 9, impacts 8 | killed 1 of 5 in 61.1 s
+ck9_flyer/repeat_3.log: jumping] telegraphs 10, dives 10, impacts 9 | killed 1 of 5 in 60.8 s
+ck9_flyer/repeat_4.log: jumping] telegraphs 9, dives 9, impacts 8 | killed 1 of 5 in 61.1 s
+ck9_flyer/repeat_5.log:  | 
+ck8_repeats/run_1.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+ck8_repeats/run_2.log: jumping] telegraphs 4, dives 4, impacts 3 | killed 5 of 5 in 12.0 s
+
+===== 2026-09-26T15:24:16.324Z
+$ tail -4 /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/ck9_flyer/ck8_repeats/summary.txt | cut -c1-200
+----- output
+tree /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-bombs rev 3b96bc451d2b changes 0
+run 1 exit 0 secs 46     [c011 / jumping] telegraphs 7, dives 7, impacts 6, damage 72.0     [c011 / cleared] killed 5 of 5 in 12.0 s; player deaths 0 
+run 2 exit 0 secs 45     [c011 / jumping] telegraphs 4, dives 4, impacts 3, damage 36.0     [c011 / cleared] killed 5 of 5 in 12.0 s; player deaths 0 
+run 3 exit 0 secs 46     [c011 / jumping] telegraphs 7, dives 7, impacts 6, damage 72.0     [c011 / cleared] killed 5 of 5 in 12.0 s; player deaths 0
+
+===== 2026-09-26T15:24:33.167Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; cd $S/wt-hbf4a && timeout 300 make godot-import > $S/ck9_flyer/diag_import.log 2>&1; echo "import exit $?"; for i in 1 2 3; do timeout 400 make godot-flyer-room > $S/ck9_flyer/diag_run_$i.log 2>&1; rc=$?; echo "diag run $i exit $rc: $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $S/ck9_flyer/diag_run_$i.log) $(grep -c '^DIAG' $S/ck9_flyer/diag_run_$i.log) diag lines"; if [ $rc -ne 0 ]; then break; fi; done
+----- output
+import exit 0
+diag run 1 exit 2: killed 1 of 5 in 60.9 s 156 diag lines
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T15:26:24.410Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; grep "^DIAG" $S/ck9_flyer/diag_run_1.log | head -30 | cut -c1-330
+----- output
+DIAG f0 player (-6.42, 31.57, 147.29) room 'c011' floor true vel (-2.25, 0.0, -6.55) strafing false sighted true alive 5
+DIAG   Enemy_diver at (-9.849999, 31.64, 141.47) room 'c011' dist 6.76 vel (-0.55, 0.0, -0.93) noticed true dive 0.00 hover_y 31.64 telegraph '' -> ray hits /root/@Node3D@3/Enemy_diver (CharacterBody3D) at (-9.54, 33.51, 141.98)
+DIAG   @CharacterBody3D@4491 at (-5.18, 32.07, 147.64) room 'c011' dist 1.38 vel (0.0, 0.0, 0.0) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/@CharacterBody3D@4501 (CharacterBody3D) at (-5.9, 33.5, 147.45)
+DIAG   @CharacterBody3D@4501 at (-5.29, 31.57, 147.38) room 'c011' dist 1.13 vel (0.0, 0.0, 0.0) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/@CharacterBody3D@4501 (CharacterBody3D) at (-5.89, 33.3, 147.34)
+DIAG   @CharacterBody3D@4511 at (-3.93, 31.57, 147.55) room 'c011' dist 2.50 vel (0.0, 0.0, 0.0) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/@CharacterBody3D@4501 (CharacterBody3D) at (-5.89, 33.22, 147.35)
+DIAG   @CharacterBody3D@4521 at (-6.23, 31.59, 150.47) room 'c011' dist 3.18 vel (0.0, -0.05, 0.0) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/@CharacterBody3D@4521 (CharacterBody3D) at (-6.27, 33.43, 149.87)
+DIAG f120 player (0.47, 0.76, 1.24) room 'c001' floor false vel (5.25, -3.2, 0.39) strafing true sighted false alive 4
+DIAG   Enemy_diver at (-9.9, 31.64, 141.43) room 'c011' dist 143.93 vel (5.13, 0.0, 0.0) noticed true dive 0.00 hover_y 31.64 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@128/@StaticBody3D@130 (StaticBody3D) at (-0.52, 5.33, 14.6)
+DIAG   @CharacterBody3D@4491 at (-4.69, 31.62, 147.58) room 'c011' dist 149.66 vel (5.83, -0.13, -0.03) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@128/@StaticBody3D@130 (StaticBody3D) at (0.0, 5.21, 14.6)
+DIAG   @CharacterBody3D@4511 at (-3.38, 31.57, 147.47) room 'c011' dist 149.49 vel (5.83, 0.0, -0.08) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@128/@StaticBody3D@130 (StaticBody3D) at (0.12, 5.2, 14.6)
+DIAG   @CharacterBody3D@4521 at (-6.77, 31.57, 150.35) room 'c011' dist 152.43 vel (-5.81, 0.0, -0.48) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@128/@StaticBody3D@130 (StaticBody3D) at (-0.18, 5.15, 14.6)
+DIAG f240 player (-0.61, 0.0, 1.13) room 'c001' floor true vel (6.99, 0.0, 0.3) strafing true sighted false alive 4
+DIAG   Enemy_diver at (-9.76, 31.64, 141.53) room 'c011' dist 144.21 vel (0.0, 0.0, 0.36) noticed true dive 0.00 hover_y 31.64 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-1.51, 4.68, 14.6)
+DIAG   @CharacterBody3D@4491 at (-7.42, 31.57, 142.22) room 'c011' dist 144.74 vel (3.41, 0.0, 0.14) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-1.28, 4.66, 14.6)
+DIAG   @CharacterBody3D@4511 at (-6.77, 31.57, 140.66) room 'c011' dist 143.19 vel (0.3, 0.0, -6.99) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-1.22, 4.69, 14.6)
+DIAG   @CharacterBody3D@4521 at (-8.179999, 31.57, 142.25) room 'c011' dist 144.81 vel (2.52, 0.0, 0.12) noticed true dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-1.35, 4.66, 14.6)
+DIAG f360 player (-1.54, 0.0, 1.05) room 'c001' floor true vel (7.0, 0.0, 0.09) strafing true sighted false alive 4
+DIAG   Enemy_diver at (-10.05, 31.64, 141.37) room 'c011' dist 144.09 vel (0.0, 0.0, -0.67) noticed false dive 0.00 hover_y 31.64 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@AnimatableBody3D@148 (AnimatableBody3D) at (-1.69, 2.14, 3.3)
+DIAG   @CharacterBody3D@4491 at (-8.15, 31.57, 136.07) room 'c011' dist 138.82 vel (1.85, 0.0, -2.61) noticed false dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@AnimatableBody3D@148 (AnimatableBody3D) at (-1.67, 2.16, 3.3)
+DIAG   @CharacterBody3D@4511 at (-3.43, 31.57, 131.02) room 'c011' dist 133.77 vel (0.1, 0.0, 2.39) noticed false dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-1.75, 4.95, 14.6)
+DIAG   @CharacterBody3D@4521 at (-6.05, 31.57, 130.96) room 'c011' dist 133.77 vel (1.14, 0.0, 0.54) noticed false dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-2.02, 4.95, 14.6)
+DIAG f480 player (-2.47, 0.0, 1.05) room 'c001' floor true vel (6.93, 0.0, 0.04) strafing true sighted false alive 4
+DIAG   Enemy_diver at (-10.03, 31.64, 141.18) room 'c011' dist 143.86 vel (0.0, 0.0, -0.11) noticed false dive 0.00 hover_y 31.64 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-3.21, 4.71, 14.6)
+DIAG   @CharacterBody3D@4491 at (-6.33, 31.57, 136.05) room 'c011' dist 138.70 vel (0.0, 0.0, 1.36) noticed false dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-2.87, 4.82, 14.6)
+DIAG   @CharacterBody3D@4511 at (-3.58, 31.57, 134.1) room 'c011' dist 136.75 vel (0.0, 0.0, 0.35) noticed false dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-2.59, 4.87, 14.6)
+DIAG   @CharacterBody3D@4521 at (-4.22, 31.57, 134.53) room 'c011' dist 137.17 vel (0.03, 0.0, 0.05) noticed false dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-2.66, 4.86, 14.6)
+DIAG f600 player (-3.3, 0.0, 1.03) room 'c001' floor true vel (2.8, 0.0, 0.0) strafing true sighted false alive 4
+DIAG   Enemy_diver at (-10.03, 31.64, 141.18) room 'c011' dist 143.84 vel (0.0, 0.0, -0.11) noticed false dive 0.00 hover_y 31.64 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@110/@StaticBody3D@112 (StaticBody3D) at (-3.75, 3.72, 10.32)
+DIAG   @CharacterBody3D@4491 at (-6.07, 31.57, 138.28) room 'c011' dist 140.86 vel (-1.29, 0.0, -0.06) noticed false dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-3.58, 4.75, 14.6)
+DIAG   @CharacterBody3D@4511 at (-3.58, 31.57, 134.13) room 'c011' dist 136.80 vel (0.0, 0.0, 0.42) noticed false dive 0.00 hover_y 31.57 telegraph '' -> ray hits /root/@Node3D@3/Zone_zone_001/Chamber_c001/@MeshInstance3D@122/@StaticBody3D@124 (StaticBody3D) at (-3.33, 4.85, 14.6)
+
+===== 2026-09-26T15:26:47.778Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; grep -i "plug\|return" $S/ck9_flyer/tree_841041a.log | head -20; grep -n "func _place_plug\|func _build_plug\|ReturnPlug\|class_name.*Plug\|HOLD_SECONDS\|hold_seconds" -r /home/user/archipepsi/godot/scripts | head -10
+----- output
+TREE ReturnPlug_p_c011_start Area3D (-6.142, 31.57, 144.49)
+TREE ReturnPlug_p_c011_start/@CollisionShape3D@4130 CollisionShape3D (-6.142, 33.07, 144.49)
+TREE ReturnPlug_p_c011_start/Face MeshInstance3D (-6.142, 31.72, 144.49)
+TREE ReturnPlug_p_c011_start/Charge MeshInstance3D (-6.142, 31.57, 144.49)
+TREE ReturnPlug_p_c011_start/PlugLabel Label3D (-6.142, 35.07, 144.49)
+TREE ReturnPlug_p_c012_start Area3D (-21.74, 33.1, 116.83)
+TREE ReturnPlug_p_c012_start/@CollisionShape3D@4131 CollisionShape3D (-21.74, 34.6, 116.83)
+TREE ReturnPlug_p_c012_start/Face MeshInstance3D (-21.74, 33.25, 116.83)
+TREE ReturnPlug_p_c012_start/Charge MeshInstance3D (-21.74, 33.1, 116.83)
+TREE ReturnPlug_p_c012_start/PlugLabel Label3D (-21.74, 36.6, 116.83)
+TREE ReturnPlug_p_c014_start Area3D (-7.979001, 1.53, 69.992)
+TREE ReturnPlug_p_c014_start/@CollisionShape3D@4132 CollisionShape3D (-7.979001, 3.03, 69.992)
+TREE ReturnPlug_p_c014_start/Face MeshInstance3D (-7.979001, 1.68, 69.992)
+TREE ReturnPlug_p_c014_start/Charge MeshInstance3D (-7.979001, 1.53, 69.992)
+TREE ReturnPlug_p_c014_start/PlugLabel Label3D (-7.979001, 5.03, 69.992)
+TREE ReturnPlug_p_c015_start Area3D (-14.292, 1.53, 97.915)
+TREE ReturnPlug_p_c015_start/@CollisionShape3D@4133 CollisionShape3D (-14.292, 3.03, 97.915)
+TREE ReturnPlug_p_c015_start/Face MeshInstance3D (-14.292, 1.68, 97.915)
+TREE ReturnPlug_p_c015_start/Charge MeshInstance3D (-14.292, 1.53, 97.915)
+TREE ReturnPlug_p_c015_start/PlugLabel Label3D (-14.292, 5.03, 97.915)
+/home/user/archipepsi/godot/scripts/generation/zone_builder.gd:2787:		var plug := ReturnPlug.create(str(spec.get("edge_id", "")),
+/home/user/archipepsi/godot/scripts/generation/chamber_builders.gd:663:## it. `ReturnPlug.RADIUS` is the trigger; a player at the edge of it is
+/home/user/archipepsi/godot/scripts/generation/chamber_builders.gd:668:	var reach := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS + 0.6
+/home/user/archipepsi/godot/scripts/generation/chamber_builders.gd:670:			Vector3(reach * 2.0, ReturnPlug.HEIGHT, reach * 2.0))
+/home/user/archipepsi/godot/scripts/generation/chamber_builders.gd:696:	# A CAPSULE HAS TO FIT, NOT THE TRIGGER. `ReturnPlug.RADIUS` is the
+/home/user/archipepsi/godot/scripts/ui/reveal.gd:15:const HOLD_SECONDS := 2.2
+/home/user/archipepsi/godot/scripts/ui/reveal.gd:135:	var hold := HOLD_SECONDS
+/home/user/archipepsi/godot/scripts/content/room_audit.gd:542:## `ReturnPlug.RADIUS` (1.4) plus `PLAYER_RADIUS` (0.4) is 1.8, so 2.5
+/home/user/archipepsi/godot/scripts/content/room_audit.gd:620:		var clearance := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+/home/user/archipepsi/godot/scripts/content/room_audit.gd:754:		var plug: ReturnPlug = raw
+
+===== 2026-09-26T15:31:56.671Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; cd $S/wt-hbf4a && timeout 600 make godot-room-contract > $S/ck9f1/CK9-F1_room_contract_after.log 2>&1; echo "exit $?"; grep -E "^FAIL|CK9-F1|ROOM CONTRACT|SCRIPT ERROR" $S/ck9f1/CK9-F1_room_contract_after.log | head -20
+----- output
+exit 0
+  CK9-F1 return plug: still 121 frame(s), after the Pulse 162, after one shot mid-charge 180; hold 120, quiet 60
+GODOT ROOM CONTRACT TESTS OK
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T15:35:38.084Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; cd $S/wt-hbf4a && timeout 600 make godot-room-contract > $S/ck9f1/CK9-F1_room_contract_after.log 2>&1; echo "exit $?"; grep -E "^FAIL|CK9-F1|ROOM CONTRACT|SCRIPT ERROR" $S/ck9f1/CK9-F1_room_contract_after.log | head -20
+----- output
+exit 2
+SCRIPT ERROR: Parse Error: Cannot infer the type of "after" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "dropped" variable because the value doesn't have a set type.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T15:39:12.414Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; cd $S/wt-hbf4a && timeout 600 make godot-room-contract > $S/ck9f1/CK9-F1_room_contract_after.log 2>&1; echo "exit $?"; grep -E "^FAIL|CK9-F1|ROOM CONTRACT|SCRIPT ERROR" $S/ck9f1/CK9-F1_room_contract_after.log | head -20
+----- output
+exit 0
+  CK9-F1 return plug: still 121 frame(s), after the Pulse 181, after one shot mid-charge 181; hold 120, quiet 60
+GODOT ROOM CONTRACT TESTS OK
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T15:42:17.008Z
+$ /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/ck9_flyer/repeat_tree.sh /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-hbf4a 6 ck9f1_repeats; cat /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/ck9_flyer/ck9f1_repeats/summary.txt | cut -c1-210
+----- output
+tree /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-hbf4a rev 841041acf78d changes 3
+run 1 exit 0 secs 45     [c011 / jumping] telegraphs 7, dives 7, impacts 6, damage 72.0     [c011 / cleared] killed 5 of 5 in 12.0 s; player deaths 0 
+run 2 exit 0 secs 42     [c011 / jumping] telegraphs 10, dives 10, impacts 9, damage 108.0     [c011 / cleared] killed 5 of 5 in 7.9 s; player deaths 0 
+run 3 exit 0 secs 45     [c011 / jumping] telegraphs 7, dives 7, impacts 6, damage 72.0     [c011 / cleared] killed 5 of 5 in 12.0 s; player deaths 0 
+run 4 exit 0 secs 40     [c011 / jumping] telegraphs 4, dives 4, impacts 4, damage 48.0     [c011 / cleared] killed 5 of 5 in 7.4 s; player deaths 0 
+run 5 exit 0 secs 45     [c011 / jumping] telegraphs 8, dives 8, impacts 8, damage 96.0     [c011 / cleared] killed 5 of 5 in 12.1 s; player deaths 0 
+run 6 exit 0 secs 40     [c011 / jumping] telegraphs 4, dives 4, impacts 3, damage 36.0     [c011 / cleared] killed 5 of 5 in 8.0 s; player deaths 0 
+repeat done
+
+===== 2026-09-26T15:48:34.983Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; V=$S/ck9f1/evidence; mkdir -p $V; cd $S/ck9_flyer && {
+echo "# godot-flyer-room, run alone on the machine, one line per run"; echo "# 841041a (HB-F4a-3): CK9 step 65, a re-run, then repeats 1-4 (repeats stopped after 4; 5 was cut short and is not counted)";
+for f in $S/ck9_frontier/logs/65_make_godot_flyer_room.log rerun1_841041a.log repeat_1.log repeat_2.log repeat_3.log repeat_4.log; do echo "841041a $(basename $f): $(grep -o 'jumping\] telegraphs [0-9]*, dives [0-9]*, impacts [0-9]*' $f) | $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done;
+echo "# 3b96bc4 (CK8's revision, the code of adfb76c): 3 runs, stopped after 3"; for f in ck8_repeats/run_1.log ck8_repeats/run_2.log ck8_repeats/run_3.log; do echo "3b96bc4 $(basename $f): $(grep -o 'jumping\] telegraphs [0-9]*, dives [0-9]*, impacts [0-9]*' $f) | $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done;
+echo "# ck9-f1 (841041a plus the repair): 6 runs"; for i in 1 2 3 4 5 6; do f=ck9f1_repeats/run_$i.log; echo "ck9-f1 run_$i.log: $(grep -o 'jumping\] telegraphs [0-9]*, dives [0-9]*, impacts [0-9]*' $f) | $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done; } > $V/CK9-F1_flyer_runs.txt; cat $V/CK9-F1_flyer_runs.txt; tar czf $V/CK9-F1_flyer_run_logs.tar.gz -C $S rerun1_841041a.log 2>/dev/null; tar czf $V/CK9-F1_flyer_run_logs.tar.gz -C $S/ck9_flyer rerun1_841041a.log repeat_1.log repeat_2.log repeat_3.log repeat_4.log ck8_repeats ck9f1_repeats && ls -la $V | awk '{print $5, $9}'
+----- output
+# godot-flyer-room, run alone on the machine, one line per run
+# 841041a (HB-F4a-3): CK9 step 65, a re-run, then repeats 1-4 (repeats stopped after 4; 5 was cut short and is not counted)
+841041a 65_make_godot_flyer_room.log: jumping] telegraphs 7, dives 7, impacts 5 | killed 1 of 5 in 61.0 s
+841041a rerun1_841041a.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 7.0 s
+841041a repeat_1.log: jumping] telegraphs 8, dives 8, impacts 7 | killed 5 of 5 in 8.0 s
+841041a repeat_2.log: jumping] telegraphs 9, dives 9, impacts 8 | killed 1 of 5 in 61.1 s
+841041a repeat_3.log: jumping] telegraphs 10, dives 10, impacts 9 | killed 1 of 5 in 60.8 s
+841041a repeat_4.log: jumping] telegraphs 9, dives 9, impacts 8 | killed 1 of 5 in 61.1 s
+# 3b96bc4 (CK8's revision, the code of adfb76c): 3 runs, stopped after 3
+3b96bc4 run_1.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+3b96bc4 run_2.log: jumping] telegraphs 4, dives 4, impacts 3 | killed 5 of 5 in 12.0 s
+3b96bc4 run_3.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+# ck9-f1 (841041a plus the repair): 6 runs
+ck9-f1 run_1.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+ck9-f1 run_2.log: jumping] telegraphs 10, dives 10, impacts 9 | killed 5 of 5 in 7.9 s
+ck9-f1 run_3.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+ck9-f1 run_4.log: jumping] telegraphs 4, dives 4, impacts 4 | killed 5 of 5 in 7.4 s
+ck9-f1 run_5.log: jumping] telegraphs 8, dives 8, impacts 8 | killed 5 of 5 in 12.1 s
+ck9-f1 run_6.log: jumping] telegraphs 4, dives 4, impacts 3 | killed 5 of 5 in 8.0 s
+ 
+4096 .
+4096 ..
+3906 CK9-F1_flyer_run_logs.tar.gz
+1641 CK9-F1_flyer_runs.txt
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T15:48:46.104Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; V=$S/ck9f1/evidence; cp $S/ck9_flyer/layout_3b96bc4.log $V/CK9-F1_layout_on_3b96bc4.log; cp $S/ck9_flyer/layout_841041a.log $V/CK9-F1_layout_on_841041a.log; gzip -c $S/ck9_flyer/tree_3b96bc4.log > $V/CK9-F1_tree_on_3b96bc4.log.gz; gzip -c $S/ck9_flyer/tree_841041a.log > $V/CK9-F1_tree_on_841041a.log.gz; { echo "# diff of the two TREE dumps with Godot's auto-generated names (@Class@N) normalised to @Class@:"; echo "# sed -E 's/@([A-Za-z0-9_]+)@[0-9]+/@\\1@/g' on each, then diff"; echo "# lines of difference: $(wc -l < $S/ck9_flyer/tree_diff_norm.txt)"; echo "# raw (unnormalised) diff lines: $(wc -l < $S/ck9_flyer/tree_diff.txt), every one an auto-generated name"; } > $V/CK9-F1_tree_diff.txt; cp $S/ck9f1/CK9-F1_diag_failing_clear_on_841041a.log $V/; cp $S/ck9_flyer/diag_patch.py $V/CK9-F1_diag_patch.py; cp $S/ck9_flyer/layout_probe.gd $V/CK9-F1_layout_probe_tool.gd; cp $S/ck9_flyer/tree_probe.gd $V/CK9-F1_tree_probe_tool.gd; cp $S/ck9_flyer/repeat_tree.sh $V/CK9-F1_repeat_tree.sh; cat $V/CK9-F1_tree_diff.txt; ls $V
+----- output
+# diff of the two TREE dumps with Godot's auto-generated names (@Class@N) normalised to @Class@:
+# sed -E 's/@([A-Za-z0-9_]+)@[0-9]+/@\1@/g' on each, then diff
+# lines of difference: 0
+# raw (unnormalised) diff lines: 7982, every one an auto-generated name
+CK9-F1_diag_failing_clear_on_841041a.log
+CK9-F1_diag_patch.py
+CK9-F1_flyer_run_logs.tar.gz
+CK9-F1_flyer_runs.txt
+CK9-F1_layout_on_3b96bc4.log
+CK9-F1_layout_on_841041a.log
+CK9-F1_layout_probe_tool.gd
+CK9-F1_repeat_tree.sh
+CK9-F1_tree_diff.txt
+CK9-F1_tree_on_3b96bc4.log.gz
+CK9-F1_tree_on_841041a.log.gz
+CK9-F1_tree_probe_tool.gd
+
+===== 2026-09-26T15:49:59.263Z
+$ sed -n 1,12p /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/ck9f1/CK9-F1_sabotages.log | cut -c1-330
+----- output
+RF-1 [return_plug.gd; make godot-room-contract] REPRO: the plug charges whatever its occupant is doing
+    CAUGHT by "with the Static Pulse held down" -- exit 2, 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CK9-F1: standing on the plug with the Static Pulse held down for 4.0 s does not return (11 shot(s); fired 1 time(s))
+      FAIL: CK9-F1: …and the device says why ('RETURN', expected 'RETURN · NOT WHILE FIGHTING')
+      FAIL: CK9-F1: …and once the firing stops the return still owes a quiet second and the whole hold: it fired -100 frame(s) after the last shot, of 178 owed
+      FAIL: CK9-F1: standing on the plug while being hit every 0.5 s does not return (fired [["p:fight:start", 2943]])
+      FAIL: CK9-F1: a shot 1.5 s into the charge drops it: the return then owes a quiet second and the whole hold again (fired 30 frame(s) after the shot, of 178 owed)
+      FAIL: CK9-F1: standing on the plug while using an Action every 0.5 s does not return (fired [["p:fight:start", 3316]])
+
+===== 2026-09-26T16:07:01.394Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; grep -E "^RF|CAUGHT|CONTROL|sabotages caught|runner exit" $S/ck9f1/CK9-F1_sabotages.log | cut -c1-200; git -C $S/wt-hbf4a status --short | grep -v "^?? \(godot-bin\|.archipelago\)$"; for f in godot/scripts/gameplay/return_plug.gd godot/scripts/gameplay/player.gd; do echo "$f $(git -C $S/wt-hbf4a diff --stat -- $f | tail -1)"; done
+----- output
+RF-1 [return_plug.gd; make godot-room-contract] REPRO: the plug charges whatever its occupant is doing
+    CAUGHT by "with the Static Pulse held down" -- exit 2, 6 failing check(s), 0 script error(s); restored byte for byte: True
+RF-2 [player.gd; make godot-room-contract] being hurt is not fighting
+    CAUGHT by "while being hit every 0.5 s does not return" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+RF-3 [return_plug.gd; make godot-room-contract] a fight pauses the charge instead of dropping it
+    CAUGHT by "into the charge drops it" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+RF-4 [return_plug.gd; make godot-room-contract] no quiet owed: a fight holds the plug only on its own frame
+    CAUGHT by "with the Static Pulse held down" -- exit 2, 6 failing check(s), 0 script error(s); restored byte for byte: True
+RF-5 [return_plug.gd; make godot-room-contract] the device does not say why it is not charging
+    CAUGHT by "and the device says why" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+RF-6 [player.gd; make godot-room-contract] using an Action is not fighting
+    CAUGHT by "while using an Action every 0.5 s does not return" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+RF-C1 [return_plug.gd; make godot-room-contract] CONTROL: a longer hold is still a hold a fight resets
+    CONTROL HOLDS -- exit 0, 0 failing check(s), 0 script error(s); restored byte for byte: True
+6 of 6 sabotages caught; 1 of 1 controls hold
+runner exit 0
+ M godot/scripts/gameplay/player.gd
+ M godot/scripts/gameplay/return_plug.gd
+ M godot/tests/room_contract_driver.gd
+godot/scripts/gameplay/return_plug.gd  1 file changed, 35 insertions(+)
+godot/scripts/gameplay/player.gd  1 file changed, 18 insertions(+)
+

@@ -1,0 +1,46 @@
+# test_featured_grant.py on the UNCHANGED code (2c4d721, D-01), 2026-09-25T13:42:51Z
+FFF...FFFF                                                               [100%]
+=================================== FAILURES ===================================
+E   AttributeError: 'EchoGenerationRequest' object has no attribute 'required_function'
+/usr/local/lib/python3.11/dist-packages/pydantic/main.py:1042: AttributeError: 'EchoGenerationRequest' object has no attribute 'required_function'
+E   AssertionError: the featured Echo does not supply the requirement
+    assert ['the feature...e_to_surface'] == []
+      
+      Left contains one more item: "the featured Echo must supply grapple_to_surface (grapple): 'act_yank_89100006' is grapple_pull_target, not grapple_to_surface"
+      Use -v to get more diff
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/tests/test_featured_grant.py:147: AssertionError: the featured Echo does not supply the requirement
+E   AssertionError: the featured Echo does not supply the requirement
+    assert ['the feature...e_to_surface'] == []
+      
+      Left contains one more item: "the featured Echo must supply grapple_to_surface (grapple): 'act_yank_89100001' is grapple_pull_target, not grapple_to_surface"
+      Use -v to get more diff
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/tests/test_featured_grant.py:147: AssertionError: the featured Echo does not supply the requirement
+E   assert ['the feature...e_to_surface'] == []
+      
+      Left contains one more item: "the featured Echo must supply grapple_to_surface (grapple): 'act_l89100006' is burst_fire, not grapple_to_surface"
+      Use -v to get more diff
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/tests/test_featured_grant.py:198: assert ['the feature...e_to_surface'] == []
+E   assert ['the feature...e_to_surface'] == []
+      
+      Left contains one more item: "the featured Echo must supply grapple_to_surface (grapple): 'act_l89100001' is hitscan_damage, not grapple_to_surface"
+      Use -v to get more diff
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/tests/test_featured_grant.py:198: assert ['the feature...e_to_surface'] == []
+E   ImportError: cannot import name 'featured_fallback' from 'archipepsi_bridge.epsilon.fallback' (/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/fallback.py)
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/tests/test_featured_grant.py:207: ImportError: cannot import name 'featured_fallback' from 'archipepsi_bridge.epsilon.fallback' (/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/epsilon/fallback.py)
+E   pydantic_core._pydantic_core.ValidationError: 1 validation error for CampaignSave
+      Value error, interpretation_seq 1: component 'act_hook' already exists; ids are unique for the life of a campaign [type=value_error, input_value={'save_version': 1, 'sche... 0}, 'goal_sent': False}, input_type=dict]
+        For further information visit https://errors.pydantic.dev/2.13/v/value_error
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-d05/bridge/archipepsi_bridge/schemas/transitions.py:70: pydantic_core._pydantic_core.ValidationError: 1 validation error for CampaignSave
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED bridge/tests/test_featured_grant.py::test_an_echo_that_supplies_it_is_kept_as_written[own]
+PASSED bridge/tests/test_featured_grant.py::test_an_echo_that_supplies_it_is_kept_as_written[foreign]
+PASSED bridge/tests/test_featured_grant.py::test_the_same_enemy_pull_elsewhere_is_accepted
+FAILED bridge/tests/test_featured_grant.py::test_the_provider_is_told_the_function_and_only_for_that_check
+FAILED bridge/tests/test_featured_grant.py::test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own]
+FAILED bridge/tests/test_featured_grant.py::test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[foreign]
+FAILED bridge/tests/test_featured_grant.py::test_the_fallback_provider_still_hands_over_a_working_grapple[own]
+FAILED bridge/tests/test_featured_grant.py::test_the_fallback_provider_still_hands_over_a_working_grapple[foreign]
+FAILED bridge/tests/test_featured_grant.py::test_the_requirements_echo_reads_as_its_item
+FAILED bridge/tests/test_featured_grant.py::test_an_echo_that_would_not_fold_is_repaired_never_appended
+7 failed, 3 passed in 0.28s

@@ -1,0 +1,63 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_unweighted_switch mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:131)
+         [1] _on_object_settled (res://scripts/gameplay/zone_controller.gd:1005)
+         [2] _watch_rest (res://scripts/gameplay/transported_objects.gd:373)
+         [3] _physics_process (res://scripts/gameplay/transported_objects.gd:350)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:131)
+         [1] send_layout_result (res://scripts/gameplay/zone_controller.gd:1702)
+         [2] _publish_layout (res://scripts/gameplay/zone_controller.gd:1516)
+         [3] _certify_physics (res://scripts/gameplay/zone_controller.gd:1624)
+         [4] of_build (res://scripts/gameplay/chain_certificate.gd:141)
+         [5] of_room (res://scripts/gameplay/chain_certificate.gd:81)
+         [6] certify (res://scripts/gameplay/chain_certificate.gd:228)
+         [7] replay (res://scripts/gameplay/replay_harness.gd:78)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _await_verdict (res://scripts/gameplay/zone_controller.gd:1575)
+  ok: the played Zone's c011 declares its divers (5)
+  ok: the player stands in c011, at its arrival
+  ok: all 5 divers are alive when the player arrives
+    [c011 / grounded] telegraphs 0, dives 0, impacts 0, damage 0.0, watching 0 of 5
+  ok: c011, the player standing on the floor: the divers WAIT -- 0 dives, 0 impacts in 5 s
+   GDScript backtrace (most recent call first):
+FAIL: c011, waiting reads as watching: 0 of 5 divers have noticed the player and hold their eye at the watching level
+    [c011 / jumping] impacts by source: { "bulwark": { "impacts": 4, "damage": 40.0 } }
+    [c011 / jumping] telegraphs 0, dives 0, impacts 0, damage 0.0
+   GDScript backtrace (most recent call first):
+FAIL: c011, the player jumping: leaving the ground draws dives and they land (0 dives, 0 impacts, 0.0 damage)
+    [c011 / cleared] killed 5 of 5 in 8.7 s; player deaths 0
+  ok: c011 cleared with the Static Pulse aimed at the divers' bodies: 5 of 5 killed, counted from enemy_died; kill_all satisfied: true
+GODOT FLYER ROOM: 2 failures in 7 checks
+make: *** [Makefile:604: godot-flyer-room] Error 1

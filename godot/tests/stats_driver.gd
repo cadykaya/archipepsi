@@ -537,8 +537,76 @@ func _an_unknown_status_kind_is_refused() -> void:
 			"a status the schema does not admit is refused, not stored")
 	_check(statuses.active_kinds().is_empty(),
 			"...and leaves nothing behind: %s" % [statuses.active_kinds()])
+	# SUPPORT IS PER TARGET, NOT PER KIND, and the boundary owes both
+	# answers: accepted on every target a kind declares, refused on every
+	# target it does not. This read `ECHO_STATUS_KINDS_IMPLEMENTED`
+	# against a single `self` container, which only ever asked the first
+	# half -- and it passed while `vulnerable` was declared `("enemy",)`
+	# and `stat_stack.gd:93` multiplied the PLAYER's `damage_taken` by it.
+	# The declaration was wrong and the test could not see it.
+	var target_kinds: Array[String] = ["self", "enemy", "object",
+			"surface", "volume"]
+	var accepted := 0
+	var refused := 0
+	for kind: String in Constants.ECHO_STATUS_KINDS_IMPLEMENTED:
+		var declared: Array = Constants.ECHO_STATUS_SUPPORTED_TARGETS.get(kind, [])
+		_check(not declared.is_empty(),
+				"'%s' is implemented, so it declares its targets" % kind)
+		for target: String in target_kinds:
+			var one := StatusEffects.new()
+			one.side = target
+			var seen: Array[String] = []
+			one.status_applied.connect(func(k: String) -> void:
+				seen.append(k))
+			one.apply(kind, 1.0, 1.0)
+			if target in declared:
+				accepted += 1
+				_check(one.has(kind) and seen.size() == 1,
+						"'%s' is accepted on declared target '%s'"
+						% [kind, target])
+			else:
+				refused += 1
+				# NO ACTIVE STATE AND NO SUCCESS EVENT. A refusal that
+				# still emitted `status_applied` would satisfy a rule
+				# edge for an application that did not happen.
+				_check(not one.has(kind) and one.active_kinds().is_empty()
+						and seen.is_empty(),
+						"'%s' on undeclared target '%s' leaves nothing"
+						% [kind, target])
+	_check(accepted > 0 and refused > 0,
+			"the sweep exercised both answers: %d accepted, %d refused"
+			% [accepted, refused])
+
+	# TWO ANCHORS the sweep cannot derive from the table it reads. The
+	# sweep proves the boundary honours the declaration; these two say
+	# the declaration is the right one, by naming the runtime lines that
+	# implement each pair.
+	var vulnerable_at: Array = Constants.ECHO_STATUS_SUPPORTED_TARGETS.get(
+			"vulnerable", [])
+	_check("self" in vulnerable_at and "enemy" in vulnerable_at,
+			"vulnerable declares both sides: stat_stack.gd raises the "
+			+ "player's damage_taken, enemy.gd raises the enemy's")
+	_check(Constants.ECHO_STATUS_SUPPORTED_TARGETS.get("lightened", []) == ["object"],
+			"lightened declares `object` and nothing else -- an actor, a "
+			+ "surface and a volume are three unbuilt runtimes")
+
+	# NAMED IS NOT SUPPORTED, and the gap between the two lists is the
+	# whole point of there being two. A designed kind admitted to the
+	# vocabulary ahead of its runtime must be refused here exactly as a
+	# typo is -- otherwise it stores, reads as active, and cannot be
+	# cleansed, which is the defect this case was written for.
+	var named_only: Array[String] = []
 	for kind: String in Constants.ECHO_STATUS_KINDS:
+		if not kind in Constants.ECHO_STATUS_KINDS_IMPLEMENTED:
+			named_only.append(kind)
+	_check(not named_only.is_empty(),
+			"the vocabulary runs ahead of the runtime by %d kind(s)"
+			% named_only.size())
+	var before := statuses.active_kinds().size()
+	for kind: String in named_only:
 		statuses.apply(kind, 1.0, 1.0)
-	_check(statuses.active_kinds().size()
-			== Constants.ECHO_STATUS_KINDS.size(),
-			"every kind the schema DOES admit is accepted")
+		_check(not statuses.has(kind),
+				"'%s' is named but unsupported, and is refused" % kind)
+	_check(statuses.active_kinds().size() == before,
+			"...and none of them left anything behind: %d of %d"
+			% [statuses.active_kinds().size(), before])

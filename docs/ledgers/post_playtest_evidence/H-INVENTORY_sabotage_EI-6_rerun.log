@@ -1,0 +1,8 @@
+EI-6 [equipment_query.gd] a key filter keeps the always-on half
+    case _the_split_and_the_filter: CAUGHT -- 4 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: MOBILITY: ["act_dash", "res_magic", "trait_grip", "trait_ward"]
+      FAIL: and that is the query's answer, not only the painting's
+      FAIL: counted as 2 of 6, the always-on half hidden: ["ON A KEY (2 of 6)", "ALWAYS ON (3)"]
+      FAIL: the RMB key shows what goes on it: ["act_bolt", "act_lash", "res_magic", "trait_grip", "trait_ward"]
+
+1 of 1 sabotages caught

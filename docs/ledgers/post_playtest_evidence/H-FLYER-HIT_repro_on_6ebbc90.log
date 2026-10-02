@@ -1,0 +1,77 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- A: another room, behind an intact wall
+  ok: through an intact wall from the next room, in 10 s: 0 shells committed, 0 launched, 0 hits, 0 hp lost -- it may not shell what it cannot see
+  -- B: under a roof, seen through the open side
+  ok: under an intact roof, in 10 s: 0 shells committed, 0 launched, 0 hits, 0 hp lost -- no shell through the slab
+  -- F: hidden behind a wall the arc could clear
+  ok: unseen behind 2.5 m, in 10 s: 0 shells committed, 0 hits -- no shell at what it cannot see, though the arc would clear the wall
+  -- C: a blast on the far side of a wall (a shell built by hand)
+   GDScript backtrace (most recent call first):
+  ok: a blast 2.4 m away, behind a 6 m wall: 0 hits, 0 hp lost -- the wall is cover
+   GDScript backtrace (most recent call first):
+  ok: the control: the same blast in the open lands 1 hit (16 hp)
+  -- D: a wall raised across a shell's path in flight
+   GDScript backtrace (most recent call first):
+  ok: a wall across its path mid-flight: 0 hits, 0 hp lost -- it detonates on the wall
+  -- E: the control -- low cover is not a roof
+  ok: over 0.6 m cover, in 10 s: 3 shells committed, 3 launched, 3 hits, 48 hp lost -- the repair did not silence artillery
+  -- drifter: seen, hit and placed where the contract says
+FAIL: drifter: the body the player sees is centred 1.95 m from the box a shot can hit (seen 4.78 m, hittable 6.72 m)
+FAIL: drifter: the body the player sees is centred 1.95 m from the box a shot can hit (seen 4.78 m, hittable 6.72 m)
+FAIL: drifter: what is seen and what is hittable are the same box, not two that merely share a centre (seen [P: (-0.675, 4.144677, -0.518814), S: (1.35, 1.26112, 1.299814)], hittable [P: (-0.675, 6.246297, -0.675), S: (1.35, 0.95, 1.35)])
+FAIL: drifter: what is seen and what is hittable are the same box, not two that merely share a centre (seen [P: (-0.675, 4.144677, -0.518814), S: (1.35, 1.26112, 1.299814)], hittable [P: (-0.675, 6.246297, -0.675), S: (1.35, 0.95, 1.35)])
+FAIL: drifter: its body holds at 6.72 m above the floor, where its envelope's hover height (2.55 m, the collider's centre above the floor) puts it
+FAIL: drifter: its body holds at 6.72 m above the floor, where its envelope's hover height (2.55 m, the collider's centre above the floor) puts it
+  ok: drifter: its shots start inside the body the player sees (muzzle (0.0, 5.371297, 0.0), seen [P: (-0.675, 4.144677, -0.518814), S: (1.35, 1.26112, 1.299814)])
+  ok: drifter: having noticed the player, it faces them (0 deg off)
+FAIL: drifter at 4 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (44.0 -> 44.0 hp)
+FAIL: drifter at 4 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (44.0 -> 44.0 hp)
+FAIL: drifter at 9 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (44.0 -> 44.0 hp)
+FAIL: drifter at 9 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (44.0 -> 44.0 hp)
+FAIL: drifter at 18 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (44.0 -> 44.0 hp)
+FAIL: drifter at 18 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (44.0 -> 44.0 hp)
+FAIL: drifter: aimed 0.45 m above its visible body, the Static Pulse misses (2 hit(s), 44.0 -> 32.0 hp)
+FAIL: drifter: aimed 0.45 m above its visible body, the Static Pulse misses (2 hit(s), 44.0 -> 32.0 hp)
+  ok: drifter: aimed 0.45 m below its visible body, the Static Pulse misses (0 hit(s), 32.0 -> 32.0 hp)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _authored_projectile (res://scripts/content/content_instantiator.gd:597)
+         [1] projectile_visual (res://scripts/content/content_instantiator.gd:579)
+         [2] _ready (res://scripts/gameplay/echo_projectile.gd:73)
+         [3] _a_flyer_is_hit_where_it_is_seen (res://tests/combat_fairness_driver.gd:410)
+         [4] _fire (res://tests/combat_fairness_driver.gd:427)
+         [5] _settle (res://tests/combat_fairness_driver.gd:72)
+FAIL: drifter: an explosive Echo shot aimed at its visible body damages it (32.0 -> 32.0 hp)
+FAIL: drifter: an explosive Echo shot aimed at its visible body damages it (32.0 -> 32.0 hp)
+  -- diver: seen, hit and placed where the contract says
+FAIL: diver: the body the player sees is centred 1.57 m from the box a shot can hit (seen 4.50 m, hittable 6.07 m)
+FAIL: diver: the body the player sees is centred 1.57 m from the box a shot can hit (seen 4.50 m, hittable 6.07 m)
+FAIL: diver: what is seen and what is hittable are the same box, not two that merely share a centre (seen [P: (-0.35, 3.961297, -0.43571), S: (0.7, 1.08, 1.13271)], hittable [P: (-0.35, 5.821297, -0.6), S: (0.7, 0.5, 1.2)])
+FAIL: diver: what is seen and what is hittable are the same box, not two that merely share a centre (seen [P: (-0.35, 3.961297, -0.43571), S: (0.7, 1.08, 1.13271)], hittable [P: (-0.35, 5.821297, -0.6), S: (0.7, 0.5, 1.2)])
+FAIL: diver: its body holds at 6.07 m above the floor, where its envelope's hover height (1.90 m, the collider's centre above the floor) puts it
+FAIL: diver: its body holds at 6.07 m above the floor, where its envelope's hover height (1.90 m, the collider's centre above the floor) puts it
+FAIL: diver: its shots start inside the body the player sees (muzzle (0.0, 5.371297, 0.0), seen [P: (-0.35, 3.961297, -0.43571), S: (0.7, 1.08, 1.13271)])
+FAIL: diver: its shots start inside the body the player sees (muzzle (0.0, 5.371297, 0.0), seen [P: (-0.35, 3.961297, -0.43571), S: (0.7, 1.08, 1.13271)])
+  ok: diver: having noticed the player, it faces them (0 deg off)
+FAIL: diver at 4 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (20.0 -> 20.0 hp)
+FAIL: diver at 4 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (20.0 -> 20.0 hp)
+FAIL: diver at 9 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (20.0 -> 20.0 hp)
+FAIL: diver at 9 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (20.0 -> 20.0 hp)
+FAIL: diver at 18 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (20.0 -> 20.0 hp)
+FAIL: diver at 18 m: aimed at the middle of its visible body, the Static Pulse hits it 0 time(s) (20.0 -> 20.0 hp)
+FAIL: diver: aimed 0.45 m above its visible body, the Static Pulse misses (2 hit(s), 20.0 -> 8.0 hp)
+FAIL: diver: aimed 0.45 m above its visible body, the Static Pulse misses (2 hit(s), 20.0 -> 8.0 hp)
+  ok: diver: aimed 0.45 m below its visible body, the Static Pulse misses (0 hit(s), 8.0 -> 8.0 hp)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _authored_projectile (res://scripts/content/content_instantiator.gd:597)
+         [1] projectile_visual (res://scripts/content/content_instantiator.gd:579)
+         [2] _ready (res://scripts/gameplay/echo_projectile.gd:73)
+         [3] _a_flyer_is_hit_where_it_is_seen (res://tests/combat_fairness_driver.gd:410)
+         [4] _fire (res://tests/combat_fairness_driver.gd:427)
+         [5] _settle (res://tests/combat_fairness_driver.gd:72)
+FAIL: diver: an explosive Echo shot aimed at its visible body damages it (8.0 -> 8.0 hp)
+FAIL: diver: an explosive Echo shot aimed at its visible body damages it (8.0 -> 8.0 hp)
+GODOT COMBAT FAIRNESS: 17 failures in 29 checks
+make: *** [Makefile:591: godot-combat-fairness] Error 1

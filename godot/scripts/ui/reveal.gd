@@ -1,7 +1,22 @@
 class_name RevealLayer
 extends CanvasLayer
-## The payoff moment (DESIGN §16): freeze input, show the card, play the
-## sound, hold ~2 seconds. One card per notification; queued, never stacked.
+## The payoff moment (DESIGN §16): show the card, play the sound, hold
+## ~2 seconds. One card per notification; queued, never stacked.
+##
+## INFORMATIONAL, NOT MODAL (HB-O1). The owner's ruling, 2026-09-26:
+## "Treat pickup cards as informational rather than gameplay-modal. If Q
+## is a valid gameplay action while the card is visible, let it pass
+## through and perform the action normally. [...] Don't make Q merely
+## close the card instead of doing what Q normally does." So the card
+## holds nothing and takes nothing:
+##   - `Main._update_modal` does not count it, so no hold goes on;
+##   - none of its controls takes a mouse event (`_let_input_through`),
+##     so mouse look under it reaches the player;
+##   - it has no input handler to mark a press handled. It READS `Input`,
+##     as the player does, and a gameplay press it sees cuts its hold
+##     short: the card fades in `HURRY_SECONDS` while the press does what
+##     it does. Walking does not hurry it -- the card is still the one
+##     moment the packet built it to be.
 ##
 ## The packet calls this "the only genuinely novel moment in the loop", so
 ## the card is built to make one thing unmistakable: the other player got
@@ -13,6 +28,9 @@ signal reveal_started
 signal reveal_finished
 
 const HOLD_SECONDS := 2.2
+#: How long a card takes to fade once a gameplay press cuts its hold
+#: short (HB-O1).
+const HURRY_SECONDS := 0.25
 #: Epsilon's colour everywhere it speaks in its own voice.
 const EPSILON_TINT := Color(0.55, 1.0, 0.9)
 
@@ -27,9 +45,29 @@ var _body: Label
 var _divider: ColorRect
 var _echo_body: Label
 var tones: Tones
+## Which card is up. A hold timer carries the number of the card it was
+## started for, so the timer of a card a press cut short cannot turn
+## over the card after it early.
+var _serial := 0
+## The card up now was cut short and is fading.
+var _hurried := false
+## The slam's own tween, so a press in its first tenth of a second does
+## not leave two tweens pulling one card in two directions.
+var _slam: Tween
+## THE ECHO THIS CARD NAMES AND THE CLIENT DOES NOT HOLD YET, or "".
+##
+## HB-F5: the bridge sends a claim's card from inside the confirmation
+## (`transactions.finalize`) and the snapshot carrying the new Echo after
+## it, so live, every card for a newly made Echo was drawn before the
+## client knew that Echo. It showed the name and the flavour and never the
+## summary -- what it does and which key it goes on. A fixture that
+## applied the snapshot first never saw it. The card now fills in when
+## that snapshot lands.
+var _awaiting_echo := ""
 
 func _ready() -> void:
 	layer = 10
+	BridgeClient.snapshot_received.connect(_on_snapshot)
 	visible = false
 
 	# Dims the world behind the card. Without it the card competes with a
@@ -79,11 +117,30 @@ func _ready() -> void:
 	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_flash)
+	_let_input_through(self)
+
+## NO CONTROL ON THE CARD TAKES A MOUSE EVENT (HB-O1).
+##
+## A panel and a colour rect stop the mouse events over them by default,
+## and with the mouse captured the pointer sits at the centre of the
+## screen -- where the card is. The card would have eaten mouse look the
+## moment it stopped holding the player. Every Control under it lets
+## events through, whatever `_ready` comes to build.
+static func _let_input_through(root: Node) -> void:
+	for node: Node in root.find_children("*", "Control", true, false):
+		(node as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func enqueue(note: Dictionary) -> void:
 	_queue.append(note)
 	if not _showing:
 		_show_next()
+
+## What the card shows now, half by half: for the suites, and for anything
+## that has to ask what the player is reading.
+func shown() -> Dictionary:
+	return {"title": _title.text, "sent": _body.text,
+			"echo": _echo_body.text if _echo_body.visible else "",
+			"divider": _divider.visible, "visible": visible}
 
 ## Splits the bridge's card text into the two halves the packet describes.
 ## The bridge composes that text and marks the boundary with a blank line;
@@ -105,6 +162,8 @@ static func split_halves(lines: Array) -> Array:
 	return [sent, echo]
 
 func _show_next() -> void:
+	_serial += 1
+	_hurried = false
 	if _queue.is_empty():
 		_showing = false
 		visible = false
@@ -125,15 +184,19 @@ func _show_next() -> void:
 	# For a reveal carrying an echo, append the shared effect summary so the
 	# card and the inventory describe it identically.
 	var echo_id: Variant = note.get("echo_id")
+	_awaiting_echo = ""
 	if echo_id != null:
 		var echo := BridgeClient.echo_by_id(str(echo_id))
 		if not echo.is_empty():
 			echo_lines.append("")
 			echo_lines.append_array(EffectSummary.lines(echo))
+		else:
+			_awaiting_echo = str(echo_id)
 	_body.text = "\n".join(sent_lines)
 	_echo_body.text = "\n".join(echo_lines)
-	# No Echo half means no rule to divide: a self-recipient check gets one
-	# block, not one block and an empty gap where the payoff should be.
+	# No Echo half means no rule to divide: a legacy campaign's own item
+	# (D-01: a new campaign's has an Echo too) gets one block, not one
+	# block and an empty gap where the payoff should be.
 	var has_echo := not echo_lines.is_empty()
 	_divider.visible = has_echo
 	_echo_body.visible = has_echo
@@ -157,8 +220,49 @@ func _show_next() -> void:
 	if tones != null:
 		tones.play("goal" if note.get("kind") == "goal_reached" else "echo")
 	_play_slam()
-	var timer := get_tree().create_timer(hold)
-	timer.timeout.connect(_show_next)
+	# PAUSES WITH THE WORLD (H-PAUSE): a SceneTree timer runs through a
+	# pause unless it is told not to.
+	var timer := get_tree().create_timer(hold, false)
+	timer.timeout.connect(_on_hold_done.bind(_serial))
+
+## A card's hold ran out, or its hurried fade finished: the next card, if
+## this is still the card that is up.
+func _on_hold_done(serial: int) -> void:
+	if serial == _serial:
+		_show_next()
+
+## A GAMEPLAY PRESS WHILE A CARD IS UP. Read, never taken: the press is
+## the player's, and this only watches for it (HB-O1) -- on the physics
+## step, where `Player` reads the same press, so the two cannot disagree
+## about which step it landed on. Pauses with the world, so nothing a
+## menu does reaches it.
+func _physics_process(_delta: float) -> void:
+	if not visible or _hurried:
+		return
+	for action: String in Player.ACTION_PRESSES:
+		if Input.is_action_just_pressed(action):
+			hurry()
+			return
+
+## Cut the card's hold short: it fades, and the next card, if one is
+## queued, follows as it would have. Never INSTEAD of a press -- the
+## press has already done what it does by the time this is called.
+func hurry() -> void:
+	if not visible or _hurried:
+		return
+	_hurried = true
+	_serial += 1
+	if _slam != null and _slam.is_valid():
+		_slam.kill()
+	_flash.color.a = 0.0
+	var fade := create_tween().set_parallel(true)
+	fade.tween_property(_panel, "modulate:a", 0.0, HURRY_SECONDS)
+	fade.tween_property(_backdrop, "color:a", 0.0, HURRY_SECONDS)
+	fade.chain().tween_callback(_on_hold_done.bind(_serial))
+
+## The card up now was cut short by a press and is on its way out.
+func hurried() -> bool:
+	return _hurried
 
 ## Animates opacity rather than scale: a scale punch needs a pivot from the
 ## laid-out size, which is not known on the frame the card first appears.
@@ -166,7 +270,25 @@ func _play_slam() -> void:
 	_backdrop.color.a = 0.0
 	_panel.modulate.a = 0.0
 	_flash.color.a = 0.32
-	var tween := create_tween().set_parallel(true)
-	tween.tween_property(_backdrop, "color:a", 0.66, 0.12)
-	tween.tween_property(_panel, "modulate:a", 1.0, 0.10)
-	tween.tween_property(_flash, "color:a", 0.0, 0.24)
+	if _slam != null and _slam.is_valid():
+		_slam.kill()
+	_slam = create_tween().set_parallel(true)
+	_slam.tween_property(_backdrop, "color:a", 0.66, 0.12)
+	_slam.tween_property(_panel, "modulate:a", 1.0, 0.10)
+	_slam.tween_property(_flash, "color:a", 0.0, 0.24)
+
+## The snapshot that carries the card's Echo, arriving after the card: its
+## summary goes where it would have been had it come first.
+func _on_snapshot(_message: Dictionary) -> void:
+	if _awaiting_echo == "" or not visible:
+		return
+	var echo := BridgeClient.echo_by_id(_awaiting_echo)
+	if echo.is_empty():
+		return
+	_awaiting_echo = ""
+	var lines: Array = [_echo_body.text] if _echo_body.text != "" else []
+	lines.append("")
+	lines.append_array(EffectSummary.lines(echo))
+	_echo_body.text = "\n".join(lines)
+	_divider.visible = true
+	_echo_body.visible = true

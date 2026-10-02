@@ -5,6 +5,38 @@ extends RefCounted
 
 static var _cache: Dictionary = {}
 
+## THE ZONE'S GAME PACK (D-11), held for as long as that Zone owns it.
+##
+## Every material request -- 114 of them, across twenty builders --
+## passes a family `theme` and nothing else, and every one is made while
+## some Zone, or the Hub, is being built or played. So the pack is bound
+## HERE, by whoever owns the world being built: `ZoneController.setup`
+## binds its Zone's `theme_pack` (or none) before it builds anything, and
+## the Hub binds none. A binding is REPLACED, never merely cleared, so the
+## next Zone or the Hub cannot inherit the last Zone's pack whichever
+## order they are built and freed in; `release_pack` from an owner that
+## no longer holds the binding does nothing.
+##
+## The pack is part of every material's cache key, and `ThemePack` keys
+## its own on (pack, theme, role): two packs over one family never share
+## a result, and a Zone with no pack gets exactly the family material it
+## always did.
+static var _pack := ""
+static var _pack_owner := 0
+
+static func bind_pack(pack: String, owner: Object) -> void:
+	_pack = pack
+	_pack_owner = owner.get_instance_id() if owner != null else 0
+
+static func release_pack(owner: Object) -> void:
+	if owner != null and owner.get_instance_id() == _pack_owner:
+		_pack = ""
+		_pack_owner = 0
+
+## The pack materials are being made for right now, "" for none.
+static func bound_pack() -> String:
+	return _pack
+
 static func spec(theme: String) -> Dictionary:
 	var all: Dictionary = Constants.THEME_MATERIALS
 	return all.get(theme, all["void_glitch"])
@@ -57,7 +89,7 @@ static func color_for_game(game: String) -> Color:
 static func _material(theme: String, kind: String,
 		noise_override: String = "",
 		role: String = "") -> StandardMaterial3D:
-	var key := "%s|%s|%s" % [theme, kind, noise_override]
+	var key := "%s|%s|%s|%s" % [_pack, theme, kind, noise_override]
 	if _cache.has(key):
 		return _cache[key]
 	var s := spec(theme)
@@ -78,13 +110,14 @@ static func _material(theme: String, kind: String,
 	# missing role or a digest that does not match paints the room the
 	# way it was painted before the pack existed rather than not at all.
 	var asked := role if role != "" else kind
-	var authored := ThemePack.texture_for(theme, asked)
+	var authored := ThemePack.texture_for(theme, asked, _pack)
 	if authored != null:
 		material.albedo_texture = authored
 		# COVERS_M DRIVES THE SCALE (contract clause 5). 4.0 m
 		# reproduces the hardcoded 0.25 exactly, so the first bind is a
 		# no-op visually and any later change is the art lane's to make.
-		var tile := 1.0 / maxf(ThemePack.covers_m(theme, asked), 0.001)
+		var tile := 1.0 / maxf(ThemePack.covers_m(theme, asked, _pack),
+				0.001)
 		material.uv1_scale = Vector3(tile, tile, tile)
 	else:
 		material.albedo_texture = ProcTextures.get_texture(noise, color,
@@ -137,6 +170,17 @@ static func light_energy(theme: String) -> float:
 
 static func void_color(theme: String) -> Color:
 	return Color(spec(theme)["trim_color"]).darkened(0.6)
+
+## GLASS: seen through, and solid. A screen that must block a reach while
+## leaving what is behind it visible (H-PASSING's glass gallery).
+static func glass_material(tint := Color(0.7, 0.9, 1.0, 0.22)) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = tint
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.roughness = 0.05
+	material.metallic = 0.2
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return material
 
 static func glow_material(color: Color, energy: float = 1.6) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()

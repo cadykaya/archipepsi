@@ -1,0 +1,36 @@
+# make godot-counterfire-hosted after the repair (cp2-runtime over b96eaf2 + the H-COUNTERFIRE changes), rc=0
+  ok: the played Zone hosts EX50-021: ["c025:Chamber_c025", "c024:Chamber_c024"]
+  -- c025: what the room says before anything is done
+  ok: c025: the trip names what it does, and is not an unrelated emergency control: 'IMPACT TRIP / A HIT ON ITS FACE OPENS / THE SERVICE SHUTTER FOR 8 s'
+  ok: c025: and nothing prints the answer on entry (no bait, gunner or dodge instruction): ["ARRIVAL ARCADE", "IMPACT TRIP / A HIT ON ITS FACE OPENS / THE SERVICE SHUTTER FOR 8 s", "SERVICE SHUTTER / SHUT", "GALLERY"]
+  -- c025: no step from anywhere reached drops out of the world
+  ok: c025: from 7906 cell(s) reached, no step lands on nothing (void edges, the room's frame: [])
+  -- c025: kill-first -- the gunner dead, the receiver shot by hand, the Check claimed (V-11, PT-04)
+  ok: c025: the Zone's gunner killed with the base kit: 1 of 1 down in 4.2 s, 8 hp taken, 0 death(s)
+  ok: c025: a Static Pulse from the lane side trips the receiver (1 hit(s), 0 before the fight) and the shutter opens
+  ok: c025: through the shutter inside its window (5.1 s left)
+  ok: c025: up the supported route onto the flank ((15.200000, 3.000000, -2.000000))
+  ok: c025: the Check 89100025 claimed on the flank, the gunner dead: the reward is not stranded (1 claim(s))
+  ok: c025: no death on the way (8 hp taken)
+  -- c025: back from the flank with nothing pulled
+  ok: c025: along the flank, past the Check, to its reach over the low wall ((15.000000, 3.000000, 6.300000))
+  ok: c025: off the flank's reach onto the gallery, nothing pulled ((10.100000, 1.000000, 7.500000))
+  ok: c025: and back to where the room was entered (1.2 m off)
+  -- c025: what the room says while the window runs
+  ok: c025: a Static Pulse on the receiver's face opens the window (7.6 s)
+  ok: c025: the conduit from the receiver to the shutter LIGHTS while the window runs (2 glowing, 0 before)
+  ok: c025: and the shutter says how long it has: 'SERVICE SHUTTER / OPEN · 8 s' (was 'SERVICE SHUTTER / SHUT')
+  ok: c025: when the window closes, the conduit goes dark again
+  -- c025: which side of the receiver a shot trips it
+  ok: c025: from the arrival side, 0 shot(s) at the receiver trip it 0 time(s): the hood is steel (97 shots; tripped from [])
+  ok: c025: from the lane side, 130 of 393 shot(s) trip it
+  -- c025: movement assistance, the room as built (V-10)
+  NOTE: c025 mobility: 17444 blinks (5673 moved), 18 flights, 16 arrived on G (by blink 5, double jump 5, grapple 6)
+  ok: c025: V-10 -- no blink, double jump or grapple puts the Check in claim reach from anywhere but the flank (17444 blinks (5673 moved), 18 flights, 16 arrived on G (by blink 5, double jump 5, grapple 6)); off-flank claims: []
+  -- c025: the release, and the way back it lowers (R3)
+  ok: c025: on the flank again, through a fresh window
+  ok: c025: the SERVICE RELEASE pulled on the flank: the shutter held open and its stair down (12 steps)
+  ok: c025: the release STAYS THROWN and says so: 'RELEASE THROWN -- SHUTTER HELD OPEN, STAIR DOWN'
+  ok: c025: down the release's stair onto the gallery ((8.300000, 1.000000, 7.500000))
+  ok: c025: and back to where the room was entered (1.2 m off)
+GODOT COUNTERFIRE HOSTED OK (25 checks, 1 notes)

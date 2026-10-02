@@ -1,0 +1,54 @@
+HB-1 [hud.gd] REPRO: the consumable row as it was (— or a bare name)
+    CAUGHT by "owning a Bomb Bag that is on no key reads differently" -- exit 2, 8 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: owning a Bomb Bag that is on no key reads differently from owning none ('  Q     —' / '  Q     —')
+      FAIL: …and names what is owned
+      FAIL: carried, the key shows its count (  Q     Bomb Bag)
+      FAIL: empty, it shows 0 / 3 and reads as empty (  Q     Bomb Bag)
+      FAIL: …while its row still says it is owned and on no key (▸ Q     —)
+      FAIL: …and the HUD key counts it (▸ Q     Bomb Bag)
+      FAIL: the key counts it: 2 / 3 (▸ Q     Bomb Bag)
+      FAIL: spent reads EMPTY on the key, and entering Zone zone_007 refills it ('▸ Q     Bomb Bag' -> '▸ Q     Bomb Bag  Mk 5')
+HB-2 [player.gd] REPRO: an empty key refuses in silence
+    CAUGHT by "none_owned: pressing the key says why nothing happened" -- exit 2, 4 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: none_owned: pressing the key says why nothing happened ('No consumable owned yet' expected, heard [])
+      FAIL: none_owned: …and pressing it three more times does not stack it (0 on screen)
+      FAIL: acquired: pressing the key says why nothing happened ('You own 1 consumable' expected, heard [])
+      FAIL: acquired: …and pressing it three more times does not stack it (0 on screen)
+HB-3 [hud.gd] the refusal never reaches the HUD
+    CAUGHT by "spent: pressing the key says why nothing happened" -- exit 2, 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: none_owned: pressing the key says why nothing happened ('No consumable owned yet' expected, heard [])
+      FAIL: none_owned: …and pressing it three more times does not stack it (0 on screen)
+      FAIL: acquired: pressing the key says why nothing happened ('You own 1 consumable' expected, heard [])
+      FAIL: acquired: …and pressing it three more times does not stack it (0 on screen)
+      FAIL: spent: pressing the key says why nothing happened ('Empty' expected, heard [])
+      FAIL: spent: …and pressing it three more times does not stack it (0 on screen)
+HB-4 [hud.gd] every press toasts, repeated or not
+    CAUGHT by "pressing it three more times does not stack it" -- exit 2, 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: none_owned: …and pressing it three more times does not stack it (4 on screen)
+      FAIL: acquired: …and pressing it three more times does not stack it (4 on screen)
+      FAIL: spent: …and pressing it three more times does not stack it (4 on screen)
+HB-5 [main.gd] REPRO: no word about the key when it arrives
+    CAUGHT by "a word points at the key it goes on, once" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a word points at the key it goes on, once (heard ["EPSILON COIN RECEIVED"])
+HB-6 [hud.gd] the word said on every snapshot, not on arrival
+    CAUGHT by "the next snapshot does not say it again" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: …and the next snapshot does not say it again
+HB-7 [hud.gd] what a campaign first met already owns taken for news
+    CAUGHT by "no word says it just arrived" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: no word says it just arrived (heard ["Bomb Bag is a consumable for Q. Put it on the key from EQUIPMENT [Tab]."])
+      FAIL: …nor on returning to the campaign
+HB-8 [hud.gd] the engine's refusal said a second time
+    CAUGHT by "the engine's refusal is on screen once, and nothing else is" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the engine's refusal is on screen once, and nothing else is (heard ["\'act_l89100140\' authorization 1 was minted against supply 6; the current supply is 7. It was refilled after the press, so this use no longer exists", "\'act_l89100140\' authorization 1 was minted against supply 6; the current sup
+HB-9 [main.gd] REPRO: the Hub never re-equips on a snapshot
+    CAUGHT by "the engine's answer throws exactly one Bomb Bag" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the engine's answer throws exactly one Bomb Bag (0 thrown; the key's runtime holds 'nothing'; sent ["authorize_consumable", "release_consumable_authorization"])
+      FAIL: …and reports that one use ([])
+HB-10 [player.gd] a denied use no longer counted as refused
+    CAUGHT by "the refusal still counts as refused" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the refusal still counts as refused (`Player.exhausted`)
+HB-11 [hud.gd] an empty supply not marked EMPTY
+    CAUGHT by "spent reads EMPTY on the key" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: spent reads EMPTY on the key, and entering Zone zone_007 refills it ('▸ Q     Bomb Bag  0 / 3' -> '▸ Q     Bomb Bag  Mk 5  3 / 3')
+
+11 of 11 sabotages caught

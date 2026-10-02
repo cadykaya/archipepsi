@@ -1,0 +1,559 @@
+=== make godot-rail-zone (17:30:10)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- A DECLARATION BECOMES A MACHINE
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_rail mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone built: 
+  ok: one declared network built one junction (1)
+  ok: the junction's package is the NETWORK ID 'yard', which is what its latches will be reported under
+  ok: three declared docks became three stops (3)
+  ok: every dock stands in the room its declaration names (0 astray)
+  ok: one declared span became one span (1)
+  ok: the span persists under the declared latch, as 'yard/span_one'
+  ok: the declared control room produced a control
+  ok: ...standing in c002, the room that declared it, at (8.600000, 0.000000, 20.000000)
+  -- A SPAN IS THE THING YOU EARN, OR IT IS NOT A SPAN
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_rail mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone built a carrier
+  ok: three docks leave two links (2)
+  ok: the span WITH a control starts refused: it is what the player earns
+  ok: the span with a NULL control ships commissioned, which is what the schema says a null control_room_id means
+  ok: one lever for the one span that needs one (1)
+  -- THE LATCH PERSISTS, THE SPAN IS RECOMPUTED
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_rail mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: a fresh Zone comes up with the span NOT commissioned
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_rail mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: rebuilt from the latch, the span is commissioned again
+  ok: ...and the carrier still has its three docks
+  NOTE: nothing saved a span: the latch ref is the only thing that crossed between the two builds
+  -- A SPAN THE CARRIER CANNOT RUN IS REFUSED BY NAME
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_rail mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: nothing was built for a network the engine cannot honour
+  ok: ...and it said so once (1 refusal(s))
+  ok: ...naming the span and the reason: span 's_jump' joins docks 0 and 2 of network 'yard', which are not consecutive; a carrier runs one ordered route and has no link between them. Either spans join neighbouring docks or the carrier must become graph-capable -- a decision, not a gap to guess at
+  ok: the Zone itself still built: a railway the engine will not guess at is a finding, not a crash
+  NOTE: this is the D-4 question for the bridge lane: either spans join neighbouring docks, or the carrier becomes graph-capable. The engine refuses rather than deciding.
+  -- A ZONE THAT DECLARES NO RAILWAY GETS NONE
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_rail mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: a Zone with no `rail_networks` key builds: 
+  ok: ...with no junction and nothing refused
+  -- THE CARRIER PARKS WHERE THE ZONE SAYS
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_rail mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: a network naming `home_dock: d2` parks at dock 2 (offset 35.73, dock 2 is 35.73)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_rail mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: a network declaring no home_dock still parks at the first
+
+GODOT RAIL ZONE OK (25 checks, 2 notes)
+=== exit 0
+=== make godot-rail-junction (17:30:33)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- SHAPE: a latch the bridge would refuse
+  ok: a well-formed junction has nothing to refuse, got []
+  ok: the package names itself
+  ok: and declares the latch the manifest must carry, got [{ "latch_id": "span_aligned", "kind": "CONSTRAINT_STATE", "detail": "span locked home across link 1" }]
+  ok: the latch's global identity is package-qualified
+  ok: a package id the bridge's pattern refuses is caught here
+  ok: two spans sharing one latch id are indistinguishable, and saying so is this method's job
+  -- CHAIN: lever -> span -> lock -> latch -> crossable
+  ok: the span starts stowed
+  ok: and the carrier is standing at S2
+  ok: S2 to S3 is refused
+  ok: for want of track, got ["no_link"]
+  ok: the interact probe finds the lever
+  ok: and offers it by name, got '[E] ALIGN THE SPAN'
+  ok: pressing it throws the lever
+  ok: and the span starts travelling
+  ok: the span is part way across (23%)
+  ok: and is not track yet
+  ok: no latch has fired, got []
+  ok: the carrier is still refused
+  ok: for want of track, got ["no_link"]
+  ok: the span locks home
+  ok: and fires its latch, once, got ["s2_junction/span_aligned"]
+  ok: the link it spans is commissioned
+  ok: and the same command that was refused now travels
+  ok: reaching S3
+  -- REPORTED: the client sends `latch_fired`
+  ok: one intent, got 1
+  ok: with exactly the fields the bridge reads, got { "type": "latch_fired", "zone_id": "zone_01", "package_id": "s2_junction", "latch_id": "span_aligned" }
+  ok: and the same latch twice is still one intent
+  ok: the Zone knows what it has reported, got ["s2_junction/span_aligned"]
+  ok: a Zone accepts the snapshot's latches and its own, got ["s2_junction/other", "s2_junction/span_aligned"]
+  ok: and a machine rebuilt from that union comes up repaired
+  -- RE-ENTRY: the repair is recomputed, not replayed
+  ok: one span is restored, got 1
+  ok: the span comes up locked
+  ok: the link comes up commissioned
+  ok: and NOTHING is reported, got []
+  ok: the lever comes back armed
+  ok: and standing up
+  ok: the carrier is parked at a dock, not where it was left
+  ok: and the railway is rideable
+  -- NOT ACCEPTED: a span mid-travel leaves nothing behind
+  ok: the span was left part way across
+  ok: nothing is restored, got 0
+  ok: the span comes back stowed
+  ok: the link comes back broken
+  ok: and the crossing is refused again, got ["no_link"]
+  -- IDENTITY: another package's latch is not this one's
+  ok: neither a foreign package nor an unknown latch restores anything, got 0
+  ok: and the link stays broken
+  -- PARKED: the carrier returns to a dock it is supported on
+  ok: the carrier is mid-segment (0.68 m)
+  ok: parking puts it on S1
+  ok: with no journey left over
+  ok: a dock this build does not have is clamped to one it does
+  NOTE: a carrier's position is not saved anywhere: `park` chooses a dock this build supports, because a carrier resumed where it was left could be standing on a span this build has not commissioned
+  -- SCENARIO: `--railway` is a place a person can stand
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: the yard's junction has nothing to refuse, got []
+  ok: six shootable controls, two per dock, got 6
+  ok: the carrier is parked at S1
+  ok: and the gap beyond S2 is not track
+  ok: every control points along the track, 6 do
+  ok: the deck's top is at the platform height (1.00)
+  ok: the player lands on the S1 platform
+  ok: at platform height (1.00 vs 1.00)
+  ok: S1 has a FORWARD control
+  ok: shooting it sends the carrier toward S2
+  ok: and it arrives at S2
+  ok: the gantry lever starts the span
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: which locks home and commissions the gap
+  ok: and the far end of the span meets S3 (0.01 m off)
+  ok: the carrier can now ride to S3
+  -- M2-mech: acquire, return, and open what you could see
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: the gantry's hook is visible from the S2 platform
+  ok: and 3.1 m above it, past anything a jump reaches
+  ok: and has not been pulled
+  ok: the player starts with nothing in the mobility slot, got ''
+  ok: the interact probe finds the pedestal
+  ok: taking it hands over the Echo
+  ok: into the mobility slot, got 'dev_hookshot'
+  ok: as the primitive the schema's own tests author
+  ok: the hookshot is aimed at the gantry's plate
+  ok: the mobility key fires the hookshot (cooldown 1.48)
+    pulled from 1.00 m to 3.90 m (peak 4.98)
+  ok: the pull puts the player on the gantry (3.90 m, lever at 4.07)
+  ok: standing on it rather than back on the dock
+  ok: the lever is in reach now
+  ok: and pulling it starts the span
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: which locks home and opens the way to S3
+  ok: one latch was accepted, got ["yard_junction/span_aligned"]
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  railway: rebuilt the yard; 1 of 1 accepted latch(es) came back
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: coming back rebuilds the railway rather than resetting it
+  ok: and the span is still home, recomputed from the latch
+  ok: while the lever stands up again: its position was never the thing that persisted
+  ok: the carrier is parked at S1, not where it was left
+  ok: and the pedestal is rebuilt -- a dev-path grant is scenery, not progress
+  ok: and the rebuild reported nothing new, got ["yard_junction/span_aligned"]
+  ok: the railway is rideable from the first command
+  ok: reaching S2
+  -- GAUNTLET: a ride with something on it
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: three shooters stand beside the first leg, got 3
+  ok: all of them alive, got 3
+  ok: and they are not all on one side of the track, got 2 side(s)
+  ok: the shield is part of the carrier, so it turns with the deck
+  ok: a shot at the deck from the shielded side stops at the carrier
+  ok: and nothing on the carrier stops a shot from the other side, which is why the rider has to move
+  ok: the first shooter is in the deck's line of fire, saw Enemy_ranged:<CharacterBody3D#355794421809>
+  ok: and a shot from the moving deck damages it (16.0 -> 10.0)
+  ok: the player comes back after 1.5 s
+  ok: on S1's platform rather than at the world origin (0.0 m from its centre)
+  -- WALKED: the whole loop on foot, nothing placed
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: walks from S1's platform onto the deck
+  ok: one pulse at the chevron rides the skiff to S2 (6.8 s)
+  ok: with the player still standing on it
+  railway: no_link -- no commissioned track leaves S2 forward
+  ok: shooting forward again is refused for want of track, got ["no_link"]
+  ok: steps off onto S2's platform
+  ok: turns onto the branch walkway
+  ok: and walks it to the pedestal
+  ok: takes the hookshot
+  ok: walks the branch back
+  ok: and stands on S2's platform again
+  ok: and pulls itself onto the gantry (3.90 m)
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: throws the lever and the span locks home (2.2 s)
+  ok: comes down onto S2's platform
+  ok: and steps back aboard
+  ok: standing on the deck rather than in the yard (1.00 m)
+  ok: and the same command that was refused rides to S3 (4.1 s)
+  -- BRACING: the same span, a different relationship
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: bracing
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: the bracing is built
+  ok: and this configuration has no gantry, no pedestal and no hook
+  ok: the junction is still well formed, got []
+  ok: and the gap beyond S2 is still not track
+  ok: it rides the raised span (4.2 m above the rail)
+  ok: the Static Pulse can reach it from S2's platform, saw TargetBody:<StaticBody3D#460568135670>
+  ok: one shot releases the span
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: it locks home and commissions the same link (2.1 s)
+  ok: under the same latch, got ["yard_junction/span_aligned"]
+  ok: reported once and only once, got ["yard_junction/span_aligned"]
+  -- WALK-AROUND: is S3 reachable on foot with the span up?
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  ok: the span is up and the link is not commissioned
+  ok: and the player has nothing in the mobility slot
+    walked 49.3 m; ended 2.0 m from S3's platform centre at y=-25.03 (platform top 1.00)
+    on the platform: no
+  ok: S3 is NOT reachable on foot with the span up (ended 2.0 m away at y=-25.03)
+  ok: and the walk ends in the hole rather than short of it (-25.03)
+  ok: the narrowest gap round S3 is 6.0 m
+  ok: a body dropped on the far rim stands on ground (0.00 m)
+  ok: and a run-up and a jump at the island still ends in the hole (-27.21 m)
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: with the span home the link is commissioned
+  ok: and the carrier reaches S3 (10.9 s)
+  NOTE: the two are kept apart on purpose: the repair restores VEHICLE SERVICE, and because S3 stands on an island the skiff is the only way onto, that is ALSO the only access to the destination. An earlier yard had continuous ground and a stair at every dock: the repair meant the same thing then, and the scenario read as though it meant more
+  -- RECALL: stranded on S3, and calling the skiff back
+
+  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario
+  binding: gantry  (--bracing selects the other one)
+  Not a Zone: no Checks, no exit, no campaign, no bridge.
+
+    WASD / space     move
+    left mouse       Static Pulse -- shoot a direction control
+    E                take the hookshot / pull the lever
+    right-hand mouse / the mobility key   fire the hookshot
+    Esc              quit
+
+  S1 --commissioned-- S2 - - - broken - - - S3
+                      |
+                      +-- the branch: a hookshot, and a ledge
+                          to learn it on
+
+  Board at S1 and shoot the chevron pointing down the track.
+  Three shooters stand along that leg, on alternating sides:
+  the deck's shield covers one side at a time and the deck
+  turns, so staying behind it means moving.
+  At S2 the railway refuses S3: the span is up. The gantry that
+  lowers it is overhead and out of reach -- cross the junction,
+  take the hookshot, try it on the ledge, come back, and pull
+  yourself up to the ring.
+
+  Then use the plinth by S1 to leave and come back. The span
+  stays down -- recomputed from the latch it fired -- and
+  everything else is built again: the lever stands up, the
+  controls are armed, the carrier is parked at S1.
+
+  railway: the span locked home; the latch would be reported as 'yard_junction/span_aligned'
+  ok: the skiff is standing at S3
+  ok: the player is standing on S3's island (1.00 m)
+  ok: which stands over the hole, so there is nothing to walk back on
+  ok: the skiff leaves for S2 without them
+  ok: S3 has a forward control within reach
+  ok: the player can see it from the island, saw TargetBody:<StaticBody3D#591933736851>
+  ok: and one shot brings the skiff back to them (4.1 s)
+  MEASURED 140 check(s), 2 note(s)
+GODOT RAIL JUNCTION OK (140 checks)
+=== exit 0
+=== make godot-rail-carrier (17:32:33)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- SHAPE: a malformed railway refuses instead of guessing
+  ok: a short link array refuses the command
+  ok: and says which fact about its own shape is wrong, got ["not_a_railway"]
+  ok: and does not move
+  ok: a well-formed railway has nothing to refuse, got []
+  -- BEAM: the rail a player sees is the rail they ride
+  ok: a straight rail is swept between its control points, unchanged
+  ok: because its curve IS its control polyline (bow 0.0000 m)
+  ok: the curved route's ride leaves the control chord by 0.744 m, past the beam's own half-thickness
+  ok: and the swept beam holds it to 0.030 m, inside the beam
+    4 control points -> 27 swept, ride within 0.030 m (was 0.744)
+  -- TRAVEL: S1 to S2 arrives and stops
+  ok: the carrier starts at S1
+  ok: FORWARD is accepted
+  ok: and reports leaving S1, got ["S1"]
+  ok: the journey ends within the budget (273 frames)
+  ok: at S2, once, got ["S2"]
+  ok: and `at_dock` agrees
+  ok: stopped ON the dock offset (17.0000 vs 17.0000)
+  ok: with no speed left
+  ok: and no heading
+  ok: and the deck sits on the rail at the dock (0.200 m off)
+    S1->S2 17.00 m in 4.55 s
+  -- REFUSAL: S2 to S3 over track that is not there
+  ok: the carrier is at S2
+  ok: FORWARD over the broken link is refused
+  ok: for the right reason, got ["no_link"]
+  ok: and the carrier does not glide over missing rail
+  ok: nor is it stranded off a dock by the refusal
+  -- REPAIR: the same command, once the link is commissioned
+  ok: the same command is now accepted
+  ok: and the carrier reaches S3
+  -- REPEAT: a second shot does not skip a dock
+  ok: a repeat FORWARD mid-journey is refused
+  ok: a repeat FORWARD mid-journey is refused
+  ok: a repeat FORWARD mid-journey is refused
+  ok: a repeat FORWARD mid-journey is refused
+  ok: a repeat FORWARD mid-journey is refused
+  ok: each one saying it is already travelling, got ["already_moving", "already_moving", "already_moving", "already_moving", "already_moving"]
+  ok: the destination is unchanged
+  ok: and the carrier stops at S2, not S3, got ["S2"]
+  ok: with one departure, got ["S1"]
+  -- REVERSE: back the way it came, mid-segment
+  ok: the carrier is under way (1.52 m along)
+  ok: BACK is accepted
+  ok: aimed at the dock it departed from
+  ok: and it returns to S1, got ["S1"]
+  ok: exactly on the dock (0.0000)
+  -- HOLD: stop safely, and be able to go again
+  ok: holding stops the carrier where it is
+  ok: and a travel command is refused while held
+  ok: for the right reason, got ["held"]
+  ok: the held carrier does not drift
+  ok: released, the carrier is stranded between docks (1.52 m)
+  ok: and can still be sent on
+  ok: arriving at S2
+  ok: a released carrier can also go back
+  ok: returning to S2
+  -- RECEIVER: the Static Pulse sends the carrier
+  ok: the shot is actually aimed at the receiver, hit TargetBody:<StaticBody3D#280330503713>
+  ok: one Static Pulse is one FORWARD command, got [1]
+  ok: and the control is re-arming
+  ok: the arrow lunges the way it points (0.260 m)
+  ok: the carrier has not moved yet
+  ok: the station resolves the command and the carrier departs
+  ok: arriving at S2
+  -- DEBOUNCE: one blast is one command
+  ok: only the first pellet registers, 1 did
+  ok: and one blast is one command, got 1
+  ok: a hit inside the re-arm window is still the same command
+  ok: because the control is not armed yet
+  ok: the control re-arms
+  ok: and goes dim again
+  ok: a later shot is a second command, got 2
+  -- CONFLICT: two opposed commands in one frame
+  ok: the carrier is parked at S2
+  ok: the two arrows point opposite ways (1 vs -1)
+  ok: the pair cancels and says so, got ["conflicting"]
+  ok: the carrier stays put
+  ok: and does not move
+  ok: the same FORWARD control, alone, commands the carrier
+  ok: and it reaches S3
+  ok: the carrier's refusal is relayed by the station, got ["no_link"]
+  -- CARRY: a player rides S1 to S2 around the corner
+    DRIFT 0.124 m   GROUNDED 273/273 (100%)   ABOARD yes
+    top speed 7.00 m/s   ride 4.55 s
+  ok: the ride ends at S2
+  ok: and the passenger is still on the deck
+  ok: grounded for 100% of the ride
+  MEASURED 73 check(s), 0 note(s)
+GODOT RAIL CARRIER OK (73 checks)
+=== exit 0

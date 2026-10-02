@@ -1,0 +1,265 @@
+candidate steps ('zone_state', 'transport', 'latched_route', 'minors'), options ('consumables',)
+  hub shop (coins 0): []
+  hub shop (coins 0): []
+ZONE 1 zone_001: 15 Checks
+  89100005 'REP' -> Echo 'REP' [CreateOperation]
+      notice reveal: SENT TO FAUX ('REP', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'REP', 'A burst of borrowed momentum.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('REP',)
+  89100019 'Warp Whistle' -> Echo 'Warp Whistle' [CreateOperation]
+      notice reveal: SENT TO FAUX ('Warp Whistle', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Warp Whistle', 'You are looking at somewhere. Now you are there.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Warp Whistle',)
+  89100025 'Spear of Justice' -> Echo 'Spear of Justice' [CreateOperation]
+      notice reveal: SENT TO FAUX ('Spear of Justice', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Spear of Justice', 'Reach beats width, and a pierced guard stays pierced.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Spear of Justice',)
+  89100042 'Warp Whistle' -> Echo 'Warp Whistle' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Warp Whistle', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Warp Whistle', 'The same Warp Whistle, farther. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Warp Whistle',)
+  89100051 'Clarity Draught' -> Echo 'Clarity Draught' [CreateOperation]
+      notice reveal: SENT TO FAUX ('Clarity Draught', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Clarity Draught', 'Epsilon squints at the name and hands you a gun.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Clarity Draught',)
+  89100055 'Fresh Rep' -> Echo 'Fresh Rep' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Fresh Rep', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Fresh Rep', 'The same REP, stronger. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Fresh Rep',)
+  89100068 'Spear of Justice' -> Echo 'Spear of Justice' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Spear of Justice', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Spear of Justice', 'The same Spear of Justice, heavier. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Spear of Justice',)
+  89100076 'Fresh Rep' -> Echo 'Fresh Rep' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Fresh Rep', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Fresh Rep', 'The same REP, stronger. Mk 3.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Fresh Rep',)
+  89100089 'Spear of Justice' -> Echo 'Spear of Justice' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Spear of Justice', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Spear of Justice', 'The same Spear of Justice, heavier. Mk 3.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Spear of Justice',)
+  89100093 'Clarity Draught' -> Echo 'Clarity Draught' [CreateOperation]
+      notice reveal: SENT TO FAUX ('Clarity Draught', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Clarity Draught', 'It only means anything once you have left the floor.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Clarity Draught',)
+  89100097 'Fresh Rep' -> Echo 'Fresh Rep' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Fresh Rep', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Fresh Rep', 'The same REP, quicker. Mk 4.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Fresh Rep',)
+  89100110 'Spear of Justice' -> Echo 'Spear of Justice' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Spear of Justice', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Spear of Justice', 'The same Spear of Justice, quicker. Mk 4.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Spear of Justice',)
+  89100126 'Warp Whistle' -> Echo 'Warp Whistle' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Warp Whistle', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Warp Whistle', 'The same Warp Whistle, quicker. Mk 3.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Warp Whistle',)
+  89100139 'Fresh Rep' -> Echo 'Fresh Rep' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Fresh Rep', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Fresh Rep', 'The same REP, quicker. Mk 5.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Fresh Rep',)
+  89100147 'Warp Whistle' -> Echo 'Warp Whistle' [UpgradeOperation]
+      notice reveal: SENT TO FAUX ('Warp Whistle', 'Bomb Rush Cyberfunk', '', 'EPSILON ECHO ACQUIRED', 'Warp Whistle', 'The same Warp Whistle, quicker. Mk 4.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Warp Whistle',)
+  owned after Zone 1: {'echo_a': ['Spear of Justice Mk4', 'Clarity Draught Mk1'], 'mobility': ['REP Mk5', 'Warp Whistle Mk4', 'Clarity Draught Mk1']}
+  slotted: {'echo_a': None, 'echo_b': None, 'mobility': None, 'utility': None, 'consumable': None}
+  hub shop (coins 5): []
+  hub shop (coins 5): []
+ZONE 2 zone_002: 15 Checks
+  89100087 'Hookshot Chain' -> Echo 'Hookshot Chain' [CreateOperation]
+      notice reveal: SENT TO ASHEN ('Hookshot Chain', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Hookshot Chain', 'Latch onto geometry and get yanked there.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Hookshot Chain',)
+  89100108 'Hookshot Chain' -> Echo 'Hookshot Chain' [UpgradeOperation]
+      notice reveal: SENT TO ASHEN ('Hookshot Chain', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Hookshot Chain', 'The same Hookshot Chain, farther. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Hookshot Chain',)
+  89100121 'Ember' -> Echo 'Ember' [ModifyOperation]
+      notice reveal: SENT TO ASHEN ('Ember', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Ember', 'Clarity Draught now leaves burning behind. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Ember',)
+  89100142 'Ember' -> Echo 'Ember' [CreateOperation]
+      notice reveal: SENT TO ASHEN ('Ember', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Ember', 'Epsilon could not place it, so it moved you instead.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Ember',)
+  89100145 'Restoration Wine' -> Echo 'Restoration Wine' [CreateOperation]
+      notice reveal: SENT TO ASHEN ('Restoration Wine', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Restoration Wine', 'Worn quietly. You walk with more purpose.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Restoration Wine',)
+  89100153 'Seal of Authority' -> Echo 'Seal of Authority' [CreateOperation]
+      notice reveal: SENT TO ASHEN ('Seal of Authority', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Seal of Authority', 'Epsilon could not place it, so it moved you instead.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Seal of Authority',)
+  89100171 'Hookshot Chain' -> Echo 'Hookshot Chain' [UpgradeOperation]
+      notice reveal: SENT TO ASHEN ('Hookshot Chain', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Hookshot Chain', 'The same Hookshot Chain, stronger. Mk 3.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Hookshot Chain',)
+  89100237 'Seal of Authority' -> Echo 'Seal of Authority' [CreateOperation]
+      notice reveal: SENT TO ASHEN ('Seal of Authority', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Seal of Authority', 'Held wrong, swung anyway.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Seal of Authority',)
+  89100268 'Ember' -> Echo 'Ember' [ModifyOperation]
+      notice reveal: SENT TO ASHEN ('Ember', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Ember', 'Seal of Authority now leaves burning behind. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Ember',)
+  89100271 'Restoration Wine' -> Echo 'Restoration Wine' [CreateOperation]
+      notice reveal: SENT TO ASHEN ('Restoration Wine', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Restoration Wine', 'Worn quietly. You walk with more purpose.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Restoration Wine',)
+  89100297 'Hookshot Chain' -> Echo 'Hookshot Chain' [UpgradeOperation]
+      notice reveal: SENT TO ASHEN ('Hookshot Chain', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Hookshot Chain', 'The same Hookshot Chain, stronger. Mk 4.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Hookshot Chain',)
+  89100313 'Restoration Wine' -> Echo 'Restoration Wine' [CreateOperation]
+      notice reveal: SENT TO ASHEN ('Restoration Wine', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Restoration Wine', 'It only means anything once you have left the floor.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Restoration Wine',)
+  89100397 'Restoration Wine' -> Echo 'Restoration Wine' [CreateOperation]
+      notice reveal: SENT TO ASHEN ('Restoration Wine', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Restoration Wine', "Epsilon decided the safest reading was 'throw it'.")
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Restoration Wine',)
+  89100415 'Ember' -> Echo 'Ember' [ModifyOperation]
+      notice reveal: SENT TO ASHEN ('Ember', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Ember', 'Restoration Wine now leaves burning behind. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Ember',)
+  89100447 'Seal of Authority' -> Echo 'Seal of Authority' [CreateOperation]
+      notice reveal: SENT TO ASHEN ('Seal of Authority', 'Dark Souls III', '', 'EPSILON ECHO ACQUIRED', 'Seal of Authority', 'Epsilon could not place it, so it moved you instead.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Seal of Authority',)
+  owned after Zone 2: {'echo_a': ['Spear of Justice Mk4', 'Clarity Draught Mk2', 'Seal of Authority Mk2', 'Restoration Wine Mk2'], 'mobility': ['REP Mk5', 'Warp Whistle Mk4', 'Clarity Draught Mk1', 'Hookshot Chain Mk4', 'Ember Mk1', 'Seal of Authority Mk1', 'Restoration Wine Mk1', 'Seal of Authority Mk1'], 'trait': ['Restoration Wine Mk1', 'Restoration Wine Mk1']}
+  slotted: {'echo_a': None, 'echo_b': None, 'mobility': None, 'utility': None, 'consumable': None}
+  hub shop (coins 10): [('Fresh Rep', 2), ('Sledge Hammer', 4)]
+  hub shop (coins 10): [('Fresh Rep', 2), ('Sledge Hammer', 4)]
+ZONE 3 zone_003: 15 Checks
+  89100032 'Metal Cap' -> Echo 'Metal Cap' [CreateOperation]
+      notice reveal: SENT TO MARIO ('Metal Cap', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Metal Cap', 'Gravity applies to you less than it used to.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Metal Cap',)
+  89100064 'Wall Jump Boots' -> Echo 'Wall Jump Boots' [CreateOperation]
+      notice reveal: SENT TO MARIO ('Wall Jump Boots', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Wall Jump Boots', 'One more jump than the world budgeted for.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Wall Jump Boots',)
+  89100099 'Power Star' -> Echo 'Power Star' [CreateOperation, CreateOperation, CreateOperation]
+      notice reveal: SENT TO MARIO ('Power Star', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Power Star', 'It wants to be full. It has opinions about what happens then.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Power Star',)
+  89100123 'Tower Shield' -> Echo 'Tower Shield' [CreateOperation]
+      notice reveal: SENT TO MARIO ('Tower Shield', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Tower Shield', "A temporary layer of somebody else's protection.")
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Tower Shield',)
+  89100127 'Wall Jump Boots' -> Echo 'Wall Jump Boots' [UpgradeOperation]
+      notice reveal: SENT TO MARIO ('Wall Jump Boots', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Wall Jump Boots', 'The same Wall Jump Boots, stronger. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Wall Jump Boots',)
+  89100169 'Wall Jump Boots' -> Echo 'Wall Jump Boots' [UpgradeOperation]
+      notice reveal: SENT TO MARIO ('Wall Jump Boots', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Wall Jump Boots', 'The same Wall Jump Boots, quicker. Mk 3.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Wall Jump Boots',)
+  89100225 'Power Star' -> Echo 'Power Star' [CreateOperation, CreateOperation, CreateOperation]
+      notice reveal: SENT TO MARIO ('Power Star', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Power Star', 'It wants to be full. It has opinions about what happens then.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Power Star',)
+  89100253 'Wall Jump Boots' -> Echo 'Wall Jump Boots' [UpgradeOperation]
+      notice reveal: SENT TO MARIO ('Wall Jump Boots', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Wall Jump Boots', 'The same Wall Jump Boots, quicker. Mk 4.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Wall Jump Boots',)
+  89100274 'Wall Jump Boots' -> Echo 'Wall Jump Boots' [UpgradeOperation]
+      notice reveal: SENT TO MARIO ('Wall Jump Boots', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Wall Jump Boots', 'The same Wall Jump Boots, quicker. Mk 5.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Wall Jump Boots',)
+  89100309 'Power Star' -> Echo 'Power Star' [CreateOperation, CreateOperation, CreateOperation]
+      notice reveal: SENT TO MARIO ('Power Star', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Power Star', 'It wants to be full. It has opinions about what happens then.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Power Star',)
+  89100347 'Metal Cap' -> Echo 'Metal Cap' [UpgradeOperation]
+      notice reveal: SENT TO MARIO ('Metal Cap', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Metal Cap', 'The same Metal Cap, steeper. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Metal Cap',)
+  89100372 'Power Star' -> Echo 'Power Star' [CreateOperation, CreateOperation, CreateOperation]
+      notice reveal: SENT TO MARIO ('Power Star', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Power Star', 'It wants to be full. It has opinions about what happens then.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Power Star',)
+  89100393 'Power Star' -> Echo 'Power Star' [CreateOperation, CreateOperation, CreateOperation]
+      notice reveal: SENT TO MARIO ('Power Star', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Power Star', 'It wants to be full. It has opinions about what happens then.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Power Star',)
+  89100396 'Tower Shield' -> Echo 'Tower Shield' [UpgradeOperation]
+      notice reveal: SENT TO MARIO ('Tower Shield', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Tower Shield', 'The same Tower Shield, deeper. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Tower Shield',)
+  89100410 'Metal Cap' -> Echo 'Metal Cap' [UpgradeOperation]
+      notice reveal: SENT TO MARIO ('Metal Cap', 'Super Mario 64', '', 'EPSILON ECHO ACQUIRED', 'Metal Cap', 'The same Metal Cap, steeper. Mk 3.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Metal Cap',)
+  owned after Zone 3: {'echo_a': ['Spear of Justice Mk4', 'Clarity Draught Mk2', 'Seal of Authority Mk2', 'Restoration Wine Mk2'], 'mobility': ['REP Mk5', 'Warp Whistle Mk4', 'Clarity Draught Mk1', 'Hookshot Chain Mk4', 'Ember Mk1', 'Seal of Authority Mk1', 'Restoration Wine Mk1', 'Seal of Authority Mk1', 'Wall Jump Boots Mk5'], 'resource': ['POWER STAR Mk1', 'POWER STAR Mk1', 'POWER STAR Mk1', 'POWER STAR Mk1', 'POWER STAR Mk1'], 'rule': ['Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1'], 'trait': ['Restoration Wine Mk1', 'Restoration Wine Mk1', 'Metal Cap Mk3'], 'utility': ['Tower Shield Mk2']}
+  slotted: {'echo_a': None, 'echo_b': None, 'mobility': None, 'utility': None, 'consumable': None}
+  hub shop (coins 15): []
+  hub shop (coins 15): []
+ZONE 4 zone_004: 15 Checks
+  89100022 'Cloud Boots' -> Echo 'Cloud Boots' [UpgradeOperation]
+      notice reveal: SENT TO BL2PLAYER ('Cloud Boots', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Cloud Boots', 'The same REP, quicker. Mk 6.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Cloud Boots',)
+  89100054 'Unkempt Harold' -> Echo 'Unkempt Harold' [CreateOperation]
+      notice reveal: SENT TO BL2PLAYER ('Unkempt Harold', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Unkempt Harold', 'It only means anything once you have left the floor.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Unkempt Harold',)
+  89100065 'Cloud Boots' -> Echo 'Cloud Boots' [UpgradeOperation]
+      notice reveal: SENT TO BL2PLAYER ('Cloud Boots', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Cloud Boots', 'The same REP, quicker. Mk 7.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Cloud Boots',)
+  89100096 'Unkempt Harold' -> Echo 'Unkempt Harold' [CreateOperation]
+      notice reveal: SENT TO BL2PLAYER ('Unkempt Harold', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Unkempt Harold', 'Epsilon could not place it, so it moved you instead.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Unkempt Harold',)
+  89100117 'Unkempt Harold' -> Echo 'Unkempt Harold' [CreateOperation]
+      notice reveal: SENT TO BL2PLAYER ('Unkempt Harold', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Unkempt Harold', 'Epsilon could not place it, so it moved you instead.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Unkempt Harold',)
+  89100133 'Momentum Core' -> Echo 'Momentum Core' [CreateOperation, CreateOperation, CreateOperation]
+      notice reveal: SENT TO BL2PLAYER ('Momentum Core', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Momentum Core', 'It wants to be full. It has opinions about what happens then.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Momentum Core',)
+  89100138 'Unkempt Harold' -> Echo 'Unkempt Harold' [CreateOperation]
+      notice reveal: SENT TO BL2PLAYER ('Unkempt Harold', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Unkempt Harold', 'It stutters when it speaks. Three times, quickly.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Unkempt Harold',)
+  89100191 'Cloud Boots' -> Echo 'Cloud Boots' [UpgradeOperation]
+      notice reveal: SENT TO BL2PLAYER ('Cloud Boots', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Cloud Boots', 'The same REP, quicker. Mk 8.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Cloud Boots',)
+  89100196 'Momentum Core' -> Echo 'Momentum Core' [CreateOperation, CreateOperation, CreateOperation, MergeOperation]
+      notice reveal: SENT TO BL2PLAYER ('Momentum Core', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Momentum Core', 'Folded into POWER STAR rather than adding a sixteenth meter.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Momentum Core',)
+  89100233 'Cloud Boots' -> Echo 'Cloud Boots' [UpgradeOperation]
+      notice reveal: SENT TO BL2PLAYER ('Cloud Boots', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Cloud Boots', 'The same REP, quicker. Mk 9.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Cloud Boots',)
+  89100264 'Unkempt Harold' -> Echo 'Unkempt Harold' [CreateOperation]
+      notice reveal: SENT TO BL2PLAYER ('Unkempt Harold', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Unkempt Harold', 'Epsilon could not place it, so it moved you instead.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Unkempt Harold',)
+  89100343 'Momentum Core' -> Echo 'Momentum Core' [CreateOperation, CreateOperation, CreateOperation, MergeOperation]
+      notice reveal: SENT TO BL2PLAYER ('Momentum Core', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Momentum Core', 'Folded into POWER STAR rather than adding a sixteenth meter.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Momentum Core',)
+  89100411 'Unkempt Harold' -> Echo 'Unkempt Harold' [CreateOperation]
+      notice reveal: SENT TO BL2PLAYER ('Unkempt Harold', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Unkempt Harold', 'Held wrong, swung anyway.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Unkempt Harold',)
+  89100416 'Ice Beam' -> Echo 'Ice Beam' [ModifyOperation]
+      notice reveal: SENT TO BL2PLAYER ('Ice Beam', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Ice Beam', 'Unkempt Harold now leaves slowed behind. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Ice Beam',)
+  89100427 'Momentum Core' -> Echo 'Momentum Core' [CreateOperation, CreateOperation, CreateOperation, MergeOperation]
+      notice reveal: SENT TO BL2PLAYER ('Momentum Core', 'Borderlands 2', '', 'EPSILON ECHO ACQUIRED', 'Momentum Core', 'Folded into POWER STAR rather than adding a sixteenth meter.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Momentum Core',)
+  owned after Zone 4: {'echo_a': ['Spear of Justice Mk4', 'Clarity Draught Mk2', 'Seal of Authority Mk2', 'Restoration Wine Mk2', 'Unkempt Harold Mk2', 'Unkempt Harold Mk1'], 'mobility': ['REP Mk9', 'Warp Whistle Mk4', 'Clarity Draught Mk1', 'Hookshot Chain Mk4', 'Ember Mk1', 'Seal of Authority Mk1', 'Restoration Wine Mk1', 'Seal of Authority Mk1', 'Wall Jump Boots Mk5', 'Unkempt Harold Mk1', 'Unkempt Harold Mk1', 'Unkempt Harold Mk1', 'Unkempt Harold Mk1'], 'resource': ['POWER STAR Mk4', 'POWER STAR Mk1', 'POWER STAR Mk1', 'POWER STAR Mk1', 'POWER STAR Mk1', 'MOMENTUM CORE Mk1'], 'rule': ['Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1'], 'trait': ['Restoration Wine Mk1', 'Restoration Wine Mk1', 'Metal Cap Mk3'], 'utility': ['Tower Shield Mk2']}
+  slotted: {'echo_a': None, 'echo_b': None, 'mobility': None, 'utility': None, 'consumable': None}
+  hub shop (coins 20): [('Unkempt Harold', 4), ('Momentum Core', 4)]
+  hub shop (coins 20): [('Unkempt Harold', 4), ('Momentum Core', 4)]
+ZONE 5 zone_005: 4 Checks
+  89100006 'Epsilon Coin'
+      notice check_confirmed: CHECK CONFIRMED ('Epsilon Coin', 'Delivered to you.')
+  89100013 'Epsilon Static'
+      notice check_confirmed: CHECK CONFIRMED ('Epsilon Static', 'Delivered to you.')
+  89100020 'Epsilon Static'
+      notice check_confirmed: CHECK CONFIRMED ('Epsilon Static', 'Delivered to you.')
+  89100027 'Epsilon Coin'
+      notice check_confirmed: CHECK CONFIRMED ('Epsilon Coin', 'Delivered to you.')
+  owned after Zone 5: {'echo_a': ['Spear of Justice Mk4', 'Clarity Draught Mk2', 'Seal of Authority Mk2', 'Restoration Wine Mk2', 'Unkempt Harold Mk2', 'Unkempt Harold Mk1'], 'mobility': ['REP Mk9', 'Warp Whistle Mk4', 'Clarity Draught Mk1', 'Hookshot Chain Mk4', 'Ember Mk1', 'Seal of Authority Mk1', 'Restoration Wine Mk1', 'Seal of Authority Mk1', 'Wall Jump Boots Mk5', 'Unkempt Harold Mk1', 'Unkempt Harold Mk1', 'Unkempt Harold Mk1', 'Unkempt Harold Mk1'], 'resource': ['POWER STAR Mk4', 'POWER STAR Mk1', 'POWER STAR Mk1', 'POWER STAR Mk1', 'POWER STAR Mk1', 'MOMENTUM CORE Mk1'], 'rule': ['Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1'], 'trait': ['Restoration Wine Mk1', 'Restoration Wine Mk1', 'Metal Cap Mk3'], 'utility': ['Tower Shield Mk2']}
+  slotted: {'echo_a': None, 'echo_b': None, 'mobility': None, 'utility': None, 'consumable': None}
+  hub shop (coins 23): []
+  hub shop (coins 23): []
+ZONE 6 zone_006: 15 Checks
+  89100031 'Boomerang' -> Echo 'Boomerang' [CreateOperation]
+      notice reveal: SENT TO SAGE ('Boomerang', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Boomerang', 'Epsilon squints at the name and hands you a gun.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Boomerang',)
+  89100041 'Glider Cape' -> Echo 'Glider Cape' [CreateOperation]
+      notice reveal: SENT TO SAGE ('Glider Cape', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Glider Cape', 'Hold it and the fall becomes a decision.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Glider Cape',)
+  89100134 'Revelation Scroll' -> Echo 'Revelation Scroll' [CreateOperation]
+      notice reveal: SENT TO SAGE ('Revelation Scroll', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Revelation Scroll', 'Epsilon could not place it, so it moved you instead.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Revelation Scroll',)
+  89100140 'Bomb Bag' -> Echo 'Bomb Bag' [CreateOperation]
+      notice reveal: SENT TO SAGE ('Bomb Bag', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Bomb Bag', 'Three of them. Lob one, count, regret nothing.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Bomb Bag',)
+  89100161 'Bomb Bag' -> Echo 'Bomb Bag' [UpgradeOperation]
+      notice reveal: SENT TO SAGE ('Bomb Bag', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Bomb Bag', 'The same Bomb Bag, heavier. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Bomb Bag',)
+  89100193 'Sledge Hammer' -> Echo 'Sledge Hammer' [CreateOperation]
+      notice reveal: SENT TO SAGE ('Sledge Hammer', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Sledge Hammer', 'Only works from up there. Bring yourself down hard.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Sledge Hammer',)
+  89100199 'Boomerang' -> Echo 'Boomerang' [CreateOperation]
+      notice reveal: SENT TO SAGE ('Boomerang', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Boomerang', 'It only means anything once you have left the floor.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Boomerang',)
+  89100260 'Revelation Scroll' -> Echo 'Revelation Scroll' [CreateOperation]
+      notice reveal: SENT TO SAGE ('Revelation Scroll', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Revelation Scroll', 'Whatever it was, now it makes you faster briefly.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Revelation Scroll',)
+  89100277 'Sledge Hammer' -> Echo 'Sledge Hammer' [UpgradeOperation]
+      notice reveal: SENT TO SAGE ('Sledge Hammer', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Sledge Hammer', 'The same Sledge Hammer, heavier. Mk 2.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Sledge Hammer',)
+  89100308 'Bomb Bag' -> Echo 'Bomb Bag' [UpgradeOperation]
+      notice reveal: SENT TO SAGE ('Bomb Bag', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Bomb Bag', 'The same Bomb Bag, wider. Mk 3.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Bomb Bag',)
+  89100323 'Revelation Scroll' -> Echo 'Revelation Scroll' [CreateOperation]
+      notice reveal: SENT TO SAGE ('Revelation Scroll', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Revelation Scroll', 'It only means anything once you have left the floor.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Revelation Scroll',)
+  89100361 'Sledge Hammer' -> Echo 'Sledge Hammer' [UpgradeOperation]
+      notice reveal: SENT TO SAGE ('Sledge Hammer', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Sledge Hammer', 'The same Sledge Hammer, wider. Mk 3.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Sledge Hammer',)
+  89100388 'Boomerang' -> Echo 'Boomerang' [CreateOperation]
+      notice reveal: SENT TO SAGE ('Boomerang', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Boomerang', 'It stutters when it speaks. Three times, quickly.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Boomerang',)
+  89100392 'Bomb Bag' -> Echo 'Bomb Bag' [UpgradeOperation]
+      notice reveal: SENT TO SAGE ('Bomb Bag', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Bomb Bag', 'The same Bomb Bag, quicker. Mk 4.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Bomb Bag',)
+  89100413 'Bomb Bag' -> Echo 'Bomb Bag' [UpgradeOperation]
+      notice reveal: SENT TO SAGE ('Bomb Bag', 'Ocarina of Time', '', 'EPSILON ECHO ACQUIRED', 'Bomb Bag', 'The same Bomb Bag, quicker. Mk 5.')
+      notice echo_acquired: EPSILON ECHO ACQUIRED ('Bomb Bag',)
+  owned after Zone 6: {'consumable': ['Bomb Bag Mk5'], 'echo_a': ['Spear of Justice Mk4', 'Clarity Draught Mk2', 'Seal of Authority Mk2', 'Restoration Wine Mk2', 'Unkempt Harold Mk2', 'Unkempt Harold Mk1', 'Boomerang Mk1', 'Sledge Hammer Mk3', 'Boomerang Mk1'], 'mobility': ['REP Mk9', 'Warp Whistle Mk4', 'Clarity Draught Mk1', 'Hookshot Chain Mk4', 'Ember Mk1', 'Seal of Authority Mk1', 'Restoration Wine Mk1', 'Seal of Authority Mk1', 'Wall Jump Boots Mk5', 'Unkempt Harold Mk1', 'Unkempt Harold Mk1', 'Unkempt Harold Mk1', 'Unkempt Harold Mk1', 'Glider Cape Mk1', 'Revelation Scroll Mk1', 'Boomerang Mk1', 'Revelation Scroll Mk1', 'Revelation Scroll Mk1'], 'resource': ['POWER STAR Mk4', 'POWER STAR Mk1', 'POWER STAR Mk1', 'POWER STAR Mk1', 'POWER STAR Mk1', 'MOMENTUM CORE Mk1'], 'rule': ['Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1', 'Kinetic Intake Mk1', 'Overflow Ward Mk1'], 'trait': ['Restoration Wine Mk1', 'Restoration Wine Mk1', 'Metal Cap Mk3'], 'utility': ['Tower Shield Mk2']}
+  slotted: {'echo_a': None, 'echo_b': None, 'mobility': None, 'utility': None, 'consumable': None}
+FIRST CONSUMABLE OWNED after Zone 6: ['Bomb Bag Mk5']

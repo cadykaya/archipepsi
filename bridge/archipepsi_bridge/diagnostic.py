@@ -1,6 +1,7 @@
 """The diagnostic campaign: one entry point, one save folder, on purpose.
 
     python -m archipepsi_bridge.diagnostic [--slot NAME] [--new] [--list]
+        [--quiet | --candidate[=STEPS]]
 
 WHY THIS EXISTS. `Start Archipepsi (Windows).bat` starts the bridge with
 the defaults -- `--mock-scale=prototype` and `bridge/saves` -- and the
@@ -64,6 +65,18 @@ QUIET_DEFAULT_SLOT = "quiet"
 #: pointed at a quieter one. Its content is the note, not a format.
 QUIET_MARKER = ".quiet-generation"
 
+#: The slot the CANDIDATE PROFILE resumes (Overnight 05, O05-13/15).
+#: Its own name for the reason the quieter variant has one: the profile
+#: adds relationships to the Zones it composes, so a candidate campaign
+#: and an ordinary one are different campaigns.
+CANDIDATE_DEFAULT_SLOT = "candidate"
+
+#: Written the first time a candidate run starts in a slot. Its FIRST
+#: LINE is the profile (`profile: zone_state,latched_route,transport`),
+#: because a candidate slot remembers not only its mode but which steps
+#: composed its Zones; the rest is the note for a person.
+CANDIDATE_MARKER = ".candidate-profile"
+
 #: The configuration this entry point exists to pin. Every one of these
 #: was wrong or absent in the run that prompted it.
 FIXED_ARGS = ("--ap=mock", "--epsilon=fallback", "--mock-scale=default")
@@ -72,7 +85,7 @@ FIXED_ARGS = ("--ap=mock", "--epsilon=fallback", "--mock-scale=default")
 #: the thing that decides them. Passing `--mock-scale=prototype` here
 #: would reintroduce exactly the confusion it exists to remove.
 RESERVED = ("--ap", "--epsilon", "--mock-scale", "--save-dir",
-            "--quiet-generation")
+            "--quiet-generation", "--candidate")
 
 
 def repo_root() -> Path:
@@ -125,57 +138,127 @@ def slot_is_occupied(path: Path) -> bool:
 
 
 def slot_mode(path: Path) -> str:
-    """What this slot was made as: `"quiet"` or `"normal"`.
+    """What this slot was made as: `"quiet"`, `"candidate"` or `"normal"`.
 
     An EMPTY slot has no mode yet and answers `"normal"`, which is only
     ever compared against when the slot is occupied -- see
-    `refuse_mode_mismatch`. A slot that predates the marker (every slot
-    that exists today, the owner's included) therefore reads as the
-    ordinary campaign it is.
+    `refuse_mode_mismatch`. A slot that predates the markers (every slot
+    that existed before follow-up 02, the owner's included) therefore
+    reads as the ordinary campaign it is.
     """
+    if (path / CANDIDATE_MARKER).exists():
+        return "candidate"
     return "quiet" if (path / QUIET_MARKER).exists() else "normal"
 
 
-def refuse_mode_mismatch(path: Path, want_quiet: bool) -> None:
-    """Refuse to continue a campaign in the other mode. Never converts.
+def slot_profile(path: Path) -> tuple[str, ...]:
+    """The candidate steps a slot was made with; `()` if it is not one."""
+    marker = path / CANDIDATE_MARKER
+    if not marker.exists():
+        return ()
+    first = marker.read_text(encoding="utf-8").splitlines()[:1]
+    if not first or not first[0].startswith("profile:"):
+        return ()
+    return tuple(s for s in first[0][len("profile:"):].strip().split(",")
+                 if s)
+
+
+#: How a mode is asked for, for the refusal that names the other one.
+_MODE_SWITCH = {"normal": "without --quiet or --candidate",
+                "quiet": "with --quiet", "candidate": "with --candidate"}
+
+
+def refuse_mode_mismatch(path: Path, want: bool | str) -> None:
+    """Refuse to continue a campaign in another mode. Never converts.
 
     THE SAVE IS NOT TOUCHED EITHER WAY. This raises before anything is
     created, started or written, because the failure it prevents is the
-    one that cannot be undone: a quieter run appending Zones to a
-    campaign that was recorded as ordinary evidence.
+    one that cannot be undone: a run in one mode appending Zones to a
+    campaign that was recorded as another.
+
+    `want` is the mode's name, or -- as it was before the candidate mode
+    existed -- a bool meaning quiet or not.
     """
     if not slot_is_occupied(path):
         return
+    if isinstance(want, bool):
+        want = "quiet" if want else "normal"
     have = slot_mode(path)
-    want = "quiet" if want_quiet else "normal"
     if have == want:
         return
-    other = "without --quiet" if have == "normal" else "with --quiet"
     raise ValueError(
         f"{path.name} already holds a {have.upper()} campaign and this "
         f"run is {want.upper()}.\n"
         f"  Nothing has been read, written or started.\n"
-        f"  Resume it {other}, or choose another slot with --slot NAME.\n"
-        f"  The two modes compose different Zones; mixing them into one "
+        f"  Resume it {_MODE_SWITCH[have]}, or choose another slot with "
+        f"--slot NAME.\n"
+        f"  The modes compose different Zones; mixing them into one "
         f"campaign is what this refuses.")
+
+
+def refuse_profile_mismatch(path: Path, steps: tuple[str, ...]) -> None:
+    """A candidate slot continues only under the profile that made it.
+
+    Its Zones were composed with those steps; a later Zone composed with
+    others would make one campaign two experiments. Refused, not
+    converted, and nothing is touched.
+    """
+    if not slot_is_occupied(path) or slot_mode(path) != "candidate":
+        return
+    have = slot_profile(path)
+    if have == tuple(steps):
+        return
+    raise ValueError(
+        f"{path.name} is a CANDIDATE campaign composed with "
+        f"{','.join(have) or '(no profile recorded)'}; this run asks for "
+        f"{','.join(steps)}.\n"
+        f"  Nothing has been read, written or started.\n"
+        f"  Resume it with --candidate={','.join(have)}, or start another "
+        f"slot with --new or --slot NAME.")
+
+
+def _mark(path: Path, marker_name: str, note: str) -> None:
+    """THE ONE WRITE IN THIS MODULE: a mode marker, once, on start.
+
+    A marker that exists is left exactly as it is -- a slot's mode is
+    decided by the run that made it.
+    """
+    marker = path / marker_name
+    if marker.exists():
+        return
+    marker.write_text(note, encoding="utf-8")
 
 
 def mark_quiet(path: Path) -> None:
     """Record that this slot is the quieter one. Written once, on start."""
-    marker = path / QUIET_MARKER
-    if marker.exists():
-        return
-    marker.write_text(
-        "This diagnostic slot holds a LOWER-BUDGET GENERATION VARIANT "
-        "campaign (follow-up 02 item D).\n"
-        "Zones composed here were offered fewer activity families AND "
-        "built to a smaller band,\n"
-        "which also gave them more rooms and more enemies than the "
-        "baseline would have.\n"
-        "They are not the baseline Zones with two drills removed.\n"
-        "Resume it with the same launcher switch. Deleting this file "
-        "does not convert the campaign;\n"
-        "it only removes the guard that keeps the two modes apart.\n")
+    _mark(path, QUIET_MARKER,
+          "This diagnostic slot holds a LOWER-BUDGET GENERATION VARIANT "
+          "campaign (follow-up 02 item D).\n"
+          "Zones composed here were offered fewer activity families AND "
+          "built to a smaller band,\n"
+          "which also gave them more rooms and more enemies than the "
+          "baseline would have.\n"
+          "They are not the baseline Zones with two drills removed.\n"
+          "Resume it with the same launcher switch. Deleting this file "
+          "does not convert the campaign;\n"
+          "it only removes the guard that keeps the two modes apart.\n")
+
+
+def mark_candidate(path: Path, steps: tuple[str, ...]) -> None:
+    """Record that this slot is a candidate campaign, and its profile."""
+    _mark(path, CANDIDATE_MARKER,
+          f"profile: {','.join(steps)}\n"
+          "This diagnostic slot holds a CANDIDATE campaign (Overnight 05, "
+          "O05-13). Every Zone composed here\n"
+          "ran the opt-in candidate profile above after its graph was "
+          "proved and before it was accepted;\n"
+          "each step emitted a relationship or declined by name, recorded "
+          "under candidate/<zone>.json.\n"
+          "It is an implementation candidate, not the ordinary game and "
+          "not owner-approved content.\n"
+          "Resume it with the same launcher switch. Deleting this file "
+          "does not convert the campaign;\n"
+          "it only removes the guard that keeps the modes apart.\n")
 
 
 def fresh_slot_name(root: Path | None = None,
@@ -248,15 +331,30 @@ def missing_prerequisites() -> list[str]:
 
 
 def describe(slot: str, path: Path, resuming: bool,
-             quiet_generation: bool = False) -> str:
+             quiet_generation: bool = False,
+             candidate: tuple[str, ...] = ()) -> str:
     """The three facts the run that prompted this could not answer: which
     build, which scale, and which folder -- and, since follow-up 02, a
-    fourth: whether this campaign is the quieter preview."""
+    fourth: whether this campaign is the quieter preview. Since Overnight
+    05, a fifth: the candidate profile, if one composes this campaign's
+    Zones, and that nothing is staged for it."""
     meta = build_metadata()
     state = "RESUMING an existing campaign" if resuming \
         else "NEW campaign (this folder is empty)"
-    title = "DIAGNOSTIC CAMPAIGN (LOWER-BUDGET VARIANT)" \
-        if quiet_generation else "DIAGNOSTIC CAMPAIGN"
+    if candidate:
+        title = "DIAGNOSTIC CAMPAIGN (CANDIDATE PROFILE)"
+    else:
+        title = "DIAGNOSTIC CAMPAIGN (LOWER-BUDGET VARIANT)" \
+            if quiet_generation else "DIAGNOSTIC CAMPAIGN"
+    profile = ((f"    profile     CANDIDATE: {', '.join(candidate)}\n"
+                "                opt-in (O05-13): each step adds a "
+                "relationship to a\n"
+                "                new Zone or declines by name -- see "
+                "candidate/<zone>.json\n"
+                "                in the save folder. Not the ordinary game.\n"
+                "    staged      nothing: no Echo, item, key or function is "
+                "seeded\n")
+               if candidate else "")
     mode = ("    generation  LOWER-BUDGET VARIANT (opt-in preview)\n"
             "                two drill families not offered, their share "
             "not\n"
@@ -273,7 +371,7 @@ def describe(slot: str, path: Path, resuming: bool,
         f"({meta['tree']} tree)\n"
         "    campaign    MOCK, default scale (450 locations)\n"
         "    epsilon     fallback (deterministic)\n"
-        + mode +
+        + mode + profile +
         f"    slot        {slot}\n"
         f"    save folder {path}\n"
         f"    state       {state}\n")
@@ -303,6 +401,14 @@ def build_parser() -> argparse.ArgumentParser:
              "which mode made it and this refuses to mix them, so an "
              "ordinary campaign cannot be continued here.")
     parser.add_argument(
+        "--candidate", nargs="?", const="all", default=None,
+        metavar="STEPS",
+        help="run the Overnight 05 CANDIDATE PROFILE in its own slot, "
+             f"{CANDIDATE_DEFAULT_SLOT!r} by default: every new Zone runs "
+             "the named steps (all of them when none are named: "
+             "zone_state, latched_route, transport) after its graph is "
+             "proved. A slot remembers its profile and refuses another.")
+    parser.add_argument(
         "--list", action="store_true",
         help="list the diagnostic slots on disk and exit")
     parser.add_argument(
@@ -324,16 +430,44 @@ def resolve(args, root: Path | None = None) -> tuple[str, Path, bool]:
     not the name, because a name is advice and a marker is a fact.
     """
     want_quiet = getattr(args, "quiet", False)
+    steps = candidate_steps(args)
+    if want_quiet and steps:
+        raise ValueError(
+            "--quiet and --candidate are two different campaigns; choose "
+            "one. Nothing has been read, written or started.")
+    mode = "candidate" if steps else ("quiet" if want_quiet else "normal")
+    suffix = {"quiet": "-quiet", "candidate": "-candidate"}.get(mode, "")
+    default = {"quiet": QUIET_DEFAULT_SLOT,
+               "candidate": CANDIDATE_DEFAULT_SLOT}.get(mode, DEFAULT_SLOT)
     if args.new:
-        slot = fresh_slot_name(root)
-        if want_quiet:
-            slot = f"{slot}-quiet"
+        slot = f"{fresh_slot_name(root)}{suffix}"
     else:
-        slot = args.slot or (QUIET_DEFAULT_SLOT if want_quiet
-                             else DEFAULT_SLOT)
+        slot = args.slot or default
     path = slot_dir(slot, root)
-    refuse_mode_mismatch(path, want_quiet)
+    refuse_mode_mismatch(path, mode)
+    if steps:
+        refuse_profile_mismatch(path, steps)
     return slot, path, slot_is_occupied(path)
+
+
+def candidate_steps(args) -> tuple[str, ...]:
+    """The profile `--candidate` asked for, in the profile's own order.
+
+    `()` when the switch is absent. The names are checked by the same
+    parser the bridge uses, so an unknown step is refused here, before a
+    folder exists, rather than by the bridge after one does.
+    """
+    spec = getattr(args, "candidate", None)
+    if spec is None:
+        return ()
+    from . import candidate as CP
+    steps = CP.parse(spec)
+    if not steps:
+        raise ValueError(
+            f"--candidate={spec} names no step; the profile knows "
+            f"{', '.join(CP.STEPS + CP.OPTIONS)} (or give --candidate "
+            "alone for all).")
+    return steps
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -366,7 +500,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n  {exc}\n")
         return 2
 
-    print(describe(slot, path, resuming, args.quiet))
+    steps = candidate_steps(args)
+    print(describe(slot, path, resuming, args.quiet, steps))
 
     from .schemas import constants as C
     port = args.port or C.BRIDGE_PORT
@@ -389,6 +524,11 @@ def main(argv: list[str] | None = None) -> int:
     argv_out = bridge_argv(path, extra)
     if args.quiet:
         argv_out.append("--quiet-generation")
+    # AND THIS ONE, for the same reason: `--candidate` is reserved, so a
+    # profile only reaches the bridge through the switch that chose the
+    # slot and checked its marker.
+    if steps:
+        argv_out.append(f"--candidate={','.join(steps)}")
     if args.dry_run:
         print("  Would run:\n    " + " ".join(argv_out[1:]) + "\n")
         return 0
@@ -399,6 +539,8 @@ def main(argv: list[str] | None = None) -> int:
     path.mkdir(parents=True, exist_ok=True)
     if args.quiet:
         mark_quiet(path)
+    if steps:
+        mark_candidate(path, steps)
 
     from .__main__ import main as bridge_main
     sys.argv = argv_out

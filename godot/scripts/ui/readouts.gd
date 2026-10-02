@@ -201,8 +201,7 @@ func _draw_enemy_health(camera: Camera3D) -> void:
 		# a wallhack, and this readout is information, not an advantage.
 		if enemy.hp >= enemy.max_hp or enemy.max_hp <= 0.0:
 			continue
-		var projected := _project(camera,
-				enemy.global_position + Vector3.UP * 2.1)
+		var projected := _project(camera, enemy.overhead())
 		if not projected["ok"]:
 			continue
 		var at: Vector2 = projected["at"]

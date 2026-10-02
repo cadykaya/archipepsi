@@ -1,0 +1,88 @@
+EI-1 [equip_requests.gd] an equip is resolved by ANY snapshot (optimistic)
+    case _pending_then_accepted: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: an unrelated snapshot answers nothing
+EI-2 [equip_requests.gd] a refusal resolves the first request whatever it names
+    case _refusals_and_a_lost_link: CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a refusal naming another request resolves nothing
+      FAIL: the exact key is REFUSED, with the bridge's reason
+EI-3 [equip_requests.gd] an error with no `about` counts as a refusal
+    case _refusals_and_a_lost_link: CAUGHT -- 4 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a refusal naming another request resolves nothing
+      FAIL: an error with no `about` resolves nothing
+      FAIL: it is shown as the bridge's, unattributed: ''
+      FAIL: the exact key is REFUSED, with the bridge's reason
+EI-4 [equipment_face.gd] the key paints the pending pick as held (optimistic)
+    case _pending_then_accepted: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the key still shows what the bridge confirmed: 'Arc Bolt'
+EI-5 [equipment_query.gd] an upgrade becomes an item of its own (a tile per history link)
+    case _one_item_one_tile: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: one tile per inventory item, 11 of 9: ["act_bolt", "act_cinder", "act_dash", "act_flask", "act_lash", "act_lash", "act_lens", "res_magic", "res_magic", "trait_grip", "trait_ward"]
+EI-6 [equipment_query.gd] a key filter keeps the always-on half
+    case _the_split_and_the_filter: CAUGHT -- 4 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: MOBILITY: ["act_dash", "res_magic", "trait_grip", "trait_ward"]
+      FAIL: and that is the query's answer, not only the painting's
+      FAIL: counted as 2 of 6, the always-on half hidden: ["ON A KEY (2 of 6)", "ALWAYS ON (3)"]
+      FAIL: the RMB key shows what goes on it: ["act_bolt", "act_lash", "res_magic", "trait_grip", "trait_ward"]
+EI-7 [equipment_query.gd] owning no consumable reads as owning one off the key
+    case _the_consumable_key: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: none owned says so: ["Q", "CONSUMABLE", "—", "Nothing on Q. You own 0 consumables: pick one to carry."]
+EI-8 [equipment_face.gd] the consumable key ignores the link
+    case _the_consumable_key: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: disconnected says so, count kept: ["Q", "CONSUMABLE", "Cinder Charge     2 / 3", "✕"]
+EI-9 [equipment_face.gd] the consumable key ignores a use awaiting the bridge
+    case _the_consumable_key: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a use awaiting the bridge says so, beside the count the HUD shows: 'Cinder Charge     1 / 3' ["Q", "CONSUMABLE", "Cinder Charge     1 / 3", "✕"]
+EI-10 [equipment_seen.gd] a campaign met for the first time is all NEW
+    case _a_new_item_is_marked: CAUGHT -- 5 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: Glow Seed arrives marked NEW, and only it: ["act_glow", "act_cinder", "act_lens", "act_bolt", "act_dash", "act_lash", "trait_ward", "res_magic", "trait_grip"]
+      FAIL: a campaign met for the first time marks nothing new: ["act_cinder", "act_lens", "act_bolt", "act_dash", "act_lash", "trait_ward", "res_magic", "trait_grip"]
+      FAIL: inspecting it is noticing it: the marker goes
+      FAIL: met for the first time already holding it, it is not new
+      FAIL: the OWNED heading counts it
+EI-11 [equipment_seen.gd] inspecting an item does not clear NEW
+    case _a_new_item_is_marked: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: inspecting it is noticing it: the marker goes
+EI-12 [equipment_face.gd] a repaint takes focus from the search box
+    case _the_search_box_keeps_its_place: CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a snapshot mid-search keeps focus, caret 2 and text 'lash'
+      FAIL: the box has focus to begin with
+EI-13 [menu_shell.gd] the shell forgets a text field has the keys
+    case _typing_is_not_playing: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the letters go into the box ('') and the box does not turn
+EI-14 [project.godot] the pad's A is not ui_accept (the default map)
+    case _keyboard_and_controller: CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: A chooses: act_bolt
+      FAIL: A on EQUIP sends it: []
+EI-15 [equipment_face.gd] the equip controls scroll with the detail (the first layout)
+    case _the_mouse: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a click on REPLACE sends it: []
+EI-16 [equipment_query.gd] a spent spare is offered
+    case _an_empty_spare_is_not_offered: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a spent spare is not offered, and says a Zone refills it
+EI-17 [equipment_face.gd] a second press is offered while the first waits
+    case _pending_then_accepted: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a second press is not offered while it waits
+EI-18 [equipment_query.gd] the comparison runs this → now
+    case _pending_then_accepted: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the comparison is against what is on the key, now → this
+EI-19 [equipment_query.gd] history drops the upgrades
+    case _history_and_reads: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the whole chain, in order, once: ["Mk I  Magic Meter ← Magic Upgrade  (Ocarina of Time)"]
+EI-20 [equipment_face.gd] arriving at the wall, nothing takes focus
+    case _keyboard_and_controller: CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: an arrow key moves focus to another control on the wall: nothing
+      FAIL: arriving, the selected tile holds focus: nothing
+EI-21 [equipment_face.gd] a link lost mid-request stays pending
+    case _refusals_and_a_lost_link: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a link lost mid-request is LOST, not pending forever
+EI-23 [equipment_query.gd] one-sided fields are listed as differences again
+    case _pending_then_accepted: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and a field only one kind of attack has is not listed as a difference
+EI-24 [equipment_face.gd] units may wrap away from their numbers again
+    case _the_detail_answers: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a number keeps its unit on its line (a no-break space)
+EI-22 [equipment_snapshot.json] the fixture hand-edited (Cinder Charge 2 -> 3 left in base)
+    test_equipment_fixture.py: CAUGHT; restored byte for byte: True
+      FAILED tests/test_equipment_fixture.py::test_the_committed_fixture_matches_its_generator
+
+24 of 24 sabotages caught

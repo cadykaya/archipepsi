@@ -1,0 +1,74 @@
+python3 -m pytest -q
+........................................................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+....F................................................................... [ 25%]
+........................................................................ [ 29%]
+........................................................................ [ 32%]
+........................................................................ [ 35%]
+........................................................................ [ 38%]
+........................................................................ [ 42%]
+........................................................................ [ 45%]
+........................................................................ [ 48%]
+........................................................................ [ 51%]
+........................................................................ [ 55%]
+........................................................................ [ 58%]
+................................................................
+  fold: 0.198 ms for a full 26-echo campaign
+........ [ 61%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 71%]
+........................................................................ [ 74%]
+........................................................................ [ 77%]
+........................................................................ [ 81%]
+........................................................................ [ 84%]
+........................................................................ [ 87%]
+........................................................................ [ 90%]
+........................................................................ [ 94%]
+........................................................................ [ 97%]
+..................................... [ 98%]
+.............. [ 99%]
+..........                                 [100%]
+=================================== FAILURES ===================================
+_____________ test_ci_runs_every_godot_suite_the_makefile_defines ______________
+
+    def test_ci_runs_every_godot_suite_the_makefile_defines():
+        missing = sorted(_makefile_suites() - _suites_ci_runs())
+>       assert not missing, (
+            "these Godot suites exist but CI never runs them, so they can go red "
+            "for weeks without anyone finding out: "
+            + ", ".join(missing)
+            + ". Add them to the 'Headless Godot suites' step in "
+            "integration.yml, or -- if one genuinely should not run there -- "
+            "say so in NOT_A_SUITE with the reason."
+        )
+E       AssertionError: these Godot suites exist but CI never runs them, so they can go red for weeks without anyone finding out: godot-passing-hosted. Add them to the 'Headless Godot suites' step in integration.yml, or -- if one genuinely should not run there -- say so in NOT_A_SUITE with the reason.
+E       assert not ['godot-passing-hosted']
+
+bridge/tests/test_ci_coverage.py:70: AssertionError
+=============================== warnings summary ===============================
+.archipelago/NetUtils.py:532
+  /home/user/archipepsi/.archipelago/NetUtils.py:532: UserWarning: _speedups not available. Falling back to pure python LocationStore. Install a matching C++ compiler for your platform to compile _speedups.
+    warnings.warn("_speedups not available. Falling back to pure python LocationStore. "
+
+.archipelago/worlds/pokemon_emerald/data.py:12
+  /home/user/archipepsi/.archipelago/worlds/pokemon_emerald/data.py:12: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+    import pkg_resources
+
+apworld/tests/test_apworld.py::TestStructure::test_all_state_can_reach_everything
+apworld/tests/test_apworld.py::TestTierReachability::test_all_state_can_reach_everything
+apworld/tests/test_apworld.py::TestProductionScale::test_all_state_can_reach_everything
+apworld/tests/test_apworld.py::TestAnUnusualSize::test_all_state_can_reach_everything
+  /home/user/archipepsi/.archipelago/BaseClasses.py:450: DeprecationWarning: multiworld.get_all_state no longer caches all_state and this argument will be removed.
+    warnings.warn("multiworld.get_all_state no longer caches all_state and this argument will be removed.",
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED bridge/tests/test_ci_coverage.py::test_ci_runs_every_godot_suite_the_makefile_defines
+1 failed, 2220 passed, 6 warnings, 627 subtests passed in 191.32s (0:03:11)
+make: *** [Makefile:19: test] Error 1

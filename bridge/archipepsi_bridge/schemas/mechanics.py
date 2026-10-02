@@ -234,9 +234,26 @@ def _check_rule_references(component, components, aliases, seq: int) -> None:
 #: rather than as a second taxonomy: "can this campaign grapple" is
 #: "does it own an action whose primitive is in the grapple family", and
 #: that question has exactly one right answer, held here.
+#: THE PRIMITIVES THAT MOVE THE PLAYER'S OWN BODY -- what a traversal
+#: requirement has to be answered with (owner ruling D-02, 2026-09-25:
+#: "Moving an enemy does not prove that the player can perform the
+#: crossing"). Read off what the runtime does, not the catalog's grouping:
+#: `_grapple` bites a `StaticBody3D` and pulls the PLAYER to it and
+#: `grapple_swing` is a held tether on one (`echo_runtime.gd`), while
+#: `grapple_pull_target` hits only enemies and moves THE ENEMY. The ECHOES
+#: catalog files all three under movement (`echo.MOVEMENT_PRIMITIVES`),
+#: which is right for authoring and says nothing about a crossing.
+PLAYER_TRAVERSAL_PRIMITIVES: tuple[str, ...] = (
+    "dash", "air_dash", "double_jump", "wall_kick", "glide", "hover",
+    "blink", "grapple_to_surface", "grapple_swing")
+
+#: The anchor-grapples: what bites a fixed surface and carries the player.
+_ANCHOR_GRAPPLES: tuple[str, ...] = ("grapple_to_surface", "grapple_swing")
+
 AFFORDANCE_REQUIREMENTS: dict[str, dict[str, tuple[str, ...]]] = {
-    "grapple_anchor": {"primitives": (
-        "grapple_to_surface", "grapple_pull_target", "grapple_swing")},
+    # DESS-26: an anchor is used by a grapple that bites it; pulling an
+    # enemy never touches one.
+    "grapple_anchor": {"primitives": _ANCHOR_GRAPPLES},
     "breakable_wall": {"primitives": (
         "slam_ground", "melee_swing", "melee_thrust", "arc_lob",
         "beam_sustained")},
@@ -292,11 +309,28 @@ ACTIVITY_CAPABILITIES: dict[str, dict[str, tuple[str, ...]]] = {
     "cross_long_gap": {"primitives": (
         "dash", "air_dash", "double_jump", "wall_kick", "glide", "hover",
         "blink", "grapple_to_surface", "grapple_swing")},
-    # The same family `grapple_anchor` names, for the same reason.
-    "grapple": {"primitives": (
-        "grapple_to_surface", "grapple_pull_target", "grapple_swing")},
+    # Pull yourself to, or swing from, a fixed anchor -- the same
+    # anchor-grapples `grapple_anchor` names. NOT `grapple_pull_target`
+    # (owner ruling D-02, DESS-26): it shares the family and the name,
+    # and it moves an enemy, which proves nothing about a crossing.
+    "grapple": {"primitives": _ANCHOR_GRAPPLES},
     "blink": {"primitives": ("blink",)},
 }
+
+#: WHAT EACH CAPABILITY CERTIFIES -- the affordance a gate asking for it
+#: actually requires. A traversal capability is answered only by
+#: primitives that move the player (`PLAYER_TRAVERSAL_PRIMITIVES`), which
+#: a test holds for every entry, so a future family member cannot slip in
+#: on a shared name.
+CAPABILITY_AFFORDANCES: dict[str, str] = {
+    "ranged_hit": "hit a target at range",
+    "cross_long_gap": "move the player across more than base movement "
+                      "covers",
+    "grapple": "pull the player to, or swing them from, a fixed anchor",
+    "blink": "teleport the player a short distance",
+}
+TRAVERSAL_CAPABILITIES: tuple[str, ...] = ("cross_long_gap", "grapple",
+                                           "blink")
 
 #: Capabilities the permanent baseline satisfies for every player in every
 #: campaign, forever. Case A of the guarantee model.
@@ -350,6 +384,23 @@ def _primitives_and_stats(components) -> tuple[set[str], set[str]]:
     return primitives, stats
 
 
+def _runs_out(component) -> bool:
+    """A consumable, which is NOT a permanent capability provider.
+
+    `owned_capabilities` is what GENERATION asks, and a Zone composed
+    against it may put a required route behind the capability. A charged
+    Action cannot carry that: the player may stand in front of the gap
+    with zero charges left, and nothing in the contract guarantees a
+    resupply before they need it. Owning three grenades is not owning a
+    way across.
+
+    The exclusion is here rather than in the caller because both
+    `owned_capabilities` and `available_capabilities` have to agree --
+    one of them counting charges would make NOT YET mean two things.
+    """
+    return getattr(component, "charges", None) is not None
+
+
 def owned_capabilities(mechanics) -> tuple[str, ...]:
     """What this campaign can DO, over everything it owns (case B).
 
@@ -361,7 +412,8 @@ def owned_capabilities(mechanics) -> tuple[str, ...]:
     changes slots.
     """
     primitives, stats = _primitives_and_stats(
-        owned.component for owned in mechanics.owned)
+        owned.component for owned in mechanics.owned
+        if not _runs_out(owned.component))
     return tuple(sorted(
         capability for capability in ACTIVITY_CAPABILITIES
         if capability in BASELINE_CAPABILITIES
@@ -387,7 +439,8 @@ def available_capabilities(mechanics, slots) -> tuple[str, ...]:
     equipped.discard(None)
     primitives, stats = _primitives_and_stats(
         owned.component for owned in mechanics.owned
-        if owned.component.component_id in equipped)
+        if owned.component.component_id in equipped
+        and not _runs_out(owned.component))
     return tuple(sorted(
         capability for capability in ACTIVITY_CAPABILITIES
         if capability in BASELINE_CAPABILITIES
@@ -709,12 +762,17 @@ def capability_guarantee(
        can always slot what they own.
     C. ESTABLISHED EARLIER IN THE ZONE -- the caller passes the
        capabilities every route to this point has already been proven to
-       pass through. **Nothing produces that set yet**, and it is
-       deliberately a parameter rather than a lookup so that when a
-       capability-establishment construct exists it plugs in here and
-       every caller inherits it. Passing `()` -- which is what every
-       caller does today -- means "the Zone establishes nothing", which
-       is true.
+       pass through. **`zone.established_in_zone` produces that set**
+       (D-2) and `topology._explore_acquiring` is where it is honoured
+       (P02.1): the capability is not in hand at the Zone door and not
+       in hand on reaching the room, but after the claim -- so the
+       search runs from the entrance without it, and onward from the
+       featured room with it.
+
+       It stays a parameter rather than a lookup, so a caller with a
+       different notion of "already established" can pass its own.
+       Passing `()` still means "the Zone establishes nothing", which is
+       true of every Zone that features no acquisition.
     D. FORGE-CONSTRUCTIBLE -- **not implemented.** It needs Forge access,
        guaranteed ingredients, and a proof that a legal configuration
        satisfying `capability` can be built from them, none of which
@@ -930,7 +988,7 @@ def derive_mechanics(log) -> Mechanics:
                     components[cid], op.field, op.delta, seq
                 )
                 mk[cid] += 1
-                record(cid, "upgrade", f"{op.delta:+g} {op.field}")
+                record(cid, "upgrade", f"{op.delta:+g} {note_words(op.field)}")
 
             elif op.op == "modify":
                 cid = live(op.target, "modify", seq)
@@ -947,6 +1005,19 @@ def derive_mechanics(log) -> Mechanics:
                         f"interpretation_seq {seq}: link source and target "
                         f"resolve to the same component '{source}'"
                     )
+                # D16 G1: A PIECE OF GEAR IS ITS ATOMS AND NOTHING ELSE.
+                # Powering, filling, gating or scaling one would be the
+                # compound effect ruling 2 withholds until a clause
+                # catalogue exists. (Upgrade, modify and merge already
+                # refuse any kind they do not list.)
+                for end, cid in (("source", source), ("target", target)):
+                    if components[cid].kind == "gear":
+                        raise FoldError(
+                            f"interpretation_seq {seq}: link {end} '{cid}' "
+                            "is Gear, which links to nothing: one bounded "
+                            "stat effect per piece until a clause "
+                            "catalogue exists (owner ruling 2)"
+                        )
                 links.append(LinkEdge(link=op.link, source=source,
                                       target=target, strength=op.strength))
                 record(target, "link", f"{op.link} from {source}")
@@ -1062,6 +1133,29 @@ def _apply_upgrade(component, field: str, delta: float, seq: int):
         ) from exc
 
 
+#: A provenance note is read by the player -- the equipment wall's HISTORY
+#: prints it after the Mk -- so a field or a type is said in words, never
+#: as its identifier: "+40 maximum", not "+40 max_value", whose underscore
+#: the wall's font does not have. Only the names a plain reading gets wrong
+#: are listed; every other reads with its underscores as spaces.
+#: (Prod's N-21, made under the owner's MENU-INT instruction to fix raw
+#: field names at their source.)
+_NOTE_WORDS = {
+    "max_value": "maximum",
+    "regen_per_second": "refill a second",
+    "regen_delay": "refill delay",
+    "pip_count": "pips",
+    "apply_status_on_hit": "a status on hit",
+    "knockback_target": "knockback",
+    "recoil_self": "recoil",
+}
+
+
+def note_words(name: str) -> str:
+    """A field or type name as a provenance note says it."""
+    return _NOTE_WORDS.get(name, name.replace("_", " "))
+
+
 def _apply_modify(component, op, seq: int):
     """Add one capability to an existing component."""
     data = component.model_dump()
@@ -1074,7 +1168,7 @@ def _apply_modify(component, op, seq: int):
         data["modifiers"] = list(data["modifiers"]) + [
             op.add_modifier.model_dump()
         ]
-        note = op.add_modifier.type
+        note = note_words(op.add_modifier.type)
     elif op.add_effect is not None:
         if component.kind != "rule":
             raise FoldError(
@@ -1082,7 +1176,7 @@ def _apply_modify(component, op, seq: int):
                 f"rule, not a '{component.kind}'"
             )
         data["effects"] = list(data["effects"]) + [op.add_effect.model_dump()]
-        note = op.add_effect.type
+        note = note_words(op.add_effect.type)
     else:
         if component.kind != "rule":
             raise FoldError(
@@ -1092,7 +1186,7 @@ def _apply_modify(component, op, seq: int):
         data["conditions"] = list(data["conditions"]) + [
             op.add_condition.model_dump()
         ]
-        note = op.add_condition.type
+        note = note_words(op.add_condition.type)
     try:
         return type(component).model_validate(data), note
     except Exception as exc:

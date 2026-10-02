@@ -1,0 +1,383 @@
+{
+  "_ink": "#ffffff",
+  "_tints": {
+    "chrome ink": {
+      "hex": "#e8eef6",
+      "is": "the text face's ink (fontkit.TEXT_INK)"
+    },
+    "dead": {
+      "family": "dead",
+      "hex": "#4a4f57",
+      "is": "universal.dead.ramp[1] -- recessive on a well, the keycap lip's step",
+      "step": 1
+    },
+    "signal": {
+      "family": "signal",
+      "hex": "#39d7c8",
+      "is": "universal.signal.ramp[2] -- the step the selected panel's outline uses",
+      "step": 2
+    }
+  },
+  "arrow_down": {
+    "file": "icon_arrow_down.png",
+    "means": "scroll down",
+    "size": [
+      12,
+      12
+    ],
+    "text": "DOWN",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "arrow_left": {
+    "file": "icon_arrow_left.png",
+    "means": "page back",
+    "size": [
+      12,
+      12
+    ],
+    "text": "LEFT",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "arrow_right": {
+    "file": "icon_arrow_right.png",
+    "means": "page forward",
+    "size": [
+      12,
+      12
+    ],
+    "text": "RIGHT",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "arrow_up": {
+    "file": "icon_arrow_up.png",
+    "means": "scroll up",
+    "size": [
+      12,
+      12
+    ],
+    "text": "UP",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "blocked": {
+    "file": "icon_blocked.png",
+    "means": "the same way out, closed",
+    "size": [
+      12,
+      12
+    ],
+    "text": "SHUT",
+    "tint_by_state": {
+      "blocked": "dead"
+    }
+  },
+  "circuit": {
+    "file": "icon_circuit.png",
+    "means": "a powered junction in the conduit network",
+    "size": [
+      12,
+      12
+    ],
+    "text": "CIRCUIT",
+    "tint_by_state": {
+      "powered": "chrome ink",
+      "unpowered": "dead"
+    }
+  },
+  "control": {
+    "file": "icon_control.png",
+    "means": "a thing the player can operate",
+    "size": [
+      12,
+      12
+    ],
+    "text": "CONTROL",
+    "tint_by_state": {
+      "not operable": "dead",
+      "operable": "signal"
+    }
+  },
+  "exit": {
+    "file": "icon_exit.png",
+    "means": "a way out of the room",
+    "size": [
+      12,
+      12
+    ],
+    "text": "WAY OUT",
+    "tint_by_state": {
+      "open": "chrome ink"
+    }
+  },
+  "mouse_left": {
+    "file": "icon_mouse_left.png",
+    "means": "the left mouse button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "LMB",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "mouse_middle": {
+    "file": "icon_mouse_middle.png",
+    "means": "the middle mouse button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "MMB",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "mouse_right": {
+    "file": "icon_mouse_right.png",
+    "means": "the right mouse button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "RMB",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "mouse_wheel": {
+    "file": "icon_mouse_wheel.png",
+    "means": "the mouse wheel, turned",
+    "size": [
+      12,
+      12
+    ],
+    "text": "WHEEL",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_back": {
+    "file": "icon_pad_back.png",
+    "means": "the pad's back / view button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "BACK",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_dpad": {
+    "file": "icon_pad_dpad.png",
+    "means": "the pad's direction pad",
+    "size": [
+      12,
+      12
+    ],
+    "text": "D-PAD",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_dpad_down": {
+    "file": "icon_pad_dpad_down.png",
+    "means": "the direction pad, down",
+    "size": [
+      12,
+      12
+    ],
+    "text": "D-PAD DOWN",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_dpad_left": {
+    "file": "icon_pad_dpad_left.png",
+    "means": "the direction pad, left",
+    "size": [
+      12,
+      12
+    ],
+    "text": "D-PAD LEFT",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_dpad_right": {
+    "file": "icon_pad_dpad_right.png",
+    "means": "the direction pad, right",
+    "size": [
+      12,
+      12
+    ],
+    "text": "D-PAD RIGHT",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_dpad_up": {
+    "file": "icon_pad_dpad_up.png",
+    "means": "the direction pad, up",
+    "size": [
+      12,
+      12
+    ],
+    "text": "D-PAD UP",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_face_east": {
+    "file": "icon_pad_face_east.png",
+    "means": "the right face button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "B",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_face_north": {
+    "file": "icon_pad_face_north.png",
+    "means": "the far face button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "Y",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_face_south": {
+    "file": "icon_pad_face_south.png",
+    "means": "the face button nearest you",
+    "size": [
+      12,
+      12
+    ],
+    "text": "A",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_face_west": {
+    "file": "icon_pad_face_west.png",
+    "means": "the left face button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "X",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_lb": {
+    "file": "icon_pad_lb.png",
+    "means": "the left shoulder button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "LB",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_lstick": {
+    "file": "icon_pad_lstick.png",
+    "means": "the left stick",
+    "size": [
+      12,
+      12
+    ],
+    "text": "L-STICK",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_lt": {
+    "file": "icon_pad_lt.png",
+    "means": "the left trigger",
+    "size": [
+      12,
+      12
+    ],
+    "text": "LT",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_rb": {
+    "file": "icon_pad_rb.png",
+    "means": "the right shoulder button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "RB",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_rstick": {
+    "file": "icon_pad_rstick.png",
+    "means": "the right stick",
+    "size": [
+      12,
+      12
+    ],
+    "text": "R-STICK",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_rt": {
+    "file": "icon_pad_rt.png",
+    "means": "the right trigger",
+    "size": [
+      12,
+      12
+    ],
+    "text": "RT",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "pad_start": {
+    "file": "icon_pad_start.png",
+    "means": "the pad's start / menu button",
+    "size": [
+      12,
+      12
+    ],
+    "text": "START",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "you": {
+    "file": "icon_you.png",
+    "means": "where the player is, on a map",
+    "size": [
+      12,
+      12
+    ],
+    "text": "YOU",
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  }
+}

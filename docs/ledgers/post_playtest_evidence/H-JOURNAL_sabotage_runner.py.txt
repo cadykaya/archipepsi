@@ -1,0 +1,193 @@
+"""H-JOURNAL sabotages: break one rule, confirm a named failure, restore.
+
+Same protocol as H-INVENTORY's and H-MINIMAP's: each row edits one file
+in the wt-cp2 work tree, runs the journal suite, records its FAIL lines,
+and restores the file byte for byte (sha256 checked).
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+TREE = Path(__file__).resolve().parent / "wt-cp2"
+GODOT = [str(TREE / "godot-bin" / "godot"), "--headless", "--path",
+         str(TREE / "godot"), "--", "--journal-face"]
+QUERY = "godot/scripts/ui/journal_query.gd"
+FACE = "godot/scripts/ui/journal_face.gd"
+SETTINGS = "godot/scripts/ui/settings_face.gd"
+PAUSE = "godot/scripts/ui/pause_menu.gd"
+FIXTURE = "godot/tests/fixtures/journal_snapshot.json"
+
+ROWS = [
+    ("JR-1", "the Zone's Checks counted as all confirmed", QUERY,
+     """			out.append("Checks here: %d of %d confirmed" % [
+					confirmed_of(snapshot, here), here.size()])""",
+     """			out.append("Checks here: %d of %d confirmed" % [
+					here.size(), here.size()])""",
+     "its name and its Checks, 2 of 15 confirmed"),
+    ("JR-2", "the Hub's objective in the journal's own words", QUERY,
+     """		for key: String in ["headline", "detail"]:
+			var said := str(hub.get(key, ""))
+			if said != "":
+				out.append(said)""",
+     """		out.append("Find every Check.")""",
+     "the Hub's own headline and detail, word for word"),
+    ("JR-3", "the Hub's 'step back through the portal' shown in a Zone",
+     QUERY,
+     """	if zone.is_empty():
+		for key: String in ["headline", "detail"]:""",
+     """	if true:
+		for key: String in ["headline", "detail"]:""",
+     "and not the Hub's 'step back through the portal' while in it"),
+    ("JR-4", "a way to an unfound room named by its save id", QUERY,
+     """	return "%s to %s" % [from, to if to != "" else UNWALKED]""",
+     """	return "%s to %s" % [from, to if to != "" else b]""",
+     "no unfound room named, no save id"),
+    ("JR-5", "a setting back at its start is listed as done", QUERY,
+     """		if initial.get(variable, "") == value:
+			continue""",
+     """		if false:
+			continue""",
+     "a setting at its start again is not listed"),
+    ("JR-6", "notes oldest first", QUERY,
+     """		return int(a.get("interpretation_seq", 0)) \\
+				> int(b.get("interpretation_seq", 0)))""",
+     """		return int(a.get("interpretation_seq", 0)) \\
+				< int(b.get("interpretation_seq", 0)))""",
+     "newest first"),
+    ("JR-7", "a shut gate without the bridge's reason", QUERY,
+     """				reason if reason != "" else (""",
+     """				"shut" if reason != "" else (""",
+     "each with the bridge's reason"),
+    ("JR-8", "every room listed as a place, found or not", QUERY,
+     """		if bool(row.get("discovered", false)) and str(row.get("name", "")) != "":
+			out.append(str(row["name"]))""",
+     """		out.append(str(row.get("name", "")))""",
+     "the places found, by the bridge's names"),
+    ("JR-9", "the campaign's Checks counted from this Zone alone", QUERY,
+     """	out.append("Checks confirmed: %d of %d" % [checked.size(),
+			checked.size() + missing.size()])""",
+     """	out.append("Checks confirmed: %d of %d" % [2, 15])""",
+     "the campaign, from the snapshot"),
+    ("JR-10", "the journal does not follow the snapshot", FACE,
+     """func _on_snapshot(_snapshot: Dictionary) -> void:
+	fill()""",
+     """func _on_snapshot(_snapshot: Dictionary) -> void:
+	pass""",
+     "a snapshot refills it"),
+    ("JR-11", "Down does not scroll the journal", FACE,
+     """			KEY_DOWN:
+				step = SCROLL_STEP""",
+     """			KEY_DOWN:
+				step = 0.0""",
+     "Down scrolls the journal"),
+    ("JR-12", "an option set but not saved", SETTINGS,
+     """	settings.set_value(key, amount)
+	settings.save_to_disk()""",
+     """	settings.set_value(key, amount)""",
+     "field of view 100: set, on the player's camera now, and saved"),
+    ("JR-13", "field of view only for the next camera", SETTINGS,
+     """			if camera != null and camera.get_parent() is Player:
+				camera.fov = settings.value(key)""",
+     """			if camera != null and camera.get_parent() is Player:
+				pass""",
+     "field of view 100: set, on the player's camera now, and saved"),
+    ("JR-14", "the volume slider changes nothing you hear", SETTINGS,
+     """		"master_volume":
+			apply_volume()
+""",
+     """		"master_volume":
+			pass
+""",
+     "master volume 50%: the Master bus"),
+    ("JR-15", "captions offered, though nothing reads them", SETTINGS,
+     """const TOGGLES := [["invert_look_y", "Invert look up and down"]]""",
+     """const TOGGLES := [["invert_look_y", "Invert look up and down"],
+		["captions", "Captions"]]""",
+     "captions, which nothing reads, is not offered"),
+    ("JR-16", "a prettier label on the abandon action", PAUSE,
+     """			_add_button("ABANDON ZONE…", func() -> void:""",
+     """			_add_button("LEAVE THIS ZONE", func() -> void:""",
+     "the pause menu's actions, one button each and as they were"),
+]
+
+BRIDGE_ROWS = [
+    ("JR-17", "the fixture hand-edited (the blue door not opened)", FIXTURE),
+]
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main() -> int:
+    only = set(sys.argv[1:])
+    rows = [r for r in ROWS if not only or r[0] in only]
+    lines, caught = [], 0
+    for rid, what, rel, old, new, expect in rows:
+        path = TREE / rel
+        original = path.read_bytes()
+        before = sha(path)
+        text = original.decode("utf-8")
+        if text.count(old) != 1:
+            lines.append(f"{rid} SETUP ERROR: anchor found "
+                         f"{text.count(old)} times in {rel}")
+            continue
+        path.write_bytes(text.replace(old, new).encode("utf-8"))
+        try:
+            out = subprocess.run(GODOT, capture_output=True, text=True,
+                                 timeout=900, cwd=TREE)
+            log = out.stdout + out.stderr
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        fails = sorted({l[6:] for l in log.splitlines()
+                        if l.startswith("FAIL: ")})
+        errors = sum(1 for l in log.splitlines() if "SCRIPT ERROR" in l)
+        hit = any(expect in f for f in fails)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} -- "
+                     f"{len(fails)} failing check(s), {errors} script "
+                     f"error(s); restored byte for byte: {restored}")
+        for f in fails:
+            lines.append(f"      FAIL: {f[:300]}")
+    for rid, what, rel in [r for r in BRIDGE_ROWS
+                           if not only or r[0] in only]:
+        path = TREE / rel
+        original = path.read_bytes()
+        before = sha(path)
+        data = json.loads(original)
+        data["progressed"]["active_zone"]["progress"]["opened_locks"] = []
+        path.write_text(json.dumps(data, indent=1, sort_keys=True) + "\n",
+                        encoding="utf-8")
+        try:
+            out = subprocess.run(
+                [sys.executable, "-m", "pytest", "-q",
+                 "tests/test_journal_fixture.py"],
+                cwd=TREE / "bridge", capture_output=True, text=True,
+                timeout=600)
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        hit = out.returncode != 0
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    test_journal_fixture.py: "
+                     f"{'CAUGHT' if hit else 'NOT CAUGHT'}; restored byte "
+                     f"for byte: {restored}")
+        for l in out.stdout.splitlines():
+            if l.startswith("FAILED"):
+                lines.append(f"      {l}")
+    total = len(rows) + len([r for r in BRIDGE_ROWS
+                             if not only or r[0] in only])
+    lines.append(f"\n{caught} of {total} sabotages caught")
+    print("\n".join(lines))
+    return 0 if caught == total else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

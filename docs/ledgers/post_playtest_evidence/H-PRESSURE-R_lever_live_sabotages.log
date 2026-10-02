@@ -1,0 +1,12 @@
+== SL-1 a restored bolt is not locked (only a fresh throw locks it): rc=2 GODOT LATCHED LIVE SEED OK (2 checks, 0 notes) grep -qE "GODOT LATCHED LIVE (LEVER )?PLAY OK" /tmp/archipepsi-latched-play.log || exit 1 GODOT LATCHED LIVE LEVER PLAY OK (20 checks, 0 notes) grep -qE "GODOT LATCHED LIVE (LEVER )?RESTORE OK" /tmp/archipepsi-latched-restore.log \ GODOT LATCHED LIVE LEVER RESTORE: 2 failures in 14 checks 
+FAIL: the bolt is restored THROWN, never pulled in this process: '[E] THROW BOLT -- OPENS THE SHUTTER'
+FAIL: WITHOUT THE LEVER: never pulled, still thrown (0 pull(s))
+  restored godot/scripts/gameplay/signal_graph.gd
+== SL-2 the play phase told legacy on a lever seed: rc=2 GODOT LATCHED LIVE SEED OK (2 checks, 0 notes) grep -qE "GODOT LATCHED LIVE (LEVER )?PLAY OK" /tmp/archipepsi-latched-play.log || exit 1 GODOT LATCHED LIVE PLAY: 1 failures in 2 checks 
+FAIL: the legacy form: the Zone declares a PULSE_BUTTON and it is built as a lever
+  restored Makefile
+ M .gitignore
+ M Makefile
+ M godot/tests/latched_route_live_driver.gd
+?? godot-bin
+SAB-DONE

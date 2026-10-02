@@ -1,0 +1,17 @@
+== SP-1 a latched lever springs back: rc=2 GODOT LATCHED ROUTE TESTS: 2 failures in 73 checks
+    FAIL: the lever STAYS THROWN and says so: '[E] THROW BOLT -- OPENS THE SHUTTER' (arm 0.00)
+    FAIL: and pulling it again does nothing: 2 pull(s), 1 report(s)
+== SP-2 the builder cannot place a lever: rc=2 GODOT SIGNAL GRAPH TESTS: 1 failures in 61 checks
+    FAIL: the builder can place a lever (D-07's permanent control) whether or not the bridge admits one yet
+== SP-3 levers placed by the old blind rule: rc=0 GODOT LATCHED ROUTE TESTS OK (73 checks, 4 notes)
+== SP-4 legacy plates placed by the measured rule (M-1): rc=2 GODOT LATCHED ROUTE TESTS: 2 failures in 39 checks
+    FAIL: the declared graph built, nothing refused: ["room \'c002\': no clear floor for sensor \'step_plate\' on this side of the doorway it opens -- every candidate is inside a wall margin, within 2.6 m of something the room already
+    FAIL: the control's graph built: ["room \'c002\': no clear floor for sensor \'step_plate\' on this side of the doorway it opens -- every candidate is inside a wall margin, within 2.6 m of something the room already placed, or crow
+all restored
+== SP-3' the lever takes the old plate spot (blind rule, plate footprint): rc=2 GODOT LATCHED ROUTE TESTS: 8 failures in 73 checks
+        (the lever at (-16.8, 0.2625, 18.6) is not under the ray from (-17.30095, 0.000942, 20.16812), 1.67 m: target <null>)
+    FAIL: THROW: the player's own interact pulls the lever (0 pull(s))
+    FAIL: the latch is set
+    FAIL: and announced once as a new decision (0)
+    FAIL: the real `latch_fired` went out: {  }
+restored

@@ -8,8 +8,9 @@
 > matched no-compensation comparison **remains incomplete**; §4 records
 > exactly what would have to change to complete it.
 >
-> **Revision 2 (2026-09-14)** corrects the acceptance column, which the
-> first revision reported wrongly. See §2a.
+> **Revision 3 (2026-09-14)** adds the bounded default-scale live check
+> (§2b) and separates the two acceptance stages (§2a). Revision 2
+> corrected the acceptance column, which revision 1 reported wrongly.
 
 **Dess, bridge lane — 2026-09-13.** Follow-up 02 item D, on the current
 Production tree. Integration and screenshots are Prod's.
@@ -132,17 +133,104 @@ rather than assuming.
 
 ---
 
+## 2b. Two stages, and the bounded default-scale live check
+
+**The two figures on record answer different questions and do not
+contradict each other.**
+
+| stage | question | figure |
+|---|---|---|
+| bridge validation (`validate_zone`) | is this **proposal** structurally sound against the request that asked for it? | **12 of 12** proposals valid (this tool, 12 cases) |
+| physical layout acceptance (engine router) | can that proposal actually be **placed** in a real space? | **3 of 5** variant manifests refused (engine census) |
+
+A Zone can pass the first and fail the second; that is the router doing
+its job, not a disagreement. What matters to a player is neither number
+alone but **what bounded recovery does next** — so it was driven.
+
+**The band is genuinely narrowed at default scale, not clamped.**
+`CampaignConfig.zone_budget_for` floors at `ZONE_BUDGET_MIN = 200`.
+At **prototype** scale the budget *is* 200, so 72% clamps straight back
+to 100% and the variant there is the filter-only arm wearing the
+preview's name — which is why a green prototype harness run says nothing
+about the band. At **default** scale 720 is well clear of the floor.
+Both facts are now controls.
+
+**The sequence, run through the real campaign/acceptance/recovery
+machinery at DEFAULT scale.** One known router-refusal case per mode;
+no seed tuned, no budget altered, no validation relaxed.
+
+```
+BASELINE  (quiet_generation=False)
+  band asked for            1000  (baseline 1000)
+  realised content value    911
+  rooms / plugs             23 / 8
+  stage 1 bridge validation ACCEPTED, refusals=0
+  stage 2 router refusal    c011 NO_CANDIDATE, 16 candidates searched
+                            -> refusals=1, exhausted=False
+  recovery                  ACCEPTED after 1 refusal, manifest c88f4cc8a2fd
+  entry                     active=zone_001
+  leave / resume            left -> resumed, manifest SAME
+
+VARIANT   (quiet_generation=True)
+  band asked for            720   (baseline 1000)
+  realised content value    655        <- inside the NARROWED band
+  rooms / plugs             19 / 8
+  stage 1 bridge validation ACCEPTED, refusals=0
+  stage 2 router refusal    c010 NO_CANDIDATE, 16 candidates searched
+                            -> refusals=1, exhausted=False
+  recovery                  ACCEPTED after 1 refusal, manifest e77929c74270
+  entry                     active=zone_001
+  leave / resume            left -> resumed, manifest SAME
+```
+
+**Outcome: initial refusal 1, eventual acceptance and entry, and
+leave/resume with the committed manifest replayed** — in both modes. No
+exhaustion in either. The realised **655** against a 720 band is the
+direct evidence that the reduction reached the composer rather than
+being clamped back.
+
+**One figure to read carefully.** This single default-scale Zone comes
+out **19 rooms against the baseline's 23** — *fewer*, where the
+twelve-case census reports the variant **+17 rooms in aggregate**. They
+are different measurements (one Zone through the campaign's own
+`zone_budget_for`, versus twelve through the tool's request
+construction) and neither is corrected by the other. Both are reported;
+neither is generalised.
+
+---
+
 ## 3. Station consequences, inspected as asked
 
 A solved activity switches on the broken station in its own room
 (`zone_controller._repair_station_for`), so **a room with no activity can
 host no repair**.
 
+**Two different censuses, and the denominators are not
+interchangeable.**
+
+*Bridge census* — every composed proposal, 12 Zones, rooms that hold an
+activity and could therefore host a repair:
+
 | arm | rooms that can host a repair |
 |---|---|
 | baseline | 223 of 248 |
 | filter-only | 224 of 248 |
 | **preview** | **154 of 265** |
+
+*Engine census* (`AGENT_FRONTIER.md`) — **successful builds only**, and
+its denominators are the composed manifests, not rooms:
+
+| arm | manifests composed | stations | broken |
+|---|---|---|---|
+| baseline | **5 of 5** | 49 | 39 |
+| variant | **2 of 5** | 20 | 12 |
+
+The variant's station figures therefore describe **two** builds, not
+five, and not the twelve of the bridge census. A room holding an
+activity is not a station; the engine counts stations and this lane does
+not. No station in either variant starts broken in a room with no
+activity, and entrance and exit are whole in both — that is the engine
+lane's measurement, relayed.
 
 **The preview leaves 69 fewer repairable rooms, and rooms with zero
 activities rise from 25 to 111.** This is a visible prototype change to
@@ -223,9 +311,11 @@ container, passed the third, and passes **5 of 5 in isolation**. It also
 reproduces on the engine head unmodified, checked in a worktree of that
 commit — but that is context, not a reason to dismiss it. The symptom is
 binding `127.0.0.1:38331` while no listener and no bridge process is
-visible, which points at port contention with another test in the same
-run rather than at this work. **Unresolved, and it should be re-run on
-the combined tree during integration.**
+visible, **Port contention is a HYPOTHESIS, not an identified cause** — nothing
+has been traced to a colliding process, and `TEST_PORT` being a fixed
+constant is a property of the test, not a diagnosis. Passing in this
+container does not resolve a failure seen elsewhere. **Open, no waiver,
+and no owner policy decision about test ports is being asked for.**
 
 `check_packet` green. Seven controls, the load-bearing ones
 sabotage-proven.

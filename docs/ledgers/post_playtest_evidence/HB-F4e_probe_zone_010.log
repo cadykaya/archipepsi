@@ -1,0 +1,42 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+PROBE room c001 at (0.0, 0.0, 0.0), 1 chain(s)
+PROBE rig global (2.8, 0.0, 5.5) basis-z (0.0, 0.0, 1.0)
+PROBE crate spawned at (2.8, 0.447278, 2.5) (room-local (2.8, 0.447278, 2.5))
+PROBE at rest after 38 frame(s)
+PROBE crate settled at (2.8, 0.340003, 2.499997) v=(-0.00003, 0.000038, 0.000033) touching ["Zone_zone_010/Chamber_c001/@MeshInstance3D@2251/@StaticBody3D@2253"]
+PROBE plate region [P: (2.3, 0.0, 4.2), S: (1.0, 1.0, 1.0)] (centre (2.8, 0.5, 4.7)); link.plate_position (2.8, 0.0, 4.7)
+PROBE threshold 36.0 kg, crate 60.0 kg
+PROBE gap 2.200 m, dir (-0.0, 0.0, 1.0), push 0.75 s
+PROBE solids in the lane crate->plate: ["Zone_zone_010/Chamber_c001/@MeshInstance3D@2287/@StaticBody3D@2289(StaticBody3D)"]
+PROBE  solid @StaticBody3D@2289: global (3.1, 0.499139, 3.467158) room-local (3.1, 0.499139, 3.467158); parent @MeshInstance3D@2287 (MeshInstance3D) CylinderMesh (1.1, 0.998277, 1.1) aabb [P: (-0.55, -0.499139, -0.55), S: (1.1, 0.998277, 1.1)]; shapes ["CylinderShape3D r 0.55 h 1.00 at (3.1, 0.499139, 3.467158)"]; groups []; metas {  }
+PROBE run 0 f00 pos (2.8, 0.340004, 2.502157) v (-0.000014, 0.000013, 0.129625) in_plate false
+PROBE run 0 f06 pos (2.800081, 0.33968, 2.558584) v (0.000789, 0.000002, 0.850891) in_plate false
+PROBE run 0 f12 pos (2.764816, 0.340002, 2.606232) v (-0.461104, 0.000239, 0.394773) in_plate false
+PROBE run 0 f18 pos (2.716598, 0.340061, 2.647243) v (-0.500936, -0.000055, 0.412325) in_plate false
+PROBE run 0 f24 pos (2.663309, 0.340063, 2.688265) v (-0.551684, 0.000027, 0.39816) in_plate false
+PROBE run 0 f30 pos (2.603394, 0.340074, 2.726803) v (-0.64916, -0.00123, 0.396497) in_plate false
+PROBE run 0 f36 pos (2.535098, 0.340091, 2.772608) v (-0.705103, 0.00014, 0.51232) in_plate false
+PROBE run 0 f42 pos (2.460727, 0.339773, 2.833751) v (-0.785117, -0.019274, 0.683084) in_plate false
+PROBE run 0 f44 pos (2.435237, 0.33961, 2.859437) v (-0.764667, -0.027798, 0.794896) in_plate false
+PROBE run 0 END pos (2.349328, 0.340005, 2.939714) entered false refused [] touched ["Zone_zone_010/Chamber_c001/@MeshInstance3D@2251/@StaticBody3D@2253", "Zone_zone_010/Chamber_c001/@MeshInstance3D@2287/@StaticBody3D@2289"]
+PROBE run 1 f00 pos (2.8, 0.340004, 2.502157) v (-0.000004, 0.00002, 0.129622) in_plate false
+PROBE run 1 f06 pos (2.799944, 0.339792, 2.558421) v (-0.003422, 0.002949, 0.848826) in_plate false
+PROBE run 1 f12 pos (2.769028, 0.340013, 2.60463) v (-0.426815, 0.000146, 0.361694) in_plate false
+PROBE run 1 f18 pos (2.723881, 0.339983, 2.64274) v (-0.480689, -0.000929, 0.391298) in_plate false
+PROBE run 1 f24 pos (2.671581, 0.340043, 2.682461) v (-0.546182, 0.000058, 0.391552) in_plate false
+PROBE run 1 f30 pos (2.614071, 0.340073, 2.719161) v (-0.618223, 0.000305, 0.370581) in_plate false
+PROBE run 1 f36 pos (2.550635, 0.340097, 2.759855) v (-0.655788, -0.000092, 0.450719) in_plate false
+PROBE run 1 f42 pos (2.481682, 0.340093, 2.813742) v (-0.715516, -0.000123, 0.611035) in_plate false
+PROBE run 1 f44 pos (2.457337, 0.34009, 2.835896) v (-0.735674, -0.000107, 0.683045) in_plate false
+PROBE run 1 END pos (2.372741, 0.340364, 2.896084) entered false refused [] touched ["Zone_zone_010/Chamber_c001/@MeshInstance3D@2251/@StaticBody3D@2253", "Zone_zone_010/Chamber_c001/@MeshInstance3D@2287/@StaticBody3D@2289"]
+PROBE run 2 f00 pos (2.8, 0.340004, 2.502157) v (-0.000004, 0.00002, 0.129622) in_plate false
+PROBE run 2 f06 pos (2.799944, 0.339792, 2.558421) v (-0.003422, 0.002949, 0.848826) in_plate false
+PROBE run 2 f12 pos (2.769028, 0.340013, 2.60463) v (-0.426815, 0.000146, 0.361694) in_plate false
+PROBE run 2 f18 pos (2.723881, 0.339983, 2.64274) v (-0.480689, -0.000929, 0.391298) in_plate false
+PROBE run 2 f24 pos (2.671581, 0.340043, 2.682461) v (-0.546182, 0.000058, 0.391552) in_plate false
+PROBE run 2 f30 pos (2.614071, 0.340073, 2.719161) v (-0.618223, 0.000305, 0.370581) in_plate false
+PROBE run 2 f36 pos (2.550635, 0.340097, 2.759855) v (-0.655788, -0.000092, 0.450719) in_plate false
+PROBE run 2 f42 pos (2.481682, 0.340093, 2.813742) v (-0.715516, -0.000123, 0.611035) in_plate false
+PROBE run 2 f44 pos (2.457337, 0.34009, 2.835896) v (-0.735674, -0.000107, 0.683045) in_plate false
+PROBE run 2 END pos (2.372741, 0.340364, 2.896084) entered false refused [] touched ["Zone_zone_010/Chamber_c001/@MeshInstance3D@2251/@StaticBody3D@2253", "Zone_zone_010/Chamber_c001/@MeshInstance3D@2287/@StaticBody3D@2289"]

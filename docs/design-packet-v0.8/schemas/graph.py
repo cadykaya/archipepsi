@@ -39,10 +39,26 @@ class Strict(BaseModel):
 #: placement solver is never asked to close a cycle through a teleport.
 Realization = Literal["JOINED", "TRAVERSAL_ONLY"]
 
-#: Three usages, three different geometric outcomes. `SEALED` is not
+#: Four usages, three different geometric outcomes. `SEALED` is not
 #: "skip the audit" — it is the same measurement with the expectation
 #: inverted, and the expectation comes from this declaration.
-DoorUsage = Literal["USED", "LOCKED", "SEALED"]
+#:
+#: `ZONE_EXIT` IS THE ONE DOOR NO EDGE CARRIES, and it exists because
+#: the engine appends a room the composer never sees. A chain is written
+#: with `zip(spine, spine[1:])`, so the LAST room is assigned no exit
+#: and `_seal_the_rest` sealed it — correct from here, since nothing in
+#: THIS graph follows it. The engine then appends the exit room and
+#: routes its approach out of exactly that face, and the two lanes
+#: disagreed about a wall: twenty of twenty default-scale Zones ended on
+#: a room whose exit was solid, with the portal visible through it and
+#: no way to reach it, and every suite green because each half was
+#: right on its own terms.
+#:
+#: Declaring it here is the fix. It is passable geometry like `USED`, so
+#: `cut_plan` carves it and the layout audit expects a hole, with no
+#: exemption anywhere; what it does NOT carry is an `edge_id`, because
+#: the room on the far side is the engine's and is not in `edges`.
+DoorUsage = Literal["USED", "LOCKED", "SEALED", "ZONE_EXIT"]
 
 Direction = Literal["BIDIRECTIONAL", "A_TO_B", "B_TO_A"]
 
@@ -81,6 +97,27 @@ _SOCKET = Field(min_length=1, max_length=32, pattern=r"^[a-z0-9_]+$")
 _ANCHOR = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9_:]+$")
 
 
+class StateCondition(Strict):
+    """A route condition over a declared Zone-state variable.
+
+    D-8 §4. Amalgam §5.6 step 6a says every `TopologyEdge` predicate is
+    evaluated against the restored macro state -- and until now the edge
+    had no predicate to evaluate, so the design described a check the
+    code could not express.
+
+    **It names the VARIABLE, never the setter's node.** The variable is
+    restored at §5.6 step 4; the setter's node is rebuilt at steps 9-10
+    and may be a different object afterwards, which `M1-visible` already
+    asserts of the span, the lever and the carrier. A condition that
+    named the node would name something that does not exist yet when it
+    is evaluated.
+    """
+    variable_id: str = Field(min_length=1, max_length=24,
+                             pattern=r"^[a-z0-9_]+$")
+    state: str = Field(min_length=1, max_length=24,
+                       pattern=r"^[a-z0-9_]+$")
+
+
 class TopologyEdge(Strict):
     """One edge of the Zone graph.
 
@@ -110,6 +147,52 @@ class TopologyEdge(Strict):
     #: vacuous rule buys you.
     capability: Capability | None = None
 
+    #: P14. The room-graph ACTUATOR that opens this edge, if a machine
+    #: does. `None` is an edge no mechanism gates.
+    #:
+    #: **On the edge, not on the actuator, and that is deliberate.**
+    #: Reachability reads edges. An actuator that claimed an edge the
+    #: edge itself did not know about would be a physical gate the AP
+    #: logic never declared -- `SOLUTIONS_CATALOGUE` §0-bis's one
+    #: prohibition -- and it would be invisible to every route search.
+    #: The Zone validator ties the two ends together so neither can
+    #: exist alone.
+    #:
+    #: **This is not a third kind of gate for reachability to learn.**
+    #: A machine in a room is operable from inside that room, so it
+    #: imposes no ordering on the multiworld -- unless OPERATING it
+    #: needs something, in which case that something is the edge's
+    #: `capability` and the search already knows how to read it. The
+    #: Zone validator checks the two agree, which is what keeps a
+    #: prerequisite from being invented and an undeclared one from
+    #: slipping through.
+    opened_by: str | None = Field(default=None, max_length=24,
+                                  pattern=r"^[a-z0-9_]+$")
+
+    #: D-8. Zone-state this edge requires to be crossable -- the
+    #: predicate §5.6 step 6a has always said it evaluates. Empty means
+    #: an unconditional edge, which is every edge composed before this,
+    #: so nothing already saved changes meaning.
+    #:
+    #: ALL of them must hold. One condition per variable: two states of
+    #: one variable required at once is a route nothing can satisfy,
+    #: refused below rather than left to a search to discover.
+    requires_state: tuple[StateCondition, ...] = Field(
+        default=(), max_length=4)
+
+    @model_validator(mode="after")
+    def _one_condition_per_variable(self):
+        seen: set[str] = set()
+        for c in self.requires_state:
+            if c.variable_id in seen:
+                raise ValueError(
+                    f"edge '{self.edge_id}' requires '{c.variable_id}' twice; "
+                    "a variable holds one state at a time, so two conditions "
+                    "on it are either a duplicate or a route nothing can "
+                    "satisfy")
+            seen.add(c.variable_id)
+        return self
+
     @model_validator(mode="after")
     def _an_edge_joins_two_rooms(self):
         if self.room_a == self.room_b:
@@ -137,9 +220,10 @@ class TopologyEdge(Strict):
 class DoorAssignment(Strict):
     """One joining socket of one room instance, and what it does.
 
-    `edge_id` is required unless the door is `SEALED`, and the edge it
-    names must be `JOINED` — a `TRAVERSAL_ONLY` edge is carried by a
-    `PlugAssignment` and never by a door.
+    `edge_id` is required unless the door is `SEALED` or `ZONE_EXIT`,
+    and the edge it names must be `JOINED` — a `TRAVERSAL_ONLY` edge is
+    carried by a `PlugAssignment` and never by a door. `ZONE_EXIT` is
+    the Zone's own way out and names no edge at all: see `DoorUsage`.
     """
 
     socket_id: str = _SOCKET
@@ -163,6 +247,24 @@ class DoorAssignment(Strict):
                 raise ValueError(
                     f"door '{self.socket_id}' is SEALED and names edge "
                     f"'{self.edge_id}'; a sealed door carries no route")
+        elif self.usage == "ZONE_EXIT":
+            # THE WAY OUT OF THE ZONE NAMES NO EDGE, and may not.
+            # The room on its far side is the engine's appended exit
+            # room: it is in no `chambers` list and the approach to it
+            # is in no `edges` list, both reserved and both refused if a
+            # composer declares them. A `ZONE_EXIT` that named an edge
+            # would be claiming a route this graph does not contain.
+            if self.edge_id is not None:
+                raise ValueError(
+                    f"door '{self.socket_id}' is ZONE_EXIT and names "
+                    f"edge '{self.edge_id}'; the Zone's way out leads "
+                    "to the engine's appended exit room, which no edge "
+                    "in this graph reaches")
+            if self.socket_id != "exit":
+                raise ValueError(
+                    f"door '{self.socket_id}' is ZONE_EXIT; the Zone's "
+                    "way out leaves through a room's 'exit' socket, "
+                    "which is the face the engine appends to")
         elif not self.edge_id:
             raise ValueError(
                 f"door '{self.socket_id}' is {self.usage} and names no "

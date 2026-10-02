@@ -11,6 +11,10 @@ func _ready() -> void:
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	panel.position = Vector2(10, 10)
+	# A readout drawn over play takes no mouse event: a panel stops the
+	# ones over it by default, and this one can reach toward the centre of
+	# the screen, where a captured pointer's mouse look arrives (HB-O1).
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(panel)
 	_label = Label.new()
 	_label.add_theme_font_size_override("font_size", 13)

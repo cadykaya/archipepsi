@@ -55,12 +55,16 @@ func _run() -> void:
 	await _a_release_without_a_press_does_nothing()
 	await _a_refused_press_gives_everything_back()
 	await _death_ends_every_hold()
+	await _death_ends_the_tether_and_the_slam()
+	await _an_unrelated_swap_leaves_the_tether_alone()
+	await _a_launch_arc_survives_an_unrelated_swap()
 	await _a_slot_swap_ends_a_hover()
 	await _one_slots_key_up_leaves_another_slots_hover_alone()
 	await _two_hovers_at_once_do_not_cancel_each_other()
 	await _a_burn_tick_does_not_spend_the_parry_window()
 	await _an_absorbed_shield_does_not_inflate_the_next_one()
 	await _rule_effects_follow_the_slot_the_player_is_looking_at()
+	await _a_projectile_carries_its_status_to_what_it_hits()
 
 	if failures == 0:
 		print("GODOT VERBS TESTS OK")
@@ -119,6 +123,7 @@ func _reset() -> void:
 					BridgeClient.owned_component(str(equipped)).get(
 							"component", {}))
 	_player.hover_gravity_scale = 1.0
+	_player.cancel_transient_effects()
 	if _player._dead:
 		_player._respawn()
 	await get_tree().physics_frame
@@ -250,6 +255,92 @@ func _death_ends_every_hold() -> void:
 			% [_pool.value_of("res_fuel"), fuel])
 	_check(is_equal_approx(_player.hover_gravity_scale, 1.0),
 			"...and the hover's gravity scale is released")
+
+## TWO EFFECTS OUTLIVED A DEATH, and both were live defects.
+##
+## `_update_swing` is polled AFTER the `if _dead: return` guard, so a
+## player who died mid-swing kept `_swing_time` FROZEN rather than
+## cleared. Once `_respawn` set `_dead = false` the tether resumed,
+## pulling the respawned body toward an anchor in a part of the room they
+## were no longer standing in. `pending_slam` did the same: a slam
+## committed before dying detonated on the first landing afterwards, at
+## the respawn point.
+##
+## NO PHYSICS FRAMES BETWEEN THE CALLS, deliberately. `_update_swing`
+## ends a tether by itself the moment the body is on the floor or the key
+## is not held, so stepping frames here would clear it for a reason that
+## has nothing to do with the death. What is under test is the CLEANUP
+## contract, and the calls that carry it are synchronous.
+func _death_ends_the_tether_and_the_slam() -> void:
+	await _reset()
+	var anchor := _player.global_position + Vector3(0.0, 6.0, 4.0)
+	_player.begin_swing(anchor, 30.0, 3.0, "mobility")
+	_player.commit_slam({"damage": 10.0, "radius": 3.0,
+			"tint": Color.WHITE}, "echo_a")
+	_check(_player._swing_time > 0.0, "a tether is live before the death")
+	_check(not _player.pending_slam.is_empty(), "and a slam is committed")
+
+	_player.take_damage(10000.0)
+	_check(_player._dead, "the player is dead")
+	_check(_player._swing_time == 0.0,
+			"death ends the tether (%.3f s left)" % _player._swing_time)
+	_check(_player.pending_slam.is_empty(),
+			"and drops the committed slam")
+
+	_player._respawn()
+	_check(_player._swing_time == 0.0,
+			"and the tether does not come back with the respawn")
+	_check(_player.pending_slam.is_empty(),
+			"...nor the slam, which used to detonate at the respawn point")
+	await get_tree().physics_frame
+
+## THE CONTROL, and it is the half that keeps the repair honest.
+##
+## Shared cleanup has to retain ownership. Death ends everything the body
+## is carrying; unequipping ONE Echo may only end what THAT Echo started.
+## Without a name on each effect the two are the same call, and swapping
+## a combat Echo would drop the tether a mobility Echo is holding you on
+## -- trading one defect for a worse one.
+func _an_unrelated_swap_leaves_the_tether_alone() -> void:
+	await _reset()
+	var anchor := _player.global_position + Vector3(0.0, 6.0, 4.0)
+	_player.begin_swing(anchor, 30.0, 3.0, "mobility")
+	_check(_player._swing_time > 0.0, "the mobility tether is live")
+
+	var blink: Dictionary = BridgeClient.owned_component("act_blink").get(
+			"component", {})
+	_runtime("utility").set_equipped(blink)
+	_check(_player._swing_time > 0.0,
+			"another slot's swap leaves it live (%.3f s)"
+			% _player._swing_time)
+	_check(_player._swing_owner == "mobility",
+			"and it still belongs to the slot that started it")
+
+	_runtime("mobility").set_equipped(blink)
+	_check(_player._swing_time == 0.0,
+			"while the owning slot's swap does end it")
+	await get_tree().physics_frame
+
+## The second control: an effect NO Echo owns.
+##
+## A launch pad starts the arc, not a slot, so no slot change may end it
+## -- being dropped out of the sky because you swapped a weapon is the
+## failure an over-eager cleanup produces. Death still ends it.
+func _a_launch_arc_survives_an_unrelated_swap() -> void:
+	await _reset()
+	_player.begin_launch_flight()
+	_check(_player.in_launch_flight(), "the launch arc is live")
+
+	for slot: String in ["utility", "mobility"]:
+		_runtime(slot).set_equipped(BridgeClient.owned_component(
+				"act_blink").get("component", {}))
+	_check(_player.in_launch_flight(),
+			"no slot change drops a body out of the sky")
+
+	_player.take_damage(10000.0)
+	_check(not _player.in_launch_flight(), "but death ends it")
+	_player._respawn()
+	await get_tree().physics_frame
 
 # --- 4 and 5: the hover, which writes shared player state -----------------
 
@@ -427,3 +518,85 @@ func _rule_effects_follow_the_slot_the_player_is_looking_at() -> void:
 	_check(is_equal_approx(_runtime("echo_a").shield_hp, 0.0),
 			"...and not on whichever slot loaded first")
 	rules.queue_free()
+
+
+# --- O05-11: a projectile's status reaches what it hits -------------------
+
+## `apply_status_on_hit` on a projectile or a lob used to stop at the
+## launcher: `_launch` handed the projectile its knockback and nothing
+## else, so the status was applied to no one. The schema pairs the
+## modifier with any damage primitive and the stage gate admitted it --
+## an Action that said one thing and did less. Through the real runtime,
+## at a real enemy: a straight shot's direct hit, then a lob's blast.
+func _a_projectile_carries_its_status_to_what_it_hits() -> void:
+	await _reset()
+	var runtime := _runtime("echo_a")
+	var shot := _enemy_at(Vector3(0.0, 0.0, -7.0))
+	for _i in 4:
+		await get_tree().physics_frame
+	runtime.set_equipped({"kind": "action", "component_id": "act_test_shot",
+			"slot": "echo_a", "cooldown": 0.5,
+			"primitive": {"type": "projectile_damage", "damage": 4.0,
+				"speed": 30.0, "lifetime": 3.0, "gravity_scale": 0.0,
+				"bounces": 0},
+			"modifiers": [{"type": "apply_status_on_hit",
+				"status": "slowed", "duration": 4.0, "magnitude": 0.5}]})
+	runtime.reset_cooldown()
+	_aim_at(shot.global_position + Vector3.UP * 1.0)
+	runtime.activate()
+	for _i in 60:
+		await get_tree().physics_frame
+		if shot.hp < shot.max_hp:
+			break
+	_check(shot.hp < shot.max_hp and shot.statuses.has("slowed"),
+			"a straight shot's direct hit damaged the enemy (%.1f/%.1f) and "
+			% [shot.hp, shot.max_hp] + "applied its status: %s"
+			% [shot.statuses.active_kinds()])
+	shot.queue_free()
+
+	var caught := _enemy_at(Vector3(0.0, 0.0, -3.0))
+	for _i in 4:
+		await get_tree().physics_frame
+	runtime.set_equipped({"kind": "action", "component_id": "act_test_lob",
+			"slot": "echo_a", "cooldown": 0.5,
+			"primitive": {"type": "arc_lob", "damage": 4.0, "radius": 4.0,
+				"launch_force": 17.0, "fuse": 1.4},
+			"modifiers": [{"type": "apply_status_on_hit",
+				"status": "stunned", "duration": 1.5, "magnitude": 1.0}]})
+	runtime.reset_cooldown()
+	# DOWN AT THE FLOOR a couple of metres ahead: the lob strikes it and
+	# goes off there, inside the blast's four metres of the enemy.
+	_aim_at(_player.global_position + Vector3(0.0, -1.0, -2.0))
+	runtime.activate()
+	for _i in 120:
+		await get_tree().physics_frame
+		if caught.hp < caught.max_hp:
+			break
+	_check(caught.hp < caught.max_hp and caught.statuses.has("stunned"),
+			"a lob's blast damaged the enemy it caught (%.1f/%.1f) and "
+			% [caught.hp, caught.max_hp] + "applied its status: %s"
+			% [caught.statuses.active_kinds()])
+	caught.queue_free()
+	_player.camera.rotation = Vector3.ZERO
+	_player.rotation = Vector3.ZERO
+	await _reset()
+
+
+## An enemy standing on the floor at `at`, woken so its body is in the
+## world this frame.
+func _enemy_at(at: Vector3) -> Enemy:
+	var made := Enemy.create("melee", "concrete_facility")
+	add_child(made)
+	made.global_position = at
+	return made
+
+
+## Point the player's view at a world point: yaw on the body, pitch on
+## the camera, the way looking does.
+func _aim_at(point: Vector3) -> void:
+	var eye := _player.camera.global_position
+	var flat := Vector3(point.x - eye.x, 0.0, point.z - eye.z)
+	if flat.length() > 0.001:
+		_player.rotation.y = atan2(-flat.x, -flat.z)
+	var rise := point.y - eye.y
+	_player.camera.rotation.x = atan2(rise, maxf(flat.length(), 0.001))

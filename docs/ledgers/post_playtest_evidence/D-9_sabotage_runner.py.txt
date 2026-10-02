@@ -1,0 +1,154 @@
+"""D-9 sabotages: break one rule, confirm a named failure, restore.
+
+Same protocol as the D-01 and H-GRAPHS runners: each row edits one file
+in the wt-gantry work tree, runs `make godot-rail-gantry`, records every
+FAIL line, and restores the file byte for byte (sha256 checked). A row is
+CAUGHT only when the check it names is among the failures. Run only when
+no other Godot suite is running.
+"""
+from __future__ import annotations
+
+import hashlib
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+TREE = Path(os.environ.get("D09_TREE",
+                           Path(__file__).resolve().parent / "wt-gantry"))
+RN = "godot/scripts/generation/rail_networks.gd"
+AC = "godot/scripts/gameplay/alignment_control.gd"
+ZC = "godot/scripts/gameplay/zone_controller.gd"
+
+# (id, what, file, old, new, the check that must fail)
+ROWS = [
+    ("D09-1", "a gantry span gets the ground lever (the old build)", RN,
+     "\t\t\tif gantries.has(span_id):\n",
+     "\t\t\tif false and gantries.has(span_id):\n",
+     "a gantry was built for span s0"),
+    ("D09-2", "the deck raised to 3.3 m", RN,
+     "const GANTRY_DECK_TOP := 2.9\n",
+     "const GANTRY_DECK_TOP := 3.3\n",
+     "the deck's top stands"),
+    ("D09-2b", "the deck lowered to 2.6 m: the reach refuses every "
+     "position before the height is read", RN,
+     "const GANTRY_DECK_TOP := 2.9\n",
+     "const GANTRY_DECK_TOP := 2.6\n",
+     "the network was not refused"),
+    ("D09-3", "the plate over the deck's middle, not its near lip", RN,
+     "\tvar plate := under_plate + Vector3.UP * GANTRY_PLATE_UP\n",
+     "\tvar plate := under_plate + away * (GANTRY_DECK.z * 0.5) "
+     "+ Vector3.UP * GANTRY_PLATE_UP\n",
+     "the plate hangs over the deck's near lip"),
+    ("D09-4", "the track ignored", RN,
+     "\t\tif point.y < box.position.y or point.y > box.end.y:\n"
+     "\t\t\tcontinue\n\t\tvar rel := Vector3(point.x - mid.x",
+     "\t\tif true:\n"
+     "\t\t\tcontinue\n\t\tvar rel := Vector3(point.x - mid.x",
+     "a track through the chosen deck moves it off"),
+    ("D09-5", "the gantry's lever worked from anywhere", RN,
+     "\tcontrol.worked_from = deck\n",
+     "\tpass\n",
+     "at the top of a jump beside the lip"),
+    ("D09-6", "standing on the deck not asked", AC,
+     "\tif worked_from == null:\n\t\treturn true\n",
+     "\tif true:\n\t\treturn true\n",
+     "at the top of a jump beside the lip"),
+    ("D09-7", "the lever offered to a player off the deck", AC,
+     "\t\t\treturn WORKED_FROM_PROMPT\n",
+     "\t\t\treturn \"[E] %s\" % label\n",
+     "and what it says there is why"),
+    ("D09-8", "the placement does not ask the base kit's reach", RN,
+     "\tvar why := deck_reached(field, frame)\n",
+     "\tvar why := \"\"\n",
+     "and the room does not put its gantry there"),
+    ("D09-9", "a jump onto the deck never counted", RN,
+     "\t\t\t\tif d <= jump_reach(heights[i], GANTRY_DECK_TOP):\n",
+     "\t\t\t\tif false:\n",
+     "a gallery the base kit climbs to"),
+    ("D09-10", "the continuous apex (1.33 m), not the played one", RN,
+     "\treturn Constants.JUMP_APEX_HEIGHT + Constants.JUMP_VELOCITY \\\n"
+     "\t\t\t/ (2.0 * float(Engine.physics_ticks_per_second))\n",
+     "\treturn Constants.JUMP_APEX_HEIGHT\n",
+     "on a bare floor, a gallery up a 1.38 m step"),
+    ("D09-11", "the flight volumes not measured", RN,
+     "\t\tif not space.intersect_shape(query, 1).is_empty():\n"
+     "\t\t\treturn {\"refused\": \"not clear\"}\n",
+     "\t\tpass\n",
+     "a crate in the column the pull climbs"),
+    ("D09-12", "no floor asked for under the approach and the post", RN,
+     "\tif not _is_floor(field, approach) \\\n"
+     "\t\t\tor not _is_floor(field, deck_centre):\n",
+     "\tif false:\n",
+     "across a gap in the floor"),
+    ("D09-13", "the room's height not asked", RN,
+     "\tif floor_y + GANTRY_PLATE_UP + 0.6 > box.end.y:\n",
+     "\tif false:\n",
+     "a 5 m arena"),
+    ("D09-14", "two gantries to a room", RN,
+     "\t\t\tif str((gantries[other] as Dictionary)[\"room\"]) == room:\n",
+     "\t\t\tif false:\n",
+     "two gantries in c002"),
+    ("D09-15", "the Zone does not pass its rooms' bounds", ZC,
+     "\t\t\troom_places, str(zone_dict.get(\"theme\", "
+     "\"concrete_facility\")),\n\t\t\troom_bounds)\n",
+     "\t\t\troom_places, str(zone_dict.get(\"theme\", "
+     "\"concrete_facility\")),\n\t\t\t{})\n",
+     "the network was not refused"),
+    ("D09-16", "a refused gantry quietly becomes a ground lever", RN,
+     "\t\tif frame.has(\"refused\"):\n\t\t\treturn {\"refused\": "
+     "\"span '%s' puts its gantry in room '%s': %s\"\n",
+     "\t\tif frame.has(\"refused\"):\n\t\t\tcontinue\n"
+     "\t\tif false:\n\t\t\treturn {\"refused\": "
+     "\"span '%s' puts its gantry in room '%s': %s\"\n",
+     "a 5 m arena"),
+]
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main() -> int:
+    only = set(sys.argv[1:])
+    lines, caught, total = [], 0, 0
+    for rid, what, rel, old, new, expect in ROWS:
+        if only and rid not in only:
+            continue
+        total += 1
+        path = TREE / rel
+        original = path.read_bytes()
+        text = original.decode("utf-8")
+        if text.count(old) != 1:
+            lines.append(f"{rid} SETUP ERROR: anchor found {text.count(old)}"
+                         f" times in {rel}")
+            continue
+        before = hashlib.sha256(original).hexdigest()
+        path.write_bytes(text.replace(old, new).encode("utf-8"))
+        try:
+            out = subprocess.run(["make", "godot-rail-gantry"], cwd=TREE,
+                                 capture_output=True, text=True, timeout=1500)
+            log = out.stdout + out.stderr
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        fails = sorted({l[6:] for l in log.splitlines()
+                        if l.startswith("FAIL: ")})
+        errors = sum(1 for l in log.splitlines()
+                     if l.lstrip().startswith("SCRIPT ERROR"))
+        hit = any(expect in f for f in fails)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} by \"{expect}\""
+                     f" -- {len(fails)} failing check(s), {errors} script "
+                     f"error(s); restored byte for byte: {restored}")
+        for f in fails:
+            lines.append(f"      FAIL: {f[:260]}")
+        print("\n".join(lines[-(len(fails) + 2):]), flush=True)
+    lines.append(f"\n{caught} of {total} sabotages caught")
+    print(lines[-1])
+    return 0 if caught == total else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

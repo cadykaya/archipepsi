@@ -1,0 +1,18 @@
+HF-1 [chamber_builders.gd] REPRO: the oil drum stands wherever it was rolled
+    CAUGHT by "the owner's two rooms" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the owner's two rooms: zone_005 c005/side_right and zone_006 c005/side_left, both LOCKED, are holes ({ "zone_005 c005/entry": true, "zone_005 c005/exit": true, "zone_005 c005/side_left": true, "zone_005 c005/side_right": false, "zone_006 c005/entry": true, "zone_006 c005/exit": true, "zone_006 c005/side_left": false })
+      FAIL: 1159 declared doors across 290 rooms in 6 themes, and none measures solid (blocked: ["zone_005 c005/side_right (LOCKED)", "zone_006 c005/side_left (LOCKED)", "rusted_industrial arena census_1/side_left (USED)", "rusted_industrial corridor census_1/side_left (USED)", "rusted_industrial arena census_6/side_left (USED)", "rusted_industrial corridor census_8/side_right (LOCKED)", "rusted_industrial co
+HF-2 [chamber_builders.gd] REPRO: the column stump stands wherever it was rolled
+    CAUGHT by "and none measures solid" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: 1159 declared doors across 290 rooms in 6 themes, and none measures solid (blocked: ["temple_ruin corridor census_3/side_left (USED)", "temple_ruin arena census_8/side_right (LOCKED)", "temple_ruin corridor census_10/side_right (LOCKED)", "temple_ruin corridor census_13/side_left (USED)", "temple_ruin arena census_14/side_right (LOCKED)"])
+HF-3 [chamber_builders.gd] a corridor's props never told which doors it has
+    CAUGHT by "the owner's two rooms" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the owner's two rooms: zone_005 c005/side_right and zone_006 c005/side_left, both LOCKED, are holes ({ "zone_005 c005/entry": true, "zone_005 c005/exit": true, "zone_005 c005/side_left": true, "zone_005 c005/side_right": false, "zone_006 c005/entry": true, "zone_006 c005/exit": true, "zone_006 c005/side_left": true })
+      FAIL: 1159 declared doors across 290 rooms in 6 themes, and none measures solid (blocked: ["zone_005 c005/side_right (LOCKED)", "rusted_industrial corridor census_1/side_left (USED)", "rusted_industrial corridor census_8/side_right (LOCKED)", "rusted_industrial corridor census_9/side_left (USED)", "rusted_industrial corridor census_11/side_left (USED)", "rusted_industrial corridor census_13/side_right (
+HF-4 [chamber_builders.gd] an arena's props never told which doors it has
+    CAUGHT by "the owner's two rooms" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the owner's two rooms: zone_005 c005/side_right and zone_006 c005/side_left, both LOCKED, are holes ({ "zone_005 c005/entry": true, "zone_005 c005/exit": true, "zone_005 c005/side_left": true, "zone_005 c005/side_right": true, "zone_006 c005/entry": true, "zone_006 c005/exit": true, "zone_006 c005/side_left": false })
+      FAIL: 1159 declared doors across 290 rooms in 6 themes, and none measures solid (blocked: ["zone_006 c005/side_left (LOCKED)", "rusted_industrial arena census_1/side_left (USED)", "rusted_industrial arena census_6/side_left (USED)", "rusted_industrial arena census_10/side_left (USED)", "rusted_industrial arena census_13/side_right (LOCKED)", "rusted_industrial arena census_14/side_left (USED)", "rusted_
+
+4 of 4 sabotages caught
+runner exit 0

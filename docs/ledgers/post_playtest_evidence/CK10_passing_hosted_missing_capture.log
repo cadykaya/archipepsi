@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+   GDScript backtrace (most recent call first):
+FAIL: the Zone to play is at '/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/passing_zone_capture2.json' (see N-10)
+GODOT PASSING HOSTED TESTS: 1 failures in 1 checks
+make: *** [Makefile:1228: godot-passing-hosted] Error 1

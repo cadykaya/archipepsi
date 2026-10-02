@@ -1,0 +1,142 @@
+python3 -m pytest -q
+........................................................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 25%]
+........................................................................ [ 29%]
+........................................................................ [ 32%]
+........................................................................ [ 35%]
+........................................................................ [ 38%]
+........................................................................ [ 42%]
+........................................................................ [ 45%]
+........................................................................ [ 48%]
+........................................................................ [ 51%]
+........................................................................ [ 55%]
+........................................................................ [ 58%]
+...................................................................
+  fold: 0.192 ms for a full 26-echo campaign
+..... [ 61%]
+........................................................................ [ 64%]
+.......................................................................F [ 67%]
+........................................................................ [ 71%]
+........................................................................ [ 74%]
+........................................................................ [ 77%]
+........................................................................ [ 80%]
+........................................................................ [ 84%]
+..........................................................F............. [ 87%]
+........................................................................ [ 90%]
+........................................................................ [ 93%]
+........................................................................ [ 97%]
+................................................................                              [100%]
+=================================== FAILURES ===================================
+_____________ test_every_bundled_binary_is_first_party_or_licensed _____________
+
+    def test_every_bundled_binary_is_first_party_or_licensed():
+        """The D2 gate, and note what it is NOT.
+    
+        The old rule was "no binaries at all", which was right while there
+        were none and useless the moment the art lane ships one: a gate that
+        can only be satisfied by having no assets gets disabled the first
+        time someone needs an asset, and then nothing is checked.
+    
+        The rule now is the one that survives contact with content: every
+        tracked binary is either first-party, or carries a full licence
+        record. Adding an asset means adding its record, which is the moment
+        the licensing decision is actually needed -- rather than at release,
+        which is when it is usually discovered.
+        """
+        data = _manifest()
+        first_party = tuple(data["first_party"]["paths"])
+        registered = {e["path"] for e in data.get("third_party", [])}
+    
+        # An explicit third-party record WINS over a first-party prefix, and
+        # is then validated by the test below. Without that precedence, a
+        # first-party directory would launder anything dropped into it --
+        # which is the failure mode of every allowlist that grows by
+        # directory rather than by decision.
+        unaccounted = [
+            path for path in _tracked_binaries()
+            if path not in registered and not path.startswith(first_party)]
+    
+>       assert not unaccounted, (
+            "these tracked binaries are neither first-party nor registered:\n  "
+            + "\n  ".join(unaccounted)
+            + "\n\nAdd the path to first_party.paths in assets/LICENSES.json "
+              "if we authored it (a Claude-authored asset a developer "
+              "reviewed and approved counts), or add a full third_party "
+              "record with its licence. See OWNER_DECISIONS.md D2.")
+E       AssertionError: these tracked binaries are neither first-party nor registered:
+E           docs/ledgers/post_playtest_evidence/H-3D-SHELL_shots/mid_turn_settings_to_equipment.png
+E           docs/ledgers/post_playtest_evidence/H-3D-SHELL_shots/rest_equipment.png
+E           docs/ledgers/post_playtest_evidence/H-3D-SHELL_shots/rest_journal.png
+E           docs/ledgers/post_playtest_evidence/H-3D-SHELL_shots/rest_map.png
+E           docs/ledgers/post_playtest_evidence/H-3D-SHELL_shots/rest_settings.png
+E           docs/ledgers/post_playtest_evidence/H-INVENTORY_shots/equipment_compare_1280x720.png
+E           docs/ledgers/post_playtest_evidence/H-INVENTORY_shots/equipment_compare_1920x1080.png
+E           docs/ledgers/post_playtest_evidence/H-INVENTORY_shots/equipment_consumable_key_1280x720.png
+E           docs/ledgers/post_playtest_evidence/H-INVENTORY_shots/equipment_consumable_key_1920x1080.png
+E           docs/ledgers/post_playtest_evidence/H-INVENTORY_shots/equipment_exhausted_1280x720.png
+E           docs/ledgers/post_playtest_evidence/H-INVENTORY_shots/equipment_history_1280x720.png
+E           docs/ledgers/post_playtest_evidence/H-INVENTORY_shots/equipment_history_1920x1080.png
+E           docs/ledgers/post_playtest_evidence/H-INVENTORY_shots/equipment_offline_1280x720.png
+E         
+E         Add the path to first_party.paths in assets/LICENSES.json if we authored it (a Claude-authored asset a developer reviewed and approved counts), or add a full third_party record with its licence. See OWNER_DECISIONS.md D2.
+E       assert not ['docs/ledgers/post_playtest_evidence/H-3D-SHELL_shots/mid_turn_settings_to_equipment.png', 'docs/ledgers/post_playtes..._shots/rest_settings.png', 'docs/ledgers/post_playtest_evidence/H-INVENTORY_shots/equipment_compare_1280x720.png', ...]
+
+bridge/tests/test_packaging.py:179: AssertionError
+_ TestTheClientRestoresWhatTheBridgeLeftOut.test_no_consumer_reads_the_raw_field_behind_the_accessor _
+
+self = <bridge.tests.test_snapshot_size.TestTheClientRestoresWhatTheBridgeLeftOut object at 0x7f4da9656350>
+
+    def test_no_consumer_reads_the_raw_field_behind_the_accessor(self):
+        """One Echo log on the client side. A UI that went back to
+        `snapshot.get("interpretations")` would read an empty list on
+        every elided snapshot and quietly render an empty archive.
+    
+        `godot/tests` is deliberately out of scope: the drivers build
+        fake snapshots and assert on the raw field, which is the right
+        thing for them to do.
+        """
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[2] / "godot/scripts"
+        offenders = [
+            str(p.relative_to(root))
+            for p in root.rglob("*.gd")
+            if p.name != "bridge_client.gd"
+            and 'get("interpretations"' in p.read_text(encoding="utf-8")]
+>       assert offenders == [], (
+            "these read the snapshot field directly instead of "
+            f"BridgeClient.interpretations(): {offenders}")
+E       AssertionError: these read the snapshot field directly instead of BridgeClient.interpretations(): ['ui/equipment_query.gd']
+E       assert ['ui/equipment_query.gd'] == []
+E         
+E         Left contains one more item: 'ui/equipment_query.gd'
+E         Use -v to get more diff
+
+bridge/tests/test_snapshot_size.py:557: AssertionError
+=============================== warnings summary ===============================
+.archipelago/NetUtils.py:532
+  /home/user/archipepsi/.archipelago/NetUtils.py:532: UserWarning: _speedups not available. Falling back to pure python LocationStore. Install a matching C++ compiler for your platform to compile _speedups.
+    warnings.warn("_speedups not available. Falling back to pure python LocationStore. "
+
+.archipelago/worlds/pokemon_emerald/data.py:12
+  /home/user/archipepsi/.archipelago/worlds/pokemon_emerald/data.py:12: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+    import pkg_resources
+
+apworld/tests/test_apworld.py::TestStructure::test_all_state_can_reach_everything
+apworld/tests/test_apworld.py::TestTierReachability::test_all_state_can_reach_everything
+apworld/tests/test_apworld.py::TestProductionScale::test_all_state_can_reach_everything
+apworld/tests/test_apworld.py::TestAnUnusualSize::test_all_state_can_reach_everything
+  /home/user/archipepsi/.archipelago/BaseClasses.py:450: DeprecationWarning: multiworld.get_all_state no longer caches all_state and this argument will be removed.
+    warnings.warn("multiworld.get_all_state no longer caches all_state and this argument will be removed.",
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED bridge/tests/test_packaging.py::test_every_bundled_binary_is_first_party_or_licensed
+FAILED bridge/tests/test_snapshot_size.py::TestTheClientRestoresWhatTheBridgeLeftOut::test_no_consumer_reads_the_raw_field_behind_the_accessor
+2 failed, 2222 passed, 6 warnings, 627 subtests passed in 201.76s (0:03:21)
+make: *** [Makefile:19: test] Error 1

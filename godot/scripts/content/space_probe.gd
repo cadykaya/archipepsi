@@ -325,5 +325,15 @@ static func is_placed_content(collider: Variant) -> bool:
 		# contract's `SEALED` rule exists to prevent.
 		if node is LockedDoor:
 			return true
+		# A DECLARED ROUTE GATE IS CONTENT IN ITS OPENING, for the same
+		# reason. P14's shutter stands across the doorway its edge's
+		# `opened_by` names; the opening behind it is carved, and the
+		# route search already models what opens it. Found live: the
+		# bridge refused the latched route's layout on "door 'c002/exit'
+		# is USED and the engine measured it as solid". Only a shutter
+		# `RoomGraphs` placed for a declared edge is in the group; an
+		# undeclared one in a doorway still reads as the wall it is.
+		if node.is_in_group(RoomGraphs.ROUTE_GATE):
+			return true
 		node = node.get_parent()
 	return false

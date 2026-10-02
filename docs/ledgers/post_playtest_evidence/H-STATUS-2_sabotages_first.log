@@ -1,0 +1,85 @@
+HS2-1 [player.gd] the anchored walk keeps its intent (speed not zeroed)
+    NOT CAUGHT by "pressing forward:" -- 0 failing check(s), 0 script error(s); restored byte for byte: True
+HS2-2 [player.gd] the anchored jump not blocked
+    CAUGHT by "no `jumped` for a rule to answer" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: jump: the free player rises 1.40 m (1 jump), the anchored one 0.000 m and no `jumped` for a rule to answer (1)
+HS2-3 [player.gd] the hold removed
+    CAUGHT by "a knock (7, 3, 0)" -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a knock (7, 3, 0): the free player is thrown 0.42 m and 0.21 m up, the anchored one 0.422 m and 0.213 m up (immune to all impulse)
+      FAIL: a velocity written from outside (6, 12, 4) moves it 0.448 m and 3.100 m up
+HS2-4 [player.gd] a grind rail keeps an anchored rider
+    CAUGHT by "a grind rail catches the free player" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a grind rail catches the free player (true); anchored, it lets go (false) and does not catch it again (true)
+HS2-5 [player.gd] a grind rail catches an anchored player
+    CAUGHT by "a grind rail catches the free player" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a grind rail catches the free player (true); anchored, it lets go (true) and does not catch it again (true)
+HS2-6 [player.gd] a lightened player's knock not doubled
+    CAUGHT by "the same knock (4 m/s)" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the same knock (4 m/s) gives the plain player 4.00 m/s and the lightened one 4.00 (incoming impulse x2.0)
+HS2-7 [player.gd] the player's class ignores its Statuses
+    CAUGHT by "its class drops a step" -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a HEAVY plate that counts the player: MEDIUM leaves it unpressed; anchored, the player reads medium and it is unpressed
+      FAIL: anchoring it removes the lightness [true, false, "medium"], and lightening it the anchor [false, true, "medium"]
+      FAIL: its class drops a step: medium -> medium
+HS2-8 [echo_runtime.gd] movement Echoes fire while anchored
+    CAUGHT by "the dash refuses before it is paid for" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: anchored, the dash refuses before it is paid for (cooldown 0.61), moves nothing (0.000 m), and says why: []
+HS2-9 [status_effects.gd] the pair coexists
+    CAUGHT by "anchoring it removes the lightness" -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: anchored over it, the knock moves it 0.000 m; lightened over that, 0.00 m again
+      FAIL: anchored over lightened it is FIXED and frozen [true, 2.0, "fixed", true]; lightened over that it is thawed and LIGHT [true, true, "fixed"], and the same impulse moves it 0.00 m to a plain crate's 0.68
+      FAIL: anchoring it removes the lightness [true, true, "fixed"], and lightening it the anchor [true, true, "fixed"]
+HS2-10 [status_effects.gd] the container ignores the table it holds
+    CAUGHT by "a second held forward" -- 23 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a 5 m/s impulse moves the plain crate 1.53 m; the anchored one, with a 3 kN push on top, 6.702 m
+      FAIL: a HEAVY plate that counts the player: MEDIUM leaves it unpressed; anchored, the player reads medium and it is unpressed
+      FAIL: a HEAVY plate: the MEDIUM crate leaves it unpressed, anchored it is unpressed, and when the anchor ends unpressed -- the plate reads the crate's class as it is, not as it was
+      FAIL: a carried crate anchored is let go ([]) and stays where it was (0.057 m)
+      FAIL: a grind rail catches the free player (true); anchored, it lets go (false) and does not catch it again (true)
+      FAIL: a knock (7, 3, 0): the free player is thrown 0.42 m and 0.21 m up, the anchored one 0.421 m and 0.213 m up (immune to all impulse)
+      FAIL: a launch pad fires the free player (1) and not the anchored one (1), which stays 9.719 m from where it stood
+      FAIL: a second held forward: the free player walks 7.00 m, the anchored one 6.999 m (movement 0.0)
+      FAIL: a velocity written from outside (6, 12, 4) moves it 0.448 m and 3.100 m up
+      FAIL: an impulse landed while anchored is not released when the anchor ends: thawed, the crate has moved 1.534 m
+      FAIL: anchored over it, the knock moves it 0.000 m; lightened over that, 0.00 m again
+      FAIL: anchored over lightened it is FIXED and frozen [true, 2.0, "light", false]; lightened over that it is thawed and LIGHT [false, false, "light"], and the same impulse moves it 1.96 m to a plain crate's 0.68
+      FAIL: anchored three metres up, it hangs there (y 1.21); when the Status ends it is thawed and falls (y 0.49)
+      FAIL: anchored, the dash refuses before it is paid for (cooldown 0.62), moves nothing (0.500 m), and says why: []
+      FAIL: anchoring it removes the lightness [false, false, "medium"], and lightening it the anchor [false, false, "medium"]
+      FAIL: it reads FIXED (medium; the same crate plain is medium)
+      FAIL: its class drops a step: medium -> medium
+      FAIL: jump: the free player rises 1.40 m (1 jump), the anchored one 1.400 m and no `jumped` for a rule to answer (1)
+      FAIL: pressing forward: a free player climbs the 0.5 m step (0.50 m) and shoves the crate 7.69 m; anchored, it climbs 0.503 m and shoves 7.341 m
+      FAIL: the same 8 m/s knock: the plain enemy takes 8.0 m/s and goes 0.31 m, the lightened one 8.0 m/s and 0.31 m (incoming impulse x2.0)
+      FAIL: the same knock (4 m/s) gives the plain player 4.00 m/s and the lightened one 4.00 (incoming impulse x2.0)
+      FAIL: the verbs refuse it (), so does a push (), and the hands say 'CAN'T CARRY THAT'
+      FAIL: walked into for a second and a half, it gives 4.278 m
+HS2-11 [enemy.gd] a lightened enemy's knock not doubled
+    CAUGHT by "the same 8 m/s knock" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the same 8 m/s knock: the plain enemy takes 8.0 m/s and goes 0.31 m, the lightened one 8.0 m/s and 0.31 m (incoming impulse x2.0)
+HS2-12 [manipulable_body.gd] an anchored object not frozen
+    CAUGHT by "walked into for a second and a half" -- 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a 5 m/s impulse moves the plain crate 1.53 m; the anchored one, with a 3 kN push on top, 6.702 m
+      FAIL: a carried crate anchored is let go (["DROPPED · FIXED IN PLACE"]) and stays where it was (0.808 m)
+      FAIL: an impulse landed while anchored is not released when the anchor ends: thawed, the crate has moved 1.534 m
+      FAIL: anchored over lightened it is FIXED and frozen [false, 1.0, "fixed", false]; lightened over that it is thawed and LIGHT [false, false, "light"], and the same impulse moves it 1.96 m to a plain crate's 0.68
+      FAIL: anchored three metres up, it hangs there (y 1.21); when the Status ends it is thawed and falls (y 0.49)
+      FAIL: walked into for a second and a half, it gives 4.393 m
+HS2-13 [manipulable_body.gd] the anchor thaws a freeze it did not make
+    CAUGHT by "a bolted crate anchored and released is still frozen" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a bolted crate anchored and released is still frozen (the anchor thaws only what it froze)
+HS2-14 [manipulation.gd] a push moves an anchored body
+    CAUGHT by "so does a push" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the verbs refuse it (fixed), so does a push (), and the hands say 'FIXED IN PLACE'
+HS2-15 [hand_carry.gd] the hands pick up an anchored body
+    CAUGHT by "the hands say" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the verbs refuse it (fixed), so does a push (fixed), and the hands say 'CAN'T CARRY THAT'
+HS2-16 [hand_carry.gd] the hands keep a body anchored in them
+    CAUGHT by "a carried crate anchored is let go" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a carried crate anchored is let go ([]) and stays where it was (0.057 m)
+HS2-17 [affordance_nodes.gd] a launch pad fires an anchored player
+    CAUGHT by "a launch pad fires the free player" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a launch pad fires the free player (1) and not the anchored one (1), which stays 8.056 m from where it stood
+
+16 of 17 sabotages caught
+exit 1

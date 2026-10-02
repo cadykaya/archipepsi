@@ -1,0 +1,3 @@
+# the same tool on ce2852a + HB-F4e, the same compositions
+zone_010 [64b65729399d] room c001 package c001_pd0: per_run_latched [["plate_loaded"], ["plate_loaded"], ["plate_loaded"]]; latch plate >= 36.0000; solution ['push crate -0.0000 1.0000 0.7500', 'settle']; laid out in 496 ms
+zone_012 [06041737245b] room c001 package c001_pd0: per_run_latched [["plate_loaded"], ["plate_loaded"], ["plate_loaded"]]; latch plate >= 36.0000; solution ['push crate -0.0000 1.0000 0.7500', 'settle']; laid out in 256 ms

@@ -1,0 +1,314 @@
+# H-PRESSURE-R after: work tree on 5f348ab + the runtime half, 2026-09-24T23:37:25Z, godot 4.5.1 headless
+## make godot-latched-route
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- the latched route, played from the Zone's own arrival: the Zone as composed (PRESSURE_PLATE)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 23)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  ok: the verdict wait is over (REFUSED, no bridge) and the player is free to act (holds [])
+  ok: HELD: the verdict held the player 5.4 s at the arrival and nothing acted on them (100 hp of 100)
+  ok: and the room's guns could reach that spot: nearest 20.6 m, inside artillery's 8-34 m
+  ok: the declared graph built, nothing refused: []
+  ok: the edge 'e:c002:c003' resolves to a built doorway: c002/exit
+  ok: the declared PRESSURE_PLATE is BUILT AS A PLATE
+  ok: the shutter is bound to the edge that names it (e:c002:c003)
+  ok: its centre is the doorway's own centre ((-19.200001, 1.600000, 23.000000) vs door (-19.200001, 0.000000, 23.000000))
+  ok: it is turned to the socket's world yaw (-90.0 deg)
+  ok: and it is the opening's full size ((2.400000, 3.200000, 0.300000) for a 2.4 x 3.2 door)
+  ok: the plate is MEDIUM and counts the player, as saved
+  ok: the control is on this room's side of the door (2.4 m in)
+  ok: and the route starts shut, unlatched
+  ok: and the layout evidence reads c002/exit as an opening, gate and all (true)
+  ok: ARRIVE: from the Zone's own arrival (0.000000, -0.000000, 1.600855), through 2 connector leg(s), into c002 (23.2 m walked, 204 frames)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  ok: CLEAR: the arena is cleared with the base kit, no death: 5 of 5 down in 11.7 s, 27 shots / 25 landed; walked in 11.0 m for 0 hp, stood with every gun within 4.8 m (minimum range 8 m) for 0 hp
+  NOTE: the room's own fight cost 0 hp of 100 before the door was touched
+  ok: BLOCKED: walked up to the doorway (1.9 m from its face)
+  ok: without touching the control on the way
+  ok: pressed at it for 2.5 s and did not get through (0.55 m on this side)
+  ok: having reached the door itself, not stopped short (0.55 m)
+  ok: and what it is pressed against is the route shutter (Shutter_route_shutter)
+     GDScript backtrace (most recent call first):
+  ok: STEP ON: the player's own body satisfies the plate ({ "requires": "medium", "classes": ["medium"], "counts_player": true, "satisfied": true })
+  ok: the latch is set
+  ok: and announced once as a new decision (1)
+  ok: the real `latch_fired` went out: { "type": "latch_fired", "zone_id": "zone_001", "package_id": "graph_c002", "latch_id": "held" }
+  ok: and the shutter is commanded open
+  ok: STEP OFF: the body is out of the plate's sensing volume and the plate reads empty ({ "requires": "medium", "classes": [], "counts_player": true, "satisfied": false })
+  ok: the latch still holds
+  ok: the way opens fully with nobody on the plate (openness 1.00)
+  ok: and stepping off reported nothing new
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  ok: THROUGH: walked the doorway into c003 (7.1 m, ended (-24.816452, 0.000943, 22.989065))
+  ok: on the far side of the door plane (5.6 m past it)
+  ok: BACK: walked back through the doorway into c002
+  ok: the player never died: a respawn would have broken the continuous interaction (0.0 hp taken in total)
+  NOTE: latched route played (the Zone as composed (PRESSURE_PLATE)): arrival -> c002 -> plate -> away -> c003 -> back, 0.0 hp taken in total, 0 death(s)
+  -- the latched route, played from the Zone's own arrival: LEVER, D-07's permanent control
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 23)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  ok: the verdict wait is over (REFUSED, no bridge) and the player is free to act (holds [])
+  ok: HELD: the verdict held the player 5.4 s at the arrival and nothing acted on them (100 hp of 100)
+  ok: and the room's guns could reach that spot: nearest 20.6 m, inside artillery's 8-34 m
+  ok: the declared graph built, nothing refused: []
+  ok: the edge 'e:c002:c003' resolves to a built doorway: c002/exit
+  ok: the declared PULSE_BUTTON is BUILT AS A LEVER, a visibly permanent control
+  ok: the shutter is bound to the edge that names it (e:c002:c003)
+  ok: its centre is the doorway's own centre ((-19.200001, 1.600000, 23.000000) vs door (-19.200001, 0.000000, 23.000000))
+  ok: it is turned to the socket's world yaw (-90.0 deg)
+  ok: and it is the opening's full size ((2.400000, 3.200000, 0.300000) for a 2.4 x 3.2 door)
+  ok: it names what it does and what it sets: '[E] THROW BOLT -- OPENS THE SHUTTER', setting 'held'
+  ok: the control is on this room's side of the door (2.4 m in)
+  ok: and the route starts shut, unlatched
+  ok: and the layout evidence reads c002/exit as an opening, gate and all (true)
+     GDScript backtrace (most recent call first):
+  ok: ARRIVE: from the Zone's own arrival (0.000000, -0.000000, 1.600837), through 2 connector leg(s), into c002 (23.2 m walked, 204 frames)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  ok: CLEAR: the arena is cleared with the base kit, no death: 5 of 5 down in 11.7 s, 27 shots / 25 landed; walked in 11.0 m for 0 hp, stood with every gun within 4.8 m (minimum range 8 m) for 0 hp
+  NOTE: the room's own fight cost 0 hp of 100 before the door was touched
+  ok: BLOCKED: walked up to the doorway (1.8 m from its face)
+  ok: without touching the control on the way
+  ok: pressed at it for 2.5 s and did not get through (0.55 m on this side)
+  ok: having reached the door itself, not stopped short (0.55 m)
+  ok: and what it is pressed against is the route shutter (Shutter_route_shutter)
+     GDScript backtrace (most recent call first):
+  ok: THROW: the player's own interact pulls the lever (1 pull(s))
+  ok: the latch is set
+  ok: and announced once as a new decision (1)
+  ok: the real `latch_fired` went out: { "type": "latch_fired", "zone_id": "zone_001", "package_id": "graph_c002", "latch_id": "held" }
+  ok: and the shutter is commanded open
+  ok: the lever STAYS THROWN and says so: 'BOLT THROWN -- THE WAY IS OPEN' (arm 1.00)
+  ok: the latch still holds
+  ok: the way opens fully, with nobody at the lever (openness 1.00)
+  ok: and pulling it again does nothing: 1 pull(s), 1 report(s)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  ok: THROUGH: walked the doorway into c003 (7.1 m, ended (-24.814692, 0.000941, 23.010029))
+  ok: on the far side of the door plane (5.6 m past it)
+  ok: BACK: walked back through the doorway into c002
+  ok: the player never died: a respawn would have broken the continuous interaction (0.0 hp taken in total)
+  NOTE: latched route played (LEVER, D-07's permanent control): arrival -> c002 -> lever -> away -> c003 -> back, 0.0 hp taken in total, 0 death(s)
+  -- control: the latch removed, the route does not hold
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 23)
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+  ok: CONTROL: the arena is cleared the same way: 5 of 5 down in 11.7 s, 27 shots / 25 landed; walked in 11.0 m for 0 hp, stood with every gun within 4.8 m (minimum range 8 m) for 0 hp
+  ok: CONTROL: standing on the plate satisfies it
+  ok: CONTROL: and while the player stands there the way opens (openness 1.00)
+  ok: CONTROL: with nothing to hold it, stepping off shuts the way again (goal 0.00, openness 0.00)
+  ok: CONTROL: and the walk into c003 is stopped at the door (ended (-18.599081, 1.100943, 24.688370), 1.8 m from it, this side, 0 death(s))
+GODOT LATCHED ROUTE TESTS OK (73 checks, 4 notes)
+## make godot-signal-graph
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- a Zone declares the chain
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: nothing was refused: []
+  ok: it belongs to the room that asked
+  ok: the PRESSURE_PLATE is a real ClassPlate in the world
+  ok: and the actuator it drives is bound
+  ok: the plate is inside the room that declared it (at (0.000000, 0.060000, 21.000000))
+  ok: the graph has been evaluated (1 tick(s))
+  ok: an empty plate reads false
+  ok: and NOT of that is true -- c001: plate=false, inverted=true
+  ok: so the shutter it commands is open (1.00)
+  -- a HEAVY occupant drives it, both ways
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: a 200 kg crate is HEAVY (heavy)
+  ok: and it satisfies the plate
+  ok: the sensor change re-evaluated the graph (1 -> 2)
+  ok: NOT now reads false -- c001: plate=true, inverted=false
+  ok: and the shutter is shut (0.00)
+  ok: taking it off releases the plate
+  ok: and the shutter opens again (1.00)
+  -- the player does not count
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: the player is inside the plate's own sensing volume (player (0.000000, 0.120508, 21.000000), plate (0.000000, 0.060000, 21.000000))
+  ok: and the plate counts no occupants (0)
+  ok: so it is not satisfied
+  ok: the shutter stays open (1.00)
+  -- lightened releases a class plate, at the same mass
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: the crate is MEDIUM now (medium)
+  ok: and it weighs exactly what it weighed (200.0 kg)
+  ok: the plate releases -- it reads a class, not kilograms
+  ok: and the chain opens the shutter (1.00)
+  -- AND is named by the design and has no runtime
+     GDScript backtrace (most recent call first):
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: one refusal (["room \'c001\': node \'AND\' is named by §19.2 and no runtime implements it; supported today: [\"NOT\", \"LATCH\", \"OR\", \"TIMER\"]"])
+  ok: and it reads as a gap rather than a typo: 'room 'c001': node 'AND' is named by §19.2 and no runtime implements it; supported today: ["NOT", "LATCH", "OR", "TIMER"]'
+  ok: no graph was built
+  ok: and no half of the chain was left standing (0)
+  -- NAND is not one of the eleven
+     GDScript backtrace (most recent call first):
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: the refusal names the vocabulary: 'room 'c001': 'NAND' is not one of §19.2's eleven node types'
+  ok: and does NOT call it a missing runtime
+  -- LEVER is a sensor with no runtime
+     GDScript backtrace (most recent call first):
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: a named sensor with no runtime is a gap too: 'room 'c001': sensor 'LEVER' is named by §20 and no runtime implements it; supported today: ["PRESSURE_PLATE", "PULSE_BUTTON", "SHOOTABLE_TARGET"]'
+  -- a graph in a room that is not there
+     GDScript backtrace (most recent call first):
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: the refusal names the room: 'a signal graph names room 'c009', which this Zone did not build'
+  ok: and nothing was built
+  -- LATCH: set once, held after, restored on rebuild
+  ok: an unset latch with a false input reads false
+  ok: a true input sets it
+  ok: and it says so ONCE (["held"])
+  ok: under a package of its own, not the bare room id (["graph_c001"])
+  ok: and it HOLDS when the input goes away -- which is what lets one action open a way and then walk through it
+  ok: it does not re-announce itself every tick (1)
+  ok: a fresh graph starts unlatched
+  ok: one latch is restored; the bare-room ref and the stranger are ignored (1)
+  ok: the decision comes back with the Zone, with the plate clear and nothing standing on it
+  ok: and putting it back is NOT announced as a new decision
+  -- a declared LATCH chain builds
+  ok: the schema admits LATCH (["NOT", "LATCH", "OR", "TIMER"])
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: nothing was refused: []
+  ok: and the graph carries the latch
+  -- two occupants: a class is not a sum; one off is not both
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_signal mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 1)
+     GDScript backtrace (most recent call first):
+  ok: two MEDIUM bodies, 200 kg together against HEAVY's 120 kg floor: the plate is not satisfied, NOT is still true and the shutter open -- { "requires": "heavy", "classes": ["medium", "medium"], "counts_player": false, "satisfied": false }
+  ok: the debris is off the plate
+  ok: two HEAVY bodies on the plate: { "requires": "heavy", "classes": ["heavy", "heavy"], "counts_player": false, "satisfied": true }
+  ok: and the shutter is shut
+  ok: one taken off: the plate never changed its answer ([]), NOT is still false and the shutter still shut -- c001: plate=true, inverted=false
+  ok: the last one off releases the plate, once ([false]), and the shutter opens
+  -- a lever outlives its graph; the next graph hears it once
+  ok: a started graph wired the lever once
+  ok: the freed graph left nothing wired to the lever
+  ok: its replacement, started twice, is wired once
+  ok: one pull: the LATCH set and fired once (["held"])
+  ok: a second pull fires nothing more, and on the next tick the pulse is gone while the latch holds
+  -- a declared sensor binds only a machine of its own kind
+   GDScript backtrace (most recent call first):
+  ok: a lever under the declared target's id is left unbound; the lever under the lever's id binds
+  ok: a receiver binds as the target, and the TIMER keeps its 8 s
+  -- the bridge admits only what the builder can place
+  ok: every kind the bridge admits into a Zone, the builder can place (admitted ["PRESSURE_PLATE"], placeable ["PRESSURE_PLATE", "PULSE_BUTTON"], missing [])
+  ok: the builder can place a lever (D-07's permanent control) whether or not the bridge admits one yet
+GODOT SIGNAL GRAPH TESTS OK (61 checks, 0 notes)

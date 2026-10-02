@@ -1,0 +1,12 @@
+# c023/scuttler#1's first frames, and the floor slab it goes through.
+# Filtered: 88 lines of per-build 'p3a:' selection census and engine WARNING/backtrace lines (the offline bridge's dropped intents) removed.
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+DROP build 0: c023/scuttler#1 from (20.336252, 36.670002, 213.376251)
+    f0 (20.340000, 36.669998, 213.379990) v=(0.000000, 0.000000, 0.000000) floor=false job= hits=[]
+    f1 (20.590000, 35.349998, 213.429993) v=(0.000000, -0.400000, 0.000000) floor=false job=patrol hits=["@StaticBody3D@4195 parent=@MeshInstance3D@4193 at (22.500000, 36.219997, 209.769989) box (17.000000, 0.500000, 10.200000)", "@StaticBody3D@4195 parent=@MeshInstance3D@4193 at (22.500000, 36.219997, 209.769989) box (17.000000, 0.500000, 10.200000)"]
+BUILD 0 done
+DROP build 1: c023/scuttler#1 from (20.336252, 36.670002, 213.376251)
+    f0 (20.340000, 36.669998, 213.379990) v=(0.000000, 0.000000, 0.000000) floor=false job= hits=[]
+    f1 (20.469999, 35.349998, 213.399994) v=(0.000000, -0.400000, 0.000000) floor=false job=patrol hits=["@StaticBody3D@8919 parent=@MeshInstance3D@8917 at (22.500000, 36.219997, 209.769989) box (17.000000, 0.500000, 10.200000)", "@StaticBody3D@8919 parent=@MeshInstance3D@8917 at (22.500000, 36.219997, 209.769989) box (17.000000, 0.500000, 10.200000)"]
+BUILD 1 done

@@ -1,0 +1,18 @@
+# layout walk on wt-bombs at 7c46af4 (HB-F4a) + HB-F4e, 08:47 UTC
+zone_001 [e2dd51ae74e3]: ACCEPTED (294 ms, layout_state ACCEPTED), 15 Checks
+zone_002 [83cab638c71e]: ACCEPTED (357 ms, layout_state ACCEPTED), 15 Checks
+zone_003 [86832f692325]: ACCEPTED (312 ms, layout_state ACCEPTED), 15 Checks
+zone_004 [d2bf871d5f29]: ACCEPTED (1371 ms, layout_state ACCEPTED), 15 Checks
+zone_005 [84d01f563879]: ACCEPTED (180 ms, layout_state ACCEPTED), 4 Checks
+zone_006 [dcb604e77b35]: ACCEPTED (259 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100140, 89100161, 89100308, 89100392, 89100413]
+zone_007 [e259250fea63]: ACCEPTED (294 ms, layout_state ACCEPTED), 15 Checks
+zone_008 [1e2f761b817e]: BUILD FAILED (1919 ms): room 'c016' could not be placed clear of the 58 room(s) before it
+zone_008 [1e2f761b817e]: BUILD FAILED (1947 ms): room 'c016' could not be placed clear of the 58 room(s) before it
+zone_008 [1e2f761b817e]: BUILD FAILED (1838 ms): room 'c016' could not be placed clear of the 58 room(s) before it
+zone_008: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_009 [ba61ac8a9287]: ACCEPTED (346 ms, layout_state ACCEPTED), 15 Checks
+zone_010 [a2eac4f78c9f]: ACCEPTED (1071 ms, layout_state ACCEPTED), 15 Checks
+zone_011 [ab1da679c970]: ACCEPTED (283 ms, layout_state ACCEPTED), 15 Checks
+zone_012 [ce1163f5a49d]: ACCEPTED (331 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100224]
+FIRST BOMB BAG: ('zone_006', [89100140, 89100161, 89100308, 89100392, 89100413])
+exit 0

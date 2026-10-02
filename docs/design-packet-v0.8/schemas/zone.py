@@ -24,14 +24,30 @@ try:  # works standalone and when copied into a package
     from . import constants as C
     from . import mechanics as M
     from .graph import (
-        EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
-        ZoneKeySpec)
+        EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
+        TopologyEdge, ZoneKeySpec)
+    from .physics import (
+        CARRY_MASS_KG, MASS_CLASSES, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
+        carriable_by_hand, mass_class, plate_accepts_player,
+        refuse_reserved_package_id, state_vector_product)
+    from .signal_graph import (RoomGraph, phases, upstream,
+                               ROUTE_NODE_KINDS, ROUTE_SENSOR_KINDS,
+                               ZONE_PLACEABLE_SENSOR_KINDS)
+    from .featured import FEATURED_REQUIREMENTS
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
     from graph import (
-        EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
-        ZoneKeySpec)
+        EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
+        TopologyEdge, ZoneKeySpec)
+    from physics import (
+        CARRY_MASS_KG, MASS_CLASSES, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
+        carriable_by_hand, mass_class, plate_accepts_player,
+        refuse_reserved_package_id, state_vector_product)
+    from signal_graph import (RoomGraph, phases, upstream,
+                              ROUTE_NODE_KINDS, ROUTE_SENSOR_KINDS,
+                              ZONE_PLACEABLE_SENSOR_KINDS)
+    from featured import FEATURED_REQUIREMENTS
 
 #: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
@@ -100,7 +116,13 @@ Theme = Literal[
     "concrete_facility", "rusted_industrial", "neon_transit",
     "gothic_stone", "temple_ruin", "void_glitch",
 ]
-Archetype = Literal["melee", "ranged", "brute"]
+#: DERIVED, not transcribed. This was a fourth hand-written list of the
+#: same fact -- `ENEMY_STATS`, `ENEMY_ENVELOPES`, `ENEMY_ARCHETYPES` and
+#: this one -- and it is what refused every new role at the Zone
+#: boundary after the roster landed: the engine could spawn a drifter,
+#: the value table could score one, and a Zone naming one would not
+#: validate. `Literal[*tuple]` keeps it in step with no maintenance.
+Archetype = Literal[tuple(C.ENEMY_ARCHETYPES)]  # type: ignore[valid-type]
 
 _ID = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
 _ECHO_ID = Annotated[str, Field(max_length=32, pattern=r"^echo_\d+$")]
@@ -483,8 +505,17 @@ class ChamberBase(Strict):
         A room's door degree is its JOINED degree. A dead end with one
         door and one plug has door degree 1 — the plug consumes no
         socket.
+
+        COUNTED BY THE EDGE, not by the hole. This read `usage !=
+        "SEALED"`, which was the same number while every passable door
+        carried an edge. `ZONE_EXIT` is passable and carries none — the
+        room on its far side is the engine's appended exit room, which
+        is in no `edges` list — so counting holes made the last room on
+        every chain read as degree 2 and stopped this being a statement
+        about the graph at all. `USED` and `LOCKED` always name an edge
+        and `SEALED` never does, so nothing else moves.
         """
-        return sum(1 for d in self.doors if d.usage != "SEALED")
+        return sum(1 for d in self.doors if d.edge_id is not None)
 
     #: CAMPAIGN_SCALE.md 7: a complex room may carry more than one Check.
     #:
@@ -580,6 +611,20 @@ class ChamberBase(Strict):
             width = getattr(self, "side", None)
         if width is None:
             return self
+        # AND THE OTHER AXIS, which this rule never had.
+        # `AffordanceFeatures.fits` asks about width AND depth, and only
+        # the width half was written down -- so a `powered_door`, which
+        # reaches 3.5 m along the run and needs 11.0 m of room, could be
+        # declared on an 8.6 m corridor, pass here, and be DROPPED by the
+        # builder. The engine then offers no certified package and
+        # `layout.validate` refuses the Zone for a chain that was
+        # declared and never built. Absent depth is not checked: a room
+        # model that does not state one is not being asked to.
+        depth = getattr(self, "length", None)
+        if depth is None:
+            depth = getattr(self, "depth", None)
+        if depth is None:
+            depth = getattr(self, "side", None)
         for feature in self.features:
             needed = C.FEATURE_MIN_WIDTH.get(
                 feature.tag, C.MIN_FEATURE_CHAMBER_WIDTH)
@@ -589,6 +634,35 @@ class ChamberBase(Strict):
                     f"a '{feature.tag}', which needs {needed}m to sit clear "
                     "of the walking lane on both sides (ECHOES.md 13.2); "
                     "widen the room or offer a smaller feature"
+                )
+            if depth is None:
+                continue
+            # A SIDE DOORWAY IS CUT WHERE THE LANE RULE PUSHES A FEATURE.
+            # `side_left` and `side_right` are declared at the middle of
+            # the side wall, which is exactly where a feature pushed out
+            # of the walking lane ends up -- so the run it needs is the
+            # one that fits WHOLLY to one side of that opening. Measured
+            # on `zone_02`'s `c013` and `zone_04`'s `c009`, both refused
+            # on aperture polarity for their own `powered_door` leaf
+            # standing in a door the composer declared USED.
+            beside = any(
+                d.socket_id in C.SIDE_SOCKETS and d.usage != "SEALED"
+                for d in getattr(self, "doors", ()) or ())
+            along = (
+                C.FEATURE_MIN_DEPTH_BESIDE_DOOR.get(
+                    feature.tag, C.MIN_FEATURE_CHAMBER_DEPTH_BESIDE_DOOR)
+                if beside else
+                C.FEATURE_MIN_DEPTH.get(
+                    feature.tag, C.MIN_FEATURE_CHAMBER_DEPTH))
+            if depth < along:
+                raise ValueError(
+                    f"chamber '{self.id}' is {depth}m long and carries "
+                    f"a '{feature.tag}', which needs {along}m to clear "
+                    + ("both thresholds and the side doorway cut into "
+                       "the middle of its wall" if beside else
+                       "both thresholds along the run")
+                    + " (ECHOES.md 13.2); lengthen the room or offer a "
+                    "shorter feature"
                 )
         return self
 
@@ -767,6 +841,661 @@ Chamber = Annotated[
 ]
 
 
+class FeaturedAcquisition(Strict):
+    """D-1. The capability this Zone is built to hand the player, and the
+    Check that hands it over.
+
+    **This is a binding, not a subsystem.** Every part it joins already
+    existed: AP allocates the location, `append_interpretation` folds the
+    confirmed item into an Echo, `owned_capabilities` reads the fold, and
+    `capability_guarantee` case C takes an `established_earlier` set that
+    had no producer. This names which capability a Zone establishes so
+    that set can be produced, and `established_in_zone` below produces it.
+
+    **The foreign item is untouched.** Nothing here replaces, consumes or
+    rewrites what Archipelago delivers: `EchoInterpretation` keeps
+    `source_item_name`, `source_game` and `source_recipient_name`
+    verbatim, and this only says which location the Zone is counting on.
+    """
+    #: What the player can DO afterwards. Same vocabulary an activity
+    #: asks for, so a Zone cannot feature something no activity can want.
+    capability: ActivityCapability
+    #: The allocated Check that grants it. Must be one AP actually gave
+    #: this Zone -- that is what makes the promise match a pre-seed
+    #: guarantee rather than a local wish.
+    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)
+    #: The room carrying that Check.
+    room_id: str = _ID
+
+
+def established_in_zone(zone) -> tuple[str, ...]:
+    """D-2. The producer `capability_guarantee` case C never had.
+
+    `mechanics.capability_guarantee` takes `established_earlier` and its
+    own comment records that nothing produced that set, so case C could
+    not fire and a Zone could never prove "you will have it because you
+    get it here". This is that set, and it is deliberately narrow: a Zone
+    establishes exactly what it features, never what it merely contains.
+    """
+    featured = getattr(zone, "featured_acquisition", None)
+    return () if featured is None else (featured.capability,)
+
+
+class RailDock(Strict):
+    """A place the carrier can be parked, in a room that exists."""
+    dock_id: str = _ID
+    #: THE ZONE'S OWN ROOM-ID CONSTRAINT, not a looser one. Left as a
+    #: free `max_length=64` string this is a field Epsilon can fill with
+    #: anything, which `test_epsilon_vocabulary` refuses -- correctly:
+    #: a room id that resolves to nothing is a dock nobody can reach.
+    room_id: str = _ID
+
+
+#: D-6 (proposed 2026-09-25, confirmed by Prod's N-14): where a span's
+#: control stands, and what operating it therefore needs. `ground` is
+#: today's lever at the control room's arrival, base kit. `gantry` is the
+#: development scenario's deck -- its top 2.9 m and its hookshot plate 6.2 m
+#: above the floor it is grappled from (Prod's N-16 corrects N-14's 3.1
+#: and 7.2, which were from the scenario's ground),
+#: no stairs and no mantle by the owner's rule -- reached only by the
+#: proven anchor grapple, so it needs `grapple`: DESS-26's contract,
+#: derived from the placement and never declared beside it.
+CONTROL_PLACEMENT_CAPABILITY: dict[str, str | None] = {
+    "ground": None,
+    "gantry": "grapple",
+}
+
+#: N-14/N-16: the gantry's build needs 6.8 m of height, so its room is an
+#: arena at the top of the procedural range, at least this tall. (Its clear
+#: floor for the deck and the approach is measured by the engine, which
+#: refuses a room without it by name, and chosen by the composer.)
+GANTRY_MIN_WALL_HEIGHT = C.PROCEDURAL_ARENA_MAX_HEIGHT
+
+
+class RailSpan(Strict):
+    """One link between two docks, and the control that commissions it.
+
+    `latch_id` is the persistence handle: a commissioned span is the
+    repair that survives leaving and coming back, and it is recorded
+    through the same latch machinery a physics package already uses.
+    """
+    span_id: str = _ID
+    from_dock: str = _ID
+    to_dock: str = _ID
+    #: The room holding the alignment control that commissions this span.
+    #: `None` means the span ships commissioned and needs no control.
+    control_room_id: str | None = Field(
+        default=None, min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
+    latch_id: str = _ID
+    #: Whether the player must cross this span to finish the Zone. THE
+    #: REASON THIS IS NOT A FEATURE: §13.2 would forbid exactly this.
+    mandatory: bool = False
+    #: D-6: `ground` (the default, and every span declared before it) or
+    #: `gantry`. What operating it needs is `CONTROL_PLACEMENT_CAPABILITY`.
+    control_placement: Literal["ground", "gantry"] = "ground"
+
+    @model_validator(mode="after")
+    def _a_span_joins_two_different_docks(self):
+        if self.from_dock == self.to_dock:
+            raise ValueError(
+                f"span '{self.span_id}' leaves and arrives at "
+                f"'{self.from_dock}'")
+        return self
+
+    @model_validator(mode="after")
+    def _a_gantry_is_a_control_somewhere(self):
+        if self.control_placement == "gantry" and self.control_room_id is None:
+            raise ValueError(
+                f"span '{self.span_id}' puts its control on a gantry and "
+                "names no room for it; a span with no control ships "
+                "commissioned, and there is nothing to put on a gantry")
+        return self
+
+
+class RailNetwork(Strict):
+    """The docks and spans of one railway inside one Zone.
+
+    **`docks` is the ROUTE ORDER, not a collection** -- F-22 question 2.
+    The engine reads the declaration order as the carrier's route order
+    because it is the only ordering available, and nothing in the schema
+    said so. It says so here, and `_a_span_joins_docks_the_route_visits
+    _in_turn` below is defined against it: without a stated order,
+    "consecutive" would not mean anything.
+    """
+    network_id: str = _ID
+    docks: tuple[RailDock, ...] = Field(min_length=2, max_length=8)
+    spans: tuple[RailSpan, ...] = Field(min_length=1, max_length=8)
+    #: Where the carrier parks. `None` means the first dock, which is
+    #: exactly what `RailJunction.park` already does -- F-22 question 3
+    #: turns an engine assumption about a Zone's intent into a Zone's
+    #: declaration, and keeps the behaviour it was assuming.
+    home_dock: str | None = Field(
+        default=None, min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
+
+    @model_validator(mode="after")
+    def _every_span_joins_docks_this_network_declares(self):
+        # DESS-21: a span latch persists as `network_id/latch_id`, the
+        # same space room-graph and minor latches use. A network named
+        # into their reserved namespaces would have its span latches
+        # read as theirs, so it is refused as a physics package is.
+        refuse_reserved_package_id(self.network_id, what="rail network")
+        known = {d.dock_id for d in self.docks}
+        if len(known) != len(self.docks):
+            raise ValueError(f"network '{self.network_id}' repeats a dock id")
+        for span in self.spans:
+            missing = {span.from_dock, span.to_dock} - known
+            if missing:
+                raise ValueError(
+                    f"span '{span.span_id}' names dock(s) "
+                    f"{sorted(missing)} that network "
+                    f"'{self.network_id}' does not declare")
+        ids = [s.span_id for s in self.spans]
+        if len(set(ids)) != len(ids):
+            raise ValueError(f"network '{self.network_id}' repeats a span id")
+        latches = [s.latch_id for s in self.spans]
+        if len(set(latches)) != len(latches):
+            raise ValueError(
+                f"network '{self.network_id}' reuses a latch id; a latch is "
+                "the handle a commissioned span persists under and two spans "
+                "sharing one cannot be told apart on reload")
+        if self.home_dock is not None and self.home_dock not in known:
+            raise ValueError(
+                f"network '{self.network_id}' parks at dock "
+                f"'{self.home_dock}', which it does not declare")
+        return self
+
+    @model_validator(mode="after")
+    def _a_span_joins_docks_the_route_visits_in_turn(self):
+        """F-22 question 1, answered YES -- and the reason matters.
+
+        The schema described a GRAPH: any two of up to eight docks.
+        `RailCarrier` runs ONE ORDERED ROUTE, a link between each
+        consecutive pair, so a span from the first dock to the third has
+        no link to commission. The engine refuses it by name rather than
+        routing through the dock in between, which would be the engine
+        deciding what the Zone meant.
+
+        **A schema that can express what no runtime can build hands the
+        engine a decision it must not make.** So the restriction belongs
+        here, where a Zone is refused before it is ever composed, and
+        the engine's refusal becomes unreachable from a validated Zone
+        while staying in place for a hand-built one.
+
+        **THIS DESCRIBES THE IMPLEMENTATION, NOT THE DESIGN** (owner
+        correction 3, 2026-09-22). It is an accurate statement of what
+        `RailCarrier` runs today -- one ordered route, a link between
+        each consecutive pair -- and it **does not retire branching or
+        switchable railway configurations from the accepted design**.
+        They remain accepted and unbuilt, which is a scoping fact rather
+        than a decision against them.
+
+        Two things make that distinction easy to lose, so both are
+        written down. `RailJunction` is **not a track fork**: it is one
+        railway's persistent machinery and the seam keeping four
+        lifetimes apart, so a Zone naming a "junction" today is naming a
+        control point, not a branch. And relaxing this rule later
+        invalidates no Zone that ever satisfied it, which is why YES is
+        the answer that can be taken back while NO would have left
+        unbuildable Zones composable in the meantime.
+
+        What Blindside's selected configuration needs is already served:
+        S1-S2-S3 is a linear three-dock route, and its acquisition
+        branch is **walked, not ridden** (`railway_scenario._branch`).
+        `docs/ledgers/HUGE_BATCH_LEDGER.md` DESS-01 lists the support a
+        branching or switchable configuration would still require.
+        """
+        order = [d.dock_id for d in self.docks]
+        at = {dock_id: i for i, dock_id in enumerate(order)}
+        seen_pairs: dict[tuple[str, str], str] = {}
+        for span in self.spans:
+            if span.from_dock not in at or span.to_dock not in at:
+                continue         # already refused above, by name
+            step = abs(at[span.from_dock] - at[span.to_dock])
+            if step != 1:
+                between = order[
+                    min(at[span.from_dock], at[span.to_dock]) + 1:
+                    max(at[span.from_dock], at[span.to_dock])]
+                raise ValueError(
+                    f"span '{span.span_id}' joins '{span.from_dock}' and "
+                    f"'{span.to_dock}', which the route visits {step} docks "
+                    f"apart with {sorted(between)} in between; the carrier "
+                    "runs one ordered route with a link between each "
+                    "consecutive pair, so this span has no link to "
+                    "commission")
+            pair = (span.from_dock, span.to_dock) if (
+                at[span.from_dock] < at[span.to_dock]) else (
+                span.to_dock, span.from_dock)
+            if pair in seen_pairs:
+                raise ValueError(
+                    f"spans '{seen_pairs[pair]}' and '{span.span_id}' both "
+                    f"join '{pair[0]}' and '{pair[1]}'; consecutive docks "
+                    "have ONE link between them, so the second span has no "
+                    "link of its own to commission")
+            seen_pairs[pair] = span.span_id
+        return self
+
+
+#: One state name of a Zone-state variable. Same charset as every other
+#: id here, for the same reason: a free string is a field Epsilon can
+#: fill with anything.
+_STATE_NAME = Annotated[str, Field(min_length=1, max_length=24,
+                                   pattern=r"^[a-z0-9_]+$")]
+
+#: A room id as a tuple ELEMENT. `_ID` is a `Field`, which annotates a
+#: model attribute; a tuple's element type needs the `Annotated` form.
+_ROOM_ID = Annotated[str, Field(min_length=1, max_length=24,
+                                pattern=r"^[a-z0-9_]+$")]
+
+
+class ZoneStateSetter(Strict):
+    """Where the player performs the interaction, and what it may select.
+
+    D-8 §4, answering Prod's §3 question 2. §19.7 is explicit that the
+    crossing happens because **the player performs a setter package's
+    interaction** -- so a setter has a room, and that room is the one
+    the player has to be standing in.
+    """
+    room_id: str = _ID
+    #: Which states this control can choose. A subset of the variable's
+    #: `states`, and the field §4.0's lifetime rule is checked against.
+    selects: tuple[_STATE_NAME, ...] = Field(min_length=1, max_length=4)
+    #: What OPERATING this control requires, over and above standing in
+    #: its room. `None` means reaching the room is enough.
+    #:
+    #: **OWNER CORRECTION 2, 2026-09-22, and it was a real defect.**
+    #: The search granted a setter to anyone who could reach its room,
+    #: so Blindside's overhead gantry -- a control at 4.6 m with no
+    #: mantle and no stairs -- became operable in logic the moment the
+    #: player walked in underneath it, grapple or no grapple. Room
+    #: membership is not operability, and a search that assumes it is
+    #: over-approximates in the player's favour, which is the direction
+    #: nothing ever fails in.
+    #:
+    #: **What this field is and is not.** It is the DECLARATION of what
+    #: operating the control costs, and `reachability` honours it. It is
+    #: NOT evidence that the control really is out of reach: that the
+    #: gantry's deck tops out 2.9 m up and the played jump at 1.40 m is
+    #: a physical measurement, and it belongs to the engine lane. The
+    #: two are kept apart deliberately -- a declaration the world does
+    #: not match is a lie in either direction.
+    capability: Capability | None = None
+
+
+class ZoneStateReader(Strict):
+    """A room whose local mechanism responds to the variable.
+
+    D-8 §4, answering Prod's §3 question 3. **The reader names the
+    variable and never the setter's node**, which is what makes the
+    stale reference the owner warned about impossible to write rather
+    than merely discouraged -- see `Zone._a_reader_is_somewhere_else`.
+    """
+    room_id: str = _ID
+    #: The local mechanism this variable drives, in that room. Room-layer
+    #: per §19.7: the Zone state is read, the mechanism is local.
+    mechanism: str = _ID
+    #: The states in which the mechanism is driven.
+    when: tuple[_STATE_NAME, ...] = Field(min_length=1, max_length=4)
+
+
+class ZoneStateVariable(Strict):
+    """One declared cross-room relationship: `ZoneState.macro`, named.
+
+    The bridge has budgeted macro variables since `physics.py` was
+    written -- `state_vector_product` multiplies a tuple of state counts
+    against §4.10's bound -- and has never been able to NAME one. This
+    is the declaration that arithmetic was waiting for.
+
+    **The three-step crossing, as data** (D-8 §2, from §19.7): a player
+    interaction in `setter.room_id` writes `variable_id`, and each
+    reader's room graph reads it. Rooms never address each other at any
+    step, which is why the forbidden global signal bus is not ruled out
+    by a rule here -- it is unrepresentable.
+    """
+    variable_id: str = _ID
+    #: 2 to 4, exactly §4.10's per-variable range as `state_vector_product`
+    #: already assumes.
+    states: tuple[_STATE_NAME, ...] = Field(min_length=2, max_length=4)
+    initial: _STATE_NAME
+    #: §4.0. NOT a label beside the declaration -- a claim about it, which
+    #: `_the_lifetime_agrees_with_what_the_setter_can_do` checks.
+    lifetime: Literal["reversible", "permanent"]
+    setter: ZoneStateSetter
+    readers: tuple[ZoneStateReader, ...] = Field(min_length=1, max_length=4)
+    #: `RailSpan.mandatory`'s question, in its own words and for its own
+    #: reason: §13.2 forbids a feature from lying on the mandatory path,
+    #: so a mandatory cross-room relationship cannot be a `feature:` tag
+    #: either. Hence first class, exactly as the railway is.
+    mandatory: bool = False
+
+    @model_validator(mode="after")
+    def _states_are_distinct_and_contain_everything_named(self):
+        if len(set(self.states)) != len(self.states):
+            raise ValueError(
+                f"variable '{self.variable_id}' repeats a state name; two "
+                "states spelled the same cannot be told apart")
+        known = set(self.states)
+        if self.initial not in known:
+            raise ValueError(
+                f"variable '{self.variable_id}' starts in '{self.initial}', "
+                f"which is not one of its states {sorted(known)}")
+        stray = set(self.setter.selects) - known
+        if stray:
+            raise ValueError(
+                f"variable '{self.variable_id}' has a setter selecting "
+                f"{sorted(stray)}, which it does not declare")
+        for r in self.readers:
+            stray = set(r.when) - known
+            if stray:
+                raise ValueError(
+                    f"variable '{self.variable_id}' has a reader in room "
+                    f"'{r.room_id}' responding to {sorted(stray)}, which it "
+                    "does not declare")
+        return self
+
+    @model_validator(mode="after")
+    def _the_lifetime_agrees_with_what_the_setter_can_do(self):
+        """D-8 §4.0 -- the rule that makes the silent latch unwritable.
+
+        The clarification says: do not silently replace a live
+        requirement with a permanent latch. A label saying `reversible`
+        beside a setter that can only ever move one way IS that
+        replacement, and nothing but a reviewer's attention would have
+        caught it. So lifetime is proven from the declaration:
+
+        - `permanent`  -- exactly one selectable state, and not the
+          initial one. Monotone by construction, which is §5.5's latch
+          DERIVED rather than asserted.
+        - `reversible` -- the initial state is selectable, and at least
+          one other, so a reversal OPERATION exists.
+
+        **OWNER CORRECTION 2: an operation existing is not a reversal
+        the player can reach.** An earlier revision of this docstring
+        said "the player can always put it back, so a reversible
+        variable cannot strand you". That is false and it was the
+        dangerous direction of false. `selects` says the control CAN
+        choose the initial state; whether the player can get back to
+        that control and operate it is a question about the route and
+        about `setter.capability`, and it is answered by
+        `topology.reachability` -- which is why R-subset-E still has to
+        run over the macro component instead of being argued away by
+        this field.
+        """
+        selects = set(self.setter.selects)
+        if self.lifetime == "permanent":
+            if len(selects) != 1 or self.initial in selects:
+                raise ValueError(
+                    f"variable '{self.variable_id}' is declared permanent, "
+                    f"but its setter selects {sorted(selects)}; a permanent "
+                    "variable is monotone, so its setter chooses exactly one "
+                    f"state and it is not the initial '{self.initial}'")
+        else:
+            if self.initial not in selects or len(selects) < 2:
+                raise ValueError(
+                    f"variable '{self.variable_id}' is declared reversible, "
+                    f"but its setter selects {sorted(selects)} and cannot "
+                    f"return it to '{self.initial}'; that is a permanent "
+                    "variable wearing a reversible label, which is exactly "
+                    "the silent latch this rule exists to refuse")
+        return self
+
+    @model_validator(mode="after")
+    def _at_least_one_reader_is_somewhere_else(self):
+        """What makes the relationship CROSS-room rather than merely declared.
+
+        **OWNER CORRECTION 4, 2026-09-22.** The first cut of this rule
+        refused *any* reader in the setter's room, which turned an
+        acceptance-case requirement into a global content restriction:
+        *"a cross-room relationship must demonstrate a remote
+        consequence, but that does not require banning additional
+        readers in its source room."*
+
+        What must hold is the claim the declaration actually makes: a
+        remote consequence EXISTS, so at least one reader is somewhere
+        else. A lever that also drives something where the player is
+        standing -- a local indicator, a hatch beside it, the gantry's
+        own cradle -- is ordinary content, and it is the LEGIBLE kind: a
+        control whose only visible effect is in a room you cannot see is
+        worse to play, not better.
+
+        *Both lanes wrote this rule independently and identically; the
+        prose and the message below are the better halves of the two.*
+        """
+        if all(r.room_id == self.setter.room_id for r in self.readers):
+            raise ValueError(
+                f"variable '{self.variable_id}' has every reader in its "
+                f"setter's room '{self.setter.room_id}'; that is a "
+                "room-local mechanism with Zone-scope machinery wrapped "
+                "around it, not a cross-room relationship. At least one "
+                "reader must be somewhere else; others may be here")
+        seen: set[tuple[str, str]] = set()
+        for r in self.readers:
+            if (r.room_id, r.mechanism) in seen:
+                raise ValueError(
+                    f"variable '{self.variable_id}' drives mechanism "
+                    f"'{r.mechanism}' in room '{r.room_id}' twice")
+            seen.add((r.room_id, r.mechanism))
+        return self
+
+
+#: The two ways an object crosses a room boundary. **Both are real
+#: design; only one is built.** §10.3 hand carry is the first
+#: `TransportedObject` slice. §29's qualified manipulation -- a push or
+#: a pull by a host at the provider envelope -- is what §10.3 means when
+#: it says an object over the line "is manipulable only": a DIFFERENT
+#: way of moving the thing, not a statement that the thing may not move.
+TransportMode = Literal["hand_carried", "manipulated"]
+
+#: What a Zone may declare today.
+#:
+#: `manipulated` is named above rather than left out, because leaving it
+#: out would make heavier cross-room transport look forbidden by the
+#: 60 kg pickup rule. It is not. It is UNFINISHED, and
+#: `refuse_unsupported_transport` says exactly what is missing rather
+#: than refusing it as though it were a design error.
+SUPPORTED_TRANSPORT_MODES: tuple[str, ...] = ("hand_carried",)
+
+#: What `manipulated` is waiting on, stated once so the refusal and the
+#: ledger cannot drift apart.
+_MANIPULATED_NEEDS = (
+    "route validation that knows the object needs "
+    "`capability:core:manipulate` at §29.3.2's envelope -- `topology.py` "
+    "does not read `transported_objects` at all today, so a required "
+    "manipulated object would gate the mandatory path on a capability no "
+    "reachability search has been told about",
+    "the physical runtime that pushes or pulls it across a boundary "
+    "(P16.2, engine lane)",
+    "a doorway-clearance check on the object's own footprint -- a pushed "
+    "crate has to fit the door, and nothing measures that yet",
+)
+
+
+def refuse_unsupported_transport(mode: str) -> None:
+    """A named way of moving an object with no runtime is refused, not
+    offered -- and is not confused with an error.
+
+    Same two answers as `refuse_unsupported_node`: a mode the design
+    does not name is a typo (pydantic's `Literal` answers that one), and
+    a mode it names that nothing implements is a gap. One message for
+    both is how a gap starts reading as a prohibition.
+    """
+    if mode in SUPPORTED_TRANSPORT_MODES:
+        return
+    needs = "; ".join(f"({i}) {n}" for i, n in enumerate(_MANIPULATED_NEEDS, 1))
+    raise ValueError(
+        f"transport mode '{mode}' is real design and is UNFINISHED, not "
+        f"forbidden. §10.3's {CARRY_MASS_KG:g} kg line governs ordinary "
+        "pickup and says nothing against moving something heavier between "
+        f"rooms -- it names this as the way to do it. Missing: {needs}. "
+        f"Supported today: {sorted(SUPPORTED_TRANSPORT_MODES)}.")
+
+
+class TransportedObject(Strict):
+    """P16 / D-8 lifetime 5. An object the player carries between rooms.
+
+    **Neither macro state nor a latch**, which is why §19.7 does not
+    cover it: rooms may not write macro state, and an object is not
+    monotone -- you can carry it back. Two settled rules meet here and
+    only one of them needed an amendment:
+
+    - **Persistence was already settled by §10.5.** `allowed_volume` is
+      a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.
+      No amendment, and the union's own example sentence is a `BURNING`
+      power cell carried three rooms to a generator.
+    - **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` §4 question 1,
+      accepted and narrowed in D-8 §11.1: a transported object is
+      room-layer state **whose owning room is its current room**, and
+      crossing a boundary is a TRANSFER rather than a write to the
+      machine layer. §19.7 rule 2 stays intact.
+
+    **What is NOT here, and what that does NOT mean.** The object's
+    Statuses are absent from this declaration because §5.1 puts every
+    `ActiveStatus` in `EPHEMERAL` -- they are not SAVED.
+
+    **CORRECTED, 2026-09-22 (owner).** An earlier revision of this
+    docstring went on to say a `BURNING` cell "arrives having been
+    carried three rooms and not still burning", which conflated two
+    different things: what survives a save, and what survives a
+    doorway. **Carrying an object between rooms during live play is not
+    a reload.** A Status on it follows its own duration and removal
+    rules; walking through a door is not an event that cleanses
+    anything, and inventing a doorway cleanse would be inventing a
+    mechanic.
+
+    The paragraph above quotes the union's own example sentence -- *"a
+    `BURNING` power cell carried three rooms to a generator"* -- which
+    only means anything if the cell is still alight when it gets there.
+    The earlier text contradicted the sentence it had just cited.
+
+    What remains true: the Status is not written to the save, so a cell
+    alight when the player quits is not alight when they load. That is
+    §5.1, and it is a statement about saves alone.
+    """
+    object_id: str = _ID
+    #: §10.5's list of rooms. At least two, or it is not transported --
+    #: an object that may only ever be in one room is room-local and
+    #: needs none of this.
+    allowed_volume: tuple[_ROOM_ID, ...] = Field(min_length=2, max_length=8)
+    #: Where it starts, and where a recovery puts it back.
+    home_room_id: str = _ID
+    #: Whether a puzzle on the mandatory path needs it. §5.1: `required`
+    #: or constrained configurations are `PUZZLE_LOCAL`, everything else
+    #: is `EPHEMERAL` -- so this decides whether losing it matters.
+    required: bool = False
+
+    #: §10.1's flag and §10.3's kilograms, DECLARED rather than assumed.
+    #:
+    #: This schema's own first sentence is "an object the player carries
+    #: between rooms", and until these two fields existed nothing
+    #: checked that the player could carry it: a 320 kg `BALLAST` could
+    #: be declared a transported object and every validator would have
+    #: agreed. That is the project's recurring failure in its usual
+    #: shape -- a rule that exists, is correct, and is never handed the
+    #: case that fails it.
+    #:
+    #: Both are required. An optional mass defaults to something
+    #: truthful-looking and is never supplied, which is the same
+    #: unchecked declaration wearing a field name.
+    carriable: bool
+    mass_kg: float = Field(gt=0.0, le=100_000.0)
+    #: How it crosses the boundary. Defaults to `hand_carried`, which is
+    #: what this schema's first sentence describes and the only mode
+    #: with a runtime. A heavier object says `manipulated` and gets a
+    #: refusal that names what is unbuilt -- which is the point: silence
+    #: about the heavier case would read as a ban.
+    movement: TransportMode = "hand_carried"
+
+    @model_validator(mode="after")
+    def _the_declared_way_of_moving_it_is_one_that_exists(self):
+        """Two questions, answered apart.
+
+        **Is the declared mode built?** `hand_carried` is; `manipulated`
+        is named, is real design, and has no runtime. That refusal lists
+        what is missing.
+
+        **If it is hand carry, does §10.3 allow it?** The flag and the
+        kilograms, handed the case that fails them.
+
+        CORRECTED, 2026-09-22 (owner). An earlier revision had only the
+        second question, so a 320 kg object came back refused by the
+        carry line with no way to say what was actually meant -- which
+        reads as *"the 60 kg rule prohibits heavy cross-room
+        transport"*. It does not. §10.3 governs ordinary pickup and, in
+        the same sentence, names manipulation as the other way. Heavier
+        transport is UNFINISHED, and the two answers now say so
+        separately.
+        """
+        refuse_unsupported_transport(self.movement)
+        if carriable_by_hand(self.carriable, self.mass_kg):
+            return self
+        if not self.carriable:
+            why = ("it is not `carriable` (§10.1): whatever it weighs, "
+                   "this object is handled with lifting slots or attach "
+                   "pads, not a grip")
+        else:
+            why = (f"it weighs {self.mass_kg:g} kg, over §10.3's "
+                   f"{CARRY_MASS_KG:g} kg carry line")
+        raise ValueError(
+            f"object '{self.object_id}' is declared `hand_carried`, but "
+            f"{why}. This is not a ban on moving it between rooms: say "
+            "`movement = \"manipulated\"` for a push or a pull by a "
+            "qualified provider, and that refusal will name what is "
+            "unbuilt. The provider envelope's 120 kg is not a licence to "
+            "pick this up either: it bounds what a PUSH may act on, not "
+            "what a hand may hold.")
+
+    @model_validator(mode="after")
+    def _home_is_inside_the_volume(self):
+        if self.home_room_id not in self.allowed_volume:
+            raise ValueError(
+                f"object '{self.object_id}' comes home to "
+                f"'{self.home_room_id}', which is not in the volume it is "
+                f"allowed in ({sorted(self.allowed_volume)}); a recovery "
+                "would put it somewhere it may not be")
+        if len(set(self.allowed_volume)) != len(self.allowed_volume):
+            raise ValueError(
+                f"object '{self.object_id}' repeats a room in its volume")
+        return self
+
+
+class ObjectConsumer(Strict):
+    """P16. The machine at the far end that takes the object.
+
+    **Transport without a consumer is not a puzzle**, and reporting
+    ownership and a room was the overbroad part of P16's first pass: an
+    object can arrive somewhere it is allowed to be and have nothing
+    happen. The generator in the union's own sentence -- *"a `BURNING`
+    power cell carried three rooms to a generator"* -- is this.
+
+    **The consequence goes through D-8's handle, not through a new
+    channel.** A consumer that accepts its object sets a declared
+    Zone-state variable, which the rest of the Zone already knows how to
+    read. Nothing here addresses another room, nothing writes to a
+    machine layer, and there is no second mechanism for "something
+    happened over there".
+    """
+    mechanism_id: str = _ID
+    room_id: str = _ID
+    #: The transported object this machine takes. One: a socket that
+    #: accepts anything is a bin, not a puzzle.
+    accepts: str = _ID
+    #: The Zone-state variable arrival sets, and to what. `None` means
+    #: the consumer is scenery -- legal, and it consumes nothing that
+    #: progression depends on.
+    sets_variable: str | None = Field(
+        default=None, min_length=1, max_length=24,
+        pattern=r"^[a-z0-9_]+$")
+    sets_state: _STATE_NAME | None = None
+
+    @model_validator(mode="after")
+    def _it_sets_a_state_or_it_sets_nothing(self):
+        if (self.sets_variable is None) != (self.sets_state is None):
+            raise ValueError(
+                f"consumer '{self.mechanism_id}' names "
+                f"{'a variable with no state' if self.sets_state is None else 'a state with no variable'}"
+                "; a consequence is a variable AND the state it is put in")
+        return self
+
+
 class Zone(Strict):
     #: Still 7, and deliberately. The Zone contract did not change in v0.8 —
     #: Echoes 2.0 changes what an Echo means, not what a Zone is — and
@@ -777,6 +1506,18 @@ class Zone(Strict):
     display_name: str = Field(min_length=1, max_length=C.MAX_TEXT_LEN)
     target_game: str = Field(min_length=1, max_length=C.MAX_AP_STRING_LEN)
     theme: Theme
+    #: D-11. A GAME PACK, beside the family and never instead of it.
+    #:
+    #: `theme` keeps its six-member vocabulary exactly: no rename, no
+    #: addition, and no Zone already in a save changes meaning. A pack is
+    #: a separate identity, so the two can never be mistaken for each
+    #: other -- and because `theme` is still required, the family a
+    #: pack's missing roles fall back to is always one this Zone names.
+    #:
+    #: `None` is every Zone written before this and resolves exactly as
+    #: before. Composition never sets it.
+    theme_pack: str | None = Field(default=None, min_length=1,
+                                   max_length=24, pattern=r"^[a-z0-9_]+$")
     designer_note: str | None = Field(default=None, max_length=C.MAX_DESIGNER_NOTE_LEN)
     featured_echo_ids: tuple[_ECHO_ID, ...] = Field(default=(), max_length=4)
     chambers: tuple[Chamber, ...] = Field(
@@ -796,6 +1537,472 @@ class Zone(Strict):
     #: a door, because a door assignment consumes a joining socket and a
     #: plug must not.
     plugs: tuple[PlugAssignment, ...] = Field(default=(), max_length=8)
+
+    #: D-4. Rail content a composed Zone declares, so a junction can be
+    #: ASKED FOR rather than invented.
+    #:
+    #: **Why this is not a `feature:` tag.** A physics package binds to
+    #: `feature:<tag>` or `shell:<id>` (`layout._content_refs`), and
+    #: §13.2 forbids a feature from lying on the mandatory path, hosting
+    #: a reward, an exit or an objective. A rail span the player must
+    #: cross is exactly a thing on the mandatory path, so declaring it as
+    #: a feature would either break §13.2 or make the span optional --
+    #: and an optional span is not a railway. Hence first class.
+    #:
+    #: Shaped after what `RailJunction` already runs, not after a new
+    #: idea: docks it parks at, spans between them, one alignment control
+    #: per span and a latch per span.
+    rail_networks: tuple[RailNetwork, ...] = Field(default=(), max_length=2)
+
+    #: D-1. The capability this Zone is built to grant, and where.
+    #: Optional: a Zone that features nothing establishes nothing, which
+    #: is every Zone composed before this.
+    featured_acquisition: FeaturedAcquisition | None = None
+
+    #: D-8. The cross-room relationships this Zone declares -- the
+    #: `ZoneState.macro` of §5.1, which `physics.state_vector_product`
+    #: has budgeted since before anything could name one.
+    #:
+    #: Additive and optional, so every Zone composed before this still
+    #: means what it meant and `schema_version` stays 7. Four is the
+    #: bound: four variables of four states is 256 configurations, which
+    #: leaves §4.10's 4096 room for the latches that compete for the
+    #: same budget rather than spending it all here.
+    zone_state: tuple[ZoneStateVariable, ...] = Field(
+        default=(), max_length=4)
+
+    #: P16. Objects the player may carry from room to room. Additive and
+    #: optional: a Zone declaring none behaves exactly as before.
+    transported_objects: tuple[TransportedObject, ...] = Field(
+        default=(), max_length=4)
+
+    #: P16. Machines that take a transported object and do something.
+    #: Additive and optional.
+    object_consumers: tuple[ObjectConsumer, ...] = Field(
+        default=(), max_length=4)
+
+    #: P14. Room-local signal graphs -- a sensor, §19.2 logic, and the
+    #: machine it drives. Additive and optional.
+    #:
+    #: **The first slice declares one real chain**, the class plate and
+    #: shutter `unweighted_switch.gd` already runs, so a Zone can ASK for
+    #: it instead of a scenario hard-coding it. Unsupported node and
+    #: sensor kinds are named and refused rather than offered.
+    room_graphs: tuple[RoomGraph, ...] = Field(default=(), max_length=4)
+
+    @model_validator(mode="after")
+    def _zone_state_names_rooms_this_zone_has(self):
+        """D-8 §5's generation constraints, the half a schema can settle.
+
+        A setter in a room that does not exist is a control nobody can
+        reach; a reader in one is a consequence nobody can see.
+        """
+        if not self.zone_state:
+            return self
+        rooms = {c.id for c in self.chambers}
+        seen: set[str] = set()
+        for v in self.zone_state:
+            if v.variable_id in seen:
+                raise ValueError(
+                    f"two Zone-state variables are both called "
+                    f"'{v.variable_id}'; the id is the handle a reader binds "
+                    "to, so two of them cannot be told apart")
+            seen.add(v.variable_id)
+            if v.setter.room_id not in rooms:
+                raise ValueError(
+                    f"variable '{v.variable_id}' has its setter in room "
+                    f"'{v.setter.room_id}', which this Zone does not have")
+            for r in v.readers:
+                if r.room_id not in rooms:
+                    raise ValueError(
+                        f"variable '{v.variable_id}' has a reader in room "
+                        f"'{r.room_id}', which this Zone does not have")
+
+        # §4.10's budget, through the function that has computed it all
+        # along. Latches are counted where they are known; here the
+        # claim is only that the declared variables alone do not spend
+        # the whole vector.
+        product = state_vector_product(
+            macro_variables=tuple(len(v.states) for v in self.zone_state))
+        if product > STATE_VECTOR_BOUND:
+            raise ValueError(
+                f"the declared Zone-state variables alone are {product} "
+                f"configurations, past §4.10's {STATE_VECTOR_BOUND} bound")
+        return self
+
+    @model_validator(mode="after")
+    def _consumers_stand_where_their_object_can_reach_them(self):
+        """Four ways a consumer can be a promise nothing keeps."""
+        if not self.object_consumers:
+            return self
+        rooms = {c.id for c in self.chambers}
+        objects = {o.object_id: o for o in self.transported_objects}
+        variables = {v.variable_id: v for v in self.zone_state}
+        seen: set[str] = set()
+        for con in self.object_consumers:
+            if con.mechanism_id in seen:
+                raise ValueError(
+                    f"two consumers are both '{con.mechanism_id}'")
+            seen.add(con.mechanism_id)
+            if con.room_id not in rooms:
+                raise ValueError(
+                    f"consumer '{con.mechanism_id}' stands in room "
+                    f"'{con.room_id}', which this Zone does not have")
+            obj = objects.get(con.accepts)
+            if obj is None:
+                raise ValueError(
+                    f"consumer '{con.mechanism_id}' accepts "
+                    f"'{con.accepts}', which this Zone does not declare as "
+                    "a transported object")
+            # THE DELIVERY HAS TO BE POSSIBLE. §10.5's volume is where
+            # the object may go; a consumer outside it is a destination
+            # the player may never legally carry anything to, and the
+            # puzzle would be unsolvable in a way no route search sees.
+            if con.room_id not in obj.allowed_volume:
+                raise ValueError(
+                    f"consumer '{con.mechanism_id}' is in room "
+                    f"'{con.room_id}', which is outside "
+                    f"'{con.accepts}''s volume "
+                    f"{sorted(obj.allowed_volume)}; the object may never "
+                    "legally be carried to it")
+            if con.sets_variable is not None:
+                var = variables.get(con.sets_variable)
+                if var is None:
+                    raise ValueError(
+                        f"consumer '{con.mechanism_id}' sets "
+                        f"'{con.sets_variable}', which this Zone does not "
+                        "declare")
+                if con.sets_state not in var.states:
+                    raise ValueError(
+                        f"consumer '{con.mechanism_id}' sets "
+                        f"'{con.sets_variable}' to '{con.sets_state}', "
+                        f"which it does not have; it has "
+                        f"{sorted(var.states)}")
+        return self
+
+    @model_validator(mode="after")
+    def _a_named_pack_is_one_a_zone_may_name(self):
+        """D-11. Authored is not selected.
+
+        A pack's rows existing in the descriptor makes it a CANDIDATE --
+        viewable in an isolated review scene, nameable by no Zone. A Zone
+        may name a pack only once a reviewed decision has made it
+        `selectable` (or the owner has `approved` it), and that decision
+        is `C.THEME_PACK_STATUS`, in source. A pack id that is a house
+        family's name is refused outright: game-pack identity is distinct
+        from the families, and a pack called `gothic_stone` would make
+        the one moment they meet ambiguous.
+        """
+        pack = self.theme_pack
+        if pack is None:
+            return self
+        if pack in C.THEMES:
+            raise ValueError(
+                f"theme pack '{pack}' is the name of a house family; a "
+                "game pack's identity is distinct from the six families, "
+                "so it may not share one of their names")
+        status = C.THEME_PACK_STATUS.get(pack, "candidate")
+        if status not in ("selectable", "approved"):
+            raise ValueError(
+                f"theme pack '{pack}' is {status}: authored rows make a "
+                "pack viewable in review, not nameable by a Zone. It "
+                "becomes nameable when a reviewed decision marks it "
+                "selectable in THEME_PACK_STATUS")
+        return self
+
+    @model_validator(mode="after")
+    def _room_graphs_belong_to_rooms_this_zone_has(self):
+        """A graph in a room that does not exist drives nothing."""
+        if not self.room_graphs:
+            return self
+        rooms = {c.id for c in self.chambers}
+        seen: set[str] = set()
+        for graph in self.room_graphs:
+            if graph.room_id in seen:
+                raise ValueError(
+                    f"room '{graph.room_id}' declares two signal graphs; "
+                    "§19.3 evaluates one graph per room in one tick")
+            seen.add(graph.room_id)
+            if graph.room_id not in rooms:
+                raise ValueError(
+                    f"a signal graph names room '{graph.room_id}', which "
+                    "this Zone does not have")
+            # O05-07: A ZONE ASKS ONLY FOR WHAT ITS BUILDER PLACES.
+            # `RoomGraphs` puts a class plate or a lever down (D-07, D13
+            # 1c); a shot target is run by the same runtime but placed
+            # only by a room that owns its machine.
+            for sensor in graph.sensors:
+                if sensor.kind not in ZONE_PLACEABLE_SENSOR_KINDS:
+                    raise ValueError(
+                        f"room '{graph.room_id}' declares a {sensor.kind} "
+                        f"('{sensor.node_id}'); the Zone builder places "
+                        f"{list(ZONE_PLACEABLE_SENSOR_KINDS)} only. That "
+                        "sensor belongs to a room that owns its machine")
+        return self
+
+    @model_validator(mode="after")
+    def _a_gated_edge_and_its_machine_agree_about_what_it_costs(self):
+        """P14. An edge a machine opens, and what opening it asks.
+
+        **The interaction is one thing, described once.** The sensor
+        that drives this actuator, its class, whether it counts the
+        player, and what the chain does after one press all have to
+        describe the same act -- walk onto the plate, walk off, walk
+        through -- or the route search is validating a door the runtime
+        does not build. So everything below is read off the chain that
+        actually drives THIS actuator (`upstream`) and settled the way
+        the runtime settles it (`phases`), not inferred room-wide.
+
+        Refused, each for a reason the player would meet:
+
+        **The edge names an actuator nothing declares**, or **one in a
+        room the edge does not touch** -- a door worked from somewhere
+        else is D-8 Zone state, not a room graph.
+
+        **The plate does not accept the player.** An object-only plate
+        (`counts_player` false, EX50-033's arrangement) is not a base-kit
+        interaction however much the player weighs, and the carry and
+        push verbs that could load it are unbuilt. A plate that counts
+        the player but demands a class the player's own body does not
+        reach is refused the same way. `graph.Capability` cannot name a
+        manipulation prerequisite, so the honest answer is that such a
+        chain gates no route -- not that it gates one on something
+        invented to write it down.
+
+        **The route is not open after the one action.** Rest closed and
+        released closed is a door the player must hold -- D-8 §11.2's
+        held requirement. Rest open and released closed is a plate that
+        shuts the way for good, and a route the player's own step can
+        seal is a softlock. What passes is a chain that is open once the
+        one action is done: `lever -> LATCH -> shutter` -- D-07's
+        visibly permanent control, the shape the composer emits (D13
+        1c) -- or a `NOT` chain that only ever denies while it is held.
+        A lever is pulled, not stood on, so the plate's body rule says
+        nothing about it.
+
+        **`plate -> LATCH -> shutter` still LOADS.** It is D-10's
+        step-once plate, which D-07 rejects: "A pressure plate must not
+        permanently latch merely because I stepped on it once." A save
+        composed before the ruling holds one, and M-1 keeps it playing
+        as saved, so it is refused where a Zone is ACCEPTED
+        (`validate_zone`, D13 1a) and never composed -- not here, where
+        every save is loaded.
+
+        Whether the plate's room can be reached WITHOUT the route it
+        opens is a question about the whole Zone graph, and
+        `topology.reachability` asks it.
+        """
+        gated = [e for e in self.edges if e.opened_by is not None]
+        if not gated:
+            return self
+        by_actuator = {a.actuator_id: graph
+                       for graph in self.room_graphs
+                       for a in graph.actuators}
+        for edge in gated:
+            graph = by_actuator.get(edge.opened_by)
+            if graph is None:
+                raise ValueError(
+                    f"edge '{edge.edge_id}' is opened by "
+                    f"'{edge.opened_by}', which no room graph declares; "
+                    "the route search would see a gate with nothing on "
+                    "the other side of it")
+            if graph.room_id not in (edge.room_a, edge.room_b):
+                raise ValueError(
+                    f"edge '{edge.edge_id}' joins '{edge.room_a}' and "
+                    f"'{edge.room_b}', and the machine that opens it is "
+                    f"in '{graph.room_id}'. A door operated from a room "
+                    "it does not touch is a cross-room relationship: "
+                    "declare it as Zone state (D-8), not as a room "
+                    "graph, which is room-local by construction")
+            sensors, chain = upstream(graph, edge.opened_by)
+            # O05-07: A ROUTE HANGS ON A CHAIN THIS VALIDATOR REASONS
+            # ABOUT. `phases` and the route search were written for one
+            # plate through NOT/LATCH; an OR or a button in front of a
+            # route would be certified by arithmetic that does not
+            # describe it. Room-local machinery may use them freely.
+            odd = sorted({s.kind for s in sensors
+                          if s.kind not in ROUTE_SENSOR_KINDS}
+                         | {n.kind for n in chain
+                            if n.kind not in ROUTE_NODE_KINDS})
+            if odd:
+                raise ValueError(
+                    f"edge '{edge.edge_id}' is opened through {odd}; a "
+                    "route gate is certified only for the plate, NOT and "
+                    "LATCH chains the route search reasons about. Put "
+                    "that machine inside the room, where it gates nothing")
+            # D13 1d: THE LIVE-PRESSURE ROUTE. `plate -> shutter`, open
+            # only while pressed, legal because the plate names the weight
+            # that holds it. The player's body is never the solution, so
+            # the body rule below does not apply to it.
+            if any(s.held_by for s in sensors):
+                self._held_route_is_sound(edge, graph, sensors, chain)
+                continue
+            for sensor in sensors:
+                # A LEVER IS PULLED, NOT STOOD ON (D-07, D13 1c): the
+                # interact verb is the guaranteed base kit, so the
+                # plate's body rule describes nothing about it.
+                if sensor.kind != "PRESSURE_PLATE":
+                    continue
+                if plate_accepts_player(sensor.requires_class,
+                                        sensor.counts_player):
+                    continue
+                if not sensor.counts_player:
+                    why = ("is object-only (`counts_player` is false), so "
+                           "the player standing on it does not load it, "
+                           "whatever they weigh, and it names no weight "
+                           "to hold it (`held_by`, D13 1d)")
+                else:
+                    why = (f"demands {sensor.requires_class} and the "
+                           f"player's own body is "
+                           f"{mass_class(PLAYER_MASS_KG)} "
+                           f"({PLAYER_MASS_KG:g} kg)")
+                raise ValueError(
+                    f"edge '{edge.edge_id}' is opened through plate "
+                    f"'{sensor.node_id}', which {why}. A route may only "
+                    "hang on an interaction the guaranteed base kit "
+                    "performs, and a manipulation prerequisite is not "
+                    "one this contract can name. Put the consequence "
+                    "inside the room, or name the carried weight that "
+                    "holds the plate down (`held_by`)")
+            shape = phases(graph, edge.opened_by)
+            if shape["released"]:
+                continue
+            if not shape["rest"]:
+                raise ValueError(
+                    f"edge '{edge.edge_id}' is opened by "
+                    f"'{edge.opened_by}', which is closed at rest and "
+                    "closed again once the plate is left -- so the player "
+                    "has to hold it open to walk through it. That is D-8 "
+                    "§11.2's held requirement: legal only when the plate "
+                    "names the weight that holds it down (`held_by`, D13 "
+                    "1d). A permanent opening needs a lever into a LATCH, "
+                    "not a latched plate (D-07)")
+            lever = all(s.kind == "PULSE_BUTTON" for s in sensors)
+            act = "pulling the lever" if lever else "stepping on the plate"
+            raise ValueError(
+                f"edge '{edge.edge_id}' is opened by '{edge.opened_by}', "
+                f"which starts open and is SHUT FOR GOOD by {act} -- a "
+                "latch after an inversion. A route the player's own "
+                "action can seal permanently is a softlock")
+        return self
+
+    def _held_route_is_sound(self, edge, graph, sensors, chain) -> None:
+        """D13 1d, the route half. The weight half is checked for every
+        held plate, in or out of a route, by the validator below."""
+        if chain or any(not s.held_by for s in sensors):
+            raise ValueError(
+                f"edge '{edge.edge_id}' is held open by a weight, and a "
+                "held plate drives its door DIRECTLY: every plate on the "
+                "chain names its weight and nothing stands between them "
+                "and the shutter (a latch would make it permanent, which "
+                "is a lever's job, D-07)")
+        far = edge.room_b if graph.room_id == edge.room_a else edge.room_a
+        objects = {o.object_id: o for o in self.transported_objects}
+        for sensor in sensors:
+            weight = objects.get(sensor.held_by)
+            if weight is not None and far in weight.allowed_volume:
+                raise ValueError(
+                    f"weight '{weight.object_id}' holds edge "
+                    f"'{edge.edge_id}' open and may be carried into "
+                    f"'{far}', through that door: lifted and carried "
+                    "across, it would let the door shut behind the player "
+                    "with the weight on the wrong side. Keep the far room "
+                    "out of its volume")
+
+    @model_validator(mode="after")
+    def _a_held_plate_names_a_weight_that_holds_it(self):
+        """D13 1d. A plate that names its weight names one that can
+        really hold it, and that nothing else needs."""
+        objects = {o.object_id: o for o in self.transported_objects}
+        installed = {c.accepts for c in self.object_consumers}
+        claimed: dict[str, str] = {}
+        for graph in self.room_graphs:
+            for sensor in graph.sensors:
+                if sensor.held_by is None:
+                    continue
+                name, plate = sensor.held_by, sensor.node_id
+                weight = objects.get(name)
+                if weight is None:
+                    raise ValueError(
+                        f"plate '{plate}' is held by '{name}', which this "
+                        "Zone does not declare as a transported object")
+                # Today the object's own model already refuses anything
+                # but a hand carry of at most 60 kg (`manipulated` is
+                # unbuilt); this keeps the plate's guarantee once it is.
+                if weight.movement != "hand_carried" or not \
+                        carriable_by_hand(weight.carriable, weight.mass_kg):
+                    raise ValueError(
+                        f"plate '{plate}' is held by '{name}', which is "
+                        "not an ordinary hand carry (carriable, at most "
+                        f"{CARRY_MASS_KG:g} kg); a weight only a "
+                        "manipulation tool moves is not guaranteed")
+                body = mass_class(weight.mass_kg)
+                if MASS_CLASSES.index(body) < MASS_CLASSES.index(
+                        sensor.requires_class):
+                    raise ValueError(
+                        f"plate '{plate}' demands {sensor.requires_class} "
+                        f"and '{name}' is {body} ({weight.mass_kg:g} kg); "
+                        "it would rest on the plate and not press it")
+                if graph.room_id not in weight.allowed_volume:
+                    raise ValueError(
+                        f"plate '{plate}' is in '{graph.room_id}', outside "
+                        f"the volume '{name}' may be carried in")
+                if name in installed:
+                    raise ValueError(
+                        f"'{name}' holds plate '{plate}' and is also what "
+                        "a receiver installs; it cannot do both at once")
+                if name in claimed:
+                    raise ValueError(
+                        f"'{name}' is named by plates '{claimed[name]}' "
+                        f"and '{plate}'; one weight holds one plate")
+                claimed[name] = plate
+        return self
+
+    @model_validator(mode="after")
+    def _transported_objects_name_rooms_this_zone_has(self):
+        """An object allowed into a room that does not exist is a volume
+        nobody can carry it through."""
+        if not self.transported_objects:
+            return self
+        rooms = {c.id for c in self.chambers}
+        seen: set[str] = set()
+        for obj in self.transported_objects:
+            if obj.object_id in seen:
+                raise ValueError(
+                    f"two transported objects are both called "
+                    f"'{obj.object_id}'; the id is what a save records a "
+                    "room against, so two of them cannot be told apart")
+            seen.add(obj.object_id)
+            missing = sorted(set(obj.allowed_volume) - rooms)
+            if missing:
+                raise ValueError(
+                    f"object '{obj.object_id}' is allowed into {missing}, "
+                    "which this Zone does not have")
+        return self
+
+    @model_validator(mode="after")
+    def _route_conditions_name_state_this_zone_declares(self):
+        """An edge gated on a variable nobody declares is a locked route
+        with no key, and nothing in the search would ever open it.
+
+        Checked even when `zone_state` is empty, which is the case that
+        matters: an edge carrying a condition in a Zone that declares no
+        variables is the whole failure in miniature.
+        """
+        by_id = {v.variable_id: v for v in self.zone_state}
+        for e in self.edges:
+            for c in e.requires_state:
+                var = by_id.get(c.variable_id)
+                if var is None:
+                    raise ValueError(
+                        f"edge '{e.edge_id}' requires Zone-state variable "
+                        f"'{c.variable_id}', which this Zone does not declare")
+                if c.state not in var.states:
+                    raise ValueError(
+                        f"edge '{e.edge_id}' requires '{c.variable_id}' in "
+                        f"state '{c.state}', which that variable does not "
+                        f"have; it has {sorted(var.states)}")
+        return self
 
     @model_validator(mode="after")
     def _the_graph_and_the_assignments_agree(self):
@@ -839,6 +2046,41 @@ class Zone(Strict):
                         f"chamber '{c.id}' door '{d.socket_id}' names "
                         f"unknown edge '{d.edge_id}'")
                 door_ends.setdefault(d.edge_id, []).append((c.id, d))
+
+        # ONE ZONE EXIT, ON THE ROOM THAT ACTUALLY ENDS THE CHAIN.
+        #
+        # `ZONE_EXIT` is passable geometry that names no edge, which
+        # makes it the one door nothing else constrains -- so it is
+        # constrained here, or it becomes a licence to open any wall.
+        # The engine appends ONE exit room, off the LAST room on the
+        # chain; a second way out is a hole onto nothing, and one on a
+        # room the chain continues through is a hole into the next
+        # room's approach.
+        way_out = [(c.id, d) for c in self.chambers for d in c.doors
+                   if d.usage == "ZONE_EXIT"]
+        if len(way_out) > 1:
+            raise ValueError(
+                "%d doors are ZONE_EXIT (%s); the engine appends one "
+                "exit room, so a Zone has one way out"
+                % (len(way_out), ", ".join(
+                    f"{r}/{d.socket_id}" for r, d in way_out)))
+        if way_out:
+            host = way_out[0][0]
+            # A room the chain leaves by a JOINED edge is not the end of
+            # it. `departures` is not on the wire, so this is read off
+            # the edges themselves: any JOINED edge whose `room_a` is
+            # this room and whose door there is the `exit` socket.
+            onward = [e.edge_id for e in self.edges
+                      if e.realization == "JOINED" and e.room_a == host
+                      and any(d.socket_id == "exit" and d.edge_id
+                              == e.edge_id
+                              for c in self.chambers if c.id == host
+                              for d in c.doors)]
+            if onward:
+                raise ValueError(
+                    f"room '{host}' carries the ZONE_EXIT and also "
+                    f"departs by edge(s) {onward}; the way out belongs "
+                    "to the room the chain ENDS on")
 
         plug_of: dict[str, PlugAssignment] = {}
         for pl in self.plugs:
@@ -1007,6 +2249,80 @@ class Zone(Strict):
 
     # NOTE: no `required_echo_ids`, and no field anywhere in this schema can
     # express a mandatory Echo requirement. Structural, not a rule.
+
+    @model_validator(mode="after")
+    def _the_featured_acquisition_is_somewhere_real(self):
+        """A featured capability the Zone cannot actually hand over is a
+        promise `capability_guarantee` would honour and the player would
+        not receive.
+
+        Two facts, both checkable here: the room exists, and it really
+        carries that Check. `reward_ids` is the canonical view -- reading
+        `reward_location_id` alone would miss a multi-Check room and call
+        a true promise false.
+        """
+        featured = self.featured_acquisition
+        if featured is None:
+            return self
+        room = next((c for c in self.chambers if c.id == featured.room_id),
+                    None)
+        if room is None:
+            raise ValueError(
+                f"featured acquisition names room '{featured.room_id}', "
+                "which this Zone does not have")
+        if featured.location_id not in room.reward_ids:
+            raise ValueError(
+                f"featured acquisition puts Check {featured.location_id} in "
+                f"room '{featured.room_id}', which carries "
+                f"{list(room.reward_ids)}")
+        return self
+
+    @model_validator(mode="after")
+    def _rail_networks_name_rooms_this_zone_has(self):
+        """A dock in a room that does not exist is a junction nobody can
+        reach, and the engine must not invent the room to fix it."""
+        rooms = {c.id for c in self.chambers}
+        seen: set[str] = set()
+        for net in self.rail_networks:
+            if net.network_id in seen:
+                raise ValueError(
+                    f"two rail networks are both called '{net.network_id}'")
+            seen.add(net.network_id)
+            for dock in net.docks:
+                if dock.room_id not in rooms:
+                    raise ValueError(
+                        f"rail dock '{dock.dock_id}' names room "
+                        f"'{dock.room_id}', which this Zone does not have")
+            for span in net.spans:
+                if (span.control_room_id is not None
+                        and span.control_room_id not in rooms):
+                    raise ValueError(
+                        f"span '{span.span_id}' puts its control in room "
+                        f"'{span.control_room_id}', which this Zone does "
+                        "not have")
+                if span.control_placement == "gantry":
+                    self._a_gantry_room_can_hold_one(span)
+        return self
+
+    def _a_gantry_room_can_hold_one(self, span) -> None:
+        """N-14: the measured gantry needs an arena at the top of the
+        procedural range. An authored shell is refused until one is
+        measured for a gantry: its ceiling and clutter are not this
+        room's numbers."""
+        room = next(c for c in self.chambers
+                    if c.id == span.control_room_id)
+        height = getattr(room, "wall_height", None)
+        if (room.type != "arena" or getattr(room, "shell_id", None)
+                or height is None or height < GANTRY_MIN_WALL_HEIGHT):
+            raise ValueError(
+                f"span '{span.span_id}' puts its gantry in room "
+                f"'{room.id}', a {room.type}"
+                + (f" {height:g} m tall" if height is not None else "")
+                + (f" built as shell '{room.shell_id}'"
+                   if getattr(room, "shell_id", None) else "")
+                + "; the measured gantry needs a procedural arena at least "
+                f"{GANTRY_MIN_WALL_HEIGHT:g} m tall (its plate is 6.2 m up and "
+                "the build needs 6.8 m, N-16)")
 
     @model_validator(mode="after")
     def _zone_wide_limits(self):
@@ -1298,4 +2614,75 @@ def validate_zone(
             "featured_echo_ids must all be owned; unknown: " + ", ".join(unowned)
         )
 
+    # D-07 (owner ruling, 2026-09-24): A PRESSURE PLATE IS A HELD SENSOR.
+    # "A pressure plate must not permanently latch merely because I
+    # stepped on it once." So no plate may set a LATCH, directly or
+    # through NOT/OR. Refused HERE, where a Zone is accepted, and never in
+    # the model validators that run on load: a Zone saved with the
+    # step-once chain loads and plays as saved (M-1, D13 1a).
+    errors.extend(_plates_that_latch(zone))
+
+    # DESS-23: A KEY MUST OPEN SOMETHING. A key no door locks is picked up
+    # and carried for nothing -- PT-15's "keys without noticed matching
+    # doors" at its purest. The composer never makes one (0 of 80 in the
+    # sample); this refuses one at acceptance, and never on load.
+    errors.extend(_keys_that_open_nothing(zone))
+
+    # D-02: A FEATURED ACQUISITION NAMES A PROVEN FUNCTION. The Echo its
+    # Check yields is held to a requirement the room was shown to be
+    # crossed with (`featured.FEATURED_REQUIREMENTS`); a capability with
+    # none would be a name-only claim nothing can qualify against.
+    featured = getattr(zone, "featured_acquisition", None)
+    if featured is not None and \
+            featured.capability not in FEATURED_REQUIREMENTS:
+        errors.append(
+            f"the featured acquisition asks for '{featured.capability}', "
+            "which no proven requirement covers; its Echo could not be "
+            "held to a real function")
+
     return errors
+
+
+def _keys_that_open_nothing(zone: Zone) -> list[str]:
+    """DESS-23: every declared key that no LOCKED door names."""
+    locked = {d.key_id for c in zone.chambers for d in c.doors
+              if d.usage == "LOCKED" and d.key_id}
+    return [f"key '{k.key_id}' in room '{c.id}' opens no locked door; a "
+            "key the player picks up must open something"
+            for c in zone.chambers for k in c.keys
+            if k.key_id not in locked]
+
+
+def _plates_that_latch(zone: Zone) -> list[str]:
+    """D13 1a: every LATCH a pressure plate sets, walked through NOT/OR."""
+    out = []
+    for graph in zone.room_graphs:
+        plates = {s.node_id for s in graph.sensors
+                  if s.kind == "PRESSURE_PLATE"}
+        if not plates:
+            continue
+        by_id = {n.node_id: n for n in graph.nodes}
+        for latch in graph.nodes:
+            if latch.kind != "LATCH":
+                continue
+            found, stack, seen = set(), list(latch.inputs), set()
+            while stack:
+                at = stack.pop()
+                if at in seen:
+                    continue
+                seen.add(at)
+                if at in plates:
+                    found.add(at)
+                elif at in by_id and by_id[at].kind in ("NOT", "OR"):
+                    stack.extend(by_id[at].inputs)
+            if found:
+                names = ", ".join(f"'{p}'" for p in sorted(found))
+                out.append(
+                    f"room '{graph.room_id}': pressure "
+                    + (f"plate {names} sets" if len(found) == 1
+                       else f"plates {names} set")
+                    + f" LATCH '{latch.node_id}'. A plate is a held sensor (D-07) "
+                    "and may not latch anything: a permanent opening needs "
+                    "a lever, and a door held open needs a plate that "
+                    "stays pressed")
+    return out

@@ -115,22 +115,26 @@ async def finalize(engine: CampaignEngine, location_id: int) -> None:
 
     scout = engine.ap.scouts.get(location_id)
     if pending is not None and scout is not None:
+        # The card has two halves split on its first blank line
+        # (`RevealLayer.split_halves`): what the original did, then the
+        # Echo Epsilon made from it. A self-addressed original is
+        # "Delivered to you"; under D-01 it has an Echo half too, and a
+        # legacy campaign's has none (`grant_echo` answers None).
+        echo_id = await engine.grant_echo(location_id)
+        echo = (engine.save.interpretation_by_id(echo_id)
+                if echo_id else None)
         if scout.recipient_is_self:
-            await engine._notify(
-                "check_confirmed", "CHECK CONFIRMED",
-                (scout.item_name, "Delivered to you."),
-                location_id=location_id)
+            kind, title = "check_confirmed", "CHECK CONFIRMED"
+            lines = [scout.item_name, "Delivered to you."]
         else:
-            echo_id = await engine.grant_echo(location_id)
-            echo = (engine.save.interpretation_by_id(echo_id)
-                    if echo_id else None)
+            kind = "reveal"
+            title = f"SENT TO {scout.recipient_name.upper()}"
             lines = [scout.item_name, scout.recipient_game]
-            if echo is not None:
-                lines += ["", "EPSILON ECHO ACQUIRED", echo.display_name,
-                          echo.description]
-            await engine._notify(
-                "reveal", f"SENT TO {scout.recipient_name.upper()}",
-                lines, location_id=location_id, echo_id=echo_id)
+        if echo is not None:
+            lines += ["", "EPSILON ECHO ACQUIRED", echo.display_name,
+                      echo.description]
+        await engine._notify(kind, title, lines, location_id=location_id,
+                             echo_id=echo_id)
         if was_shop:
             await engine._notify(
                 "shop_purchased", "PURCHASE COMPLETE",

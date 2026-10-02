@@ -81,12 +81,33 @@ def _owning(primitive: str) -> M.Mechanics:
 
 # --- the vocabulary is semantic, not an item list ------------------------
 
-def test_grapple_is_satisfied_by_any_member_of_the_family():
-    """The owner's central point. Three different primitives, one
-    capability, and no canonical Echo anywhere in the answer."""
-    for primitive in ("grapple_to_surface", "grapple_pull_target",
-                      "grapple_swing"):
+def test_grapple_is_satisfied_by_every_grapple_that_moves_the_player():
+    """The owner's central point: different primitives, one capability,
+    and no canonical Echo anywhere in the answer -- among the grapples
+    that actually carry the player to an anchor."""
+    for primitive in ("grapple_to_surface", "grapple_swing"):
         assert "grapple" in M.owned_capabilities(_owning(primitive)), primitive
+
+
+def test_pulling_an_enemy_satisfies_no_traversal_requirement():
+    """Owner ruling D-02 (DESS-26): "Moving an enemy does not prove that
+    the player can perform the crossing." Same family, same name, and
+    not the capability -- nor the anchor the capability uses."""
+    mechanics = _owning("grapple_pull_target")
+    owned = M.owned_capabilities(mechanics)
+    for capability in M.TRAVERSAL_CAPABILITIES:
+        assert capability not in owned, capability
+    assert "grapple_anchor" not in M.owned_affordance_tags(mechanics)
+
+
+def test_every_traversal_capability_is_answered_by_moving_the_player():
+    """The contract names the affordance a gate requires, and every
+    primitive counted for a traversal capability moves the player."""
+    assert set(M.CAPABILITY_AFFORDANCES) == set(M.ACTIVITY_CAPABILITIES)
+    for capability in M.TRAVERSAL_CAPABILITIES:
+        counted = set(M.ACTIVITY_CAPABILITIES[capability]["primitives"])
+        assert counted <= set(M.PLAYER_TRAVERSAL_PRIMITIVES), capability
+    assert "grapple_pull_target" not in M.PLAYER_TRAVERSAL_PRIMITIVES
 
 
 def test_owning_the_wrong_thing_does_not_satisfy_it():

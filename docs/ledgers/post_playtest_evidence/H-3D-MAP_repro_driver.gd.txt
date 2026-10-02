@@ -1,0 +1,125 @@
+extends Node
+## H-3D-MAP REPRODUCTION, on the revision before it (H-MINIMAP's head).
+## Scratch: evidence, not a suite. Asks §6-§7 of the map wall the game
+## builds, the same way on the old code and the new.
+
+const MAPS := "res://tests/fixtures/map_snapshot.json"
+
+var failing := 0
+var cases := 0
+
+
+func _requirement(id: String, holds: bool, measured: String) -> void:
+	cases += 1
+	if holds:
+		print("REQUIREMENT %s HOLDS: %s" % [id, measured])
+	else:
+		failing += 1
+		print("REQUIREMENT %s FAILS: %s" % [id, measured])
+
+
+func _frames(n: int) -> void:
+	for _i in n:
+		await get_tree().process_frame
+
+
+func _key(code: Key) -> void:
+	for down: bool in [true, false]:
+		var event := InputEventKey.new()
+		event.physical_keycode = code
+		event.keycode = code
+		event.pressed = down
+		Input.parse_input_event(event)
+		await get_tree().process_frame
+
+
+## Everything the map page shows that could change: its texts, and every
+## 3D camera under it.
+func _page_state(root: Control) -> Array:
+	var out: Array = []
+	for node: Node in root.find_children("*", "", true, false):
+		if node is Label:
+			out.append((node as Label).text)
+		elif node is Button:
+			out.append((node as Button).text)
+		elif node is Camera3D:
+			out.append((node as Camera3D).global_transform)
+	return out
+
+
+func _ready() -> void:
+	await get_tree().process_frame
+	get_window().size = Vector2i(1280, 720)
+	var main: Node = get_parent()
+	main.call("boot")
+	await _frames(2)
+	# The candidate Zone, built for real, held the way Main holds a Zone.
+	var zone_data: Dictionary = JSON.parse_string(
+			FileAccess.get_file_as_string(
+				"res://tests/fixtures/candidate_zone.json"))
+	var maps: Dictionary = JSON.parse_string(
+			FileAccess.get_file_as_string(MAPS))
+	BridgeClient.snapshot = {"type": "campaign_snapshot",
+			"zone_map": (maps["carried"] as Dictionary)["zone_map"]}
+	var zone := ZoneController.new()
+	var pool := ResourcePool.new()
+	pool.name = "ResourcePool"
+	zone.add_child(pool)
+	get_tree().root.add_child(zone)
+	zone.setup(zone_data)
+	# Whatever Main binds to a Zone it enters, bind here too.
+	if main.get("minimap") != null:
+		main.get("minimap").call("bind", zone)
+	if main.get("map_face") != null:
+		main.get("map_face").call("bind", zone)
+	await _frames(2)
+	var shell: MenuShell = main.get("menu_shell")
+	shell.open("map")
+	await _frames(4)
+	var root := shell.page_root("map")
+	var meshes := 0
+	var views := root.find_children("*", "SubViewport", true, false)
+	for view: Node in views:
+		meshes += view.find_children("*", "MeshInstance3D", true, false).size()
+	var texts: Array = []
+	for node: Node in root.find_children("*", "Label", true, false):
+		if (node as Label).visible and (node as Label).text != "":
+			texts.append((node as Label).text.left(70))
+	_requirement("R1 the map wall holds a miniature of the Zone",
+			meshes > 0, "%d 3D views and %d meshes on the map page; " % [
+				views.size(), meshes] + "what it says: %s" % [texts])
+	# §7: rotate / zoom / pan / floors, by the keys.
+	var before := _page_state(root)
+	for code: Key in [KEY_RIGHT, KEY_EQUAL, KEY_W, KEY_PAGEUP]:
+		await _key(code)
+	await _frames(2)
+	var after := _page_state(root)
+	_requirement("R2 the map turns, zooms, pans and isolates a floor",
+			before != after and shell.front() == "map",
+			"after Right, =, W and PgUp the map page %s (the front page: %s)"
+			% ["changed" if before != after else "is unchanged",
+				shell.front()])
+	# §6's green circuit on the 3D map: carrying the cell, the power door
+	# is blocked in the bridge's map; is it on the wall?
+	var blockers := root.find_children("Blocker_*", "", true, false)
+	_requirement("R3 the power door, blocked, shows on the wall",
+			blockers.any(func(n: Node) -> bool:
+				return str(n.get_meta("edge_id", "")) == "e:c005:c006"),
+			"%d blocker indicators on the map page: %s" % [blockers.size(),
+				blockers.map(func(n: Node) -> String:
+					return str(n.get_meta("edge_id", n.name)))])
+	# §7: "Known destinations and return routes should remain inspectable".
+	var found: Array = []
+	for raw: Variant in maps["carried"]["zone_map"]["rooms"]:
+		if bool((raw as Dictionary)["discovered"]):
+			found.append(str((raw as Dictionary)["name"]))
+	var named := 0
+	for name_text: String in found:
+		if _page_state(root).has(name_text):
+			named += 1
+	_requirement("R4 the places you know are listed on the wall",
+			named == found.size(), "%d of the %d rooms found are named on "
+			% [named, found.size()] + "the map page: %s" % [found])
+	print("MAP WALL REPRO: %d of %d requirements fail" % [failing, cases])
+	shell.close()
+	get_tree().quit(0)

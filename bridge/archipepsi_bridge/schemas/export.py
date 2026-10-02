@@ -18,6 +18,8 @@ Regenerate after any schema change; never hand-edit the outputs.
 
 from __future__ import annotations
 
+from typing import get_args
+
 import json
 import sys
 from pathlib import Path
@@ -27,6 +29,8 @@ from pydantic import TypeAdapter
 try:
     from . import constants as C
     from . import echo as E
+    from . import signal_graph as SG
+    from . import minors as MINORS
     from . import physics as PH
     from .echo import EchoInterpretation
     from .protocol import CampaignSnapshot, ClientMessage, ServerMessage
@@ -34,6 +38,8 @@ try:
 except ImportError:  # pragma: no cover
     import constants as C
     import echo as E
+    import signal_graph as SG
+    import minors as MINORS
     import physics as PH
     from echo import EchoInterpretation
     from protocol import CampaignSnapshot, ClientMessage, ServerMessage
@@ -64,7 +70,49 @@ GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS", "DEFAULT_CONFIG",
 #: Named rather than swept, because `physics.py` also holds bounds that
 #: are the VERIFIER's budget (`STATE_VECTOR_BOUND`,
 #: `MAX_VECTOR_LATCHES`) and mean nothing in a scene.
-GD_PHYSICS = ("ENVELOPE_FORCE_N", "ENVELOPE_RANGE_M", "ENVELOPE_MASS_KG")
+GD_PHYSICS = ("ENVELOPE_FORCE_N", "ENVELOPE_RANGE_M", "ENVELOPE_MASS_KG",
+              "CARRY_MASS_KG", "MASS_LIGHT_BELOW", "MASS_MEDIUM_BELOW",
+              "MASS_HEAVY_BELOW", "PLAYER_MASS_KG")
+
+#: Notes emitted above a physics constant in `constants.gd`, because two
+#: of them are masses that answer different questions and the generated
+#: file prints them one line apart.
+#:
+#: `ENVELOPE_MASS_KG` is the older and more familiar name, and every
+#: existing manipulation call site already uses it — so a carry verb
+#: written against "the mass constant" lands on 120 kg and makes
+#: `WEIGHTED` carriable, which Design 2 changed from Design 1 on
+#: purpose. Prod named that hazard in `3b67921` after the constant
+#: landed. The bridge cannot write the carry verb — that is P12 — and a
+#: GDScript helper for a verb that does not exist would be the inert
+#: framework this lane declined to build for P14. What it can do is make
+#: sure neither number is met bare.
+GD_PHYSICS_NOTES = {
+    "ENVELOPE_MASS_KG": (
+        "What a qualified PUSH/PULL/HOLD may act on (§29.3.2), together",
+        "with ENVELOPE_FORCE_N and ENVELOPE_RANGE_M. A property of the",
+        "HOST. NOT the pickup limit — see CARRY_MASS_KG below.",
+    ),
+    "CARRY_MASS_KG": (
+        "Design 2 §10.3's ordinary-pickup line: an object is carriable",
+        "if `carriable == true` AND `mass_kg <= 60.0`; above it the",
+        "object is manipulable only. A property of the OBJECT, and no",
+        "Gear, Mod or Ability widens it. NOT the envelope above: a host",
+        "that clears 120 kg may push a 100 kg crate and still may not",
+        "pick one up.",
+    ),
+}
+
+
+def _gd_dict(mapping: dict) -> str:
+    """A GDScript dictionary literal, keys and values both quoted.
+
+    Stable order: the declaration's own, so a regenerated file diffs
+    only when the declaration changes.
+    """
+    inner = ", ".join(
+        f'"{k}": {_gd_literal(list(v))}' for k, v in mapping.items())
+    return "{" + inner + "}"
 
 
 def _gd_literal(value) -> str:
@@ -115,6 +163,8 @@ def export_constants_gd() -> str:
                 f"export: physics.py no longer defines {name}, which the "
                 "engine builds a provider against. Remove it from "
                 "GD_PHYSICS deliberately, or restore it.")
+        for note in GD_PHYSICS_NOTES.get(name, ()):
+            lines.append(f"## {note}")
         lines.append(f"const {name} = {_gd_literal(getattr(PH, name))}")
     # `MANIPULATE_VERBS` is a frozenset and GDScript has no set literal,
     # so it goes over as a sorted Array -- which is also how the engine
@@ -228,6 +278,55 @@ def export_constants_gd() -> str:
         "# conditions and `status_applied` edges, and `cleanse` can never",
         "# remove it, because it is not in the cleanse order.",
         f"const ECHO_STATUS_KINDS = {_gd_literal(list(E.STATUS_KINDS))}",
+        "",
+        "# The subset the RUNTIME implements an effect for. While it equals",
+        "# the list above nothing changes; when a designed kind is admitted",
+        "# ahead of its runtime, this is what the bridge refuses to emit and",
+        "# what the engine can assert it can honour. NO STATUS BEFORE ITS",
+        "# EFFECT -- the vocabulary may run ahead of the runtime, a campaign",
+        "# may not.",
+        "const ECHO_STATUS_KINDS_IMPLEMENTED = "
+        f"{_gd_literal(list(E.IMPLEMENTED_STATUS_KINDS))}",
+        "",
+        "# WHICH TARGETS each supported kind is implemented FOR.",
+        "#",
+        "# The kind list above cannot answer target applicability, and a",
+        "# boundary that guards on it alone admits `lightened` on a",
+        "# surface the moment `lightened` works on an object. Support is",
+        "# per kind AND per target because those are different runtime",
+        "# work; this is that table, so the Godot application boundary can",
+        "# refuse the pair rather than the name.",
+        "const ECHO_STATUS_SUPPORTED_TARGETS = "
+        f"{_gd_dict(E.SUPPORTED_STATUS_TARGETS)}",
+        "",
+        "# P14. The room signal graph vocabulary, and what is IMPLEMENTED.",
+        "#",
+        "# Design 1 19.2's eleven node types and Amalgam 20's eighteen",
+        "# sensors are the complete sets, because a vocabulary with holes",
+        "# cannot tell 'not supported yet' from 'not a thing'. The",
+        "# SUPPORTED lists are what a Zone may actually use, and they are",
+        "# small on purpose: today they describe the one chain that runs,",
+        "# a HEAVY class plate through a NOT into a shutter.",
+        f"const SIGNAL_NODE_KINDS = {_gd_literal(list(get_args(SG.NodeKind)))}",
+        "const SIGNAL_NODE_KINDS_IMPLEMENTED = "
+        f"{_gd_literal(list(SG.SUPPORTED_NODE_KINDS))}",
+        f"const SIGNAL_SENSOR_KINDS = {_gd_literal(list(get_args(SG.SensorKind)))}",
+        "const SIGNAL_SENSOR_KINDS_IMPLEMENTED = "
+        f"{_gd_literal(list(SG.SUPPORTED_SENSOR_KINDS))}",
+        # What a graph value may DO to a machine. Exported for the same
+        # reason as the other two: `RoomGraphs` refuses an operation no
+        # runtime implements, and a refusal that read a list GDScript
+        # kept for itself could disagree with the one the Zone was
+        # validated against.
+        "const SIGNAL_ACTUATOR_OPS_IMPLEMENTED = "
+        f"{_gd_literal(list(SG.SUPPORTED_ACTUATOR_OPS))}",
+        # O05-07. What a Zone's own graphs may place (`RoomGraphs` refuses
+        # the rest), and the hosted minors' own declared graphs.
+        "const SIGNAL_ZONE_PLACEABLE_SENSORS = "
+        f"{_gd_literal(list(SG.ZONE_PLACEABLE_SENSOR_KINDS))}",
+        "const MINOR_SIGNAL_GRAPHS = " + _gd_literal({
+            sid: c.graph.model_dump(mode="json", exclude_none=True)
+            for sid, c in MINORS.CONTRACTS.items() if c.graph is not None}),
     ]
     lines.append("")
     return "\n".join(lines)

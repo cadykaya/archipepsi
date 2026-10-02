@@ -9,12 +9,14 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (BaseModel, ConfigDict, Field, model_serializer,
+                      model_validator)
 
 from .. import content_value as V
 from .. import echo_projection as P
 from ..schemas import constants as C
 from ..schemas import echo as E
+from ..schemas import gear as G
 from ..schemas import zone as Z
 from ..schemas import mechanics as M
 from . import capabilities as CAP
@@ -253,6 +255,19 @@ class OwnedComponentSummary(Strict):
     #: that cannot see the existing two is guessing at exactly the thing
     #: the fold will refuse it for. Empty for every kind but `action`.
     modifiers: tuple[str, ...] = Field(default=(), max_length=2)
+    #: THE ITEM THAT MADE IT, and the world it came from: its first
+    #: provenance row. Owner direction (2026-09-23): whether a new item
+    #: upgrades something the player owns or becomes a new thing is
+    #: Epsilon's reading of "the new source and the existing collection",
+    #: and sharing an Action primitive does not make two items one family.
+    #: A collection that names only verbs cannot be read that way. Empty
+    #: for a caller that predates it, which reads as "related to nothing".
+    origin: _AP_STR = ""
+    origin_game: _AP_STR = ""
+    #: An action's slot. A consumable, a weapon and a utility that share a
+    #: verb are three different things to hold, and an upgrade keeps the
+    #: function the owned one has. "" for every other kind.
+    slot: str = Field(default="", max_length=16)
 
 
 class OwnedLinkSummary(Strict):
@@ -278,6 +293,35 @@ class EchoPlayerState(Strict):
     #: absorbed id still lands (aliases are permanent, §3.1), but a
     #: provider that can see the table can name the survivor directly.
     aliases: tuple[tuple[str, str], ...] = ()
+
+
+def allowed_for(*, consumable: bool = False) -> dict:
+    """What an Echo request may use. Production's, unless a caller -- the
+    candidate profile's `consumables` option (O05-11.4) -- asks for the
+    consumable slot as well. `generate_echo_validated` admits exactly the
+    slots advertised here, so the two cannot disagree."""
+    allowed = {
+        "operations": list(CAP.IMPLEMENTED_OPERATION_KINDS),
+        "modes": list(E.INTERPRETATION_MODES),
+        "component_kinds": list(CAP.IMPLEMENTED_COMPONENT_KINDS),
+        "action_primitives": list(E.IMPLEMENTED_PRIMITIVES),
+        "modifiers": list(CAP.IMPLEMENTED_MODIFIER_TYPES),
+        "trait_stats": list(CAP.IMPLEMENTED_TRAIT_STATS),
+        "slots": list(CAP.CANDIDATE_ACTION_SLOTS if consumable
+                      else CAP.IMPLEMENTED_ACTION_SLOTS),
+        "rule_events": list(CAP.IMPLEMENTED_RULE_EVENTS),
+        "rule_conditions": list(CAP.IMPLEMENTED_CONDITION_KINDS),
+        "rule_effects": list(CAP.IMPLEMENTED_EFFECT_KINDS),
+    }
+    # D16 G1: the atoms a piece of Gear may carry -- never a number, which
+    # is derived. Only once the gate opens, exactly when `gear` joins
+    # `component_kinds`: until then the request is byte-for-byte what it
+    # was, and the playtest baseline that records it is retaken in the
+    # gate-opening commit, deliberately, as its rule asks.
+    if G.SUPPORTED_GEAR_DOMAINS:
+        allowed["gear_domains"] = list(G.SUPPORTED_GEAR_DOMAINS)
+        allowed["gear_magnitudes"] = list(G.LEGAL_MAGNITUDES)
+    return allowed
 
 
 class EchoGenerationRequest(Strict):
@@ -329,18 +373,28 @@ class EchoGenerationRequest(Strict):
     #: disposition could usefully touch. Empty on a fresh campaign, where
     #: there is nothing to relate to and CREATE is the only honest answer.
     relevance_hint: str = Field(default="", max_length=C.MAX_TEXT_LEN)
-    allowed: dict = Field(default_factory=lambda: {
-        "operations": list(CAP.IMPLEMENTED_OPERATION_KINDS),
-        "modes": list(E.INTERPRETATION_MODES),
-        "component_kinds": list(CAP.IMPLEMENTED_COMPONENT_KINDS),
-        "action_primitives": list(E.IMPLEMENTED_PRIMITIVES),
-        "modifiers": list(CAP.IMPLEMENTED_MODIFIER_TYPES),
-        "trait_stats": list(CAP.IMPLEMENTED_TRAIT_STATS),
-        "slots": list(CAP.IMPLEMENTED_ACTION_SLOTS),
-        "rule_events": list(CAP.IMPLEMENTED_RULE_EVENTS),
-        "rule_conditions": list(CAP.IMPLEMENTED_CONDITION_KINDS),
-        "rule_effects": list(CAP.IMPLEMENTED_EFFECT_KINDS),
-    })
+    #: H-QUALIFY (D-02, Dess's note D-5): the function a FEATURED Check's
+    #: Echo must supply, as `FeaturedRequirement.describe()` states it.
+    #: None for every other Check. The game owns the requirement and the
+    #: grant enforces it (`featured.check`); the provider names and styles
+    #: within it, and one that misses it is repaired, then replaced by the
+    #: requirement's own deterministic Echo. Bounded, like every request
+    #: field, but not by `MAX_TEXT_LEN`: the grapple's statement alone is
+    #: 185 characters, and it grows by one clause per floor.
+    #:
+    #: **Absent, not null, when there is none** (`_absent_requirement`):
+    #: every other Echo request -- the provider's input, the archive, the
+    #: pre-art baseline -- serialises exactly as it did before the field.
+    required_function: str | None = Field(default=None, max_length=400)
+
+    @model_serializer(mode="wrap")
+    def _absent_requirement(self, handler):
+        data = handler(self)
+        if isinstance(data, dict) and data.get("required_function") is None:
+            data.pop("required_function", None)
+        return data
+
+    allowed: dict = Field(default_factory=lambda: allowed_for())
     composition_rules: tuple[str, ...] = (
         "an interpretation carries 1-4 operations",
         "a create operation's component id must start with its kind prefix "

@@ -12,9 +12,27 @@ extends RefCounted
 
 signal status_applied(kind: String)
 
-#: Which side this container belongs to, for matching StatusComponent
-#: definitions ("self" for the player, "enemy" for an enemy).
+#: WHICH TARGET KIND this container belongs to -- Amalgam §15.1's five:
+#: `self`, `enemy`, `object`, `surface`, `volume`. `self`/`enemy` are the
+#: ECHOES.md spelling and still match `StatusComponent.target`; `object`
+#: is what a crate carries. It is the same field because it answers the
+#: same question the schema's `target` asks, and a second one would be a
+#: second vocabulary.
 var side := "self"
+
+#: THE TABLE THIS CONTAINER HONOURS: `SUPPORTED_STATUS_TARGETS`, generated
+#: from the bridge's schema, which is the contract -- a kind is applied to
+#: a target only once the contract declares the runtime implements it
+#: there. A field, not a constant read, for one reason: a suite may hand a
+#: container the table AS IT WILL BE DECLARED, to prove an effect through
+#: this real application path before the declaration opens the gate for
+#: everyone. Nothing in the game sets it.
+var supported: Dictionary = Constants.ECHO_STATUS_SUPPORTED_TARGETS
+
+#: THE KINETIC PAIR NEVER COEXISTS (Design 1 item 72; Design 2 §15):
+#: "applying either removes the other, since one sets mass to `FIXED` and
+#: the other reduces it."
+const _RIVALS := {"anchored": "lightened", "lightened": "anchored"}
 
 var _active: Dictionary = {}
 
@@ -26,8 +44,36 @@ func apply(kind: String, duration: float, magnitude: float) -> void:
 	# `status_applied` edges, and permanently uncleansable because it is
 	# not in the cleanse order. A typo produced a status that did nothing
 	# and could never be removed.
+	# ...AND SUPPORT IS NOT MEMBERSHIP. The vocabulary grew from twelve to
+	# twenty-four when the destination's kinds were admitted ahead of
+	# their runtimes, and for that window this guard read the wrong list:
+	# `lightened` was in `ECHO_STATUS_KINDS`, so it applied, stored, and
+	# satisfied `status_active` while nothing implemented it and no
+	# cleanse order could remove it -- the permanent inert status above,
+	# arrived at by the front door. The bridge refuses to EMIT an
+	# unsupported kind; this is the engine asserting it can HONOUR what
+	# it is handed, which is the half that lives here.
 	if not kind in Constants.ECHO_STATUS_KINDS:
 		push_error("apply_status names unknown status '%s'" % kind)
+		return
+	# ...AND SUPPORT IS PER TARGET, not per kind. `lightened` is
+	# implemented on an OBJECT and on nothing else; a kind that works on
+	# one target kind is not thereby working on another, and the bridge
+	# refuses to emit at an unsupported target for the same reason. The
+	# engine asks the same question at its own application boundary, so a
+	# room cannot start a Status the campaign would have been refused.
+	#
+	# A REFUSAL LEAVES NOTHING BEHIND: no entry, and no `status_applied`,
+	# so nothing downstream sees a success that did not happen.
+	var targets: Array = supported.get(kind, [])
+	if targets.is_empty():
+		push_error(("apply_status names '%s', which the design names " % kind)
+				+ "but no runtime effect implements, so it may not be "
+				+ "applied. NO STATUS BEFORE ITS EFFECT.")
+		return
+	if not side in targets:
+		push_error("apply_status names '%s' on target '%s'; the runtime "
+				% [kind, side] + "implements it on %s" % [targets])
 		return
 	for entry: Dictionary in BridgeClient.owned_components("status"):
 		var component: Dictionary = entry.get("component", {})
@@ -36,6 +82,9 @@ func apply(kind: String, duration: float, magnitude: float) -> void:
 			duration = maxf(duration, float(component.get("duration", 0.0)))
 			magnitude = maxf(magnitude,
 					float(component.get("magnitude", 0.0)))
+	# THE RIVAL GOES FIRST, and only once this application is admitted: a
+	# refused `anchored` leaves a `lightened` body lightened.
+	_active.erase(_RIVALS.get(kind, ""))
 	# Re-application refreshes rather than stacks: two burnings that added
 	# up would breach the schema's own magnitude bound from outside it.
 	#
@@ -91,6 +140,10 @@ func tick(delta: float) -> void:
 func has(kind: String) -> bool:
 	return _active.has(kind)
 
+## Seconds left on `kind`, 0 when it is not active: what a readout shows.
+func remaining_of(kind: String) -> float:
+	return float((_active.get(kind, {}) as Dictionary).get("remaining", 0.0))
+
 func magnitude_of(kind: String) -> float:
 	return float(_active.get(kind, {}).get("magnitude", 0.0))
 
@@ -122,8 +175,8 @@ func regen_per_second() -> float:
 const _CLEANSE_ORDER := {
 	"self": ["burning", "poisoned", "frozen", "shocked", "slowed",
 			"vulnerable"],
-	"enemy": ["burning", "poisoned", "frozen", "stunned", "shocked",
-			"slowed", "vulnerable", "marked"],
+	"enemy": ["burning", "poisoned", "frozen", "stunned", "anchored",
+			"rooted", "shocked", "slowed", "vulnerable", "marked"],
 }
 
 func cleanse(count: int) -> int:

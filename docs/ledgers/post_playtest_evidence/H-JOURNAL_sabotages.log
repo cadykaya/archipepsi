@@ -1,0 +1,75 @@
+JR-1 [journal_query.gd] the Zone's Checks counted as all confirmed
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: in a Zone: its name and its Checks, 2 of 15 confirmed: ["In Relay 001: Bomb Rush Cyberfunk", "Checks here: 15 of 15 confirmed", "Toward the finale: 10 of 24 Checks"]
+JR-2 [journal_query.gd] the Hub's objective in the journal's own words
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: in the Hub: the Hub's own headline and detail, word for word: ["Find every Check.", "Toward the finale: 8 of 24 Checks"]
+JR-3 [journal_query.gd] the Hub's 'step back through the portal' shown in a Zone
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and not the Hub's 'step back through the portal' while in it
+      FAIL: in a Zone: its name and its Checks, 2 of 15 confirmed: ["ZONE IN PROGRESS", "Step back through the portal to resume.", "Toward the finale: 10 of 24 Checks"]
+JR-4 [journal_query.gd] a way to an unfound room named by its save id
+    CAUGHT -- 4 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: latched: no unfound room named, no save id: [] ["A latch held in Arena 4. Open now: Arena 4 to c010."]
+      FAIL: latched: the latch in Arena 4, and the way it holds open
+      FAIL: progressed: no unfound room named, no save id: [] ["Cell power: powered, set in Arena 2. Open now: Arena 2 to c006."]
+      FAIL: the power: on in Arena 2; the way it opened leads somewhere not yet walked, and says so
+JR-5 [journal_query.gd] a setting back at its start is listed as done
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the span put back: a setting at its start again is not listed (6 lines)
+JR-6 [journal_query.gd] notes oldest first
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: one note per Echo in the log, newest first (10): ["Braided Lash", "Leather Grip", "Sprint Coil", "Arc Bolt", "Magic Meter", "Estus Shard", "Warding Loop", "Scan Lens", "Cinder Charge", "Frost Flask"]
+JR-7 [journal_query.gd] a shut gate without the bridge's reason
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every gate the map lists shut, each with the bridge's reason (3): ["Arena 1 to Platform Path 1: shut", "Arena 2 to a way not yet walked: shut", "Arena 2 to a way not yet walked: shut"]
+JR-8 [journal_query.gd] every room listed as a place, found or not
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the places found, by the bridge's names: ["Corridor 1", "Arena 1", "Platform Path 1", "Corridor 2", "Arena 2"]
+JR-9 [journal_query.gd] the campaign's Checks counted from this Zone alone
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the campaign, from the snapshot: missing ["Checks confirmed: 8 of 21"] from ["Seed: JOURNALFIXTURE", "Player: Pepsi", "Archipelago: mock, connected", "Epsilon: fallback", "Checks confirmed: 2 of 15", "Zones completed: 2", "Link to the bridge: down"]
+JR-10 [journal_face.gd] the journal does not follow the snapshot
+    CAUGHT -- 18 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: Down scrolls the journal (0 px), and the page stays
+      FAIL: a snapshot refills it (1 -> 1)
+      FAIL: and once Arena 3 is found, the power line names it
+      FAIL: and once all three are open, it says nothing found is shut
+      FAIL: and the finale's count, 8 of 24
+      FAIL: arrived: nothing yet: ["You are not in a Zone."]
+      FAIL: each with Epsilon's read, word for word
+      FAIL: every gate the map lists shut, each with the bridge's reason (3): []
+      FAIL: in a Zone: its name and its Checks, 2 of 15 confirmed: ["No campaign yet."]
+      FAIL: in the Hub: the Hub's own headline and detail, word for word: ["No campaign yet."]
+      FAIL: latched: the latch in Arena 4, and the way it holds open
+      FAIL: one note per Echo in the log, newest first (10): []
+      FAIL: six lines for six things done: 1
+      FAIL: the keys, the blue door and the cell, each in the room it happened in: missing ["Picked up the blue key.", "Picked up the red key.", "Unlocked the blue door in Arena 2.", "Installed the power cell in Arena 2."] from ["You are not in a Zone."]
+      FAIL: the places found, by the bridge's names: ["Corridor 1", "Arena 1", "Platform Path 1", "Corridor 2", "Arena 2"]
+      FAIL: the power: on in Arena 2; the way it opened leads somewhere not yet walked, and says so
+      FAIL: the span put back: a setting at its start again is not listed (1 lines)
+      FAIL: the span: lowered in Arena 1, and the way it opened named
+JR-11 [journal_face.gd] Down does not scroll the journal
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: Down scrolls the journal (0 px), and the page stays
+JR-12 [settings_face.gd] an option set but not saved
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: field of view 100: set, on the player's camera now, and saved
+JR-13 [settings_face.gd] field of view only for the next camera
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: field of view 100: set, on the player's camera now, and saved
+JR-14 [settings_face.gd] the volume slider changes nothing you hear
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: master volume 50%: the Master bus at 0.0 dB
+JR-15 [settings_face.gd] captions offered, though nothing reads them
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: captions, which nothing reads, is not offered
+JR-16 [pause_menu.gd] a prettier label on the abandon action
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: ABANDON still asks first, and says the same consequences
+      FAIL: the pause menu's actions, one button each and as they were: ["RESUME", "RETURN TO HUB", "LEAVE THIS ZONE", "QUIT GAME"]
+JR-17 [journal_snapshot.json] the fixture hand-edited (the blue door not opened)
+    test_journal_fixture.py: CAUGHT; restored byte for byte: True
+      FAILED tests/test_journal_fixture.py::test_the_committed_fixture_matches_its_generator
+
+17 of 17 sabotages caught

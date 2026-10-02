@@ -1,0 +1,2454 @@
+{
+ "all_rooms": {
+  "zone_map": {
+   "circuits": [
+    {
+     "circuit_id": "key:blue",
+     "connectors": [
+      "e:c005:c014"
+     ],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c003",
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "key:gold",
+     "connectors": [
+      "e:c014:c017"
+     ],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002",
+      "c014"
+     ]
+    },
+    {
+     "circuit_id": "key:green",
+     "connectors": [
+      "e:c014:c015"
+     ],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c004",
+      "c014"
+     ]
+    },
+    {
+     "circuit_id": "key:red",
+     "connectors": [
+      "e:c011:c012"
+     ],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002",
+      "c011"
+     ]
+    },
+    {
+     "circuit_id": "machine:c009:route_shutter",
+     "connectors": [
+      "e:c009:c010"
+     ],
+     "kind": "machine",
+     "objects": [],
+     "rooms": [
+      "c009"
+     ]
+    },
+    {
+     "circuit_id": "state:cell_power",
+     "connectors": [
+      "e:c005:c006"
+     ],
+     "kind": "setting",
+     "objects": [
+      "power_cell"
+     ],
+     "rooms": [
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "state:span_alignment",
+     "connectors": [
+      "e:c002:c003"
+     ],
+     "kind": "setting",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    }
+   ],
+   "connectors": [
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c001:c002",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c001",
+     "room_b": "c002",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:span_alignment"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c003",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 1",
+     "room_a": "c002",
+     "room_b": "c003",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c003:c004",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c003",
+     "room_b": "c004",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c004:c005",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c004",
+     "room_b": "c005",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:cell_power"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c006",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 2",
+     "room_a": "c005",
+     "room_b": "c006",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c006:c007",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c006",
+     "room_b": "c007",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c007:c008",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c007",
+     "room_b": "c008",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c008:c009",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c008",
+     "room_b": "c009",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "machine:c009:route_shutter"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c009:c010",
+     "gates": [
+      "machine"
+     ],
+     "realization": "joined",
+     "reason": "worked by a control in Arena 4",
+     "room_a": "c009",
+     "room_b": "c010",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c010:c013",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c010",
+     "room_b": "c013",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c013:c016",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c013",
+     "room_b": "c016",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c016:c019",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c016",
+     "room_b": "c019",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c019:c022",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c019",
+     "room_b": "c022",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c022:c023",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c022",
+     "room_b": "c023",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c009:c011",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c009",
+     "room_b": "c011",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "A_TO_B",
+     "edge_id": "p:c011:start",
+     "gates": [
+      "none"
+     ],
+     "realization": "traversal_only",
+     "reason": "",
+     "room_a": "c011",
+     "room_b": "c001",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "key:red"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c011:c012",
+     "gates": [
+      "key"
+     ],
+     "realization": "joined",
+     "reason": "locked -- red key; you hold it",
+     "room_a": "c011",
+     "room_b": "c012",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "A_TO_B",
+     "edge_id": "p:c012:start",
+     "gates": [
+      "none"
+     ],
+     "realization": "traversal_only",
+     "reason": "",
+     "room_a": "c012",
+     "room_b": "c001",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "key:blue"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c014",
+     "gates": [
+      "key"
+     ],
+     "realization": "joined",
+     "reason": "locked -- blue key",
+     "room_a": "c005",
+     "room_b": "c014",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "A_TO_B",
+     "edge_id": "p:c014:start",
+     "gates": [
+      "none"
+     ],
+     "realization": "traversal_only",
+     "reason": "",
+     "room_a": "c014",
+     "room_b": "c001",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "key:green"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c014:c015",
+     "gates": [
+      "key"
+     ],
+     "realization": "joined",
+     "reason": "locked -- green key",
+     "room_a": "c014",
+     "room_b": "c015",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "A_TO_B",
+     "edge_id": "p:c015:start",
+     "gates": [
+      "none"
+     ],
+     "realization": "traversal_only",
+     "reason": "",
+     "room_a": "c015",
+     "room_b": "c001",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "key:gold"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c014:c017",
+     "gates": [
+      "key"
+     ],
+     "realization": "joined",
+     "reason": "locked -- gold key",
+     "room_a": "c014",
+     "room_b": "c017",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "A_TO_B",
+     "edge_id": "p:c017:start",
+     "gates": [
+      "none"
+     ],
+     "realization": "traversal_only",
+     "reason": "",
+     "room_a": "c017",
+     "room_b": "c001",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c018",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c002",
+     "room_b": "c018",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "A_TO_B",
+     "edge_id": "p:c018:start",
+     "gates": [
+      "none"
+     ],
+     "realization": "traversal_only",
+     "reason": "",
+     "room_a": "c018",
+     "room_b": "c001",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c018:c020",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c018",
+     "room_b": "c020",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "A_TO_B",
+     "edge_id": "p:c020:start",
+     "gates": [
+      "none"
+     ],
+     "realization": "traversal_only",
+     "reason": "",
+     "room_a": "c020",
+     "room_b": "c001",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c018:c021",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c018",
+     "room_b": "c021",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "A_TO_B",
+     "edge_id": "p:c021:start",
+     "gates": [
+      "none"
+     ],
+     "realization": "traversal_only",
+     "reason": "",
+     "room_a": "c021",
+     "room_b": "c001",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c015:c024",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c015",
+     "room_b": "c024",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c020:c025",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c020",
+     "room_b": "c025",
+     "state": "open"
+    }
+   ],
+   "rooms": [
+    {
+     "discovered": true,
+     "name": "Corridor 1",
+     "room_id": "c001",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 1",
+     "room_id": "c002",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 1",
+     "room_id": "c003",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 2",
+     "room_id": "c004",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 2",
+     "room_id": "c005",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 3",
+     "room_id": "c006",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 3",
+     "room_id": "c007",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 2",
+     "room_id": "c008",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 4",
+     "room_id": "c009",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 4",
+     "room_id": "c010",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 5",
+     "room_id": "c011",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 3",
+     "room_id": "c012",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 5",
+     "room_id": "c013",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 6",
+     "room_id": "c014",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 7",
+     "room_id": "c015",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 6",
+     "room_id": "c016",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 4",
+     "room_id": "c017",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 8",
+     "room_id": "c018",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 7",
+     "room_id": "c019",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 9",
+     "room_id": "c020",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 5",
+     "room_id": "c021",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 8",
+     "room_id": "c022",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 10",
+     "room_id": "c023",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Unweighted Switch",
+     "room_id": "c024",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Counterfire Arcade",
+     "room_id": "c025",
+     "type": "arena"
+    }
+   ],
+   "zone_id": "zone_001"
+  }
+ },
+ "carried": {
+  "zone_map": {
+   "circuits": [
+    {
+     "circuit_id": "key:blue",
+     "connectors": [
+      "e:c005:c014"
+     ],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c003",
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "key:gold",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "key:green",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c004"
+     ]
+    },
+    {
+     "circuit_id": "key:red",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "state:cell_power",
+     "connectors": [
+      "e:c005:c006"
+     ],
+     "kind": "setting",
+     "objects": [
+      "power_cell"
+     ],
+     "rooms": [
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "state:span_alignment",
+     "connectors": [
+      "e:c002:c003"
+     ],
+     "kind": "setting",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    }
+   ],
+   "connectors": [
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c001:c002",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c001",
+     "room_b": "c002",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:span_alignment"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c003",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 1",
+     "room_a": "c002",
+     "room_b": "c003",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c003:c004",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c003",
+     "room_b": "c004",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c004:c005",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c004",
+     "room_b": "c005",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:cell_power"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c006",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 2",
+     "room_a": "c005",
+     "room_b": "c006",
+     "state": "blocked"
+    },
+    {
+     "circuits": [
+      "key:blue"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c014",
+     "gates": [
+      "key"
+     ],
+     "realization": "joined",
+     "reason": "locked -- blue key",
+     "room_a": "c005",
+     "room_b": "c014",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c018",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c002",
+     "room_b": "c018",
+     "state": "open"
+    }
+   ],
+   "rooms": [
+    {
+     "discovered": true,
+     "name": "Corridor 1",
+     "room_id": "c001",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 1",
+     "room_id": "c002",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 1",
+     "room_id": "c003",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 2",
+     "room_id": "c004",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 2",
+     "room_id": "c005",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c006",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c007",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c008",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c009",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c010",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c011",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c012",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c013",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c014",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c015",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c016",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c017",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c018",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c019",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c020",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c021",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c022",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c023",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c024",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c025",
+     "type": "arena"
+    }
+   ],
+   "zone_id": "zone_001"
+  }
+ },
+ "powered": {
+  "zone_map": {
+   "circuits": [
+    {
+     "circuit_id": "key:blue",
+     "connectors": [
+      "e:c005:c014"
+     ],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c003",
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "key:gold",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "key:green",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c004"
+     ]
+    },
+    {
+     "circuit_id": "key:red",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "state:cell_power",
+     "connectors": [
+      "e:c005:c006"
+     ],
+     "kind": "setting",
+     "objects": [
+      "power_cell"
+     ],
+     "rooms": [
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "state:span_alignment",
+     "connectors": [
+      "e:c002:c003"
+     ],
+     "kind": "setting",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    }
+   ],
+   "connectors": [
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c001:c002",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c001",
+     "room_b": "c002",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:span_alignment"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c003",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 1",
+     "room_a": "c002",
+     "room_b": "c003",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c003:c004",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c003",
+     "room_b": "c004",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c004:c005",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c004",
+     "room_b": "c005",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:cell_power"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c006",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c005",
+     "room_b": "c006",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "key:blue"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c014",
+     "gates": [
+      "key"
+     ],
+     "realization": "joined",
+     "reason": "locked -- blue key",
+     "room_a": "c005",
+     "room_b": "c014",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c018",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c002",
+     "room_b": "c018",
+     "state": "open"
+    }
+   ],
+   "rooms": [
+    {
+     "discovered": true,
+     "name": "Corridor 1",
+     "room_id": "c001",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 1",
+     "room_id": "c002",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 1",
+     "room_id": "c003",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 2",
+     "room_id": "c004",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 2",
+     "room_id": "c005",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c006",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c007",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c008",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c009",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c010",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c011",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c012",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c013",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c014",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c015",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c016",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c017",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c018",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c019",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c020",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c021",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c022",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c023",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c024",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c025",
+     "type": "arena"
+    }
+   ],
+   "zone_id": "zone_001"
+  }
+ },
+ "span_lowered": {
+  "zone_map": {
+   "circuits": [
+    {
+     "circuit_id": "key:blue",
+     "connectors": [
+      "e:c005:c014"
+     ],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c003",
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "key:gold",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "key:green",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c004"
+     ]
+    },
+    {
+     "circuit_id": "key:red",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "state:cell_power",
+     "connectors": [
+      "e:c005:c006"
+     ],
+     "kind": "setting",
+     "objects": [
+      "power_cell"
+     ],
+     "rooms": [
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "state:span_alignment",
+     "connectors": [
+      "e:c002:c003"
+     ],
+     "kind": "setting",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    }
+   ],
+   "connectors": [
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c001:c002",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c001",
+     "room_b": "c002",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:span_alignment"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c003",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c002",
+     "room_b": "c003",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c003:c004",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c003",
+     "room_b": "c004",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c004:c005",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c004",
+     "room_b": "c005",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:cell_power"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c006",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 2",
+     "room_a": "c005",
+     "room_b": "c006",
+     "state": "blocked"
+    },
+    {
+     "circuits": [
+      "key:blue"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c014",
+     "gates": [
+      "key"
+     ],
+     "realization": "joined",
+     "reason": "locked -- blue key",
+     "room_a": "c005",
+     "room_b": "c014",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c018",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c002",
+     "room_b": "c018",
+     "state": "open"
+    }
+   ],
+   "rooms": [
+    {
+     "discovered": true,
+     "name": "Corridor 1",
+     "room_id": "c001",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 1",
+     "room_id": "c002",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 1",
+     "room_id": "c003",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 2",
+     "room_id": "c004",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 2",
+     "room_id": "c005",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c006",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c007",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c008",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c009",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c010",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c011",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c012",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c013",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c014",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c015",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c016",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c017",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c018",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c019",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c020",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c021",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c022",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c023",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c024",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c025",
+     "type": "arena"
+    }
+   ],
+   "zone_id": "zone_001"
+  }
+ },
+ "span_stowed": {
+  "zone_map": {
+   "circuits": [
+    {
+     "circuit_id": "key:blue",
+     "connectors": [
+      "e:c005:c014"
+     ],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c003",
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "key:gold",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "key:green",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c004"
+     ]
+    },
+    {
+     "circuit_id": "key:red",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "state:cell_power",
+     "connectors": [
+      "e:c005:c006"
+     ],
+     "kind": "setting",
+     "objects": [
+      "power_cell"
+     ],
+     "rooms": [
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "state:span_alignment",
+     "connectors": [
+      "e:c002:c003"
+     ],
+     "kind": "setting",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    }
+   ],
+   "connectors": [
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c001:c002",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c001",
+     "room_b": "c002",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:span_alignment"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c003",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 1",
+     "room_a": "c002",
+     "room_b": "c003",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c003:c004",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c003",
+     "room_b": "c004",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c004:c005",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c004",
+     "room_b": "c005",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:cell_power"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c006",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 2",
+     "room_a": "c005",
+     "room_b": "c006",
+     "state": "blocked"
+    },
+    {
+     "circuits": [
+      "key:blue"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c014",
+     "gates": [
+      "key"
+     ],
+     "realization": "joined",
+     "reason": "locked -- blue key",
+     "room_a": "c005",
+     "room_b": "c014",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c018",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c002",
+     "room_b": "c018",
+     "state": "open"
+    }
+   ],
+   "rooms": [
+    {
+     "discovered": true,
+     "name": "Corridor 1",
+     "room_id": "c001",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 1",
+     "room_id": "c002",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 1",
+     "room_id": "c003",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 2",
+     "room_id": "c004",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 2",
+     "room_id": "c005",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c006",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c007",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c008",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c009",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c010",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c011",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c012",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c013",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c014",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c015",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c016",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c017",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c018",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c019",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c020",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c021",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c022",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c023",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c024",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c025",
+     "type": "arena"
+    }
+   ],
+   "zone_id": "zone_001"
+  }
+ },
+ "start": {
+  "zone_map": {
+   "circuits": [],
+   "connectors": [
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c001:c002",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c001",
+     "room_b": "c002",
+     "state": "open"
+    }
+   ],
+   "rooms": [
+    {
+     "discovered": true,
+     "name": "Corridor 1",
+     "room_id": "c001",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c002",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c003",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c004",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c005",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c006",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c007",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c008",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c009",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c010",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c011",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c012",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c013",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c014",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c015",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c016",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c017",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c018",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c019",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c020",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c021",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c022",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c023",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c024",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c025",
+     "type": "arena"
+    }
+   ],
+   "zone_id": "zone_001"
+  }
+ },
+ "walked": {
+  "zone_map": {
+   "circuits": [
+    {
+     "circuit_id": "key:blue",
+     "connectors": [
+      "e:c005:c014"
+     ],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c003",
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "key:gold",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "key:green",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c004"
+     ]
+    },
+    {
+     "circuit_id": "key:red",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    },
+    {
+     "circuit_id": "state:cell_power",
+     "connectors": [
+      "e:c005:c006"
+     ],
+     "kind": "setting",
+     "objects": [
+      "power_cell"
+     ],
+     "rooms": [
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "state:span_alignment",
+     "connectors": [
+      "e:c002:c003"
+     ],
+     "kind": "setting",
+     "objects": [],
+     "rooms": [
+      "c002"
+     ]
+    }
+   ],
+   "connectors": [
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c001:c002",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c001",
+     "room_b": "c002",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:span_alignment"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c003",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 1",
+     "room_a": "c002",
+     "room_b": "c003",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c003:c004",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c003",
+     "room_b": "c004",
+     "state": "open"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c004:c005",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c004",
+     "room_b": "c005",
+     "state": "open"
+    },
+    {
+     "circuits": [
+      "state:cell_power"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c006",
+     "gates": [
+      "zone_state"
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 2",
+     "room_a": "c005",
+     "room_b": "c006",
+     "state": "blocked"
+    },
+    {
+     "circuits": [
+      "key:blue"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c014",
+     "gates": [
+      "key"
+     ],
+     "realization": "joined",
+     "reason": "locked -- blue key",
+     "room_a": "c005",
+     "room_b": "c014",
+     "state": "blocked"
+    },
+    {
+     "circuits": [],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c002:c018",
+     "gates": [
+      "none"
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c002",
+     "room_b": "c018",
+     "state": "open"
+    }
+   ],
+   "rooms": [
+    {
+     "discovered": true,
+     "name": "Corridor 1",
+     "room_id": "c001",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 1",
+     "room_id": "c002",
+     "type": "arena"
+    },
+    {
+     "discovered": true,
+     "name": "Platform Path 1",
+     "room_id": "c003",
+     "type": "platform_path"
+    },
+    {
+     "discovered": true,
+     "name": "Corridor 2",
+     "room_id": "c004",
+     "type": "corridor"
+    },
+    {
+     "discovered": true,
+     "name": "Arena 2",
+     "room_id": "c005",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c006",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c007",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c008",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c009",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c010",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c011",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c012",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c013",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c014",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c015",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c016",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c017",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c018",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c019",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c020",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c021",
+     "type": "platform_path"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c022",
+     "type": "corridor"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c023",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c024",
+     "type": "arena"
+    },
+    {
+     "discovered": false,
+     "name": null,
+     "room_id": "c025",
+     "type": "arena"
+    }
+   ],
+   "zone_id": "zone_001"
+  }
+ }
+}

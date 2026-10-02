@@ -1,0 +1,246 @@
+"""D-01 reproduction (Prod, scratch: never committed).
+
+D14 §1: "In a campaign under this policy, Epsilon also makes a local Echo
+from that original, whoever the recipient is, the player included."
+D14 §3: "A new campaign is created with `True`."
+
+Each requirement is its own test so the run reports N of M. The three
+CONTROLS must hold both before and after the change.
+"""
+from __future__ import annotations
+
+import json
+
+from archipepsi_bridge import transactions
+from archipepsi_bridge.mock_ap import (SELF_SLOT, MockAPBackend,
+                                       MockServerState)
+from archipepsi_bridge.schemas import constants as C
+from archipepsi_bridge.schemas import protocol as P
+from archipepsi_bridge.schemas import transitions as T
+
+from .conftest import Collector, drain, enter_zone, make_engine, run
+
+#: The mock seed whose first Zone holds one of this slot's own items.
+SELF_SEED = "MockSeed-3"
+
+
+async def _campaign(tmp_path, seed=SELF_SEED, server_state=None):
+    engine = make_engine(tmp_path)
+    backend = MockAPBackend(engine, seed_name=seed, server_state=server_state)
+    engine.backend = backend
+    await backend.connect("", "Skyiah", "")
+    await drain()
+    await engine.handle_request_next_zone(False)
+    await drain()
+    zone_id = engine.save.active_zone_id
+    await enter_zone(engine, zone_id)
+    return engine, backend, zone_id
+
+
+def _own(engine, zone_id):
+    locs = engine.save.zone_by_id(zone_id).allocated_location_ids
+    return [l for l in locs if engine.ap.scouts[l].recipient_is_self]
+
+
+def _foreign(engine, zone_id):
+    locs = engine.save.zone_by_id(zone_id).allocated_location_ids
+    return [l for l in locs if not engine.ap.scouts[l].recipient_is_self]
+
+
+def test_D1_a_new_campaign_is_created_with_the_policy_on(tmp_path):
+    async def go():
+        engine, _, _ = await _campaign(tmp_path)
+        on_disk = json.loads(engine._save_path.read_text())
+        assert engine.save.self_addressed_echoes is True, \
+            "the new campaign's save has self_addressed_echoes False"
+        assert on_disk.get("self_addressed_echoes") is True, \
+            "the save written to disk has the policy off"
+    run(go())
+
+
+def test_D2_an_own_check_mints_one_echo_keyed_by_the_check(tmp_path):
+    async def go():
+        engine, _, zone_id = await _campaign(tmp_path)
+        mine = _own(engine, zone_id)
+        assert mine, "the mock seed placed no own item in this Zone"
+        loc = mine[0]
+        await transactions.claim_check(engine, zone_id, loc)
+        await drain()
+        ids = [i.echo_id for i in engine.save.interpretations]
+        assert ids.count(f"echo_{loc}") == 1, (
+            f"own Check {loc} ({engine.ap.scouts[loc].item_name}) confirmed; "
+            f"echo_{loc} minted {ids.count(f'echo_{loc}')} times")
+    run(go())
+
+
+def test_D3_the_confirmation_says_delivered_then_the_echo(tmp_path):
+    async def go():
+        engine, _, zone_id = await _campaign(tmp_path)
+        loc = _own(engine, zone_id)[0]
+        seen = Collector(engine)
+        await transactions.claim_check(engine, zone_id, loc)
+        await drain()
+        notes = [n for n in seen.of_type("notification")
+                 if n.location_id == loc
+                 and n.kind in ("check_confirmed", "reveal")]
+        assert len(notes) == 1, [n.kind for n in notes]
+        note = notes[0]
+        echo = engine.save.interpretation_by_id(f"echo_{loc}")
+        item = engine.ap.scouts[loc].item_name
+        want = (item, "Delivered to you.", "", "EPSILON ECHO ACQUIRED",
+                echo.display_name if echo else "<no echo>",
+                echo.description if echo else "<no echo>")
+        assert note.lines == want, f"card lines {note.lines!r}"
+        assert note.echo_id == f"echo_{loc}", \
+            f"card carries echo_id {note.echo_id!r}: no Echo half to reveal"
+    run(go())
+
+
+def test_D4_a_crash_before_the_append_is_granted_once_on_reload(tmp_path):
+    async def go():
+        state = MockServerState()
+        engine, _, zone_id = await _campaign(tmp_path, server_state=state)
+        loc = _own(engine, zone_id)[0]
+        await transactions.claim_check(engine, zone_id, loc)
+        await drain()
+        engine._apply(T._rebuild(engine.save, interpretations=tuple(
+            i for i in engine.save.interpretations
+            if i.echo_id != f"echo_{loc}")))
+        again = make_engine(tmp_path)
+        backend = MockAPBackend(again, seed_name=SELF_SEED,
+                                server_state=state)
+        again.backend = backend
+        await backend.connect("", "Skyiah", "")
+        await drain()
+        ids = [i.echo_id for i in again.save.interpretations]
+        assert ids.count(f"echo_{loc}") == 1, (
+            f"after a crash before the append, the reload minted "
+            f"echo_{loc} {ids.count(f'echo_{loc}')} times")
+    run(go())
+
+
+def test_D5_a_written_echo_is_never_rerolled_on_reload(tmp_path):
+    async def go():
+        state = MockServerState()
+        engine, _, zone_id = await _campaign(tmp_path, server_state=state)
+        loc = _own(engine, zone_id)[0]
+        await transactions.claim_check(engine, zone_id, loc)
+        await drain()
+        first = engine.save.interpretation_by_id(f"echo_{loc}")
+        assert first is not None, "no Echo was written to reroll"
+        again = make_engine(tmp_path)
+        backend = MockAPBackend(again, seed_name=SELF_SEED,
+                                server_state=state)
+        again.backend = backend
+        await backend.connect("", "Skyiah", "")
+        await drain()
+        after = again.save.interpretation_by_id(f"echo_{loc}")
+        assert after is not None and \
+            after.model_dump() == first.model_dump(), "the Echo changed"
+    run(go())
+
+
+def test_D6_a_failing_provider_falls_back_under_the_same_id(tmp_path):
+    async def go():
+        from .conftest import ScriptedProvider
+        engine = make_engine(tmp_path, provider=ScriptedProvider(),
+                             provider_name="mock")
+        backend = MockAPBackend(engine, seed_name=SELF_SEED)
+        engine.backend = backend
+        await backend.connect("", "Skyiah", "")
+        await drain()
+        await engine.handle_request_next_zone(False)
+        await drain()
+        zone_id = engine.save.active_zone_id
+        await enter_zone(engine, zone_id)
+        loc = _own(engine, zone_id)[0]
+        seen = Collector(engine)
+        await transactions.claim_check(engine, zone_id, loc)
+        await drain()
+        echo = engine.save.interpretation_by_id(f"echo_{loc}")
+        assert echo is not None, "no Echo, fallback or otherwise"
+        assert seen.notifications("fallback_used"), "no fallback notice"
+    run(go())
+
+
+# -- controls: these hold before and after -------------------------------
+
+def _originals(engine, loc):
+    """This Check's original among ReceivedItems: sent by this slot. The
+    mock also has another player find one of ours on each confirmation,
+    so a bare count of received items measures the wrong thing."""
+    item = engine.ap.scouts[loc].item_id
+    return [r.ordinal for r in engine.ap.received
+            if r.sender_player == SELF_SLOT and r.item_id == item]
+
+
+def _counted(engine):
+    """Keys and coins are counted from ReceivedItems and nothing else."""
+    ids = [r.item_id for r in engine.ap.received]
+    return (engine.ap.signal_keys == ids.count(C.ITEM_ID_SIGNAL_KEY)
+            and engine.ap.coins_received == ids.count(C.ITEM_ID_EPSILON_COIN))
+
+
+def test_C1_the_original_is_counted_exactly_once(tmp_path):
+    async def go():
+        state = MockServerState()
+        engine, _, zone_id = await _campaign(tmp_path, server_state=state)
+        loc = _own(engine, zone_id)[0]
+        before = _originals(engine, loc)
+        await transactions.claim_check(engine, zone_id, loc)
+        await drain()
+        await engine.grant_echo(loc)
+        await engine.echo_backlog_sweep()
+        await drain()
+        after = _originals(engine, loc)
+        assert len(after) == len(before) + 1, f"originals {before} -> {after}"
+        assert _counted(engine), "a key or coin was counted from elsewhere"
+        received = [(r.ordinal, r.item_id) for r in engine.ap.received]
+        again = make_engine(tmp_path)
+        backend = MockAPBackend(again, seed_name=SELF_SEED,
+                                server_state=state)
+        again.backend = backend
+        await backend.connect("", "Skyiah", "")
+        await drain()
+        assert _originals(again, loc) == after, "counted again on reload"
+        assert [(r.ordinal, r.item_id) for r in again.ap.received] == received
+        assert _counted(again)
+    run(go())
+
+
+def test_C2_a_foreign_check_is_unchanged(tmp_path):
+    async def go():
+        engine, _, zone_id = await _campaign(tmp_path)
+        loc = _foreign(engine, zone_id)[0]
+        seen = Collector(engine)
+        await transactions.claim_check(engine, zone_id, loc)
+        await drain()
+        echo = engine.save.interpretation_by_id(f"echo_{loc}")
+        scout = engine.ap.scouts[loc]
+        notes = seen.notifications("reveal")
+        assert echo is not None and len(notes) == 1
+        assert notes[0].title == f"SENT TO {scout.recipient_name.upper()}"
+        assert notes[0].lines == (scout.item_name, scout.recipient_game, "",
+                                  "EPSILON ECHO ACQUIRED", echo.display_name,
+                                  echo.description)
+        assert notes[0].echo_id == f"echo_{loc}"
+    run(go())
+
+
+def test_C3_a_legacy_campaign_mints_nothing_for_its_own_item(tmp_path):
+    async def go():
+        engine, _, zone_id = await _campaign(tmp_path)
+        raw = engine.save.model_dump(mode="json")
+        raw.pop("self_addressed_echoes")
+        engine._apply(P.CampaignSave.model_validate(raw))
+        loc = _own(engine, zone_id)[0]
+        seen = Collector(engine)
+        await transactions.claim_check(engine, zone_id, loc)
+        await drain()
+        await engine.echo_backlog_sweep()
+        assert engine.save.interpretation_by_id(f"echo_{loc}") is None
+        notes = seen.notifications("check_confirmed")
+        assert len(notes) == 1 and notes[0].lines == (
+            engine.ap.scouts[loc].item_name, "Delivered to you.")
+        assert notes[0].echo_id is None
+    run(go())

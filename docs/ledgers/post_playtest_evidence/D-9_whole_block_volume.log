@@ -1,0 +1,73 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- THE DECLARATION BECOMES THE MEASURED GANTRY
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone built: 
+FAIL: the network was not refused: ["span \'s0\' puts its gantry in room \'c002\': no position in the room takes the measured gantry (900 tried: 482 outside the room, 368 on the track, 50 not clear)"]
+FAIL: the network was not refused: ["span \'s0\' puts its gantry in room \'c002\': no position in the room takes the measured gantry (900 tried: 482 outside the room, 368 on the track, 50 not clear)"]
+FAIL: one junction (0)
+FAIL: one junction (0)
+  -- THE BASE KIT CANNOT REACH IT (played)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+FAIL: there is a control to try for
+FAIL: there is a control to try for
+  -- THE PROVEN GRAPPLE REACHES IT, AND THE LEVER WORKS (played)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+FAIL: a gantry to grapple to (built: false)
+FAIL: a gantry to grapple to (built: false)
+  -- A GROUND SPAN IS UNCHANGED
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: 'ground': the lever stands at the arrival, and no gantry
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: undeclared: the lever stands at the arrival, and no gantry
+  -- A ROOM THE GANTRY DOES NOT FIT IS REFUSED BY NAME
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: a 5 m arena: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': the plate needs 6.8 m of height and the room has 5.0 m
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: an 8 x 8 arena: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': no position in the room takes the measured gantry (196 tried: 178 outside the room, 18 on the track)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+FAIL: two gantries in c002: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': no position in the room takes the measured gantry (900 tried: 482 outside the room, 368 on the track, 50 not clear)
+FAIL: two gantries in c002: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': no position in the room takes the measured gantry (900 tried: 482 outside the room, 368 on the track, 50 not clear)
+  -- A STEP TO THE DECK IS MEASURED
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_gantry mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+FAIL: the bare arena takes a gantry: no position in the room takes the measured gantry (900 tried: 482 outside the room, 368 on the track, 50 not clear)
+FAIL: the bare arena takes a gantry: no position in the room takes the measured gantry (900 tried: 482 outside the room, 368 on the track, 50 not clear)
+
+GODOT RAIL GANTRY: 6 failures in 11 checks
+make: *** [Makefile:1389: godot-rail-gantry] Error 1

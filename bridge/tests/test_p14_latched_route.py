@@ -1,0 +1,573 @@
+"""P14 — a room-graph latch opens a route, persists, and is checked.
+
+Prod built LATCH in `signal_graph.gd` and it was unreachable from a
+declaration: `SUPPORTED_NODE_KINDS` was `("NOT",)`, and
+`transitions.record_latch` accepted only physics packages, so a latch
+that fired was answered "Zone accepted no physics package 'graph_c001'"
+and lost on reload (`docs/D10_P14_PROD_ANSWER.md` §3). This is the
+bridge half: the declaration, the route search, and the record.
+
+**WHAT IS NOT HERE.** Walking in, pulling the lever, walking through
+and finding it still open after a reload is Prod's played acceptance
+(H-PRESSURE-R), and nothing below stands in for it. The composer emits
+the lever since D13 1c; the step-once plate D-10 chose is kept only as
+M-1's legacy input (D-07).
+"""
+from __future__ import annotations
+
+import pytest
+
+from archipepsi_bridge.schemas import protocol as P
+from archipepsi_bridge.schemas import transitions as T
+from archipepsi_bridge.schemas.zone import Zone
+from archipepsi_bridge.topology import reachability
+
+_COMPOSED: list = []
+
+
+def composed() -> Zone:
+    """The really-composed Zone, built once."""
+    if not _COMPOSED:
+        from archipepsi_bridge.playtest import played_zone
+        zone = played_zone()
+        assert zone is not None, "the composition path produced no Zone"
+        _COMPOSED.append(zone)
+    return _COMPOSED[0]
+
+
+_SENSORS = {
+    "plate": {"node_id": "step_plate", "kind": "PRESSURE_PLATE",
+              "requires_class": "MEDIUM", "counts_player": True},
+    "lever": {"node_id": "route_lever", "kind": "PULSE_BUTTON"},
+}
+
+
+def latched_route(*, plate_side: str = "near", edge_index: int = 0,
+                  sensor: str = "plate") -> Zone:
+    """`plate -> LATCH -> shutter` (or D13 1c's `lever -> ...`), opening
+    one edge of a composed Zone.
+
+    `near` puts the control in the room the entrance side reaches first;
+    `far` puts it past the door it opens.
+    """
+    zone = composed()
+    raw = zone.model_dump()
+    edge = raw["edges"][edge_index]
+    room = edge["room_a"] if plate_side == "near" else edge["room_b"]
+    control = _SENSORS[sensor]
+    raw["room_graphs"] = [{
+        "room_id": room,
+        "sensors": [control],
+        "nodes": [{"node_id": "held", "kind": "LATCH",
+                   "inputs": [control["node_id"]]}],
+        "actuators": [{"actuator_id": "route_shutter", "driven_by": "held"}],
+    }]
+    edge["opened_by"] = "route_shutter"
+    return Zone.model_validate(raw)
+
+
+# --------------------------------------------------------------------------
+# The route search
+# --------------------------------------------------------------------------
+
+def test_the_composed_zone_is_sound_before_anything_is_added():
+    """The control: every error below has to be caused by the latch."""
+    assert reachability(composed()).ok, reachability(composed()).errors
+
+
+@pytest.mark.parametrize("sensor", ["plate", "lever"])
+def test_a_latch_on_the_near_side_opens_a_sound_route(sensor):
+    zone = latched_route(plate_side="near", sensor=sensor)
+    reach = reachability(zone)
+    assert reach.ok, reach.errors
+    assert zone.edges[0].room_b in reach.rooms
+
+
+@pytest.mark.parametrize("sensor", ["plate", "lever"])
+def test_a_trigger_behind_the_route_it_opens_is_refused_by_name(sensor):
+    """The control past the door it opens: the rooms beyond are
+    unreachable, and the message has to say WHY rather than only that."""
+    reach = reachability(latched_route(plate_side="far", sensor=sensor))
+    assert not reach.ok
+    assert any("the trigger is behind the route it opens" in e
+               for e in reach.errors), reach.errors
+
+
+def test_the_latch_actually_gates_the_edge_in_the_search():
+    """Sabotage: without the latch modelling, a far-side plate would
+    look fine -- the edge would read as an ordinary open door. Proved by
+    asking the search with the latch pre-set: everything opens."""
+    from archipepsi_bridge import topology as TP
+    zone = latched_route(plate_side="far")
+    searched, triggers = TP._route_latches(zone)
+    assert triggers, "the latch-opened edge was not modelled at all"
+    (_, plate_room, ref), = triggers
+    assert ref == f"graph_{plate_room}/held"
+    edge = next(e for e in searched.edges if e.edge_id == zone.edges[0].edge_id)
+    assert [c.variable_id for c in edge.requires_state][-1] == ref
+
+
+def test_a_denial_chain_adds_no_condition():
+    """`plate -> NOT -> shutter` rests open: the player can leave the
+    plate alone, so the search must not make the edge wait on anything."""
+    from archipepsi_bridge import topology as TP
+    raw = composed().model_dump()
+    edge = raw["edges"][0]
+    raw["room_graphs"] = [{
+        "room_id": edge["room_b"],
+        "sensors": [{"node_id": "step_plate", "kind": "PRESSURE_PLATE",
+                     "requires_class": "MEDIUM", "counts_player": True}],
+        "nodes": [{"node_id": "inverted", "kind": "NOT",
+                   "inputs": ["step_plate"]}],
+        "actuators": [{"actuator_id": "route_shutter",
+                       "driven_by": "inverted"}],
+    }]
+    edge["opened_by"] = "route_shutter"
+    zone = Zone.model_validate(raw)
+    _, triggers = TP._route_latches(zone)
+    assert triggers == ()
+    assert reachability(zone).ok
+
+
+def test_the_latch_is_permanent_in_the_search_as_it_is_in_the_runtime():
+    """Modelled as a permanent variable: set once in the plate's room,
+    never back. The same lifetime Prod's latch has, and never the
+    reversible kind -- so no search state closes a route it opened."""
+    from archipepsi_bridge import topology as TP
+    searched, _ = TP._route_latches(latched_route())
+    latch = searched.zone_state[-1]
+    assert latch.lifetime == "permanent"
+    assert latch.initial == "unset" and latch.setter.selects == ("set",)
+    assert latch.setter.capability is None
+
+
+# --------------------------------------------------------------------------
+# The record
+# --------------------------------------------------------------------------
+
+def _save(zone: Zone, *, committed: bool = True,
+          placed: tuple[str, ...] | None = None) -> P.CampaignSave:
+    # The composed Zone is default-scale, so the campaign has to be big
+    # enough to own the locations it allocates -- and one more, because
+    # the campaign's last location is the finale's and no other Zone's.
+    top = max(zone.reward_location_ids) - 89100000
+    save = P.CampaignSave(
+        seed_name="Seed", team=0, slot_id=1, slot_name="Skyiah",
+        scale=P.CampaignScale(location_count=max(top + 1, 30),
+                              zone_target_checks=15, zone_budget=1000))
+    save = T.start_generation(
+        save, zone_id=zone.zone_id,
+        allocated_location_ids=tuple(zone.reward_location_ids),
+        target_game=zone.target_game)
+    save = T.enter_zone(T.accept_zone(save, zone), zone.zone_id)
+    if committed:
+        rooms = [c.id for c in zone.chambers] if placed is None else placed
+        save = T.commit_layout(save, zone.zone_id, {
+            "zone_id": zone.zone_id, "manifest_digest": "d" * 16,
+            "rooms": {r: {} for r in rooms}, "packages": []})
+    return save
+
+
+def _plate_room(zone: Zone) -> str:
+    return zone.room_graphs[0].room_id
+
+
+def test_a_declared_room_graph_latch_is_recorded():
+    zone = latched_route()
+    room = _plate_room(zone)
+    save = T.record_latch(_save(zone), zone.zone_id, f"graph_{room}", "held")
+    assert save.zone_by_id(zone.zone_id).progress.latched == (
+        f"graph_{room}/held",)
+
+
+def test_recording_it_twice_is_recording_it_once():
+    zone = latched_route()
+    ref = f"graph_{_plate_room(zone)}"
+    once = T.record_latch(_save(zone), zone.zone_id, ref, "held")
+    assert T.record_latch(once, zone.zone_id, ref, "held") is once
+
+
+@pytest.mark.parametrize("package,latch,says", [
+    ("graph_{room}", "no_such_latch", "declares no LATCH 'no_such_latch'"),
+    ("graph_c999", "held", "placed no room 'c999'"),
+])
+def test_a_graph_name_alone_authorizes_nothing(package, latch, says):
+    zone = latched_route()
+    with pytest.raises(ValueError, match=says):
+        T.record_latch(_save(zone), zone.zone_id,
+                       package.format(room=_plate_room(zone)), latch)
+
+
+def test_a_room_without_a_graph_records_no_latch():
+    zone = latched_route()
+    other = next(c.id for c in zone.chambers if c.id != _plate_room(zone))
+    with pytest.raises(ValueError, match="declares no signal graph"):
+        T.record_latch(_save(zone), zone.zone_id, f"graph_{other}", "held")
+
+
+def test_a_node_that_is_not_a_latch_is_not_recordable():
+    """The graph's NOT, named by id, is a node and not a decision."""
+    raw = latched_route().model_dump()
+    graph = raw["room_graphs"][0]
+    graph["nodes"] = [*graph["nodes"],
+                      {"node_id": "shown", "kind": "NOT", "inputs": ["held"]}]
+    graph["actuators"] = [*graph["actuators"],
+                          {"actuator_id": "lamp", "driven_by": "shown"}]
+    zone = Zone.model_validate(raw)
+    with pytest.raises(ValueError, match="declares no LATCH 'shown'"):
+        T.record_latch(_save(zone), zone.zone_id,
+                       f"graph_{_plate_room(zone)}", "shown")
+
+
+def test_nothing_has_latched_before_the_layout_is_committed():
+    zone = latched_route()
+    with pytest.raises(ValueError, match="no committed layout"):
+        T.record_latch(_save(zone, committed=False), zone.zone_id,
+                       f"graph_{_plate_room(zone)}", "held")
+
+
+def test_a_layout_that_never_placed_the_room_is_not_evidence_for_it():
+    zone = latched_route()
+    room = _plate_room(zone)
+    elsewhere = tuple(c.id for c in zone.chambers if c.id != room)
+    with pytest.raises(ValueError, match=f"placed no room '{room}'"):
+        T.record_latch(_save(zone, placed=elsewhere), zone.zone_id,
+                       f"graph_{room}", "held")
+
+
+def test_the_physics_path_is_unchanged_for_everything_else():
+    """A name outside the reserved namespace still goes through the
+    committed manifest's packages, and still finds none here."""
+    zone = latched_route()
+    with pytest.raises(ValueError, match="accepted no physics package"):
+        T.record_latch(_save(zone), zone.zone_id, "counterweight", "l0")
+
+
+def test_no_physics_package_may_take_the_graph_namespace():
+    """Otherwise a physics latch and a room-graph latch could share one
+    identity in `latched`, and a monotone set never gives one back."""
+    from archipepsi_bridge.schemas import physics as PH
+    with pytest.raises(ValueError, match="reserved for room-graph latches"):
+        PH.refuse_reserved_package_id("graph_c001")
+    for model in (PH.PhysicsPackage, PH.ReplayEvidence, PH.PlacedPackage):
+        src = __import__("inspect").getsource(model)
+        assert "refuse_reserved_package_id" in src, (
+            f"{model.__name__} names a physics package and does not "
+            "reserve the graph namespace")
+
+
+def test_the_record_is_room_persistent_and_not_zone_state():
+    """The latch's lifetime in the save: `latched`, ROOM_PERSISTENT --
+    never `macro_state`, which is where reversible configuration lives."""
+    zone = latched_route()
+    room = _plate_room(zone)
+    save = T.record_latch(_save(zone), zone.zone_id, f"graph_{room}", "held")
+    progress = save.zone_by_id(zone.zone_id).progress
+    assert progress.macro_state == ()
+    assert P.SAVE_FIELD_CATEGORY["latched"] == "ROOM_PERSISTENT"
+
+
+def test_without_the_latch_modelling_a_far_side_plate_would_pass(monkeypatch):
+    """Sabotage, behavioural: take the modelling away and the far-side
+    plate is accepted -- the edge reads as an ordinary open door. So the
+    refusal above is the modelling's doing and not a side effect."""
+    from archipepsi_bridge import topology as TP
+    far = latched_route(plate_side="far")
+    assert not reachability(far).ok
+    monkeypatch.setattr(TP, "_route_latches", lambda zone: (zone, ()))
+    assert TP.reachability(far).ok
+
+
+# --------------------------------------------------------------------------
+# The composer: a legal latch route on a real Zone, by an explicit step
+# --------------------------------------------------------------------------
+
+# The SEARCH is shared by every entry point. These hold it through the
+# production entry, which emits D13 1c's lever; the legacy entry keeps
+# the one test that says what it still makes, and its fixture test.
+
+def test_the_composer_puts_a_legal_latch_route_on_the_real_zone():
+    from archipepsi_bridge.latched_route import compose_latched_route
+    out = compose_latched_route(composed())
+    assert out.emitted, out.note
+    assert reachability(out.zone).ok
+    edge = next(e for e in out.zone.edges if e.opened_by)
+    graph = out.zone.room_graphs[0]
+    order = [c.id for c in out.zone.chambers]
+    # The trigger is on the near side of the door it opens.
+    other = edge.room_b if graph.room_id == edge.room_a else edge.room_a
+    assert order.index(graph.room_id) < order.index(other)
+    # And it is D-07's chain: a LEVER -- a visibly permanent control --
+    # into the latch, and no gate. Never a plate that latches because it
+    # was stepped on once.
+    assert [s.kind for s in graph.sensors] == ["PULSE_BUTTON"]
+    assert [n.kind for n in graph.nodes] == ["LATCH"]
+    assert edge.capability is None
+
+
+def test_the_legacy_entry_still_makes_only_m1_s_step_once_plate():
+    """M-1's input, unchanged: D-10's plate, counting the player, on the
+    very doorway the lever now takes -- so the legacy fixture replays
+    what a save made before D-07 holds."""
+    from archipepsi_bridge.latched_route import (
+        compose_latched_route, compose_legacy_step_once_route)
+    legacy = compose_legacy_step_once_route(composed())
+    lever = compose_latched_route(composed())
+    assert legacy.emitted, legacy.note
+    (graph,) = legacy.zone.room_graphs
+    assert [(s.kind, s.counts_player) for s in graph.sensors] == [
+        ("PRESSURE_PLATE", True)]
+    assert legacy.edge_id == lever.edge_id
+    assert graph.room_id == lever.zone.room_graphs[0].room_id
+
+
+def test_the_composer_does_not_stack_onto_a_zone_that_has_one():
+    from archipepsi_bridge.latched_route import compose_latched_route
+    once = compose_latched_route(composed())
+    again = compose_latched_route(once.zone)
+    assert not again.emitted and again.zone is once.zone
+    assert "does not stack" in again.note
+
+
+def test_the_composer_declines_rather_than_emitting_something_broken(
+        monkeypatch):
+    """Sabotage: make every candidate fail the route search, and the
+    composer must hand the Zone back unchanged with the reason -- never
+    the last candidate it tried."""
+    from archipepsi_bridge import latched_route as LR
+    from archipepsi_bridge.topology import Reach
+
+    def refuses(zone, *a, **k):
+        return Reach(states=frozenset(), rooms=frozenset(),
+                     errors=("sabotaged",))
+    monkeypatch.setattr(LR, "reachability", refuses)
+    out = LR.compose_latched_route(composed())
+    assert not out.emitted and out.zone is composed()
+    assert "sabotaged" in out.note
+
+
+def test_the_default_composition_carries_no_latch_route():
+    """An explicit step, never a default: the Zone the baseline plays --
+    and every Zone the campaign composes -- is unchanged."""
+    zone = composed()
+    assert zone.room_graphs == ()
+    assert all(e.opened_by is None for e in zone.edges)
+
+
+@pytest.mark.parametrize("name, make, dump", [
+    ("latched_route_zone.json", "latched_route_zone",
+     "make latched-route-fixture"),
+    # No make target: the Makefile is Prod's (note D-7 asks for one).
+    ("lever_route_zone.json", "lever_route_zone",
+     "python -m archipepsi_bridge.playtest dump-lever --out "
+     "../godot/tests/fixtures/lever_route_zone.json` from `bridge/"),
+])
+def test_the_route_fixtures_are_the_zones_the_composers_emit(name, make,
+                                                             dump):
+    """Checked like the zone-audit fixture: a stale fixture would hand
+    Prod's acceptance a Zone the bridge no longer produces. The legacy
+    one is M-1's replay input; the lever one is D13 1c's."""
+    import json
+    from pathlib import Path
+    from archipepsi_bridge import playtest
+    fixture = (Path(__file__).resolve().parents[2]
+               / "godot/tests/fixtures" / name)
+    assert fixture.is_file(), f"{fixture} is missing; run `{dump}`"
+    live = getattr(playtest, make)()
+    assert live is not None
+    assert json.loads(fixture.read_text(encoding="utf-8")) == json.loads(
+        live.model_dump_json()), (
+        f"{name} is stale; regenerate it with `{dump}`")
+
+
+# --------------------------------------------------------------------------
+# D-07 / D13 step 1: nothing composed now latches a plate; saves still load
+# --------------------------------------------------------------------------
+
+def _legacy_raw() -> dict:
+    """M-1's legacy fixture: a Zone composed with the retired chain."""
+    import json
+    from pathlib import Path
+    raw = json.loads((Path(__file__).resolve().parents[2]
+                      / "godot/tests/fixtures/latched_route_zone.json")
+                     .read_text(encoding="utf-8"))
+    return raw.get("zone", raw)
+
+
+def _plate(node_id: str) -> dict:
+    return {"node_id": node_id, "kind": "PRESSURE_PLATE",
+            "requires_class": "MEDIUM", "counts_player": True}
+
+
+def _shaped(shape: str) -> dict:
+    """The legacy Zone with its graph rebuilt in one of three shapes."""
+    import copy
+    raw = copy.deepcopy(_legacy_raw())
+    graph = raw["room_graphs"][0]
+    shutter = [{"actuator_id": "route_shutter", "driven_by": "held"}]
+    if shape == "direct":
+        graph.update(sensors=[_plate("step_plate")], actuators=shutter,
+                     nodes=[{"node_id": "held", "kind": "LATCH",
+                             "inputs": ["step_plate"]}])
+    elif shape == "through NOT":
+        graph.update(sensors=[_plate("step_plate")], actuators=shutter,
+                     nodes=[{"node_id": "n1", "kind": "NOT",
+                             "inputs": ["step_plate"]},
+                            {"node_id": "n2", "kind": "NOT", "inputs": ["n1"]},
+                            {"node_id": "held", "kind": "LATCH",
+                             "inputs": ["n2"]}])
+    else:                       # through OR, driving a machine in the room
+        graph.update(sensors=[_plate("step_plate"), _plate("plate_b")],
+                     actuators=shutter,
+                     nodes=[{"node_id": "either", "kind": "OR",
+                             "inputs": ["step_plate", "plate_b"]},
+                            {"node_id": "held", "kind": "LATCH",
+                             "inputs": ["either"]}])
+        for edge in raw["edges"]:
+            edge["opened_by"] = None
+    return raw
+
+
+def _lever_route(*, nodes=None, driven_by="held") -> dict:
+    """The production lever route on the played Zone, as raw data, with
+    its chain optionally rebuilt."""
+    from archipepsi_bridge.latched_route import compose_latched_route
+    raw = compose_latched_route(composed()).zone.model_dump()
+    graph = raw["room_graphs"][0]
+    if nodes is not None:
+        graph["nodes"] = nodes
+        graph["actuators"][0]["driven_by"] = driven_by
+    return raw
+
+
+def test_the_lever_route_is_accepted_where_a_latched_plate_is_not():
+    """D13 1c against 1a: the accept-time refusal is of a PLATE that
+    latches. The lever's route is legal end to end -- the model, the
+    route search, and acceptance."""
+    from archipepsi_bridge.schemas.zone import validate_zone
+    zone = Zone.model_validate(_lever_route())
+    assert reachability(zone).ok, reachability(zone).errors
+    errors = validate_zone(zone, expected_zone_id=zone.zone_id,
+                           allocated_location_ids=list(
+                               zone.reward_location_ids),
+                           owned_echo_ids=[])
+    assert not any("held sensor" in e or "LATCH" in e for e in errors), \
+        errors
+
+
+def test_the_lever_opens_for_good_after_one_pull():
+    """Settled as the runtime settles it: closed as built, open on the
+    pull, and still open once the pulse has gone."""
+    from archipepsi_bridge.schemas import signal_graph as SG
+    zone = Zone.model_validate(_lever_route())
+    shape = SG.phases(zone.room_graphs[0], "route_shutter")
+    assert (shape["rest"], shape["pressed"], shape["released"]) == (
+        False, True, True)
+
+
+def test_a_lever_straight_to_a_shutter_is_refused():
+    """A pulse is gone the tick after it arrives, so a shutter driven by
+    one directly would move for one tick -- a door no one could walk
+    through. Refused structurally, before any route rule is asked."""
+    with pytest.raises(ValueError, match="move for one tick"):
+        Zone.model_validate(_lever_route(nodes=[], driven_by="route_lever"))
+
+
+def test_a_lever_that_shuts_the_way_is_a_softlock_named_as_a_pull():
+    """`lever -> LATCH -> NOT -> shutter`: open as built, shut for good
+    by the pull. Refused, and in the lever's words, not the plate's."""
+    with pytest.raises(ValueError, match="SHUT FOR GOOD by pulling the "
+                                         "lever"):
+        Zone.model_validate(_lever_route(
+            nodes=[{"node_id": "held", "kind": "LATCH",
+                    "inputs": ["route_lever"]},
+                   {"node_id": "shut", "kind": "NOT", "inputs": ["held"]}],
+            driven_by="shut"))
+
+
+def test_the_lever_s_latch_is_recorded_and_restored():
+    """D13 §3's lever row: recorded where the plate's was, kept across a
+    reload, and read by the map as an open door."""
+    from archipepsi_bridge.schemas.map_view import map_view
+    zone = Zone.model_validate(_lever_route())
+    room = _plate_room(zone)
+    edge = next(e for e in zone.edges if e.opened_by)
+    save = _save(zone)
+    before = map_view(save, zone.zone_id,
+                      visited={c.id for c in zone.chambers})
+    assert next(c for c in before.connectors
+                if c.edge_id == edge.edge_id).state == "blocked"
+    save = T.record_latch(save, zone.zone_id, f"graph_{room}", "held")
+    save = P.CampaignSave.model_validate_json(save.model_dump_json())
+    assert save.zone_by_id(zone.zone_id).progress.latched == (
+        f"graph_{room}/held",)
+    after = map_view(save, zone.zone_id,
+                     visited={c.id for c in zone.chambers})
+    assert next(c for c in after.connectors
+                if c.edge_id == edge.edge_id).state == "open"
+
+
+def _latching_plates(zone: Zone) -> list[str]:
+    """Every plate a LATCH on a drive path is fed from -- walked here
+    through `upstream`, independently of the validator's own helper."""
+    from archipepsi_bridge.schemas import signal_graph as SG
+    out = []
+    for graph in zone.room_graphs or ():
+        for actuator in graph.actuators:
+            sensors, nodes = SG.upstream(graph, actuator.actuator_id)
+            if any(n.kind == "LATCH" for n in nodes):
+                out += [f"{graph.room_id}/{s.node_id}" for s in sensors
+                        if s.kind == "PRESSURE_PLATE"]
+    return out
+
+
+def test_no_candidate_composition_latches_a_plate():
+    """D13 §3: the composer never emits one -- the production latch step
+    and the whole candidate profile on the played Zone, and the committed
+    fixtures they make. Asked of the validator's helper and of an
+    independent walk, so a blind helper cannot hide one."""
+    import json
+    from pathlib import Path
+    from archipepsi_bridge.candidate import STEPS, apply
+    from archipepsi_bridge.latched_route import compose_latched_route
+    from archipepsi_bridge.schemas.zone import _plates_that_latch
+    fixtures = Path(__file__).resolve().parents[2] / "godot/tests/fixtures"
+    made = {"latch step": compose_latched_route(composed()).zone,
+            "candidate profile": apply(composed(), STEPS).zone}
+    for name in ("candidate_zone.json", "lever_route_zone.json"):
+        raw = json.loads((fixtures / name).read_text(encoding="utf-8"))
+        made[name] = Zone.model_validate(raw.get("zone", raw))
+    for name, zone in made.items():
+        assert zone.room_graphs, f"{name}: no latch route was composed"
+        assert _plates_that_latch(zone) == [], \
+            f"{name}: a composition emitted the retired step-once plate"
+        assert _latching_plates(zone) == [], name
+
+
+@pytest.mark.parametrize("shape", ["direct", "through NOT", "through OR"])
+def test_a_plate_that_latches_loads_but_is_not_accepted(shape):
+    """M-1 and D13 1a together: the Zone model still reads it, so a save
+    holding it loads; acceptance refuses it, so nothing new holds it."""
+    from archipepsi_bridge.schemas.zone import validate_zone
+    zone = Zone.model_validate(_shaped(shape))
+    errors = validate_zone(zone, expected_zone_id=zone.zone_id,
+                           allocated_location_ids=list(
+                               zone.reward_location_ids),
+                           owned_echo_ids=[])
+    assert any("sets LATCH 'held'" in e or "set LATCH 'held'" in e
+               for e in errors), errors
+    assert any("held sensor (D-07)" in e for e in errors)
+
+
+def test_a_legacy_step_once_zone_loads_and_its_latch_restores():
+    """M-1: "Existing saved Zones containing the old step-once route
+    retain their saved behavior." Its graph loads unchanged, its latch
+    is still recordable, and a reload keeps it."""
+    legacy = Zone.model_validate(_legacy_raw())
+    room = _plate_room(legacy)
+    save = T.record_latch(_save(legacy), legacy.zone_id, f"graph_{room}",
+                          "held")
+    save = P.CampaignSave.model_validate_json(save.model_dump_json())
+    rec = save.zone_by_id(legacy.zone_id)
+    assert rec.progress.latched == (f"graph_{room}/held",)
+    assert rec.zone.room_graphs == legacy.room_graphs

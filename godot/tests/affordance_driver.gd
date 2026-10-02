@@ -857,7 +857,34 @@ func _the_rail_mesh_and_ride_come_from_one_path() -> void:
 		Vector3(3.0, 1.1, 4.0),      # 3.0 along x -- a turn
 		Vector3(3.0, 1.1, 9.5),      # 5.5 along z
 	])
-	var runs := [4.0, 3.0, 5.5]
+	# THE SWEPT POINTS, NOT THE CONTROL POINTS -- and the difference is
+	# the repair, not a relaxation. `RailPath` gained Catmull-Rom handles
+	# in P3.5: on this bent route the control polyline is the CHORD and
+	# the ride is the ARC, 0.744 m apart at the corner (measured by
+	# `godot-rail-carrier`). `build_rail` follows the ride, because a
+	# beam the rider floats beside is the exact failure this function
+	# exists to catch. Read the old way, these assertions were pinning
+	# the divergence in place.
+	var rail := RailPath.from_points(bent)
+	var sweep := AffordanceFeatures.rail_sweep_points(rail)
+	var runs: Array[float] = []
+	for i in sweep.size() - 1:
+		runs.append(sweep[i].distance_to(sweep[i + 1]))
+	_check(runs.size() >= 3,
+			"a bent route sweeps into %d pieces, too few to distinguish "
+			% runs.size() + "a derived length from a literal")
+	# SABOTAGE RESISTANCE, retained on purpose. The three unequal
+	# segments above were chosen because a hardcoded length is
+	# indistinguishable from a derived one when every segment is the same
+	# length -- and a uniform resample would hand that hole straight
+	# back. The sweep's own runs must therefore still differ; they do,
+	# because the last piece is whatever is left over.
+	var distinct := {}
+	for run: float in runs:
+		distinct[snappedf(run, 0.01)] = true
+	_check(distinct.size() >= 2,
+			"every swept run is %.2f m, so a hardcoded length would pass "
+			% runs[0] + "this test unnoticed")
 
 	# DETACHED, and never added to the tree. Every assertion below reads
 	# geometry -- extents, position, rotation, mesh -- and none of it
@@ -873,14 +900,16 @@ func _the_rail_mesh_and_ride_come_from_one_path() -> void:
 	var beams: Array = built["beams"]
 	var lanes: Array = built["lanes"]
 
-	# One ride volume AND one beam segment per straight segment -- the
-	# shape the ruling confirmed as a valid integration direction.
-	_check(lanes.size() == bent.size() - 1,
-			"a %d-point path built %d ride volumes, expected %d"
-			% [bent.size(), lanes.size(), bent.size() - 1])
-	_check(beams.size() == bent.size() - 1,
-			"a %d-point path built %d beam segments, expected %d"
-			% [bent.size(), beams.size(), bent.size() - 1])
+	# One ride volume AND one beam segment per straight PIECE of the
+	# swept route -- the shape the ruling confirmed ("one ride volume per
+	# straight polyline segment"), read against the polyline the player
+	# actually rides.
+	_check(lanes.size() == runs.size(),
+			"a %d-point path swept into %d pieces built %d ride volumes"
+			% [bent.size(), runs.size(), lanes.size()])
+	_check(beams.size() == runs.size(),
+			"a %d-point path swept into %d pieces built %d beam segments"
+			% [bent.size(), runs.size(), beams.size()])
 
 	for i in runs.size():
 		if i >= lanes.size() or i >= beams.size():
@@ -903,7 +932,7 @@ func _the_rail_mesh_and_ride_come_from_one_path() -> void:
 		# ...and they sit on the same segment, not merely at the same
 		# length. A mesh the right size in the wrong place is the failure
 		# a length check alone cannot see.
-		var midpoint := (bent[i] + bent[i + 1]) * 0.5
+		var midpoint := (sweep[i] + sweep[i + 1]) * 0.5
 		_check(Vector2(beam.position.x - midpoint.x,
 				beam.position.z - midpoint.z).length() < 0.01,
 				"beam segment %d is centred at %.2v, its segment's "

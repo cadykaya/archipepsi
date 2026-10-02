@@ -44,17 +44,17 @@ NOT_A_SUITE = {"godot-import", "godot-integration",
                # when the offline census names a case, and what it
                # reports is a description rather than a pass or a fail.
                "godot-named-case",
-               # A REPORT OF AN OPEN FINDING, not yet a gate.
-               # `godot-target-facing` reproduces a defect the playtest
-               # found and that is NOT fixed: 7 of 27 SHOT targets in
-               # Zone 1 are aimed into a crate, a wall or another
-               # target, because the unmounted placement branch never
-               # sets a yaw. Wiring it into CI today would make CI red
-               # for a known-open finding, which is a decision the owner
-               # has not made. **It becomes a gate the moment that
-               # facing repair lands**, and this entry comes out with
-               # it.
-               "godot-target-facing"}
+               # NO ZONE TO PLAY YET. `godot-passing-hosted` (H-PASSING)
+               # plays EX50-011 as a composed Zone hosts it, and no fixture
+               # carries such a Zone: the candidate hosts it only in
+               # zone_002, which exists once a live campaign has reached
+               # it. Until Dess's `passing_zone.json` lands (note N-10 in
+               # `PROD_POST_PLAYTEST.md`) it runs by hand on a capture
+               # (`make godot-candidate-live CANDIDATE_DUMP=<path>`, then
+               # `PASSING_ZONE=<path>`), and `godot-candidate-live` plays
+               # the same hosted room in CI. Give it a CI step the day the
+               # fixture lands.
+               "godot-passing-hosted"}
 
 
 #: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the

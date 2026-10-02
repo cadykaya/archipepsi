@@ -1,0 +1,63 @@
+2a573fe230f48892203dddf513ba53dfdd1f6756
+ M Makefile
+ M godot/scripts/main.gd
+?? .archipelago
+?? godot-bin
+?? godot/tests/bombs_driver.gd
+?? godot/tests/bombs_driver.gd.uid
+?? godot/tests/fixtures/bomb_snapshots.json
+ Makefile              | 14 +++++++++++++-
+ godot/scripts/main.gd |  6 ++++++
+ 2 files changed, 19 insertions(+), 1 deletion(-)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- PROVENANCE: a Bomb Bag the campaign made, not one given
+  ok: the Bomb Bag is the Echo of Check 89100140 in Zone 6, created by the provider (["CreateOperation"])
+  ok: before its Check the campaign owns no consumable; after it, exactly this one (act_l89100140)
+  ok: nothing puts it on a key for the player; the slot action does
+  -- THE KEY ON THE HUD: none, owned, carried, empty
+    none_owned   Q     —
+    acquired     Q     —
+    carried      Q     Bomb Bag
+    spent        Q     Bomb Bag
+FAIL: owning a Bomb Bag that is on no key reads differently from owning none ('  Q     —' / '  Q     —')
+FAIL: …and names what is owned
+FAIL: carried, the key shows its count (  Q     Bomb Bag)
+FAIL: empty, it shows 0 / 3 and reads as empty (  Q     Bomb Bag)
+  -- PRESSING THE KEY in each state
+FAIL: none_owned: pressing the key says why nothing happened ('No consumable owned yet' expected, heard [])
+FAIL: none_owned: …and pressing it three more times does not stack it (0 on screen)
+FAIL: acquired: pressing the key says why nothing happened ('You own 1 consumable' expected, heard [])
+FAIL: acquired: …and pressing it three more times does not stack it (0 on screen)
+FAIL: spent: pressing the key says why nothing happened ('Empty' expected, heard [])
+FAIL: spent: …and pressing it three more times does not stack it (0 on screen)
+  ok: carried with charges left: the press asks the bridge for a use and refuses nothing (awaiting 1, heard [])
+  -- THE ARRIVAL: the card, and a word about the key
+  ok: the card shows the Bomb Bag and its slot (EPSILON ECHO ACQUIRED | Bomb Bag | Three of them. Lob one, count, regret nothing. |  | Thrown: bursts for 34 damage within 4.0 m after 1.4 s | Hits leave stunned for 1.5 s | 3.0s cooldown | Slot: CONSUMABLE)
+FAIL: a word points at the key it goes on, once (heard ["EPSILON COIN RECEIVED"])
+  ok: …and the next snapshot does not say it again
+  -- FIRST SIGHT: a campaign that already owns it is not news
+  ok: no word says it just arrived (heard [])
+FAIL: …while its row still says it is owned and on no key (▸ Q     —)
+  ok: …nor on returning to the campaign
+  -- EQUIPPING IT from the equipment wall
+  ok: the Bomb Bag's card offers EQUIP ON Q ('EQUIP ON Q')
+  ok: pressing it asks the bridge to put it on the consumable key, once ([{ "type": "slot_action", "slot": "consumable", "component_id": "act_l89100140" }])
+  ok: the engine's answer shows it on Q ('TAKE OFF Q')
+FAIL: …and the HUD key counts it (▸ Q     Bomb Bag)
+  -- A REFUSED USE: said once, in the engine's words
+  ok: the press asks for use 1 of supply 6
+  ok: the engine's refusal is on screen once, and nothing else is (heard ["\'act_l89100140\' authorization 1 was minted against supply 6; the current supply is 7. It was refilled after the press, so this use no longer exists"])
+  ok: the refusal still counts as refused (`Player.exhausted`)
+  ok: …and the charge is back: nothing launched (3 left)
+  -- A GRANTED USE: the press, the engine's answer, the bomb
+  ok: the press asks, and nothing is thrown before the answer
+FAIL: the engine's answer throws exactly one Bomb Bag (0 thrown; the key's runtime holds 'nothing'; sent ["authorize_consumable", "release_consumable_authorization"])
+FAIL: …and reports that one use ([])
+FAIL: the key counts it: 2 / 3 (▸ Q     Bomb Bag)
+  ok: nothing is refused (heard [])
+  -- THE REFILL: spent, then the next Zone
+FAIL: spent reads EMPTY on the key, and entering Zone zone_007 refills it ('▸ Q     Bomb Bag' -> '▸ Q     Bomb Bag  Mk 5')
+
+GODOT BOMBS TESTS: 17 failures in 34 checks
+make: *** [Makefile:1446: godot-bombs] Error 1
