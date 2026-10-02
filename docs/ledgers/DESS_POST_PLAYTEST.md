@@ -1682,3 +1682,65 @@ stands.
 - **Beyond the gantry:** local rewards only, now enforced by the search
   (the DESS-28 ruling). The featured Check stays on the acquisition
   branch, before the gate.
+
+## The October 2 playtest handoff, and the owner's request for one Crossing (2026-10-02)
+
+**Received:**
+- the playtest team handoff;
+- the Exploration ABC lean source, revision `33cc938` on Wisp's local
+  branch, built on `e0421aa`.
+
+The handoff's top level is byte-identical to `post_playtest_v1.0/`
+already in the repo (47 of 47 files). What is new is the October 2
+folder: the A/B/C findings, the earlier Concourse Pier packet, the
+repair patch, and the proposed Crossing D.
+
+**The owner's request, verbatim:**
+
+> Hey :) read both attachments and reconcile the playtest findings with your current plans. I want a compact, buildable room brief for ONE combined Crossing, not another huge roadmap or three more alternatives.
+> Keep Knot’s openness, recognizable places and loopbacks; Playground’s enjoyable grapple/launch/rail movement; and puzzles that physically change the place and have a reason to exist.
+> For each room, specify:
+>
+> * Its main activity and why the player wants to explore it
+> * The few ingredients supporting that activity
+> * What deliberately stays out
+> * What the player sees first, the route choices and the payoff
+> * How its shortcuts reconnect to familiar space
+>
+> A tempting destination is good. An obviously reachable Check that makes the whole puzzle irrelevant isn’t. Don’t solve that by hiding every reward or blocking every clever shortcut. Avoid unexplained fantasy terminology in instructions; use clear spatial and functional language.
+> Don’t require dash while its feel is unresolved. Broader Echo use should rely on verified existing behavior. Keep combat in a space where it adds something, with a clear purpose rather than enemies rushing me while I’m trying to understand a puzzle.
+> Prod owns implementation and Arty owns the visual kit. Give them a concise usable brief, identify dependencies, and flag conflicts with current work. Separate branches/files as appropriate; no production changes, new systems, spending, merges or releases. Push back if this is getting too big.
+
+**Delivered:** `docs/D17_CROSSING_D_ROOM_BRIEF.md`. It is a proposal,
+not approved for building, and makes no production change.
+- **The rooms:** four, around one landmark: Central Hall, Courtyard,
+  Machine Hall, Upper Yard. Three Checks, three shortcuts back into the
+  hall, one fight.
+- **Build:** an isolated review build in two steps, with the fight
+  second.
+
+**Checked against the studies' source.** Outside its own
+`godot/exploration/` folder, the study changes only `project.godot` and
+adds `export_presets.cfg`. Everything else is byte-identical to
+`e0421aa`, so no file in this lane was touched.
+
+**DESS-30 (finding, not fixed: this round allows no production
+changes).**
+- `mechanics.AFFORDANCE_REQUIREMENTS["rail"]` still requires dash or air
+  dash. The entry is from S9 (`b8efc08`, 2026-08-27).
+- Since `af620d8` (2026-09-02), the runtime rail is a curve the base kit
+  catches by moving along it (`RailRider.catch`). Prototype A's
+  real-input checks ride it without dash.
+- So the generated game offers rail features only to campaigns that own
+  a dash, a hidden dash dependency that conflicts with the owner's "don't
+  require dash".
+- The fix is `"rail": {}` with a test that a base-kit campaign is offered
+  the rail. It waits for approval.
+
+**Prod's hand-backs N-17 to N-21 are untouched this round**, under the
+owner's no-production-change instruction:
+- N-17: four status targets to declare;
+- N-18: the gantry room rule, for D-6 step 4;
+- N-19: rail-breadth items 3 to 5;
+- N-20: a retry composes the same Zone;
+- N-21: a change made in `mechanics.note_words`, to accept or reshape.

@@ -80,7 +80,14 @@ under the owner's hand-back rule.
 - DESS-29 was found and fixed while landing it: a player past the claim
   holds the tool.
 
-**Waiting on the owner:** CI (Prod's N-6).
+**Delivered for review, 2026-10-02: D-17, Crossing D's room brief**
+(`docs/D17_CROSSING_D_ROOM_BRIEF.md`). It is a proposal: not approved
+for building, and no production change. Prod builds and Arty supplies
+the visual kit only once the owner approves. It records DESS-30 (the
+bridge still says a rail needs dash; the fix waits for approval).
+Prod's N-17 to N-21 wait, untouched this round.
+
+**Waiting on the owner:** the D-17 review; CI (Prod's N-6).
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for
