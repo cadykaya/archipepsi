@@ -718,6 +718,28 @@ owner's D-06/D-07 rulings and the seam table are in
       hand with `make godot-concourse-pier`. The report is
       `docs/reports/2026-09-28-concourse-pier-playtest.md`. The room stays
       `pending`; this is not visual acceptance.
+    - **CROSSING D REVIEW BUILD (owner brief, 2026-10-02): DELIVERED,
+      STOP.** One combined Crossing for review, built to Dess's D-17 room
+      brief (`a266d5da`).
+      - **Where it is.** Branch `wip/crossing-d-review`, built on the
+        concourse branch. The build is `0cf577c6`. The report is
+        `docs/reports/2026-10-02-crossing-d-review.md`.
+      - **What it is.** Four rooms, isolated through the same guard as
+        the concourse playtest (`ReviewIsolation`). It ships as an
+        exported Windows executable, checked from a fresh folder under
+        Wine, plus a Linux build. Package it with
+        `tools/crossing_d/package.sh`.
+      - **The probe.** Run it by hand with `make godot-crossing-d`, or
+        with `tools/crossing_review_probe.py --exported/--wine`.
+      - **Conflicts, flagged in the report:**
+        - the swing anchors on any static surface, so it is
+          Courtyard-only here;
+        - the Yard is 24 × 30 m;
+        - the lift answers to presence;
+        - the colour overrides are local;
+        - Arty's kit was absent.
+      - **Not merged and not released.** Nothing is integrated into the
+        campaign.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.
