@@ -56,6 +56,8 @@ func _run() -> void:
 	await _a_volume_freed_under_you_lets_go()
 	await _the_panel_is_reachable_by_a_real_shot()
 	await _the_panel_needs_a_real_hit()
+	await _the_approved_family_is_what_you_see()
+	await _the_theme_dressing_is_the_approved_dressing()
 	await _a_moving_platform_comes_back()
 	await _a_local_reward_reports_itself_once()
 	await _an_earned_reward_does_not_come_back()
@@ -199,6 +201,176 @@ func _check_once(condition: bool, message: String) -> void:
 ## Width is taken from the tag's own requirement rather than a generous
 ## constant, so every case runs against the tightest room that tag will
 ## ever see.
+## ART-CATCHUP: the approved batch 009 forms reach their real consumers
+## (the panel, the pad, the wind column's rings), the colliders are the
+## ones the gameplay was built on, and a panel's damage glow stays on the
+## panel that was hit.
+func _the_approved_family_is_what_you_see() -> void:
+	if AffordanceNodes.art("breakwall_panel") == null:
+		_check(false, "the approved affordance models are not shipped")
+		return
+	var a := AffordanceNodes.BreakablePanel.new()
+	var b := AffordanceNodes.BreakablePanel.new()
+	var pad := AffordanceNodes.BouncePad.new()
+	for n: Node in [a, b, pad]:
+		add_child(n)
+	await get_tree().process_frame
+	_check(a._mesh.mesh == AffordanceNodes.art("breakwall_panel"),
+			"the breakable panel wears the approved panel")
+	var box := (a.get_child(0) as CollisionShape3D).shape as BoxShape3D
+	_check(box.size.is_equal_approx(Vector3(0.4, 2.6, 2.4)),
+			"the panel's collider is unchanged (%s)" % box.size)
+	var pad_mesh: Mesh = null
+	for c: Node in pad.get_children():
+		if c is MeshInstance3D:
+			pad_mesh = (c as MeshInstance3D).mesh
+	_check(pad_mesh == AffordanceNodes.art("bounce_pad"),
+			"the bounce pad wears the approved drum")
+	var before := AffordanceNodes.own_signal(b._mesh).emission_energy_multiplier
+	a.take_damage(a.MIN_IMPACT, Vector3.ZERO, 0.0)
+	var hurt := AffordanceNodes.own_signal(a._mesh).emission_energy_multiplier
+	var other := AffordanceNodes.own_signal(b._mesh).emission_energy_multiplier
+	_check(hurt > before and is_equal_approx(other, before),
+			"a hit panel glows brighter (%.2f -> %.2f) and its neighbour "
+			% [before, hurt] + "does not (%.2f)" % other)
+	var rings := 0
+	var built: Dictionary = await _build_chamber(["wind_volume"])
+	for m: Node in (built["root"] as Node).find_children("*", "MeshInstance3D",
+			true, false):
+		if (m as MeshInstance3D).mesh == AffordanceNodes.art("wind_ring"):
+			rings += 1
+	_check(rings == 3, "the wind column stacks three approved rings (%d)"
+			% rings)
+	(built["root"] as Node).queue_free()
+	for n: Node in [a, b, pad]:
+		n.queue_free()
+	await get_tree().process_frame
+
+
+## ART-CATCHUP: every prop `_theme_props` places wears the approved
+## dressing (batches 010 and 013), and the two that COLLIDE (the drum and
+## the stump) keep exactly the code body they always had. void_glitch's
+## `prop_missing.mdl` stays a label, on purpose.
+func _the_theme_dressing_is_the_approved_dressing() -> void:
+	var want := {"gothic_stone": ["prop_sconce", "prop_sconce_flame"],
+		"rusted_industrial": ["prop_oil_drum", "prop_valve_wheel"],
+		"neon_transit": ["prop_transit_sign"],
+		"temple_ruin": ["prop_root_fall", "prop_column_stump"],
+		"concrete_facility": ["prop_wall_plate"]}
+	var bad: Array = []
+	for theme: String in want:
+		var seen := {}
+		var bodies_ok := true
+		# A 4 m corridor too: narrow rooms get the wall variants (the
+		# valve instead of drums, roots instead of a stump).
+		for seed in 24:
+			var chamber := {"id": "c%d" % seed, "zone_id": "zone_001",
+					"type": "corridor", "length": 22.0,
+					"width": 8.0 if seed % 2 == 0 else 4.0, "features": []}
+			var built: Dictionary = ChamberBuilders.build(chamber, theme)
+			var root: Node3D = built["root"]
+			for n: Node in root.find_children("*", "MeshInstance3D", true,
+					false):
+				var mi := n as MeshInstance3D
+				for model: String in want[theme]:
+					if mi.mesh != null and mi.mesh == ChamberBuilders._prop_art(model):
+						seen[model] = true
+						# Dressing never collides on its own.
+						if not mi.find_children("*", "CollisionShape3D",
+								true, false).is_empty():
+							bodies_ok = false
+				# A dressed floor prop: its code body, unchanged.
+				if mi.mesh == null:
+					for c: Node in mi.find_children("*", "CollisionShape3D",
+							true, false):
+						var shape := (c as CollisionShape3D).shape
+						if not shape is CylinderShape3D:
+							bodies_ok = false
+						elif not is_equal_approx(
+								(shape as CylinderShape3D).radius, 0.42) \
+								and not is_equal_approx(
+								(shape as CylinderShape3D).radius, 0.55):
+							bodies_ok = false
+			root.free()
+		for model: String in want[theme]:
+			if not seen.has(model):
+				bad.append("%s: never placed %s" % [theme, model])
+		if not bodies_ok:
+			bad.append("%s: a prop's collision changed" % theme)
+	_check(bad.is_empty(), "every theme prop is the approved dressing, "
+			+ "colliders as they were: %s" % [bad])
+	_the_sign_is_lettered_on_its_face()
+	await get_tree().process_frame
+
+
+## The owner's correction (2026-09-28): the transit sign's line is in the
+## Glyph text face alone (every character, `ε` included), with no outline, MOUNTED on the housing's lit face (a
+## child of the housing, so it follows it), centred on that face -- not on
+## the model's bounds, which include the frame and hangers -- and every
+## line fits inside it with the padding clear. It faces the player, who
+## walks in along +Z.
+func _the_sign_is_lettered_on_its_face() -> void:
+	var housing := ChamberBuilders._prop_art("prop_transit_sign")
+	if housing == null:
+		_check(false, "the sign housing is not shipped")
+		return
+	var face := ChamberBuilders.sign_face(housing)
+	var bad: Array = []
+	var signs := 0
+	for seed in 24:
+		var chamber := {"id": "c%d" % seed, "zone_id": "zone_001",
+				"type": "corridor", "length": 22.0, "width": 8.0,
+				"features": []}
+		var built: Dictionary = ChamberBuilders.build(chamber, "neon_transit")
+		var root: Node3D = built["root"]
+		for n: Node in root.find_children("SignLine", "Label3D", true, false):
+			signs += 1
+			var line := n as Label3D
+			var board := line.get_parent() as MeshInstance3D
+			if board == null or board.mesh != housing:
+				bad.append("a line not mounted on its housing")
+				continue
+			var font := line.font as FontFile
+			if font == null or font.resource_path != ChamberBuilders.SIGN_FONT \
+					or not font.fallbacks.is_empty():
+				bad.append("%s: not the Glyph text face alone" % line.text)
+			elif ChamberBuilders.TRANSIT_SIGNS.find(line.text) < 0:
+				bad.append("%s: not one of Epsilon's lines as written" % line.text)
+			else:
+				# Every character from Glyph itself: nothing falls back.
+				for i in line.text.length():
+					var c := line.text.unicode_at(i)
+					if c != 32 and not font.has_char(c):
+						bad.append("%s: Glyph has no U+%04X" % [line.text, c])
+			if line.outline_size != 0:
+				bad.append("%s: outlined" % line.text)
+			var at := line.position
+			if absf(at.x - face.get_center().x) > 0.001 \
+					or absf(at.y - face.get_center().y) > 0.001:
+				bad.append("%s: off the face's centre (%s, face %s)" % [
+						line.text, at, face.get_center()])
+			if at.z <= face.end.z or at.z > face.end.z + 0.02:
+				bad.append("%s: not just in front of the face (z %.3f, "
+						% [line.text, at.z] + "face %.3f)" % face.end.z)
+			var size := line.font.get_string_size(line.text,
+					HORIZONTAL_ALIGNMENT_LEFT, -1, line.font_size) \
+					* line.pixel_size
+			if size.x > face.size.x - 2.0 * ChamberBuilders.SIGN_PAD + 0.001 \
+					or size.y > face.size.y - 2.0 * ChamberBuilders.SIGN_PAD + 0.001:
+				bad.append("%s: %.2f x %.2f m on a %.2f x %.2f face" % [
+						line.text, size.x, size.y, face.size.x, face.size.y])
+			# Its readable side (+Z) must point back at the player (-Z).
+			# Composed by hand: the chamber is built outside the tree, where
+			# `global_basis` would ignore the housing's turn.
+			var facing := (board.basis * line.basis).z
+			if facing.z > -0.99:
+				bad.append("%s: faces %s" % [line.text, facing])
+		root.free()
+	_check(signs > 0 and bad.is_empty(), "every transit sign (%d) is "
+			% signs + "lettered in Glyph on its lit face, centred and inside "
+			+ "the padding: %s" % [bad])
+
+
 func _chamber_with(tags: Array) -> Dictionary:
 	var features: Array = []
 	var width := 5.0

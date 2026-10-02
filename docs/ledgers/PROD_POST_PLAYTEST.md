@@ -6605,3 +6605,167 @@ recovery point (`review/menu-int-ck11-ce6ea3b`).
 
 After CK12 the 0.4 development head `claude/archipepsi-0-4-blindside`
 was fast-forwarded from `c12a72f` to this branch (no merge, no rewrite).
+
+## ART-CATCHUP — the approved art that was still missing (owner brief, 2026-09-28)
+
+**The brief** arrived after the work began, as a missing attachment. It
+is kept verbatim at `docs/ledgers/assignments/PROD_ART_CATCHUP_ASSIGNMENT.txt`
+(sha256 in that folder's README). Its CK11 chronology is superseded by the
+later owner messages; the menu work it asked to finish first was already
+delivered (`ce6ea3bd`) and finished (`e708c5fa`, CK12 92/92).
+
+**Source:** the frozen art commit `a1584c8`, plus `3e73a2ca`'s pack-free
+theme descriptor. Arty's head is not followed, and her art branch is not
+merged.
+
+**Base:** the finished menu. `wip/0.4-art-catchup` carries the 0.4 head
+`e0421aaa` merged in, so the combined build has the menu and today's
+gameplay code.
+
+### What landed, one commit per family
+
+| Commit | Family | Verified by |
+|---|---|---|
+| `d6e52502` | 8 course-ruled theme textures, 11 re-baked shells | theme-pack, content |
+| `314cf7b0` | the enemy family, 10 roles × 2 value bands | `godot-enemy-art` (new; in CI) |
+| `04e78375` | the Epsilon installation and the two Hub boards | lab (the bay now measures the model), hub suites |
+| `f4e7547b` | Production's notes back to the art lane | — |
+| `84d453a4` | the exit portal frame and cores; the Echo Lab's dummy, hazard crate, height strip and runway measure | lab, integration, exit-reach, chamber |
+| `e0a5aaba` | enemy checks: a wound is one enemy's; art muzzles are inside colliders | enemy-art, sabotage-proven |
+| `ea49da82` | affordances: the breakable panel, bounce pad and wind rings | affordance, sabotage-proven |
+| `ac7c206f` | the theme dressing (010, 013) in `_theme_props` | affordance, legible, zone-audit and more, sabotage-proven |
+
+Later, a check that the Hub, portal and Lab art is what loads rather
+than the code fallback, and the reports.
+
+### Rules kept
+
+- **Collision, movement, reach, damage, timing and spawns are
+  unchanged.** Every model dresses its existing body.
+- The `_theme_props` rng stream is untouched, so a room builds the same
+  props in the same places.
+- Nothing is promoted:
+  - `THEME_PACK_STATUS` is still empty;
+  - the projectile registry is still `pending`;
+  - no candidate is wired, including `fx_bulwark_face`, the skiff and
+    the room kits.
+- **Passing and Unweighted keep their repaired gameplay.**
+
+### Found on the way (presentation only, fixed in the family's commit)
+
+- **Enemy materials were shared.** Imported glTF materials are shared by
+  every instance, so the tint unshares them per enemy. A sabotage run
+  proves it.
+- **The breakable panel's cracks.** The top one floated 0.7 m above the
+  panel. They now sit on its face.
+- **Wall dressing was inside the wall.** The side walls' inner face is
+  0.2 m in from `wall_x`, and the code plate, valve and sconce were drawn
+  inside it. The approved props sit on the face and are newly visible
+  (owner decision 7).
+- **The transit sign faced away.** Its lit face is on +Z, and the player
+  walks in along +Z.
+- **The runway module's zero** is its 2.5 cm lip; the reach mark is
+  checked on the engine's number.
+- **The import scripts minted fresh uids** on every re-run (churning
+  sidecars). They now keep the sidecars.
+
+### Blocked, and the decisions
+
+The reconciliation table is at
+`docs/reports/2026-09-28-art-catchup-reconciliation.md`. The owner
+decisions (the Check, the door lining, the Hub stations, the wall-light
+housings, the melee device, the keys, the visible dressing, and the
+projectiles) are in `docs/reports/2026-09-28-art-catchup-delivery.md`.
+
+### Concurrency
+
+- A side run of `godot-lab` during CK12 connected to CK12's bridge on
+  the fixed port and read its snapshot: five false failures.
+- From then on, no engine or bridge test ran beside a frontier run.
+- CK13 was run alone.
+
+### CK13 — the full frontier on the art head `ac7c206f`: 91 of 92
+
+Run alone, in an isolated worktree, from a fresh import, with the same
+92 steps as CK11 and CK12. Evidence:
+`post_playtest_evidence/CK13_frontier_on_ac7c206f.tsv`.
+
+- **Step 1 (`make test`) RED, a real defect of this catch-up.**
+  - Cause: registering `godot/content/props/` as first-party made the
+    licence gate's own intruder, `godot/content/props/somebody_elses_barrel.glb`,
+    count as ours (`test_the_gate_still_refuses_an_unregistered_asset`).
+  - Not a flake. It was missed because `make test` was not run during
+    the family work.
+- **The other 91 steps: green.**
+- The tree's only change at the end is the zone audit's own
+  `source_commit` stamp.
+
+This result is CK13's as run, and it stands. The follow-ups below are
+verified separately, each on the tree named.
+
+### Follow-up verifications after CK13 (each on its own, never beside another run)
+
+| What | Commit | Check | Result |
+|---|---|---|---|
+| Licence entry narrowed to `godot/content/props/prop_` | `59d47250` | `make test` on the branch head | 2313 passed |
+| The transit sign's line in Glyph on its lit face (owner correction) | `86015a7b` + the facing fix below | `godot-affordance` (a new check on 58 signs: mount, Glyph face, no outline, centre, padding, facing; a sabotage placing the line at the face's top edge fails it), `godot-legible`, `godot-zone-audit`, `godot-lab`, `godot-content` | green |
+| The sign check's facing test | this commit | the chamber is built outside the tree, where `global_basis` ignores the housing's turn, so the turn is now composed by hand | green |
+| Arty's `verify_content_pack.sh` (cherry-picked `3c2f3711`) | `ff92c7c0` | her `test_verify_content_pack_safety.sh HEAD`, from this integration tree (PROD_REF = HEAD, disposable worktrees) | PASS: on a passing and a failing run, deleted 0, overwritten 0, added 0 under `godot/`; no private copy left |
+| The shipped-art check (Hub, portal, Lab) | `e6683ef3` | `godot-lab` | green |
+
+**The sign's evidence scope:**
+- Renders are Forward+ at FOV 90 (the game's default), 1280×720, from
+  eye height.
+- "PLATFORM ε" frames use the **temporary ε fallback**. The Glyph ε is
+  requested from Arty; notes item 4.
+
+**The sign's lettering size (owner question):**
+- One size for the family, set by the longest line ("TRANSFER:
+  EVERYWHERE", 1.34 m on a 1.34 m padded face), gives a cap height of
+  about 0.083 m.
+- On screen, that is about 3.7 px at 8 m, 6 px at 5 m and 10 px at 3 m.
+- So signs read from about 5 m in. At the normal 8 m approach, the short
+  signs are unnecessarily hard to read: "EXIT →" could be twice the
+  size on the same face.
+- The comparison frames are labelled as an isolated preview. The game
+  is unchanged pending the owner's ruling.
+
+### Arty's Glyph ε imported (follow-up, after CK13)
+
+- **Source:** Arty's glyph-only commit `94f6e82a`, cherry-picked as
+  `bba44ffb`. It carries `ui_text.fnt`, `ui_text.png` and
+  `author_text.py`. The repair branch was not merged.
+- **Import:** `tools/import_ui_kit.sh` copied the pair together, byte
+  for byte. The sidecars are unchanged, and `test_ui_kit_identity`
+  passes.
+- **The sign (`8113fa08`):** the temporary fallback is removed.
+  - The sign letters in the Glyph face alone. "PLATFORM ε" is set as
+    written (U+03B5, never upper-cased), and its line height now matches
+    the other five.
+  - The sign check requires every character from Glyph itself. A
+    sabotage run with the old face fails it.
+- **The 15 characters the atlas moved** (—“”…←↑→↓▸▾★☆✓✕✗): identical
+  pixels and metrics at their new positions. ε is the only new
+  character. An in-engine proof renders them all.
+- **Green:** affordance, legible, content, zone-audit, menu-shell,
+  equipment-face, map-face, journal-face.
+- **Renders** (Forward+, FOV 90, eye height): the normal approach and a
+  close, angled view, for "PLATFORM ε" and for the longest line.
+
+### CK14 — the full frontier on the delivery head `17b76098`: 92 of 92
+
+Run alone, in an isolated worktree, from a fresh import, with the same
+92 steps. It covers everything above: the licence fix, the shipped-art
+check, the sign correction, the Glyph ε, and Arty's verifier fix. Evidence:
+`post_playtest_evidence/CK14_frontier_on_17b76098.tsv`. The tree's only
+change is the zone audit's `source_commit` stamp.
+
+**The pinned build:** `archipepsi-0.4-ART-CATCHUP-17b76098.zip` (1503
+files), the same path list as the CK10 and MENU-INT builds, plus
+`ART-CATCHUP_BUILD_NOTE.txt`.
+- Checked from a clean unpack (Linux): the Godot import, `godot-boot`
+  OK, and the candidate launcher's `--dry-run` (saves kept inside the
+  unpack).
+- A hash of every shipped file before and after the checks: none
+  changed.
+- Not run on Windows, and not played by anyone yet.

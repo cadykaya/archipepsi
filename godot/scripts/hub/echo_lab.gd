@@ -52,6 +52,8 @@ const GAP_WIDTH := 4.5
 const GAP_START := 14.0
 
 const OFFSET := Vector3(-13.0, 0.0, 6.0)
+## The runway module's half-length, lip included: its far edge is its zero.
+const RUNWAY_MODULE_HALF := 2.025
 const YAW := -90.0
 
 var dummy: LabFixtures.LabDummy
@@ -86,10 +88,32 @@ func _build_room() -> void:
 	# grapple geometry and "how high did that send me". Height bands make
 	# the answer readable without the debug overlay.
 	var wall := Node3D.new()
+	wall.name = "TallWall"
 	add_child(wall)
 	b._box(wall, Vector3(0.6, H, 7.0), Vector3(W / 2.0 - 0.4, H / 2.0, 8.0),
 			ThemeMaterials.wall_mat(THEME))
+	# The approved height strip (batch 004): a plain tick every metre, and
+	# 1.000 m (MAX_VERTICAL_STEP) and 1.333 m (JUMP_APEX_HEIGHT) called out.
+	# It replaces the code bands; the metre labels stay, just clear of it.
+	var strip_mesh := LabFixtures.art("height_markers")
+	var label_x := W / 2.0 - 0.85
+	if strip_mesh != null:
+		var strip := MeshInstance3D.new()
+		strip.name = "HeightMarkers"
+		strip.mesh = strip_mesh
+		strip.position = Vector3(W / 2.0 - 0.7 - 0.23, 0, 8.0)
+		wall.add_child(strip)
+		label_x = W / 2.0 - 0.7 - 0.5
 	for band in range(1, int(H)):
+		if strip_mesh != null:
+			var tag := Label3D.new()
+			tag.text = "%dm" % band
+			tag.font_size = 28
+			tag.pixel_size = 0.006
+			tag.position = Vector3(label_x, float(band), 4.6)
+			tag.rotation_degrees = Vector3(0, -90, 0)
+			wall.add_child(tag)
+			continue
 		var mark := MeshInstance3D.new()
 		var mesh := BoxMesh.new()
 		mesh.size = Vector3(0.08, 0.06, 6.6)
@@ -109,7 +133,28 @@ func _build_room() -> void:
 
 	# The runway: a clear lane with distance ticks, for dashes, speed
 	# traits, recoil travel and glide carry.
+	# The approved runway measure (batch 004): 4 m modules laid from the
+	# start line, turned so the JUMP_FLAT_REACH mark falls at 4.667 m, 0.667
+	# into the second module. They replace the code ticks; labels stay.
+	var runway_mesh := LabFixtures.art("runway_measure")
+	if runway_mesh != null:
+		for i in 5:
+			var module := MeshInstance3D.new()
+			module.name = "RunwayMeasure%d" % i
+			module.mesh = runway_mesh
+			module.position = Vector3(-W / 4.0, 0, RUNWAY_MODULE_HALF + 4.0 * i)
+			module.rotation.y = PI
+			add_child(module)
 	for tick in range(2, 22, 2):
+		if runway_mesh != null:
+			var tag := Label3D.new()
+			tag.text = "%dm" % tick
+			tag.font_size = 24
+			tag.pixel_size = 0.005
+			tag.position = Vector3(-W / 4.0 + 1.8, 0.1, float(tick))
+			tag.rotation_degrees = Vector3(-90, 0, 0)
+			add_child(tag)
+			continue
 		var mark := MeshInstance3D.new()
 		var mesh := BoxMesh.new()
 		mesh.size = Vector3(3.0, 0.04, 0.12)

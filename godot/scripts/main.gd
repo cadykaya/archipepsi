@@ -108,6 +108,7 @@ const DRIVERS := {
 	"--status-kinetic": preload("res://tests/status_kinetic_driver.gd"),
 	"--zone-state": preload("res://tests/zone_state_driver.gd"),
 	"--roster": preload("res://tests/roster_driver.gd"),
+	"--enemy-art": preload("res://tests/enemy_art_driver.gd"),
 	"--actuator": preload("res://tests/actuator_driver.gd"),
 	"--constraints": preload("res://tests/constraint_driver.gd"),
 	"--archive": preload("res://tests/archive_driver.gd"),

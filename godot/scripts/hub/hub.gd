@@ -299,6 +299,7 @@ func _build_room() -> void:
 
 	_build_campaign_board()
 	_build_controls_board()
+	_place_epsilon()
 
 	_static_root = Node3D.new()
 	add_child(_static_root)
@@ -478,6 +479,80 @@ func refresh() -> void:
 ## you why Tier 2 is dark before it shows you anything else. Each cell is
 ## tinted by the game that will receive that location's item, so the wall
 ## is a picture of the multiworld you are embedded in.
+## The art lane's Hub fixtures (batch 002 and 003, PASS 28 Aug), shipped by
+## `tools/import_hub_fixtures.sh`. Each is presentation: what it stands in
+## for keeps its own collider, labels and interaction.
+const FIXTURES := "res://content/hub/%s.glb"
+
+
+static func fixture(name: String) -> Node3D:
+	var path := FIXTURES % name
+	if not ResourceLoader.exists(path):
+		return null
+	var packed := load(path) as PackedScene
+	return packed.instantiate() as Node3D if packed != null else null
+
+
+## A fixture's visible extent, in its own space.
+static func fixture_box(node: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for m: Node in node.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var t := Transform3D.IDENTITY
+		var at: Node = mi
+		while at != null and at != node:
+			if at is Node3D:
+				t = (at as Node3D).transform * t
+			at = at.get_parent()
+		var b := t * mi.mesh.get_aabb()
+		out = b if first else out.merge(b)
+		first = false
+	return out
+
+
+## THE EPSILON INSTALLATION (batch 002, the Style Lock centrepiece) in the bay
+## the Hub has reserved for it: presentation only -- it is not a control, a
+## station or a voice. Its face (+Z as authored) turns into the room. It is
+## solid, as a nine-metre installation should be: one box, its footprint.
+func _place_epsilon() -> void:
+	var model := fixture("epsilon_installation")
+	if model == null:
+		return
+	var holder := StaticBody3D.new()
+	holder.name = "EpsilonInstallation"
+	add_child(holder)
+	holder.position = _anchors.origin("epsilon_presence")
+	holder.rotation.y = _anchors.yaw("epsilon_presence") + PI
+	holder.add_child(model)
+	var box := fixture_box(model)
+	var shape := CollisionShape3D.new()
+	var solid := BoxShape3D.new()
+	solid.size = box.size
+	shape.shape = solid
+	shape.position = box.get_center()
+	holder.add_child(shape)
+
+
+## A board's art backing, centred where the plate it replaces was and set
+## back against the wall; returns the x of its face, where the cells and
+## words stand -- NAN without the art.
+func _board_backing(root: Node3D, name: String, centre: Vector3,
+		into_room: float) -> float:
+	var model := fixture(name)
+	if model == null:
+		return NAN
+	var box := fixture_box(model)
+	model.rotation.y = PI / 2.0 * into_room      # its face (+Z) into the room
+	var wall := -W / 2.0 if into_room > 0.0 else W / 2.0
+	model.position = Vector3(wall + into_room * box.size.z / 2.0, centre.y,
+			centre.z)
+	root.add_child(model)
+	return model.position.x + into_room * box.size.z / 2.0
+
+
 func _build_campaign_board() -> void:
 	var panel_z := D * 0.62
 	var wall_x := -W / 2.0 + 0.35
@@ -485,9 +560,15 @@ func _build_campaign_board() -> void:
 	var root := Node3D.new()
 	root.name = "CampaignBoard"
 	add_child(root)
-	# Backing plate and frame.
-	b._box(root, Vector3(0.12, 2.6, 5.2), Vector3(wall_x, 2.3, panel_z),
-			ThemeMaterials.trim_mat(THEME), false)
+	# Backing plate and frame: the art board where it is shipped, and its
+	# face is where the cells and words stand.
+	var face := _board_backing(root, "hub_campaign_board",
+			Vector3(wall_x, 2.3, panel_z), 1.0)
+	if not is_nan(face):
+		wall_x = face + 0.02 - 0.09      # the words stand 2 cm off its face
+	else:
+		b._box(root, Vector3(0.12, 2.6, 5.2), Vector3(wall_x, 2.3, panel_z),
+				ThemeMaterials.trim_mat(THEME), false)
 
 	var title := Label3D.new()
 	title.text = "THE MULTIWORLD"
@@ -548,8 +629,13 @@ func _build_controls_board() -> void:
 	var root := Node3D.new()
 	root.name = "ControlsBoard"
 	add_child(root)
-	b._box(root, Vector3(0.12, 2.4, 4.0), Vector3(wall_x, 2.2, panel_z),
-			ThemeMaterials.trim_mat(THEME), false)
+	var face := _board_backing(root, "hub_controls_board",
+			Vector3(wall_x, 2.2, panel_z), -1.0)
+	if not is_nan(face):
+		wall_x = face - 0.02 + 0.09
+	else:
+		b._box(root, Vector3(0.12, 2.4, 4.0), Vector3(wall_x, 2.2, panel_z),
+				ThemeMaterials.trim_mat(THEME), false)
 
 	var title := Label3D.new()
 	title.text = "OPERATING PROCEDURE"

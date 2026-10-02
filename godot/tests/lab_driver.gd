@@ -49,6 +49,8 @@ func _run() -> void:
 	player.global_position = lab.global_position + Vector3(0, 1, 4)
 
 	_fixtures_exist(lab)
+	_the_measures_say_the_engines_numbers(lab)
+	await _the_shipped_art_is_what_loads(lab)
 	_dummy_takes_real_damage(lab, player)
 	_dummy_cannot_be_farmed(lab)
 	_statuses_apply_and_clear(lab)
@@ -117,6 +119,85 @@ func _fixtures_exist(lab: EchoLab) -> void:
 		_check(lab.fixture(fixture_name) != null, "the Lab has a %s" % fixture_name)
 	_check(lab.get_node_or_null("GapRecovery") != null,
 			"the gap has a recovery trigger")
+
+## ART-CATCHUP: the approved graduated fixtures (batch 004) are MEASURING
+## instruments, so their called-out marks must sit on the engine's own
+## numbers, not near them: the runway's reach mark at JUMP_FLAT_REACH from
+## the start line, the height strip's callouts at MAX_VERTICAL_STEP and
+## JUMP_APEX_HEIGHT. Checked only where the art is shipped.
+func _lit_extent(lab: EchoLab, path: String, axis: int) -> PackedFloat32Array:
+	var node := lab.get_node_or_null(path) as MeshInstance3D
+	var out := PackedFloat32Array()
+	if node == null:
+		return out
+	var lit := ArtModels.surface(node.mesh, "_lit")
+	if lit < 0:
+		return out
+	var to_lab := lab.global_transform.affine_inverse() * node.global_transform
+	for v: Vector3 in node.mesh.surface_get_arrays(lit)[Mesh.ARRAY_VERTEX]:
+		out.append((to_lab * v)[axis])
+	return out
+
+## ART-CATCHUP: every family this catch-up wired falls back to its code
+## shape when its model is missing -- which must be a RED suite, not a
+## quiet game of boxes. So: the Hub's installation and boards, the exit
+## portal's frame and cores, and the Lab's fixtures are the shipped art.
+func _the_shipped_art_is_what_loads(lab: EchoLab) -> void:
+	var missing: Array = []
+	var hub := HubController.new()
+	add_child(hub)
+	await get_tree().process_frame
+	if hub.find_child("EpsilonInstallation", true, false) == null:
+		missing.append("the Epsilon installation")
+	for board: String in ["CampaignBoard:hub_campaign_board",
+			"ControlsBoard:hub_controls_board"]:
+		var parts := board.split(":")
+		var holder := hub.find_child(parts[0], true, false)
+		if holder == null or holder.find_child(parts[1], true, false) == null:
+			missing.append(parts[1])
+	hub.queue_free()
+	var portal := ExitPortal.create("concrete_facility")
+	add_child(portal)
+	await get_tree().process_frame
+	if (portal.get_node("Frame") as MeshInstance3D).mesh \
+			!= ExitPortal.art_mesh("portal_b2_wound"):
+		missing.append("the portal frame")
+	for open: bool in [false, true]:
+		portal.set_unlocked(open, 0 if open else 2)
+		var want := ExitPortal.art_mesh(
+				"portal_core_unlocked" if open else "portal_core_locked")
+		if want == null or (portal.get_node("Core") as MeshInstance3D).mesh != want:
+			missing.append("the %s portal core" % ("open" if open else "sealed"))
+	portal.queue_free()
+	for fixture: String in ["dummy", "hazard"]:
+		var node := lab.fixture(fixture)
+		var art := LabFixtures.art(fixture)
+		if art == null or node == null or (node.get("_core") as MeshInstance3D).mesh != art:
+			missing.append("the Lab %s" % fixture)
+	if lab.get_node_or_null("TallWall/HeightMarkers") == null:
+		missing.append("the Lab height strip")
+	if lab.get_node_or_null("RunwayMeasure1") == null:
+		missing.append("the Lab runway measure")
+	await get_tree().process_frame
+	_check(missing.is_empty(), "the catch-up's art is what loads, not its "
+			+ "code fallback: missing %s" % [missing])
+
+func _the_measures_say_the_engines_numbers(lab: EchoLab) -> void:
+	var zs := _lit_extent(lab, "RunwayMeasure1", 2)
+	if not zs.is_empty():
+		var mid: float = 0.5 * (float(Array(zs).min()) + float(Array(zs).max()))
+		_check(absf(mid - Constants.JUMP_FLAT_REACH) < 0.02,
+				"the runway's reach mark is at %.3f m, the jump reaches %.3f m"
+				% [mid, Constants.JUMP_FLAT_REACH])
+	var ys := _lit_extent(lab, "TallWall/HeightMarkers", 1)
+	for want: float in [Constants.MAX_VERTICAL_STEP, Constants.JUMP_APEX_HEIGHT]:
+		if ys.is_empty():
+			break
+		var near := false
+		for y in ys:
+			if absf(y - want) < 0.05:
+				near = true
+		_check(near, "the height strip has no callout at %.3f m" % want)
 
 ## The dummy answers `Enemy`'s own signature, so the production attack
 ## paths reach it unchanged. Damage is applied through that, never by
@@ -355,7 +436,7 @@ func _the_hub_resolves_every_anchor_its_logic_needs() -> void:
 			"these Hub anchors are outside the room: %s"
 			% str(anchors.outside_room()))
 
-	## Art requirement 4. Epsilon's installation is 8.80 x 2.61 x 3.55 --
+	## Art requirement 4. Epsilon's installation (now 9.02 x 3.55 x 3.48) is --
 	## roughly a third of one 22 m Hub wall -- and the owner ruled it
 	## keeps that prominent back-wall presence. So the bay is reserved
 	## and everything else moves around it, which is a thing that has to
@@ -366,14 +447,22 @@ func _the_hub_resolves_every_anchor_its_logic_needs() -> void:
 			"these Hub stations stand inside Epsilon's reserved bay: %s"
 			% str(anchors.intruders()))
 
-	## ...and the bay is genuinely the size art declared, not a number
-	## quietly trimmed until the room was easier to lay out.
+	## ...and the bay is genuinely the size of the installation art
+	## shipped, measured from the model itself rather than from a number
+	## that could be quietly trimmed until the room was easier to lay out.
+	## (The art brief's 8.80 x 3.55 x 2.61 was superseded by the locked
+	## model, which measures 9.02 x 3.55 x 3.48.)
 	var bay := anchors.epsilon_bay()
-	_check(is_equal_approx(bay.size.x, 8.8)
-			and is_equal_approx(bay.size.z, 2.61)
-			and is_equal_approx(bay.size.y, 3.55),
-			"Epsilon's bay is %.2v, the installation is 8.80 x 3.55 x 2.61"
-			% bay.size)
+	var model := HubController.fixture("epsilon_installation")
+	_check(model != null, "the Epsilon installation model is not shipped")
+	if model != null:
+		var size := HubController.fixture_box(model).size
+		model.free()
+		_check(absf(bay.size.x - size.x) < 0.01
+				and absf(bay.size.z - size.z) < 0.01
+				and absf(bay.size.y - size.y) < 0.01,
+				"Epsilon's bay is %.2v, the installation model is %.2v"
+				% [bay.size, size])
 
 	## The abandon console is the only exit from GENERATING and
 	## ZONE_READY, so "moved out of the bay" must not have meant "moved
