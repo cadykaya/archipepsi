@@ -90,7 +90,10 @@ func _ready() -> void:
 	_hud()
 	_overlay_build()
 	_refresh_objective()
-	print("crossing-d: review build, %s yard; isolated (no bridge, no save)"
+	# To stderr: a release build does not flush stdout on print, so a
+	# launch closed by force (a tester's, or a probe's) would lose the line;
+	# stderr, and the engine's log file with it, are written at once.
+	printerr("crossing-d: review build, %s yard; isolated (no bridge, no save)"
 			% ("populated" if populated else "empty"))
 
 
