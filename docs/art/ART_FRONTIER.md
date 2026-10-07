@@ -3440,6 +3440,25 @@ Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
 **Next: STOP** until the owner decides the palette questions and the
 Crossing brief exists.
 
+### Delivered, 2026-10-07 — fitting the kit to Crossing D. STOPPED.
+
+It's on the same branch.
+Handoff: `docs/art/reports/2026-10-07-crossing-d-kit-mapping.md`.
+* **Repair:** `ck_floor_lever` is rebuilt volume for volume with D's
+  `Lever`: 168 tris, 0.70 × 0.72 × 2.01 m. The 2026-10-02 report and
+  the ledger both carry dated corrections.
+* **Mapping:**
+  * the lever's mount, colliders, hinges and pilot;
+  * the conduit profile for code-built straights;
+  * the recursive state hook;
+  * placements for D's five lines.
+* **Not done:**
+  * the fitted review in D, because Prod's trial isn't pushed;
+  * any recolour. D-local colours are flagged only.
+
+**Next: STOP** until Prod's trial exists, then the fitted review at
+player height.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

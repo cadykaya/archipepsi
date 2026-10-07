@@ -194,6 +194,21 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-07: the kit's mapping onto Crossing D is handed to Prod;
+  STOP.** It's on the same branch. The owner asked for support of
+  Prod's trial, not a new kit. Prod's trial isn't pushed, so there was
+  no fitted review, and the exact handoff stands in for it.
+  * Handoff: `docs/art/reports/2026-10-07-crossing-d-kit-mapping.md`.
+  * The one source repair: `ck_floor_lever` now matches D's `Lever`,
+    volume for volume. D's colliders stay, because the interact ray
+    doesn't walk up to a parent.
+  * Flagged, not changed:
+    * D's pale-green EXIT, its solid-green handles, and the near-blue
+      accent on the lift and bridge;
+    * three D lines that miss their target or lie underfoot;
+    * the kit's 4 cm stripe, to check at distance.
+  * Next: the fitted review in D at player height, once Prod's trial
+    exists.
 * **2026-10-02: the combined Crossing's readability kit (Batch 063) is
   DELIVERED; STOP.** It's on `claude/archipepsi-art-crossing-kit-2026-10-02`:
   a floor lever, a power raceway and three accent strips, under the owner's

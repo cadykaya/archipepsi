@@ -111,14 +111,30 @@ LIVE_STRENGTH = 0.8
 #: (`call_lever.gd`). Keeping the footprint keeps its collider, and keeping
 #: the throw keeps what the owner already learned from Wisp's study.
 THROW = 55.0
-FOOT = (0.70, 0.70, 0.06)
-PEDESTAL = (0.40, 0.40, 0.84)            # z 0.06 .. 0.90
-HEAD = (0.70, 0.34, 0.26)                # z 0.90 .. 1.16, front face y -0.17
-PIVOT = (0.0, -0.31, 1.17)               # inside the arm, on the bearing
-PILOT_AT = (0.0, -0.226, 0.70)
-#: 22 texels wide, so the two words land on whole texels.
+#: CROSSING D'S LEVER, VOLUME FOR VOLUME (repair, 2026-10-07).
+#:
+#: D's latching lever (`crossing_d_parts.gd`, `Lever` over Production's
+#: `CallLever`) keeps its colliders on the code body, and it has to: the
+#: interact ray takes the collider it hits and does not walk up to a parent
+#: (`player.gd`, `_update_interact_target`). So the art takes D's volumes:
+#: * the foot, 0.70 x 0.10 x 0.70;
+#: * the pedestal, 0.46 x 0.825 x 0.46 from the floor;
+#: * the head (`CallLever.BASE`), 0.70 x 0.35 x 0.70, from 0.825 to 1.175 m;
+#: * the arm (`CallLever.ARM`), pivoting at the head's top centre;
+#: * the pilot, 0.69 m up the pedestal's face.
+#: The first cut (2026-10-02) had a 0.34 m deep head with the arm hung in
+#: front of it. Under D's 0.70 m BASE collider that left 18 cm of invisible
+#: lever in front of and behind the visible head, at chest height.
+FOOT = (0.70, 0.70, 0.10)                # z 0 .. 0.10
+PEDESTAL = (0.46, 0.46, 0.825)           # z 0 .. 0.825, through the foot, as D's
+HEAD = (0.70, 0.70, 0.35)                # z 0.825 .. 1.175
+PIVOT = (0.0, 0.0, 1.175)                # CallLever's arm origin
+ARM = (0.12, 0.12, 0.84)                 # CallLever.ARM's 0.80, plus a 4 cm heel
+PILOT_AT = (0.0, -0.256, 0.69)
+#: 22 texels wide, so the two words land on whole texels; centred on the
+#: height of D's own ON/OFF marks.
 PLATE = (22 / DENSITY, 0.012, 6 / DENSITY)
-PLATE_Z0 = 0.91
+PLATE_Z0 = 1.0 - 3 / DENSITY
 
 # --- the raceway -----------------------------------------------------------
 PIPE_Z = 0.065            # pipe centre above the surface it is mounted on
@@ -280,19 +296,20 @@ def floor_lever():
     """`ck_floor_lever` -- a permanent lever that stands on the floor.
 
     Returns (structure, decoration, parts, hinges). The structure (foot,
-    pedestal, head) gets collider twins. The arm swings left and right in
-    front of the head on a bearing, and the pilot turns from a horizontal
-    bar (OFF) to a vertical one (ON) as its light changes. Both are
-    readable with the colour removed.
+    pedestal, head) gets collider twins that equal Crossing D's code
+    colliders. The arm rises from a bearing on the head's top centre and
+    throws left (ON) or right (OFF), over a label plate on the head's face.
+    The pilot turns from a flat bar (OFF) to an upright one (ON) as it
+    lights. Both read with the colour removed.
     """
     fx, fy, fz = FOOT
     px, py, pz = PEDESTAL
     hx, hy, hz = HEAD
     structure = [
         _b("lever_foot", FOOT, (0.0, 0.0, fz / 2.0), "trim", collide=True),
-        _b("lever_pedestal", PEDESTAL, (0.0, 0.0, fz + pz / 2.0), "wall",
+        _b("lever_pedestal", PEDESTAL, (0.0, 0.0, pz / 2.0), "wall",
            collide=True),
-        _b("lever_head", HEAD, (0.0, 0.0, fz + pz + hz / 2.0), "trim",
+        _b("lever_head", HEAD, (0.0, 0.0, pz + hz / 2.0), "trim",
            collide=True),
     ]
     decoration = []
@@ -302,28 +319,29 @@ def floor_lever():
                                  (x, y, fz + 0.015)))
     # The power exit, at the rear and at raceway height: the line starts
     # where the lever stands, rather than somewhere near it.
-    decoration.append(_b("lever_gland", (0.14, 0.16, 0.11),
-                         (0.0, py / 2.0 + 0.08, PIPE_Z)))
-    # The bearing the arm turns on, proud of the head's front and top.
-    decoration.append(_b("lever_bearing", (0.14, 0.10, 0.14),
-                         (0.0, -hy / 2.0 - 0.05, PIVOT[2])))
+    decoration.append(_b("lever_gland", (0.14, 0.13, 0.11),
+                         (0.0, py / 2.0 + 0.065, PIPE_Z)))
+    # The bearing the arm turns on: an axle boss across the head's top
+    # centre, half sunk into it.
+    decoration.append(_b("lever_bearing", (0.14, 0.30, 0.14), PIVOT))
     plate = _b("lever_label", PLATE,
                (0.0, -hy / 2.0 - PLATE[1] / 2.0, PLATE_Z0 + PLATE[2] / 2.0),
                "ck_label")
     decoration.append(plate)
     decoration.append(_b("pilot_bezel", (0.20, 0.02, 0.20),
                          (0.0, -py / 2.0 - 0.01, PILOT_AT[2])))
-    arm = _b("lever_arm", (0.08, 0.08, 0.74),
-             (0.0, PIVOT[1], PIVOT[2] - 0.06 + 0.37))
-    grip = _b("lever_grip", (0.22, 0.13, 0.12),
-              (0.0, PIVOT[1], PIVOT[2] - 0.06 + 0.74 - 0.04), "ck_neutral")
+    ax, ay, az = ARM
+    arm = _b("lever_arm", ARM, (0.0, 0.0, PIVOT[2] - 0.04 + az / 2.0))
+    grip = _b("lever_grip", (0.26, 0.18, 0.15),
+              (0.0, 0.0, PIVOT[2] + 0.80 - 0.04), "ck_neutral")
     pilot = _b("pilot_bar", (0.14, 0.012, 0.04), PILOT_AT, "ck_power")
     _tile(structure + decoration + [arm, grip, pilot])
     _planar_uv(plate, (-PLATE[0] / 2.0, PLATE_Z0), (0, 2))
     hinges = [
         {"node": "lever_hinge", "moving": [arm, grip], "pivot": PIVOT,
          # Godot +Z faces the player. +55 about it carries the arm's top
-         # to the player's LEFT, which is ON (the label's left word).
+         # to the player's LEFT, which is ON (the label's left word), the
+         # same sign and side as D's `Lever` (OFF_DEGREES -55, ON +55).
          "axis": "z", "positions_degrees": {"off": -THROW, "upright": 0.0,
                                             "on": THROW},
          "as_built": "upright"},
@@ -567,8 +585,10 @@ def build_asset(name):
         entry, body, out = _export(name, structure + decoration, parts,
                                    hinges, collide=structure)
         entry["mount"] = ("floor; origin at the foot's centre. The player "
-                          "works it from Godot +Z. The 0.70 x 0.70 m foot is "
-                          "Production's CallLever footprint.")
+                          "works it from Godot +Z. Crossing D's Lever, volume "
+                          "for volume: under a D `Lever` node, whose origin "
+                          "stands 1.0 m above its floor, place this at local "
+                          "(0, -1, 0).")
         entry["states"] = {
             "off": {"lever_hinge": -THROW, "pilot_hinge": 0.0,
                     "pilot_bar": "idle"},
@@ -582,10 +602,15 @@ def build_asset(name):
         }
         entry["power_state"] = POWER_STATE
         entry["collision"] = ("convex twins on the foot, pedestal and head "
-                              "(`-convcolonly`); the arm, grip and pilot "
-                              "move and carry none")
+                              "(`-convcolonly`), each equal to Crossing D's "
+                              "code collider (Foot, Pedestal, CallLever.BASE). "
+                              "Under a D Lever, free the GLB's StaticBody3D "
+                              "nodes: the interact ray takes the collider it "
+                              "hits and does not walk up to a parent, so only "
+                              "the code body may answer it. The arm, grip and "
+                              "pilot move and carry none.")
         entry["power_exit"] = {
-            "at_runtime": _to_runtime((0.0, PEDESTAL[1] / 2.0 + 0.16,
+            "at_runtime": _to_runtime((0.0, PEDESTAL[1] / 2.0 + 0.13,
                                        PIPE_Z)),
             "note": "a floor run leaves the gland's rear face here, along "
                     "Godot -Z, at the raceway's own pipe height"}

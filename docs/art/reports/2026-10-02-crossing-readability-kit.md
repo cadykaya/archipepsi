@@ -4,6 +4,12 @@
 
 This is a small kit, built through the art pipeline: a floor lever, a power raceway and three accent strips. Its status is **PROPOSAL** and its review is pending. It is not in the content pack, not integrated and not merged; Prod decides how it enters the Crossing.
 
+> **Correction, 2026-10-07.** "Prod's needs" below says the existing collider still fits the kit lever. It didn't. The lever kept `CallLever`'s 0.70 m width and 55° throw, but its head was only 0.34 m deep under the code's 0.70 × 0.35 × 0.70 m `BASE` collider, which left 18 cm of invisible collider in front of it and behind it. Its arm also pivoted 0.31 m in front of `CallLever`'s. Against Crossing D's `Lever`, the foot and pedestal were off too: 0.06 m and 0.40 m, where D has 0.10 m and 0.46 m.
+>
+> On 2026-10-07 the lever was rebuilt to D's volumes exactly. The foot, pedestal and head now equal D's colliders, and the arm pivots on the head's top centre. It is still 168 triangles and now measures 0.70 × 0.72 × 2.01 m.
+>
+> The pictures linked at the end of this report show the 2026-10-02 lever and are kept as they were. The rebuilt lever's views and its mapping onto D are in `2026-10-07-crossing-d-kit-mapping.md`. *— Arty*
+
 ## Checked before building
 
 - **Dess's brief.** I couldn't find it. It isn't in either uploaded archive or on any remote branch. All I had was the handoff's proposed four-room outline, so I built **no bespoke pieces**: no landmark and no room dressing.
