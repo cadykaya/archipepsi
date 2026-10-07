@@ -25,22 +25,23 @@ CONTROLS
   Esc         menu: resume, restart the Crossing, quit
 
 WHAT CHANGED FROM D (the look only)
-  - Both levers are Arty's floor lever: stencilled ON / OFF, the handle
-    resting at OFF (right) or ON (left), and a pilot on the pedestal that
-    stands up and lights once the lever has done its job. The gate lever
-    now faces the yard, where it is pulled from.
+  - Both levers are Arty's floor lever, drawn over D's own colliders:
+    stencilled ON / OFF, the handle resting at OFF (right) or ON (left),
+    and a pilot on the pedestal that stands up and lights once the lever
+    has done its job. The gate lever now faces the yard, where it is
+    pulled from.
   - The five power lines are Arty's raceway, laid on the floors and walls
-    with turns, corners and saddles, each ending in a lamp at what it
-    powers. A line lights only while its source is live.
+    with turns, corners and saddles, from what feeds them to what they
+    power. A line lights only while its source is live.
   - Everything else is D's: rooms, colliders, reach, the puzzle, enemies,
     HP and damage, movement, and the Courtyard-only swing.
 
 LIMITATIONS
   - Candidate art: Arty's kit is still in review, not approved.
-  - The floor runs do not collide (D's lines did not either): feet pass
-    through their 13 cm.
-  - The levers keep D's colliders, a little deeper than the kit lever's
-    head: from behind, you stop about 18 cm short of it.
+  - The raceway does not collide (D's lines did not either): feet pass
+    through its 13 cm where it crosses a floor.
+  - Its lit stripe is 4 cm wide: clear up close, faint from right across
+    the Machine Hall.
   - The ON / OFF status labels and the signs are still D's.
   - The swing tether is still Courtyard-only, unchanged: an open review
     question, not a final rule.
