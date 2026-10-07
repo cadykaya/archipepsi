@@ -524,8 +524,8 @@ func _machine_hall() -> void:
 	_check(room.line_live("plate") and room.badge_on("bridge"),
 			"the plate's line and the bridge's badge light")
 	_check(_lit("plate") == _pieces("plate") and _lit("lock") == 0
-			and _lit("power") == 0, "the plate's raceway lit end to end, to "
-			+ "its terminal at the bridge (%d pieces); no other line" % _lit("plate"))
+			and _lit("power") == 0, "the plate's raceway lit end to end, into "
+			+ "the bridge's near housing (%d pieces); no other line" % _lit("plate"))
 	# ACROSS, AND THE LOCK.
 	_check(await _walk(Vector3(-22.0, 0, 5.0)), "to the bridge")
 	_check(await _walk(Vector3(-22.0, 0, -5.4)), "across it")
