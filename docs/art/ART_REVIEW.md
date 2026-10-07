@@ -5125,6 +5125,30 @@ Evidence: `docs/art/review/lothric_2026-09-22/`.
 **Still not complete:** no material treatment, no runtime selection, not
 imported, no owner review.
 
+## Batch 063 — the combined Crossing's readability kit (2026-10-02)
+
+*Arty — 2026-10-02*
+
+**PROPOSAL.** Review pending; not in the content pack; not integrated. The
+colours are the owner's 2026-10-02 meanings, kit-local
+(`tools/blender/build_crossing_kit.py`).
+
+| asset | metrics | what it is |
+|---|---|---|
+| `ck_floor_lever` | 168 tris · 0.70 × 0.72 × 2.01 m · 32.0 texels/m | permanent lever on a floor foot; arm and pilot on hinges, OFF right / ON left; colliders on foot, pedestal, head, each equal to Crossing D's `Lever` collider |
+| `ck_raceway_run` | 72 tris · 1.00 × 0.22 × 0.12 m · 32.0 texels/m | 1.00 m power raceway: carrier, pipe, saddle, couplings; `power_core` state stripe |
+| `ck_raceway_inside` | 132 tris · 0.50 × 0.22 × 0.50 m · 32.0 texels/m | concave corner, floor to wall: two 0.50 m legs and an elbow |
+| `ck_raceway_outside` | 132 tris · 0.63 × 0.22 × 0.63 m · 32.0 texels/m | convex corner over an edge; the elbow stands proud of it |
+| `ck_raceway_turn` | 132 tris · 0.61 × 0.61 × 0.13 m · 32.0 texels/m | 90 degree turn on one surface: up a wall, then along it |
+| `ck_raceway_terminal` | 48 tris · 0.42 × 0.26 × 0.19 m · 32.0 texels/m | where the line ends at what it powers; `power_lens` is the destination's badge |
+| `ck_accent_movement` | 12 tris · 1.00 × 0.12 × 0.01 m · 32.0 texels/m | blue, chevrons pointing the way |
+| `ck_accent_destructible` | 12 tris · 1.00 × 0.12 × 0.01 m · 32.0 texels/m | orange, scored |
+| `ck_accent_hazard` | 12 tris · 1.00 × 0.12 × 0.01 m · 32.0 texels/m | yellow and black, the library's 0.1 m stripe pitch |
+
+**Corrected 2026-10-07.** The lever row above is the rebuilt asset. `ck_floor_lever` was re-proportioned to Crossing D's `Lever`, volume for volume, so the kit can stand on D's own colliders. The 2026-10-02 lever measured 0.70 × 0.73 × 1.87 m at the same 168 triangles; its views in `docs/art/review/crossing_kit_2026-10-02/` are kept as they were. Mapping: `docs/art/reports/2026-10-07-crossing-d-kit-mapping.md`.
+
+Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
+
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
 
 **All four large shells are `review: "pass"`.** Three authorities had to

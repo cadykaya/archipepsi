@@ -3423,6 +3423,42 @@ Four follow-ups, each its own commit on the same repair branch.
 
 **Next: HOLD** for the remaining visual decisions.
 
+### Delivered, 2026-10-02 — the combined Crossing's readability kit (Batch 063). STOPPED.
+
+It's on `claude/archipepsi-art-crossing-kit-2026-10-02`, review pending.
+Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
+* **What it is:** a floor lever on two hinges, a raceway (run, inside,
+  outside, turn, terminal) and three accent strips.
+* **How it was built:** every part at 32 texels/m, and the rebuild is
+  byte-identical.
+* **The owner's interaction meanings** are recorded in `ART_BIBLE.md`
+  with their overlaps against the locked palette. No library colour
+  changed.
+* **Not done:** a landmark or room dressing, for lack of Dess's brief;
+  integration, which is Prod's; audio, which is Wisp's.
+
+**Next: STOP** until the owner decides the palette questions and the
+Crossing brief exists.
+
+### Delivered, 2026-10-07 — fitting the kit to Crossing D. STOPPED.
+
+It's on the same branch.
+Handoff: `docs/art/reports/2026-10-07-crossing-d-kit-mapping.md`.
+* **Repair:** `ck_floor_lever` is rebuilt volume for volume with D's
+  `Lever`: 168 tris, 0.70 × 0.72 × 2.01 m. The 2026-10-02 report and
+  the ledger both carry dated corrections.
+* **Mapping:**
+  * the lever's mount, colliders, hinges and pilot;
+  * the conduit profile for code-built straights;
+  * the recursive state hook;
+  * placements for D's five lines.
+* **Not done:**
+  * the fitted review in D, because Prod's trial isn't pushed;
+  * any recolour. D-local colours are flagged only.
+
+**Next: STOP** until Prod's trial exists, then the fitted review at
+player height.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

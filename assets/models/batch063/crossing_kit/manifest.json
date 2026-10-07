@@ -1,0 +1,603 @@
+{
+  "ck_accent_destructible": {
+    "anchor": "as-built",
+    "batch": "063",
+    "colliders": [],
+    "collision": "none; flush trim",
+    "kind": "crossing_readability_kit",
+    "meaning": "destructible objects, including enemies",
+    "meanings": {
+      "colours": {
+        "destructible": "#f48a36",
+        "hazard_dark": "#20251f",
+        "hazard_light": "#f4cf46",
+        "movement": "#3266ee",
+        "power_idle": "#347b46",
+        "power_live": "#55e078"
+      },
+      "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
+      "ruling": "owner, 2026-10-02 (Locked visual meanings)"
+    },
+    "mount": "authored lying on a surface at local Godot y = 0, with +Y out of the surface. Floor: as built. Wall or ceiling: turn +Y to the surface's outward normal. Flush trim: 0.015 m.",
+    "not_changed": [
+      "any approved asset",
+      "any library colour",
+      "the content pack",
+      "Production"
+    ],
+    "parts": [],
+    "path": "batch063/crossing_kit/ck_accent_destructible.glb",
+    "reuses": [
+      "Batch 049 `_hinge` and runtime frame",
+      "concrete_facility wall and trim from materials.paint",
+      "the 3x5 stencil alphabet",
+      "paintkit.hazard_stripes at the library's 0.1 m pitch",
+      "roomcollision convex twins"
+    ],
+    "size": [
+      1.0,
+      0.125,
+      0.015
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- for the combined Crossing; review pending; not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "textures": {
+      "ck_destructible": "batch063/ck_destructible.png",
+      "ck_hazard": "batch063/ck_hazard.png",
+      "ck_movement": "batch063/ck_movement.png",
+      "ck_power": "batch063/ck_power.png",
+      "ck_power_live": "batch063/ck_power_live.png"
+    },
+    "triangles": 12
+  },
+  "ck_accent_hazard": {
+    "anchor": "as-built",
+    "batch": "063",
+    "colliders": [],
+    "collision": "none; flush trim",
+    "kind": "crossing_readability_kit",
+    "meaning": "hazards",
+    "meanings": {
+      "colours": {
+        "destructible": "#f48a36",
+        "hazard_dark": "#20251f",
+        "hazard_light": "#f4cf46",
+        "movement": "#3266ee",
+        "power_idle": "#347b46",
+        "power_live": "#55e078"
+      },
+      "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
+      "ruling": "owner, 2026-10-02 (Locked visual meanings)"
+    },
+    "mount": "authored lying on a surface at local Godot y = 0, with +Y out of the surface. Floor: as built. Wall or ceiling: turn +Y to the surface's outward normal. Flush trim: 0.015 m.",
+    "not_changed": [
+      "any approved asset",
+      "any library colour",
+      "the content pack",
+      "Production"
+    ],
+    "parts": [],
+    "path": "batch063/crossing_kit/ck_accent_hazard.glb",
+    "reuses": [
+      "Batch 049 `_hinge` and runtime frame",
+      "concrete_facility wall and trim from materials.paint",
+      "the 3x5 stencil alphabet",
+      "paintkit.hazard_stripes at the library's 0.1 m pitch",
+      "roomcollision convex twins"
+    ],
+    "size": [
+      1.0,
+      0.125,
+      0.015
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- for the combined Crossing; review pending; not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "textures": {
+      "ck_destructible": "batch063/ck_destructible.png",
+      "ck_hazard": "batch063/ck_hazard.png",
+      "ck_movement": "batch063/ck_movement.png",
+      "ck_power": "batch063/ck_power.png",
+      "ck_power_live": "batch063/ck_power_live.png"
+    },
+    "triangles": 12
+  },
+  "ck_accent_movement": {
+    "anchor": "as-built",
+    "batch": "063",
+    "colliders": [],
+    "collision": "none; flush trim",
+    "kind": "crossing_readability_kit",
+    "meaning": "movement features",
+    "meanings": {
+      "colours": {
+        "destructible": "#f48a36",
+        "hazard_dark": "#20251f",
+        "hazard_light": "#f4cf46",
+        "movement": "#3266ee",
+        "power_idle": "#347b46",
+        "power_live": "#55e078"
+      },
+      "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
+      "ruling": "owner, 2026-10-02 (Locked visual meanings)"
+    },
+    "mount": "authored lying on a surface at local Godot y = 0, with +Y out of the surface. Floor: as built. Wall or ceiling: turn +Y to the surface's outward normal. Flush trim: 0.015 m.",
+    "not_changed": [
+      "any approved asset",
+      "any library colour",
+      "the content pack",
+      "Production"
+    ],
+    "parts": [],
+    "path": "batch063/crossing_kit/ck_accent_movement.glb",
+    "reuses": [
+      "Batch 049 `_hinge` and runtime frame",
+      "concrete_facility wall and trim from materials.paint",
+      "the 3x5 stencil alphabet",
+      "paintkit.hazard_stripes at the library's 0.1 m pitch",
+      "roomcollision convex twins"
+    ],
+    "size": [
+      1.0,
+      0.125,
+      0.015
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- for the combined Crossing; review pending; not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "textures": {
+      "ck_destructible": "batch063/ck_destructible.png",
+      "ck_hazard": "batch063/ck_hazard.png",
+      "ck_movement": "batch063/ck_movement.png",
+      "ck_power": "batch063/ck_power.png",
+      "ck_power_live": "batch063/ck_power_live.png"
+    },
+    "triangles": 12
+  },
+  "ck_floor_lever": {
+    "anchor": "as-built",
+    "batch": "063",
+    "colliders": [
+      "lever_foot-convcolonly",
+      "lever_pedestal-convcolonly",
+      "lever_head-convcolonly"
+    ],
+    "collision": "convex twins on the foot, pedestal and head (`-convcolonly`), each equal to Crossing D's code collider (Foot, Pedestal, CallLever.BASE). Under a D Lever, free the GLB's StaticBody3D nodes: the interact ray takes the collider it hits and does not walk up to a parent, so only the code body may answer it. The arm, grip and pilot move and carry none.",
+    "hinges": [
+      {
+        "as_built": "upright",
+        "axis": "z",
+        "carries": [
+          "lever_arm",
+          "lever_grip"
+        ],
+        "drive": "rotate the `lever_hinge` node about its own local Z axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "lever_hinge",
+        "pivot_runtime": [
+          0.0,
+          1.175,
+          0.0
+        ],
+        "positions_degrees": {
+          "off": -55.0,
+          "on": 55.0,
+          "upright": 0.0
+        }
+      },
+      {
+        "as_built": "off",
+        "axis": "z",
+        "carries": [
+          "pilot_bar"
+        ],
+        "drive": "rotate the `pilot_hinge` node about its own local Z axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "pilot_hinge",
+        "pivot_runtime": [
+          0.0,
+          0.69,
+          0.256
+        ],
+        "positions_degrees": {
+          "off": 0.0,
+          "on": 90.0
+        }
+      }
+    ],
+    "kind": "crossing_readability_kit",
+    "meanings": {
+      "colours": {
+        "destructible": "#f48a36",
+        "hazard_dark": "#20251f",
+        "hazard_light": "#f4cf46",
+        "movement": "#3266ee",
+        "power_idle": "#347b46",
+        "power_live": "#55e078"
+      },
+      "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
+      "ruling": "owner, 2026-10-02 (Locked visual meanings)"
+    },
+    "mount": "floor; origin at the foot's centre. The player works it from Godot +Z. Crossing D's Lever, volume for volume: under a D `Lever` node, whose origin stands 1.0 m above its floor, place this at local (0, -1, 0).",
+    "not_changed": [
+      "any approved asset",
+      "any library colour",
+      "the content pack",
+      "Production"
+    ],
+    "parts": [
+      "lever_hinge",
+      "lever_arm",
+      "lever_grip",
+      "pilot_hinge",
+      "pilot_bar"
+    ],
+    "path": "batch063/crossing_kit/ck_floor_lever.glb",
+    "power_exit": {
+      "at_runtime": [
+        0.0,
+        0.065,
+        -0.36
+      ],
+      "note": "a floor run leaves the gland's rear face here, along Godot -Z, at the raceway's own pipe height"
+    },
+    "power_state": {
+      "how": "as built the state nodes carry the idle colour. Live: set their albedo to `live` and emit it. Unpowered stays dark green, so an off line still reads as a power line.",
+      "idle": "#347b46",
+      "live": "#55e078",
+      "node_prefix": "power_"
+    },
+    "reuses": [
+      "Batch 049 `_hinge` and runtime frame",
+      "concrete_facility wall and trim from materials.paint",
+      "the 3x5 stencil alphabet",
+      "paintkit.hazard_stripes at the library's 0.1 m pitch",
+      "roomcollision convex twins"
+    ],
+    "size": [
+      0.7,
+      0.722,
+      2.01
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "states": {
+      "off": {
+        "lever_hinge": -55.0,
+        "pilot_bar": "idle",
+        "pilot_hinge": 0.0
+      },
+      "on": {
+        "lever_hinge": 55.0,
+        "pilot_bar": "live",
+        "pilot_hinge": 90.0
+      },
+      "reads_without_colour": "the arm rests left (ON) or right (OFF) seen from the front, under the stencilled word; the pilot is a horizontal bar OFF and a vertical one ON"
+    },
+    "status": "PROPOSAL -- for the combined Crossing; review pending; not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "textures": {
+      "ck_destructible": "batch063/ck_destructible.png",
+      "ck_hazard": "batch063/ck_hazard.png",
+      "ck_movement": "batch063/ck_movement.png",
+      "ck_power": "batch063/ck_power.png",
+      "ck_power_live": "batch063/ck_power_live.png"
+    },
+    "triangles": 168
+  },
+  "ck_raceway_inside": {
+    "anchor": "as-built",
+    "batch": "063",
+    "colliders": [],
+    "collision": "none. Proud of its surface by at most 0.13 m (0.19 m at a terminal); presentation, as Batch 043 rules conduits. Keep floor runs along wall bases. A run that must cross a walking line gets a code-side box no taller than the run, inside the 1.0 m step and the enemies' 0.6 m footing.",
+    "kind": "crossing_readability_kit",
+    "meanings": {
+      "colours": {
+        "destructible": "#f48a36",
+        "hazard_dark": "#20251f",
+        "hazard_light": "#f4cf46",
+        "movement": "#3266ee",
+        "power_idle": "#347b46",
+        "power_live": "#55e078"
+      },
+      "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
+      "ruling": "owner, 2026-10-02 (Locked visual meanings)"
+    },
+    "mount": "authored lying on a surface at local Godot y = 0, with +Y out of the surface. Floor: as built. Wall or ceiling: turn +Y to the surface's outward normal.",
+    "not_changed": [
+      "any approved asset",
+      "any library colour",
+      "the content pack",
+      "Production"
+    ],
+    "parts": [
+      "power_core_a",
+      "power_core_b"
+    ],
+    "path": "batch063/crossing_kit/ck_raceway_inside.glb",
+    "pipe_centre_above_surface_m": 0.065,
+    "power_state": {
+      "how": "as built the state nodes carry the idle colour. Live: set their albedo to `live` and emit it. Unpowered stays dark green, so an off line still reads as a power line.",
+      "idle": "#347b46",
+      "live": "#55e078",
+      "node_prefix": "power_"
+    },
+    "reuses": [
+      "Batch 049 `_hinge` and runtime frame",
+      "concrete_facility wall and trim from materials.paint",
+      "the 3x5 stencil alphabet",
+      "paintkit.hazard_stripes at the library's 0.1 m pitch",
+      "roomcollision convex twins"
+    ],
+    "size": [
+      0.5,
+      0.22,
+      0.5
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- for the combined Crossing; review pending; not in the content pack; not integrated",
+    "supports": "a saddle every 1.00 m and a coupling at each joint",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "textures": {
+      "ck_destructible": "batch063/ck_destructible.png",
+      "ck_hazard": "batch063/ck_hazard.png",
+      "ck_movement": "batch063/ck_movement.png",
+      "ck_power": "batch063/ck_power.png",
+      "ck_power_live": "batch063/ck_power_live.png"
+    },
+    "triangles": 132
+  },
+  "ck_raceway_outside": {
+    "anchor": "as-built",
+    "batch": "063",
+    "colliders": [],
+    "collision": "none. Proud of its surface by at most 0.13 m (0.19 m at a terminal); presentation, as Batch 043 rules conduits. Keep floor runs along wall bases. A run that must cross a walking line gets a code-side box no taller than the run, inside the 1.0 m step and the enemies' 0.6 m footing.",
+    "kind": "crossing_readability_kit",
+    "meanings": {
+      "colours": {
+        "destructible": "#f48a36",
+        "hazard_dark": "#20251f",
+        "hazard_light": "#f4cf46",
+        "movement": "#3266ee",
+        "power_idle": "#347b46",
+        "power_live": "#55e078"
+      },
+      "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
+      "ruling": "owner, 2026-10-02 (Locked visual meanings)"
+    },
+    "mount": "authored lying on a surface at local Godot y = 0, with +Y out of the surface. Floor: as built. Wall or ceiling: turn +Y to the surface's outward normal.",
+    "not_changed": [
+      "any approved asset",
+      "any library colour",
+      "the content pack",
+      "Production"
+    ],
+    "parts": [
+      "power_core_a",
+      "power_core_b"
+    ],
+    "path": "batch063/crossing_kit/ck_raceway_outside.glb",
+    "pipe_centre_above_surface_m": 0.065,
+    "power_state": {
+      "how": "as built the state nodes carry the idle colour. Live: set their albedo to `live` and emit it. Unpowered stays dark green, so an off line still reads as a power line.",
+      "idle": "#347b46",
+      "live": "#55e078",
+      "node_prefix": "power_"
+    },
+    "reuses": [
+      "Batch 049 `_hinge` and runtime frame",
+      "concrete_facility wall and trim from materials.paint",
+      "the 3x5 stencil alphabet",
+      "paintkit.hazard_stripes at the library's 0.1 m pitch",
+      "roomcollision convex twins"
+    ],
+    "size": [
+      0.63,
+      0.22,
+      0.63
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- for the combined Crossing; review pending; not in the content pack; not integrated",
+    "supports": "a saddle every 1.00 m and a coupling at each joint",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "textures": {
+      "ck_destructible": "batch063/ck_destructible.png",
+      "ck_hazard": "batch063/ck_hazard.png",
+      "ck_movement": "batch063/ck_movement.png",
+      "ck_power": "batch063/ck_power.png",
+      "ck_power_live": "batch063/ck_power_live.png"
+    },
+    "triangles": 132
+  },
+  "ck_raceway_run": {
+    "anchor": "as-built",
+    "batch": "063",
+    "colliders": [],
+    "collision": "none. Proud of its surface by at most 0.13 m (0.19 m at a terminal); presentation, as Batch 043 rules conduits. Keep floor runs along wall bases. A run that must cross a walking line gets a code-side box no taller than the run, inside the 1.0 m step and the enemies' 0.6 m footing.",
+    "kind": "crossing_readability_kit",
+    "meanings": {
+      "colours": {
+        "destructible": "#f48a36",
+        "hazard_dark": "#20251f",
+        "hazard_light": "#f4cf46",
+        "movement": "#3266ee",
+        "power_idle": "#347b46",
+        "power_live": "#55e078"
+      },
+      "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
+      "ruling": "owner, 2026-10-02 (Locked visual meanings)"
+    },
+    "mount": "authored lying on a surface at local Godot y = 0, with +Y out of the surface. Floor: as built. Wall or ceiling: turn +Y to the surface's outward normal.",
+    "not_changed": [
+      "any approved asset",
+      "any library colour",
+      "the content pack",
+      "Production"
+    ],
+    "parts": [
+      "power_core"
+    ],
+    "path": "batch063/crossing_kit/ck_raceway_run.glb",
+    "pipe_centre_above_surface_m": 0.065,
+    "power_state": {
+      "how": "as built the state nodes carry the idle colour. Live: set their albedo to `live` and emit it. Unpowered stays dark green, so an off line still reads as a power line.",
+      "idle": "#347b46",
+      "live": "#55e078",
+      "node_prefix": "power_"
+    },
+    "reuses": [
+      "Batch 049 `_hinge` and runtime frame",
+      "concrete_facility wall and trim from materials.paint",
+      "the 3x5 stencil alphabet",
+      "paintkit.hazard_stripes at the library's 0.1 m pitch",
+      "roomcollision convex twins"
+    ],
+    "size": [
+      1.0,
+      0.22,
+      0.125
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- for the combined Crossing; review pending; not in the content pack; not integrated",
+    "supports": "a saddle every 1.00 m and a coupling at each joint",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "textures": {
+      "ck_destructible": "batch063/ck_destructible.png",
+      "ck_hazard": "batch063/ck_hazard.png",
+      "ck_movement": "batch063/ck_movement.png",
+      "ck_power": "batch063/ck_power.png",
+      "ck_power_live": "batch063/ck_power_live.png"
+    },
+    "triangles": 72
+  },
+  "ck_raceway_terminal": {
+    "anchor": "as-built",
+    "batch": "063",
+    "colliders": [],
+    "collision": "none. Proud of its surface by at most 0.13 m (0.19 m at a terminal); presentation, as Batch 043 rules conduits. Keep floor runs along wall bases. A run that must cross a walking line gets a code-side box no taller than the run, inside the 1.0 m step and the enemies' 0.6 m footing.",
+    "kind": "crossing_readability_kit",
+    "meanings": {
+      "colours": {
+        "destructible": "#f48a36",
+        "hazard_dark": "#20251f",
+        "hazard_light": "#f4cf46",
+        "movement": "#3266ee",
+        "power_idle": "#347b46",
+        "power_live": "#55e078"
+      },
+      "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
+      "ruling": "owner, 2026-10-02 (Locked visual meanings)"
+    },
+    "mount": "authored lying on a surface at local Godot y = 0, with +Y out of the surface. Floor: as built. Wall or ceiling: turn +Y to the surface's outward normal.",
+    "not_changed": [
+      "any approved asset",
+      "any library colour",
+      "the content pack",
+      "Production"
+    ],
+    "parts": [
+      "power_lens"
+    ],
+    "path": "batch063/crossing_kit/ck_raceway_terminal.glb",
+    "pipe_centre_above_surface_m": 0.065,
+    "power_state": {
+      "how": "as built the state nodes carry the idle colour. Live: set their albedo to `live` and emit it. Unpowered stays dark green, so an off line still reads as a power line.",
+      "idle": "#347b46",
+      "live": "#55e078",
+      "node_prefix": "power_"
+    },
+    "reuses": [
+      "Batch 049 `_hinge` and runtime frame",
+      "concrete_facility wall and trim from materials.paint",
+      "the 3x5 stencil alphabet",
+      "paintkit.hazard_stripes at the library's 0.1 m pitch",
+      "roomcollision convex twins"
+    ],
+    "size": [
+      0.42,
+      0.26,
+      0.192
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- for the combined Crossing; review pending; not in the content pack; not integrated",
+    "supports": "a saddle every 1.00 m and a coupling at each joint",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "textures": {
+      "ck_destructible": "batch063/ck_destructible.png",
+      "ck_hazard": "batch063/ck_hazard.png",
+      "ck_movement": "batch063/ck_movement.png",
+      "ck_power": "batch063/ck_power.png",
+      "ck_power_live": "batch063/ck_power_live.png"
+    },
+    "triangles": 48
+  },
+  "ck_raceway_turn": {
+    "anchor": "as-built",
+    "batch": "063",
+    "colliders": [],
+    "collision": "none. Proud of its surface by at most 0.13 m (0.19 m at a terminal); presentation, as Batch 043 rules conduits. Keep floor runs along wall bases. A run that must cross a walking line gets a code-side box no taller than the run, inside the 1.0 m step and the enemies' 0.6 m footing.",
+    "kind": "crossing_readability_kit",
+    "meanings": {
+      "colours": {
+        "destructible": "#f48a36",
+        "hazard_dark": "#20251f",
+        "hazard_light": "#f4cf46",
+        "movement": "#3266ee",
+        "power_idle": "#347b46",
+        "power_live": "#55e078"
+      },
+      "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
+      "ruling": "owner, 2026-10-02 (Locked visual meanings)"
+    },
+    "mount": "authored lying on a surface at local Godot y = 0, with +Y out of the surface. Floor: as built. Wall or ceiling: turn +Y to the surface's outward normal.",
+    "not_changed": [
+      "any approved asset",
+      "any library colour",
+      "the content pack",
+      "Production"
+    ],
+    "parts": [
+      "power_core_a",
+      "power_core_b"
+    ],
+    "path": "batch063/crossing_kit/ck_raceway_turn.glb",
+    "pipe_centre_above_surface_m": 0.065,
+    "power_state": {
+      "how": "as built the state nodes carry the idle colour. Live: set their albedo to `live` and emit it. Unpowered stays dark green, so an off line still reads as a power line.",
+      "idle": "#347b46",
+      "live": "#55e078",
+      "node_prefix": "power_"
+    },
+    "reuses": [
+      "Batch 049 `_hinge` and runtime frame",
+      "concrete_facility wall and trim from materials.paint",
+      "the 3x5 stencil alphabet",
+      "paintkit.hazard_stripes at the library's 0.1 m pitch",
+      "roomcollision convex twins"
+    ],
+    "size": [
+      0.61,
+      0.61,
+      0.13
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- for the combined Crossing; review pending; not in the content pack; not integrated",
+    "supports": "a saddle every 1.00 m and a coupling at each joint",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "textures": {
+      "ck_destructible": "batch063/ck_destructible.png",
+      "ck_hazard": "batch063/ck_hazard.png",
+      "ck_movement": "batch063/ck_movement.png",
+      "ck_power": "batch063/ck_power.png",
+      "ck_power_live": "batch063/ck_power_live.png"
+    },
+    "triangles": 132
+  }
+}
