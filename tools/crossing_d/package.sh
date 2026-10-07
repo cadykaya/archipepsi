@@ -1,7 +1,9 @@
 #!/bin/sh
-# CROSSING D'S REVIEW BUILD, exported and packed: one Windows zip and one
-# Linux zip, each a folder that runs as it is unpacked -- an executable
-# with its pack inside, no Godot, no Python and no import step.
+# CROSSING D'S READABILITY REVIEW BUILD, exported and packed: one Windows
+# zip and one Linux zip, each a folder that runs as it is unpacked -- an
+# executable with its pack inside, no Godot, no Python and no import step.
+# (The candidate kit it wears is imported by tools/crossing_d/import_kit.sh;
+# the import below picks it up.)
 #
 #   tools/crossing_d/package.sh <output folder> [path/to/godot]
 #
@@ -14,7 +16,7 @@ OUT=${1:?usage: package.sh <output folder> [godot]}
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 GODOT=${2:-$ROOT/godot-bin/godot}
 SHA=$(git -C "$ROOT" rev-parse --short=8 HEAD)
-NAME=Archipepsi-Crossing-D-review-$SHA
+NAME=Archipepsi-Crossing-D-readability-$SHA
 mkdir -p "$OUT"
 OUT=$(cd "$OUT" && pwd)
 WIN="$OUT/windows/$NAME"
@@ -26,7 +28,15 @@ mkdir -p "$WIN" "$LIN"
 	--export-release "Crossing D (Windows)" "$WIN/Archipepsi-Crossing-D.exe"
 "$GODOT" --headless --path "$ROOT/godot" \
 	--export-release "Crossing D (Linux)" "$LIN/Archipepsi-Crossing-D.x86_64"
-cp "$ROOT/tools/crossing_d/Play Crossing D - no enemies (Windows).bat" "$WIN/"
+# The two Windows launchers, the NO-ENEMIES one first. Each joins the
+# game's two parts on its first run when it came in two (below); the
+# size they check is the one executable's.
+FIRST="1 - START HERE - Crossing D, NO ENEMIES (Windows).bat"
+SECOND="2 - Crossing D, with enemies (Windows).bat"
+SIZE=$(stat -c %s "$WIN/Archipepsi-Crossing-D.exe")
+for bat in "$FIRST" "$SECOND"; do
+	sed "s/@SIZE@/$SIZE/g" "$ROOT/tools/crossing_d/$bat" > "$WIN/$bat"
+done
 cp "$ROOT/tools/crossing_d/play-crossing-d.sh" "$LIN/"
 for dir in "$WIN" "$LIN"; do
 	sed "s/@REVISION@/$SHA/" "$ROOT/tools/crossing_d/README.txt" > "$dir/README.txt"
@@ -35,27 +45,24 @@ done
 (cd "$OUT/windows" && rm -f "../$NAME-windows.zip" && zip -qr "../$NAME-windows.zip" "$NAME")
 # THE SAME WINDOWS FOLDER IN TWO PARTS, for a channel that will not carry
 # the one zip (the chat's upload limit; Wisp's studies went the same way).
-# The executable is cut in two and joined by a script that checks the
-# joined size and starts the game. The cut sits at 44%: the engine's code
-# compresses worse than the game's pack behind it, so the two zips come
-# out about the same size.
+# The executable is cut in two; either launcher joins it on its first run,
+# checks the joined size, and starts the game. The cut sits at 44%: the
+# engine's code compresses worse than the game's pack behind it, so the
+# two zips come out about the same size.
 SPLIT="$OUT/windows-split/$NAME"
 rm -rf "$OUT/windows-split"
 mkdir -p "$SPLIT"
 cp -- "$WIN"/* "$SPLIT"/
 EXE="$SPLIT/Archipepsi-Crossing-D.exe"
-SIZE=$(stat -c %s "$EXE")
 CUT=$((SIZE * 44 / 100))
 head -c "$CUT" "$EXE" > "$EXE.part1"
 tail -c +"$((CUT + 1))" "$EXE" > "$EXE.part2"
 rm "$EXE"
-JOIN="1 - Join the game, run once (Windows).bat"
-sed "s/@SIZE@/$SIZE/g" "$ROOT/tools/crossing_d/$JOIN" > "$SPLIT/$JOIN"
 (cd "$OUT/windows-split" && rm -f "../$NAME-windows-part1of2.zip" \
 	"../$NAME-windows-part2of2.zip" \
 	&& zip -q -9 "../$NAME-windows-part1of2.zip" \
-		"$NAME/Archipepsi-Crossing-D.exe.part1" "$NAME/$JOIN" \
-		"$NAME/Play Crossing D - no enemies (Windows).bat" \
+		"$NAME/Archipepsi-Crossing-D.exe.part1" "$NAME/$FIRST" \
+		"$NAME/$SECOND" \
 		"$NAME/Archipepsi-Crossing-D.console.exe" "$NAME/README.txt" \
 		"$NAME/SHA256SUMS.txt" \
 	&& zip -q -9 "../$NAME-windows-part2of2.zip" \
