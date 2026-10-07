@@ -737,9 +737,37 @@ owner's D-06/D-07 rulings and the seam table are in
         - the Yard is 24 × 30 m;
         - the lift answers to presence;
         - the colour overrides are local;
-        - Arty's kit was absent.
+        - Arty's kit was absent when checked. It was pushed at 06:01
+          UTC, minutes later; the readability pass below uses it.
       - **Not merged and not released.** Nothing is integrated into the
         campaign.
+    - **CROSSING D READABILITY PASS (owner brief, 2026-10-07): DELIVERED,
+      STOP.** Arty's candidate floor lever and raceway replace D's levers
+      and power lines. They are Batch 063, still a PROPOSAL. Each piece's
+      state is driven by its mechanism; only the look changes.
+      - **Where it is.** Branch `review/crossing-d-readability`, from the
+        delivered D `4462be29`, which stays unchanged on
+        `wip/crossing-d-review`. The build is `903bfa49`. The report is
+        `docs/reports/2026-10-07-crossing-d-readability.md`.
+      - **The candidate kit:** five pieces, copied byte for byte into
+        `assets/models/batch063/crossing_kit/`.
+        `tools/crossing_d/import_kit.sh` ships them into
+        `godot/candidate/crossing_kit/`. That folder is generated and is
+        not the content pack.
+      - **Verified:** the live check passes 148 populated and 114 empty, in
+        the source tree, the exported Linux build and under Wine.
+        - 0 connections; the player's files byte-identical.
+        - Every check D had is unchanged.
+        - The probe's control now waits 20 s, because an ordinary launch
+          connects 7.6–10.3 s in.
+      - **Named, not fixed:**
+        - D's lever colliders are deeper than the kit head (18 cm behind
+          it);
+        - the floor runs do not collide;
+        - a terminal stands in for a wall-penetration fitting;
+        - D's status labels stay.
+      - **Not merged and not released.** The swing tether is still
+        Courtyard-only, an open review question.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.

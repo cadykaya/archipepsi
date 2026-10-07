@@ -6844,3 +6844,47 @@ existing HP and damage.
   - screenshots taken;
   - 0 connections.
 - **Not played by hand, and not run on Windows.**
+
+## Crossing D readability pass (owner brief, 2026-10-07)
+
+**The brief:** a bounded readability and playtest-preparation pass on the
+delivered Crossing D, on a separate review branch, with D kept unchanged
+as the reference.
+- Trial Arty's existing floor-lever and power-line pieces where they
+  replace D's own.
+- Tie their visible states to the real mechanisms: lever position, plate,
+  bridge lock, installed cell, restored power.
+- Lines physically traceable.
+- Preserve gameplay: geometry, collision, reach, sequence, enemies,
+  HP/damage, movement. The grapple restriction is untouched (still an
+  open review issue).
+- Candidate art, only the necessary files. No new objects, systems,
+  merge, watchers or check-ins.
+- Existing tests, including pause/resume and restart, and isolation.
+- One Windows package with the NO-ENEMIES launch first, then stop.
+
+**Where it is:** `review/crossing-d-readability`, from `4462be29`. The
+build is `903bfa49`. The report is
+`docs/reports/2026-10-07-crossing-d-readability.md`.
+
+**Arty's kit** (`origin/claude/archipepsi-art-crossing-kit-2026-10-02`,
+`eb8fceda` / `7e1f9677`):
+- It was pushed at 06:01 UTC on 2 October, minutes after D's check of
+  the remote. D's notes saying it had not arrived were true only at that
+  check.
+- Five of its nine pieces, plus its manifest, were taken byte for byte;
+  no file of hers was edited.
+
+**Verified on `903bfa49`:**
+- The existing live check, extended with the pass's own read-back,
+  passes 148 checks populated and 114 empty, in the source tree, the
+  exported Linux build and under Wine. That read-back covers lit pieces,
+  handle and pilot, the menu mid-throw, and dark after a restart.
+- Every check D had passes unchanged. The empty-yard logs match D's line
+  for line. In the populated logs only the fight's notes differ, and
+  within D's own run-to-run spread.
+- 0 connection attempts; the player's three files byte-identical; the
+  control connects.
+- `make godot-import`, and the 663 Python tests that scan the Godot
+  scripts and tests.
+- Not played by hand; not run on Windows itself.
