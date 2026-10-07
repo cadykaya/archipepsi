@@ -25,6 +25,15 @@ extends RefCounted
 ## concourse playtest's guard, before any connection exists), their
 ## identity props and stair models (Arty's lane: the bounded visual kit),
 ## and their audio.
+##
+## **The readability pass trials Arty's candidate kit** (Batch 063, a
+## PROPOSAL: review pending, not in the content pack), fitted by her
+## mapping for D (`docs/art/reports/2026-10-07-crossing-d-kit-mapping.md`
+## on her branch): her floor lever replaces the mounted lever's look, and
+## her raceway fittings, with straights built here to their profile,
+## replace the power lines', each piece's state driven by the mechanism
+## it shows. Only the look changes: every collider, position and reach
+## stays D's, and the kit's own collision twins are dropped (`kit`).
 
 const MOVEMENT := Color("3266ee")
 const POWER := Color("55e078")
@@ -35,9 +44,59 @@ const HAZARD_WARNING := Color("f4cf46")
 const HAZARD_DARK := Color("20251f")
 const THEME := "concrete_facility"
 
-## Conduit geometry, from the study: a 6 cm run on a 12 cm standoff.
-const CONDUIT_RADIUS := 0.06
-const CONDUIT_STANDOFF := 0.12
+## THE CANDIDATE KIT's pieces, as `tools/crossing_d/import_kit.sh` ships
+## them, and its own numbers (its manifest.json): how far a corner
+## fitting's arms reach along each run, the terminal's pipe stub behind
+## its origin and its body ahead of it, and the floor lever's rear gland,
+## where its line leaves along -Z.
+const KIT := "res://candidate/crossing_kit/%s.glb"
+const KIT_ARM := 0.5
+const KIT_TERMINAL_IN := 0.24
+const KIT_TERMINAL_OUT := 0.18
+const KIT_GLAND := Vector3(0.0, 0.0, -0.36)
+const KIT_PILOT_ON_DEGREES := 90.0
+
+static var _kit_live: StandardMaterial3D = null
+static var _kit_idle: StandardMaterial3D = null
+
+
+## One kit piece, ready to place; null when the candidate kit is not
+## shipped. Its `-convcolonly` twins import as static bodies: they are
+## dropped here, so a kit piece never adds collision -- D's colliders stay
+## the only ones, and so does everything the player can bump or aim at.
+static func kit(piece: String) -> Node3D:
+	var path := KIT % piece
+	if not ResourceLoader.exists(path):
+		return null
+	var made := (load(path) as PackedScene).instantiate() as Node3D
+	for body in made.find_children("*", "CollisionObject3D", true, false):
+		body.get_parent().remove_child(body)
+		body.free()
+	return made
+
+
+## A state mesh lit or not -- a straight's stripe, a fitting's core, a
+## terminal's lens, a lever's pilot: D's idle green, faint, or its live
+## green, emitting. One pair of materials, so a line reads as one thing.
+static func kit_power(node: MeshInstance3D, on: bool) -> void:
+	if _kit_live == null:
+		_kit_live = ThemeMaterials.glow_material(POWER, 0.5)
+		_kit_idle = ThemeMaterials.glow_material(POWER_IDLE, 0.08)
+	node.material_override = _kit_live if on else _kit_idle
+
+
+static func is_lit(node: MeshInstance3D) -> bool:
+	return _kit_live != null and node.material_override == _kit_live
+
+
+## Every state mesh under `root`: the straights' stripes (`power_signal`)
+## and the kit's own `power_` nodes, nested in its scenes.
+static func kit_power_nodes(root: Node) -> Array[Node]:
+	var found: Array[Node] = []
+	for node in root.find_children("*", "MeshInstance3D", true, false):
+		if node.has_meta("power_signal") or String(node.name).begins_with("power_"):
+			found.append(node)
+	return found
 
 
 static func strip(parent: Node3D, name_in: String, at: Vector3,
@@ -133,79 +192,153 @@ static func retint(node: Node, tint: Color, energy := 0.6) -> void:
 		retint(child, tint, energy)
 
 
-## A SURFACE-MOUNTED POWER LINE: axis-aligned runs between `points`, each
-## carried `CONDUIT_STANDOFF` off the surface named by its normal (ZERO
-## for a short protected lead into a housing). Visual only; the state it
-## shows belongs to whatever drives `conduit_power`.
-static func conduit(parent: Node3D, id: String, points: Array,
-		normals: Array) -> Node3D:
+## A KIT POWER LINE, laid on the room's own surfaces. `points` are where
+## the line lies ON its floors and walls -- a corner between two surfaces
+## is on the edge where they meet -- and `normals[i]` is the outward
+## normal of the surface stretch i lies on. Every corner takes the kit's
+## fitting: a turn where the line changes direction on one surface, an
+## inside corner where it climbs from a floor onto a wall or comes down
+## one. The straights between are built to the kit's profile (`_straight`).
+## `start` says how the line begins: "" at its source's face (the plate,
+## the socket), "gland" out of a kit lever's rear gland, "terminal" out of
+## a box of its own (where it comes through a wall). `end` is "terminal",
+## a lens that is the lamp of what it powers, or "face", into the face of
+## the housing it drives. A stretch too short for its fittings is a build
+## error, never a squeezed fitting. Visual only, as the kit rules
+## raceways: nothing here collides. The state it shows belongs to whatever
+## drives `conduit_power`.
+static func raceway(parent: Node3D, id: String, points: Array,
+		normals: Array, start := "", end := "terminal") -> Node3D:
 	assert(normals.size() == points.size() - 1)
 	var root := Node3D.new()
 	root.name = "Conduit_" + id
 	root.set_meta("path", points.duplicate())
 	parent.add_child(root)
-	for i in points.size() - 1:
+	var last := points.size() - 1
+	for i in last:
 		var a: Vector3 = points[i]
 		var b: Vector3 = points[i + 1]
-		var delta := b - a
-		var axes := int(absf(delta.x) > 0.001) + int(absf(delta.y) > 0.001) \
-				+ int(absf(delta.z) > 0.001)
-		assert(axes == 1, "a power run keeps to one axis")
-		var axis := delta.normalized()
-		var length := delta.length()
-		var centre := (a + b) * 0.5
-		var line := MeshInstance3D.new()
-		line.name = "PowerRun_%d" % i
-		line.set_meta("power_signal", true)
-		var pipe := CylinderMesh.new()
-		pipe.top_radius = CONDUIT_RADIUS
-		pipe.bottom_radius = CONDUIT_RADIUS
-		pipe.height = length
-		line.mesh = pipe
-		line.position = centre
-		line.material_override = ThemeMaterials.glow_material(POWER_IDLE, 0.08)
-		root.add_child(line)
-		if not axis.is_equal_approx(Vector3.UP) \
-				and not axis.is_equal_approx(Vector3.DOWN):
-			line.quaternion = Quaternion(Vector3.UP, axis)
+		var along := (b - a).normalized()
 		var normal: Vector3 = normals[i]
-		if normal == Vector3.ZERO:
-			continue
-		var across := axis.cross(normal).abs()
-		var run_abs := axis.abs()
-		var normal_abs := normal.abs()
-		_hardware(root, "Raceway_%d" % i, centre - normal * CONDUIT_STANDOFF * 0.5,
-				run_abs * length + across * 0.2 + normal_abs * CONDUIT_STANDOFF)
-		var saddles := maxi(1, int(ceil(length / 1.4)))
-		for j in saddles + 1:
-			var at := a.lerp(b, (float(j) + 0.2) / (float(saddles) + 0.4))
-			_hardware(root, "Saddle", at - normal * 0.035,
-					run_abs * 0.1 + across * 0.29 + normal_abs * 0.17)
+		assert(absf(along.dot(normal)) < 0.001, "a run lies on its surface")
+		var from := KIT_ARM
+		if i == 0:
+			from = KIT_TERMINAL_IN if start == "terminal" else 0.0
+		var to := KIT_ARM
+		if i == last - 1:
+			to = KIT_TERMINAL_IN if end == "terminal" else 0.0
+		var length := a.distance_to(b) - from - to
+		assert(length > -0.001, "%s: stretch %d is too short for its fittings"
+				% [id, i])
+		if length > 0.001:
+			_straight(root, a + along * from, a + along * (from + length),
+					normal)
+		if i > 0:
+			var came: Vector3 = points[i - 1]
+			_corner(root, a, (a - came).normalized(), along, normals[i - 1],
+					normal)
+	if end == "terminal":
+		var before_end: Vector3 = points[last - 1]
+		var tip: Vector3 = points[last]
+		_kit_piece(root, "ck_raceway_terminal", _frame((tip - before_end)
+				.normalized(), normals[last - 1], tip))
+	if start == "terminal":
+		var first: Vector3 = points[0]
+		var second: Vector3 = points[1]
+		_kit_piece(root, "ck_raceway_terminal", _frame(-(second - first)
+				.normalized(), normals[0], first))
+	conduit_power(root, false)
 	return root
 
 
+## A STRAIGHT, between two points on a surface, to the kit's own profile
+## (Arty's mapping): a carrier on the surface, a square pipe centred 0.065
+## off it, the 4 cm state stripe along its top, and saddles evenly spaced
+## no more than a metre apart. The fittings carry the couplings where a
+## straight meets them, so a straight needs none.
+static func _straight(root: Node3D, a: Vector3, b: Vector3,
+		normal: Vector3) -> void:
+	var along := (b - a).normalized()
+	var length := a.distance_to(b)
+	var mid := (a + b) * 0.5
+	var trim := ThemeMaterials.trim_mat(THEME)
+	_profile(root, "Carrier", mid, along, normal, 0.01,
+			Vector3(length, 0.02, 0.18), trim)
+	_profile(root, "Pipe", mid, along, normal, 0.065,
+			Vector3(length, 0.09, 0.09), trim)
+	var stripe := _profile(root, "PowerStripe", mid, along, normal, 0.116,
+			Vector3(length, 0.012, 0.04), trim)
+	stripe.set_meta("power_signal", true)
+	var saddles := maxi(1, ceili(length - 0.001))
+	for j in saddles:
+		_profile(root, "Saddle", a + along * (length * (float(j) + 0.5)
+				/ float(saddles)), along, normal, 0.0725,
+				Vector3(0.06, 0.105, 0.22), trim)
+
+
+## One box of a straight: `size` is along the run, out of the surface and
+## across it; `out` is how far its centre stands off the surface.
+static func _profile(root: Node3D, label: String, at: Vector3, along: Vector3,
+		normal: Vector3, out: float, size: Vector3,
+		material: Material) -> MeshInstance3D:
+	var made := MeshInstance3D.new()
+	made.name = label
+	var box := BoxMesh.new()
+	box.size = size
+	made.mesh = box
+	made.material_override = material
+	made.transform = _frame(along, normal, at + normal * out)
+	root.add_child(made)
+	return made
+
+
+## The fitting where a line going `d1` on the surface `n1` goes on `d2`
+## on the surface `n2`.
+static func _corner(root: Node3D, at: Vector3, d1: Vector3, d2: Vector3,
+		n1: Vector3, n2: Vector3) -> void:
+	if n1.is_equal_approx(n2):
+		# A turn: its two arms lie along its own +X and -Z.
+		var back := -d1
+		var x_axis := back if back.cross(n1).is_equal_approx(-d2) else d2
+		_kit_piece(root, "ck_raceway_turn", _frame(x_axis, n1, at))
+		return
+	# An inside corner: the line leaves one surface along that surface's
+	# normal, onto a surface that faces back the way it came. Oriented as
+	# the kit authors it whichever way the line runs: its own +Y out of
+	# the floor, its +X out of the wall. (Over an outside edge would take
+	# the kit's outside fitting; no line here needs one, so this build
+	# does not ship it.)
+	assert(d2.is_equal_approx(n1) and d1.is_equal_approx(-n2),
+			"only inside corners are laid here")
+	var floor_n := n1 if absf(n1.y) > 0.5 else n2
+	var wall_n := n2 if floor_n == n1 else n1
+	_kit_piece(root, "ck_raceway_inside", _frame(wall_n, floor_n, at))
+
+
+## A right-handed frame: +X along `x_axis`, +Y out of the surface.
+static func _frame(x_axis: Vector3, y_axis: Vector3,
+		origin: Vector3) -> Transform3D:
+	return Transform3D(Basis(x_axis, y_axis, x_axis.cross(y_axis)), origin)
+
+
+static func _kit_piece(root: Node3D, piece: String,
+		frame: Transform3D) -> Node3D:
+	var made := kit(piece)
+	if made == null:
+		push_error("crossing-d: the candidate kit's %s is not shipped" % piece)
+		return null
+	made.transform = frame
+	root.add_child(made)
+	return made
+
+
+## Light a line or put it out: its runs' cores and its terminals' lenses.
 static func conduit_power(root: Node3D, on: bool) -> void:
 	if root == null:
 		return
 	root.set_meta("live", on)
-	for child in root.get_children():
-		if child is MeshInstance3D and child.has_meta("power_signal"):
-			(child as MeshInstance3D).material_override = \
-					ThemeMaterials.glow_material(
-						POWER if on else POWER_IDLE, 0.5 if on else 0.08)
-
-
-static func _hardware(parent: Node3D, label: String, at: Vector3,
-		size: Vector3) -> MeshInstance3D:
-	var made := MeshInstance3D.new()
-	made.name = label
-	made.position = at
-	var box := BoxMesh.new()
-	box.size = size
-	made.mesh = box
-	made.material_override = ThemeMaterials.trim_mat(THEME)
-	parent.add_child(made)
-	return made
+	for node in kit_power_nodes(root):
+		kit_power(node as MeshInstance3D, on)
 
 
 ## A plain sign: what a thing does or where a way goes, in the handoff's
@@ -246,6 +379,12 @@ class Lever extends CallLever:
 	var _pilot: MeshInstance3D
 	var _pilot_material: StandardMaterial3D
 	var _tint: Color
+	## The candidate kit's floor lever, when it is shipped: the look, with
+	## its hinge and pilot driven from this lever's own arm and latch.
+	var kit_model: Node3D = null
+	var _kit_hinge: Node3D = null
+	var _kit_pilot_hinge: Node3D = null
+	var _kit_pilot: MeshInstance3D = null
 
 	static func mounted(label_in: String, tint: Color,
 			theme := "concrete_facility") -> Lever:
@@ -258,13 +397,51 @@ class Lever extends CallLever:
 	func _build(tint: Color, theme: String) -> void:
 		super._build(tint, theme)
 		_tint = tint
+		# The colliders are D's whatever it looks like: `CallLever`'s BASE
+		# (what the interact probe finds), the pedestal and the foot.
+		_collider("PedestalCollision", PEDESTAL_AT, PEDESTAL_SIZE)
+		_collider("FootCollision", FOOT_AT, FOOT_SIZE)
+		kit_model = CrossingDParts.kit("ck_floor_lever")
+		if kit_model != null:
+			_wear_kit()
+		else:
+			_own_look(tint)
+		_arm.rotation = Vector3(0, 0, deg_to_rad(OFF_DEGREES))
+		_sync()
+
+	## THE KIT'S LOOK. Its model stands on the floor this lever is bolted
+	## to, drawn over D's three colliders volume for volume (Arty's repair
+	## of 2026-10-07: foot, pedestal and head are D's boxes, and its hinge
+	## is D's arm pin). The plinth and stick `CallLever` builds stay as the
+	## arm the logic turns, unseen; the kit's hinge follows that arm
+	## (`_sync`). The kit's stencilled ON and OFF replace the marks.
+	func _wear_kit() -> void:
+		for child in get_children():
+			if child is MeshInstance3D:
+				(child as MeshInstance3D).visible = false
+		for child in _arm.get_children():
+			if child is MeshInstance3D:
+				(child as MeshInstance3D).visible = false
+		kit_model.name = "KitLever"
+		kit_model.position = Vector3(0.0, FLOOR_Y, 0.0)
+		add_child(kit_model)
+		_kit_hinge = kit_model.find_child("lever_hinge", true, false)
+		_kit_pilot_hinge = kit_model.find_child("pilot_hinge", true, false)
+		_kit_pilot = kit_model.find_child("pilot_bar", true, false)
+
+	## Where this lever's power line leaves it, on the floor, in its
+	## parent's space: the kit's rear gland, so the line runs out of the
+	## back of the lever, away from the hand that throws it.
+	func gland() -> Vector3:
+		return transform * (Vector3(0.0, FLOOR_Y, 0.0) + KIT_GLAND)
+
+	## D's own look, kept for a build without the candidate kit.
+	func _own_look(tint: Color) -> void:
 		var metal := ThemeMaterials.glow_material(Color("697472"), 0.0)
 		metal.metallic = 0.55
 		metal.roughness = 0.7
 		_part(self, "Pedestal", PEDESTAL_AT, PEDESTAL_SIZE, metal)
 		_part(self, "Foot", FOOT_AT, FOOT_SIZE, metal)
-		_collider("PedestalCollision", PEDESTAL_AT, PEDESTAL_SIZE)
-		_collider("FootCollision", FOOT_AT, FOOT_SIZE)
 		for x in [-0.26, 0.26]:
 			for z in [-0.26, 0.26]:
 				_part(self, "Bolt", Vector3(x, -0.89, z),
@@ -273,7 +450,6 @@ class Lever extends CallLever:
 		(_arm.get_child(0) as MeshInstance3D).material_override = handle
 		_part(_arm, "Grip", Vector3(0, ARM.y - 0.04, 0),
 				Vector3(0.26, 0.15, 0.18), handle)
-		_arm.rotation = Vector3(0, 0, deg_to_rad(OFF_DEGREES))
 		# A pilot on the pedestal's face: horizontal and dim while OFF,
 		# upright and lit once latched -- readable without the words.
 		var housing := Node3D.new()
@@ -286,7 +462,6 @@ class Lever extends CallLever:
 				Vector3(0.045, 0.14, 0.02), _pilot_material)
 		_mark("OFF", Vector3(0.235, 0.02, BASE.z * 0.5 + 0.002))
 		_mark("ON", Vector3(-0.235, 0.02, BASE.z * 0.5 + 0.002))
-		_sync()
 
 	## LATCH IT. `CallLever.lock` throws the arm about X -- the base
 	## lever's own swing -- which on this mount would leave the handle
@@ -324,7 +499,16 @@ class Lever extends CallLever:
 	func handle_degrees() -> float:
 		return rad_to_deg(_arm.rotation.z) if _arm != null else 0.0
 
+	## The look follows the state: the kit's handle stands where the arm
+	## is, and its pilot stands up and lights only once the lever has
+	## latched what it controls.
 	func _sync() -> void:
+		if _kit_hinge != null:
+			_kit_hinge.rotation.z = _arm.rotation.z
+			_kit_pilot_hinge.rotation.z = deg_to_rad(KIT_PILOT_ON_DEGREES) \
+					if locked else 0.0
+			CrossingDParts.kit_power(_kit_pilot, locked)
+			return
 		if _pilot_material == null:
 			return
 		var lit := _tint if locked else _tint.darkened(0.5)

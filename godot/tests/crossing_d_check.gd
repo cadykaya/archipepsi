@@ -12,7 +12,10 @@ extends Node
 ## it proves; a failure says where.
 ##
 ## 1. **Isolation and build.** The bridge client never opened; four rooms,
-##    three Check stand-ins and one local reward; the encounter or none.
+##    three Check stand-ins and one local reward; the encounter or none;
+##    the readability pass's candidate kit on both levers and all five
+##    lines, adding no collision (each lever's colliders are D's boxes),
+##    and everything it shows dark and at OFF.
 ## 2. **Tempting, not grabbable** (D-17 rule 2), with the gantry's reach
 ##    measurement (`RailNetworks.reach_field`, the played jump, D-9):
 ##    no stand-in is within a hand's reach of anything the base kit
@@ -23,9 +26,11 @@ extends Node
 ##    Courtyard only, and a swing toward the tower ended at the opening.
 ## 4. **The Machine Hall:** the unpowered lift does nothing; the cell from
 ##    the hatch; the plate holds the bridge (and the player alone does
-##    not); across, the lock (handle thrown to ON); the cell over and
-##    installed; the glass door and the lift powered; back through the
-##    glass door.
+##    not); across, the lock (handle thrown to ON; the menu opened
+##    mid-throw holds the handle still); the cell over and installed; the
+##    glass door and the lift powered; back through the glass door. At
+##    each step every line's lit pieces and each lever's handle and pilot
+##    say what the mechanism did, and nothing else.
 ## 5. **The lift and the Upper Yard:** up in the cage; the alcove out of
 ##    the walkers' notice and nothing fired at it; THE PROJECTILE SWEEP --
 ##    every place the ranged role's thin sight ray reaches is also clear
@@ -34,9 +39,10 @@ extends Node
 ##    Check opened; enemies kept in the yard.
 ## 6. **Shortcuts and the exit:** the gate from the yard side, the stair
 ##    down, the exit used, the completion menu.
-## 7. **From the top:** RESTART is a fresh Crossing; then the legal quick
-##    carry (cell across on the rising bridge, lock never pulled) and a
-##    run through the yard to the exit without a kill.
+## 7. **From the top:** RESTART is a fresh Crossing, every line dark and
+##    both levers at OFF again; then the legal quick carry (cell across on
+##    the rising bridge, lock never pulled, its line dark) and a run
+##    through the yard to the exit without a kill.
 
 const FLAG := "--crossing-d-check"
 const STILL_STEP := 0.01
@@ -46,6 +52,8 @@ const ARRIVE := 0.6
 const SHOT_RADIUS := 0.2
 ## How far the hand reaches from the eye (`Player._update_interact_target`).
 const HAND := 3.0
+## The five power lines the readability pass lays in the kit's raceway.
+const KIT_LINES := ["plate", "lock", "power", "power_hall", "gate"]
 
 var failures := 0
 var phase := ""
@@ -151,6 +159,31 @@ func _isolation_and_build() -> void:
 			"no dash, nor anything else, in the mobility slot")
 	_check(not room.powered and room.lift.t == 0.0 and room.glass_door.is_shut(),
 			"the lift dark at the bottom, the glass door shut")
+	# THE CANDIDATE KIT (the readability pass): both levers and all five
+	# lines wear it, none of it collides, and the levers' colliders are
+	# D's own boxes where D had them.
+	var levers := [room.lock_lever, room.gate_lever]
+	var kit_levers := 0
+	var collides := 0
+	for lever: CrossingDParts.Lever in levers:
+		if lever.kit_model != null:
+			kit_levers += 1
+			collides += lever.kit_model.find_children("*",
+					"CollisionObject3D", true, false).size()
+	var pieces := 0
+	for key: String in KIT_LINES:
+		pieces += _pieces(key)
+		collides += (room._lines[key] as Node).find_children("*",
+				"CollisionObject3D", true, false).size()
+	_check(kit_levers == 2 and pieces > 0 and collides == 0,
+			"the kit's lever on both levers and its raceway on all five lines "
+			+ "(%d lit-able pieces), adding no collision" % pieces)
+	_check(_lever_boxes_are_ds(room.lock_lever)
+			and _lever_boxes_are_ds(room.gate_lever),
+			"each lever is collided and reached by D's three boxes, as placed")
+	_check(_lit_anywhere() == 0 and _lever_shows(room.lock_lever, false)
+			and _lever_shows(room.gate_lever, false),
+			"every line dark, both levers at OFF with their pilots down")
 
 
 # ======================================= 2. tempting, not grabbable
@@ -490,15 +523,33 @@ func _machine_hall() -> void:
 			% room.bridge.t)
 	_check(room.line_live("plate") and room.badge_on("bridge"),
 			"the plate's line and the bridge's badge light")
+	_check(_lit("plate") == _pieces("plate") and _lit("lock") == 0
+			and _lit("power") == 0, "the plate's raceway lit end to end, into "
+			+ "the bridge's near housing (%d pieces); no other line" % _lit("plate"))
 	# ACROSS, AND THE LOCK.
 	_check(await _walk(Vector3(-22.0, 0, 5.0)), "to the bridge")
 	_check(await _walk(Vector3(-22.0, 0, -5.4)), "across it")
 	_check(body.global_position.y > -0.5, "on the far side, not in the pit")
 	_check(await _walk(Vector3(-17.5, 0, -5.4), 0.4), "to the lock lever")
 	await _use(room.lock_lever.global_position + Vector3(0, 0.05, 0))
+	# PAUSED MID-THROW: the menu holds the handle where it is; closed, the
+	# handle goes on to ON.
+	await _press("pause")
+	await _settle(2)
+	var paused_at := room.lock_lever.handle_degrees()
+	await _settle(30)
+	var held := host.menu_open() and get_tree().paused \
+			and absf(room.lock_lever.handle_degrees() - paused_at) < 0.01
+	await _press("pause")
 	await _hold(0.8)
+	_check(held and paused_at < 50.0 and not host.menu_open(),
+			"the menu opened mid-throw holds the handle still (at %.0f deg) "
+			% paused_at + "for 30 frames; closed, it goes on")
 	_check(room.bridge_locked and room.lock_lever.locked,
 			"the far lever locks the bridge down")
+	_check(_lever_shows(room.lock_lever, true) and _lit("lock")
+			== _pieces("lock"), "its kit handle stands at ON with the arm, its "
+			+ "pilot up and lit, and its raceway lit to the far housing")
 	_check(absf(room.lock_lever.handle_degrees() - 55.0) < 2.0,
 			"its handle stands thrown at ON (%.1f deg), not upright"
 			% room.lock_lever.handle_degrees())
@@ -514,6 +565,8 @@ func _machine_hall() -> void:
 	await _hold(room.BRIDGE_SECONDS + 0.4)
 	_check(not room.plate.satisfied() and room.bridge.t >= 0.999,
 			"the lock keeps the bridge down with the plate empty")
+	_check(_lit("plate") == 0 and _lit("lock") == _pieces("lock"),
+			"the plate's raceway goes dark with the plate; the lock's stays lit")
 	_check(await _walk(Vector3(-22.0, 0, 4.4)), "carrying, to the bridge")
 	_check(await _walk(Vector3(-22.0, 0, -5.4)), "carrying, across")
 	_check(await _walk(room.SOCKET_AT + Vector3(0, 0, 1.4), 0.3),
@@ -527,6 +580,9 @@ func _machine_hall() -> void:
 	_check(room.lift.powered and room.badge_on("lift")
 			and room.line_live("power") and room.line_live("power_hall"),
 			"the lift has power, and both lines say so")
+	_check(_lit("power") == _pieces("power") and _lit("power_hall")
+			== _pieces("power_hall"), "the socket's raceway lit to the glass "
+			+ "door's terminal, and through the wall to the lift tower's")
 	_check(room.sign_text("lift") == "LIFT — STEP IN TO RIDE",
 			"the lift's sign agrees")
 	var far_check: CrossingDParts.StandIn = room.stand_ins["machine_far_ledge"]
@@ -904,6 +960,9 @@ func _shortcuts_and_exit() -> void:
 	await _hold(3.0)
 	_check(room.gate_lever.locked and room.gate.is_open(),
 			"the gate lever opens the gate from the yard side")
+	_check(_lever_shows(room.gate_lever, true) and _lit("gate")
+			== _pieces("gate"), "it shows ON, pilot lit, and its raceway lights "
+			+ "up the wall to the gate's terminal")
 	_check(await _walk(Vector3(10.75, room.YARD_FLOOR, -15.0), 0.4)
 			and await _walk(Vector3(10.75, room.YARD_FLOOR, -13.4), 0.4),
 			"round the lever to the gate")
@@ -959,6 +1018,9 @@ func _from_the_top() -> void:
 	_check(not room.powered and not room.bridge_locked and room.lift.t == 0.0
 			and room.socket.installed_object == "" and not get_tree().paused,
 			"nothing of the last run survives it, and the world runs")
+	_check(_lit_anywhere() == 0 and _lever_shows(room.lock_lever, false)
+			and _lever_shows(room.gate_lever, false),
+			"every line dark again, both levers back at OFF, pilots down")
 	# The menu: open and closed again by the pause key.
 	await _press("pause")
 	await _settle(3)
@@ -1009,6 +1071,8 @@ func _quick_carry() -> void:
 		await _use(room.socket.global_position + Vector3(0, 0.5, 0))
 	await _hold(0.5)
 	_check(room.powered, "and the power is restored without the lock: legal, kept")
+	_check(_lit("lock") == 0 and _lit("power") == _pieces("power"),
+			"the socket's raceway lit, the never-pulled lock's dark")
 	await _hold(3.0)
 	_check(await _walk(Vector3(-13.6, 0, -6.5), 0.4) and await _walk(
 			Vector3(-10.6, 0, -5.0), 0.4), "the glass door still gets them back")
@@ -1072,6 +1136,68 @@ func _empty_yard() -> void:
 
 
 # ============================================================== helpers
+
+## THE READABILITY PASS, read back: how many of a line's state pieces
+## (its straights' stripes, its fittings' cores, its terminals' lenses)
+## wear the live green, and how many it has.
+func _lit(key: String) -> int:
+	var lit := 0
+	for node in CrossingDParts.kit_power_nodes(room._lines[key]):
+		lit += 1 if CrossingDParts.is_lit(node as MeshInstance3D) else 0
+	return lit
+
+
+func _pieces(key: String) -> int:
+	return CrossingDParts.kit_power_nodes(room._lines[key]).size()
+
+
+func _lit_anywhere() -> int:
+	var lit := 0
+	for key: String in KIT_LINES:
+		lit += _lit(key)
+	return lit
+
+
+## What a lever SHOWS: the kit's handle where the lever's own arm is (ON
+## or OFF), its pilot upright and lit exactly when it has latched.
+func _lever_shows(lever: CrossingDParts.Lever, on: bool) -> bool:
+	if lever.kit_model == null:
+		return false
+	var hinge: Node3D = lever.kit_model.find_child("lever_hinge", true, false)
+	var pilot_hinge: Node3D = lever.kit_model.find_child("pilot_hinge", true,
+			false)
+	var pilot: MeshInstance3D = lever.kit_model.find_child("pilot_bar", true,
+			false)
+	var handle := rad_to_deg(hinge.rotation.z)
+	return absf(handle - lever.handle_degrees()) < 0.5 \
+			and absf(handle - (55.0 if on else -55.0)) < 2.0 \
+			and absf(pilot_hinge.rotation_degrees.z - (90.0 if on else 0.0)) < 0.5 \
+			and CrossingDParts.is_lit(pilot) == on
+
+
+## A lever's colliders, as world boxes, against D's: the BASE the probe
+## finds (0.70 x 0.35 x 0.70 at the lever's origin), the pedestal and the
+## foot -- whichever way the lever faces, since each is square and centred.
+func _lever_boxes_are_ds(lever: CrossingDParts.Lever) -> bool:
+	var at := lever.global_position
+	var want := [AABB(at + Vector3(-0.35, -0.175, -0.35), Vector3(0.7, 0.35, 0.7)),
+			AABB(at + Vector3(-0.23, -1.0, -0.23), Vector3(0.46, 0.825, 0.46)),
+			AABB(at + Vector3(-0.35, -1.0, -0.35), Vector3(0.7, 0.1, 0.7))]
+	var shapes := lever.find_children("*", "CollisionShape3D", true, false)
+	if shapes.size() != want.size():
+		return false
+	for i in shapes.size():
+		var shape := shapes[i] as CollisionShape3D
+		var box := shape.shape as BoxShape3D
+		if box == null:
+			return false
+		var got: AABB = shape.global_transform * AABB(-box.size * 0.5, box.size)
+		var expect: AABB = want[i]
+		if not got.position.is_equal_approx(expect.position) \
+				or not got.size.is_equal_approx(expect.size):
+			return false
+	return true
+
 
 func _settle(frames: int) -> void:
 	for _i in frames:

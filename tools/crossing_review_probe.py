@@ -40,6 +40,7 @@ import threading
 import time
 
 HOST, PORT = "127.0.0.1", 38290
+CONTROL_SECONDS = 20
 PLAYER_FILES = ("settings.cfg", "loadout.cfg", "equipment_seen.cfg")
 ENGINE_OWN = ("logs", "shader_cache", "vulkan")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -230,12 +231,15 @@ def main():
         # THE CONTROL: an ordinary launch of the source tree, against the
         # same listener, in its own scratch folder so it cannot touch the
         # comparison above. (An exported review build has no ordinary
-        # launch: it is the Crossing whatever it is given.)
+        # launch: it is the Crossing whatever it is given.) It gets 20 s:
+        # an ordinary launch's first attempt comes 7.6-10.3 s in on the
+        # machine this was measured on, D's tree and the readability
+        # pass's alike, so 8 s was a coin toss.
         control = dict(os.environ, XDG_DATA_HOME=os.path.join(scratch, "control"))
         try:
             subprocess.run([args.godot, "--headless", "--path",
                             os.path.join(args.root, "godot")], env=control,
-                           capture_output=True, timeout=8)
+                           capture_output=True, timeout=CONTROL_SECONDS)
         except subprocess.TimeoutExpired:
             pass
         time.sleep(0.3)

@@ -1,11 +1,13 @@
 @echo off
-rem Crossing D review build, delivered in two parts: join them into the
-rem game, check its size, and start it. Run this once; afterwards start
-rem Archipepsi-Crossing-D.exe (or the no-enemies launcher) directly.
+rem Crossing D, readability review build: the whole Crossing, the Upper
+rem Yard's fight included. Joins the game's two parts first if no launcher
+rem has yet.
 cd /d "%~dp0"
 if exist "Archipepsi-Crossing-D.exe" goto play
+rem Delivered in two parts: join them into the game, once, and check it.
 if not exist "Archipepsi-Crossing-D.exe.part1" goto missing
 if not exist "Archipepsi-Crossing-D.exe.part2" goto missing
+echo Joining the two parts into the game (once)...
 copy /b "Archipepsi-Crossing-D.exe.part1" + "Archipepsi-Crossing-D.exe.part2" "Archipepsi-Crossing-D.exe" >nul
 for %%F in ("Archipepsi-Crossing-D.exe") do set JOINED=%%~zF
 if not "%JOINED%"=="@SIZE@" goto broken
@@ -14,7 +16,7 @@ del "Archipepsi-Crossing-D.exe.part1" "Archipepsi-Crossing-D.exe.part2"
 start "" "%~dp0Archipepsi-Crossing-D.exe"
 exit /b 0
 :missing
-echo Unzip BOTH parts (part 1 of 2 and part 2 of 2) into this same folder,
+echo Unzip BOTH parts (part1of2 and part2of2) into this same folder,
 echo then run this again.
 pause
 exit /b 1
