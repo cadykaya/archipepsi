@@ -722,40 +722,45 @@ func _machine_hall() -> void:
 	add_child(machine_check)
 	stand_ins[machine_check.id] = machine_check
 	# THE LINES, every one wired to what drives it: the candidate kit's
-	# raceway, laid on the floors and walls (points ON the surfaces), each
-	# ending in a terminal whose lens is the lamp of what it powers.
-	# The plate's runs from its west side to the near housing...
+	# raceway, laid on the floors and walls (points ON the surfaces), as
+	# Arty's mapping places it in D (2026-10-07).
+	# The plate's runs from its side into the near housing's face...
 	var housing_x := BRIDGE_X.y + 0.6
 	_lines["plate"] = P.raceway(self, "plate", [
-			Vector3(PLATE_AT.x - 1.2, 0.0, PLATE_AT.z),
-			Vector3(housing_x, 0.0, PLATE_AT.z),
-			Vector3(housing_x, 0.0, GAP_Z.y + 1.0 + P.KIT_TERMINAL_OUT)],
-			[Vector3.UP, Vector3.UP])
-	# ...and the lock lever's out of its back, round to the far one.
+			Vector3(PLATE_AT.x - 1.25, 0.0, PLATE_AT.z),
+			Vector3(housing_x - 0.2, 0.0, PLATE_AT.z),
+			Vector3(housing_x - 0.2, 0.0, GAP_Z.y + 1.0)],
+			[Vector3.UP, Vector3.UP], "", "face")
+	# ...and the lock lever's out of its back, round into the far one's.
 	var lock_gland := lock_lever.gland()
 	_lines["lock"] = P.raceway(self, "lock", [
 			lock_gland,
 			lock_gland + Vector3(0.0, 0.0, -P.KIT_ARM),
 			Vector3(housing_x, 0.0, lock_gland.z - P.KIT_ARM),
-			Vector3(housing_x, 0.0, GAP_Z.x - 1.0 - P.KIT_TERMINAL_OUT)],
-			[Vector3.UP, Vector3.UP, Vector3.UP], "gland")
-	# The socket's: to the wall beside the glass door, up to the door...
+			Vector3(housing_x, 0.0, GAP_Z.x - 1.0)],
+			[Vector3.UP, Vector3.UP, Vector3.UP], "gland", "face")
+	# The socket's: to the wall, up it, and along it at 4 m to a terminal
+	# beside the glass door's jamb. (A run along the wall's base cannot
+	# climb it: the kit's corners need a metre of floor to turn up.)
 	var wall_x := HALL.position.x - WALL
-	var line_z := GLASS_DOOR_Z.x - 0.4
+	var door_z := GLASS_DOOR_Z.x - 0.4
 	var through := 4.0
 	_lines["power"] = P.raceway(self, "power", [
-			Vector3(SOCKET_AT.x + 0.4, 0.0, SOCKET_AT.z),
-			Vector3(wall_x - 1.0, 0.0, SOCKET_AT.z),
-			Vector3(wall_x - 1.0, 0.0, line_z),
-			Vector3(wall_x, 0.0, line_z),
-			Vector3(wall_x, through, line_z)],
-			[Vector3.UP, Vector3.UP, Vector3.UP, Vector3.LEFT])
-	# ...through the wall, down it, and across the floor to the lift tower.
+			Vector3(SOCKET_AT.x + 0.45, 0.0, SOCKET_AT.z),
+			Vector3(wall_x, 0.0, SOCKET_AT.z),
+			Vector3(wall_x, through, SOCKET_AT.z),
+			Vector3(wall_x, through, door_z)],
+			[Vector3.UP, Vector3.LEFT, Vector3.LEFT])
+	# ...through the wall, back to back with it: down, across the pocket
+	# beside the shaft (clear of the doorway), and up the shaft's west
+	# block to a lamp facing the glass door.
+	var shaft_face := SHAFT.position.x - 0.4
 	_lines["power_hall"] = P.raceway(self, "power_hall", [
-			Vector3(HALL.position.x, through, line_z),
-			Vector3(HALL.position.x, 0.0, line_z),
-			Vector3(SHAFT.position.x - 0.4 - P.KIT_TERMINAL_OUT, 0.0, line_z)],
-			[Vector3.RIGHT, Vector3.UP], "terminal")
+			Vector3(HALL.position.x, through, door_z),
+			Vector3(HALL.position.x, 0.0, door_z),
+			Vector3(shaft_face, 0.0, door_z),
+			Vector3(shaft_face, 1.2, door_z)],
+			[Vector3.RIGHT, Vector3.UP, Vector3.LEFT], "terminal")
 	_sign("hatch", "TOO LOW TO ENTER — REACH IN WITH E",
 			Vector3((HATCH_X.x + HATCH_X.y) * 0.5, 2.3, z1 - 0.6), 22)
 	_sign("plate", "A WEIGHT ON THE PLATE HOLDS THE BRIDGE DOWN",
@@ -899,12 +904,16 @@ func _upper_yard() -> void:
 	gate_lever.rotation.y = PI
 	add_child(gate_lever)
 	P.cap_emission(gate_lever)
+	# Its line: straight back to the wall, up it, and along to a terminal
+	# on solid wall beside the gate's jamb.
 	var gate_gland := gate_lever.gland()
+	var turn_y := floor_y + 2.6
 	_lines["gate"] = P.raceway(self, "gate", [
 			gate_gland,
 			Vector3(gate_gland.x, floor_y, hall_north),
-			Vector3(gate_gland.x, floor_y + 3.2, hall_north)],
-			[Vector3.UP, Vector3.FORWARD], "gland")
+			Vector3(gate_gland.x, turn_y, hall_north),
+			Vector3(GATE_X.x - 0.36, turn_y, hall_north)],
+			[Vector3.UP, Vector3.FORWARD, Vector3.FORWARD], "gland")
 	_sign("alcove", "UPPER YARD — THE EXIT IS ACROSS IT",
 			Vector3((ax0 + ax1) * 0.5, ALCOVE_TOP - 0.7, az0 + 0.6), 22)
 	_sign("gate_yard", "GATE LEVER — OPENS THE STAIR TO THE CENTRAL HALL",

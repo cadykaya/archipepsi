@@ -1137,12 +1137,13 @@ func _empty_yard() -> void:
 
 # ============================================================== helpers
 
-## THE READABILITY PASS, read back: how many of a line's kit state pieces
-## (its runs' cores, its terminals' lenses) are lit, and how many it has.
+## THE READABILITY PASS, read back: how many of a line's state pieces
+## (its straights' stripes, its fittings' cores, its terminals' lenses)
+## wear the live green, and how many it has.
 func _lit(key: String) -> int:
 	var lit := 0
 	for node in CrossingDParts.kit_power_nodes(room._lines[key]):
-		lit += 1 if (node as MeshInstance3D).material_override != null else 0
+		lit += 1 if CrossingDParts.is_lit(node as MeshInstance3D) else 0
 	return lit
 
 
@@ -1171,7 +1172,7 @@ func _lever_shows(lever: CrossingDParts.Lever, on: bool) -> bool:
 	return absf(handle - lever.handle_degrees()) < 0.5 \
 			and absf(handle - (55.0 if on else -55.0)) < 2.0 \
 			and absf(pilot_hinge.rotation_degrees.z - (90.0 if on else 0.0)) < 0.5 \
-			and (pilot.material_override != null) == on
+			and CrossingDParts.is_lit(pilot) == on
 
 
 ## A lever's colliders, as world boxes, against D's: the BASE the probe

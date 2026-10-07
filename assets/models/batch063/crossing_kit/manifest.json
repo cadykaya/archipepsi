@@ -166,7 +166,7 @@
       "lever_pedestal-convcolonly",
       "lever_head-convcolonly"
     ],
-    "collision": "convex twins on the foot, pedestal and head (`-convcolonly`); the arm, grip and pilot move and carry none",
+    "collision": "convex twins on the foot, pedestal and head (`-convcolonly`), each equal to Crossing D's code collider (Foot, Pedestal, CallLever.BASE). Under a D Lever, free the GLB's StaticBody3D nodes: the interact ray takes the collider it hits and does not walk up to a parent, so only the code body may answer it. The arm, grip and pilot move and carry none.",
     "hinges": [
       {
         "as_built": "upright",
@@ -179,8 +179,8 @@
         "node": "lever_hinge",
         "pivot_runtime": [
           0.0,
-          1.17,
-          0.31
+          1.175,
+          0.0
         ],
         "positions_degrees": {
           "off": -55.0,
@@ -198,8 +198,8 @@
         "node": "pilot_hinge",
         "pivot_runtime": [
           0.0,
-          0.7,
-          0.226
+          0.69,
+          0.256
         ],
         "positions_degrees": {
           "off": 0.0,
@@ -220,7 +220,7 @@
       "kit_local": "assets/art_palette.json is unchanged; reconciling it is the owner's decision",
       "ruling": "owner, 2026-10-02 (Locked visual meanings)"
     },
-    "mount": "floor; origin at the foot's centre. The player works it from Godot +Z. The 0.70 x 0.70 m foot is Production's CallLever footprint.",
+    "mount": "floor; origin at the foot's centre. The player works it from Godot +Z. Crossing D's Lever, volume for volume: under a D `Lever` node, whose origin stands 1.0 m above its floor, place this at local (0, -1, 0).",
     "not_changed": [
       "any approved asset",
       "any library colour",
@@ -258,8 +258,8 @@
     ],
     "size": [
       0.7,
-      0.735,
-      1.87
+      0.722,
+      2.01
     ],
     "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "states": {

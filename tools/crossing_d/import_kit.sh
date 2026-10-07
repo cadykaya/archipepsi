@@ -5,12 +5,15 @@
 #
 # Arty's Batch 063 crossing kit is a PROPOSAL: review pending, not in the
 # content pack (art branch claude/archipepsi-art-crossing-kit-2026-10-02,
-# commit eb8fceda; handoff docs/art/reports/2026-10-02-crossing-readability-kit.md).
-# This build trials five of its pieces -- the floor lever and the power
-# raceway's run, turn, inside corner and terminal -- in place of D's own
-# lever and power lines. They come byte for byte from
+# commit 9ae04155; handoffs docs/art/reports/2026-10-02-crossing-readability-kit.md
+# and 2026-10-07-crossing-d-kit-mapping.md). This build trials four of its
+# pieces -- the floor lever (repaired 2026-10-07 to D's colliders, volume
+# for volume) and the raceway's turn, inside corner and terminal -- in
+# place of D's own lever and power lines; the straights between them are
+# built in code to the kit's profile, as the mapping says. They come byte
+# for byte from
 #
-#   assets/models/batch063/crossing_kit/   (as committed at eb8fceda, with
+#   assets/models/batch063/crossing_kit/   (as committed at 9ae04155, with
 #                                           the kit's manifest.json)
 # into
 #   godot/candidate/crossing_kit/
@@ -25,7 +28,7 @@ GODOT=${1:-$ROOT/godot-bin/godot}
 [ -x "$GODOT" ] || { echo "import_kit: no godot at $GODOT" >&2; exit 2; }
 SRC=$ROOT/assets/models/batch063/crossing_kit
 DST=$ROOT/godot/candidate/crossing_kit
-PIECES="ck_floor_lever ck_raceway_run ck_raceway_turn ck_raceway_inside ck_raceway_terminal"
+PIECES="ck_floor_lever ck_raceway_turn ck_raceway_inside ck_raceway_terminal"
 mkdir -p "$DST"
 # The list is the list: drop any other piece (and what its import made).
 for f in "$DST"/*.glb; do
