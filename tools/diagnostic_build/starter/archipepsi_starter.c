@@ -200,6 +200,100 @@ static void log_tail(const wchar_t *path, wchar_t *out, size_t cap)
     out[cap - 1] = 0;
 }
 
+/* THE GAME IN TWO PARTS, joined on first run.
+ *
+ * A 50 MB zip does not fit every channel the build travels (the chat's
+ * upload limit is why the review builds ship as `-part1of2` and
+ * `-part2of2`), so the split package carries
+ * game\Archipepsi.exe.part1 and .part2 instead of the executable, with
+ * its byte count in game\Archipepsi.exe.size.
+ *
+ * Joining here rather than in a `.bat` keeps the one entry point: the
+ * Archipepsi Launcher verifies the parts against SHA256SUMS.txt and then
+ * starts this program, exactly as for a whole package.
+ *
+ * Returns 1 when the game is now in place (joined, or already whole), 0
+ * when it could not be, having said why.
+ */
+static int join_game(const wchar_t *dir, const wchar_t *game)
+{
+    wchar_t whole[PATH_CAP], part[PATH_CAP], sizefile[PATH_CAP];
+    wchar_t buf[64];
+    FILE *out, *in, *f;
+    static char copy[1 << 20];
+    size_t got;
+    long long want = -1, written = 0;
+    int n;
+
+    /* ALWAYS Archipepsi.exe, never `game`. The console twin is a 184 kB
+     * wrapper that launches Archipepsi.exe, so the console build needs
+     * the joined file just as much -- and keying this on `game` meant the
+     * console starter found its own wrapper, skipped the join, and
+     * started a wrapper with nothing behind it. `test.sh` step 10 caught
+     * exactly that. */
+    (void)game;
+    _snwprintf(whole, PATH_CAP, L"%ls\\game\\Archipepsi.exe", dir);
+    if (GetFileAttributesW(whole) != INVALID_FILE_ATTRIBUTES)
+        return 1;
+    _snwprintf(part, PATH_CAP, L"%ls.part1", whole);
+    if (GetFileAttributesW(part) == INVALID_FILE_ATTRIBUTES)
+        return 1;                       /* not a split package: say nothing */
+
+    _snwprintf(sizefile, PATH_CAP, L"%ls.size", whole);
+    if ((f = _wfopen(sizefile, L"r")) != NULL) {
+        if (fgetws(buf, 64, f))
+            want = _wtoi64(buf);
+        fclose(f);
+    }
+    if (want <= 0) {
+        tell(L"This build is incomplete: it says the game arrives in parts "
+             L"but does not say how big the whole file should be. Install "
+             L"the build again.");
+        return 0;
+    }
+
+    note(L"joining the game's parts (expecting %lld bytes)", want);
+    if ((out = _wfopen(whole, L"wb")) == NULL) {
+        tell(L"Could not write the game into\n%ls\\game\n\nIf the folder is "
+             L"read-only, copy the build somewhere you can write to and "
+             L"start it again.", dir);
+        return 0;
+    }
+    for (n = 1;; n++) {
+        _snwprintf(part, PATH_CAP, L"%ls.part%d", whole, n);
+        if ((in = _wfopen(part, L"rb")) == NULL)
+            break;
+        while ((got = fread(copy, 1, sizeof copy, in)) > 0) {
+            if (fwrite(copy, 1, got, out) != got) {
+                fclose(in);
+                fclose(out);
+                DeleteFileW(whole);
+                tell(L"Ran out of room while joining the game's parts. Free "
+                     L"some disk space and start it again.");
+                return 0;
+            }
+            written += (long long)got;
+        }
+        fclose(in);
+    }
+    fclose(out);
+    if (written != want) {
+        DeleteFileW(whole);
+        tell(L"The joined game is %lld bytes, not the %lld it should be, so "
+             L"a part is damaged or from a different build.\n\nDownload "
+             L"BOTH parts again, from the same message, and install again.",
+             written, want);
+        return 0;
+    }
+    note(L"joined %lld bytes; removing the parts", written);
+    for (n = 1;; n++) {
+        _snwprintf(part, PATH_CAP, L"%ls.part%d", whole, n);
+        if (!DeleteFileW(part))
+            break;
+    }
+    return GetFileAttributesW(whole) != INVALID_FILE_ATTRIBUTES;
+}
+
 int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
 {
     wchar_t dir[PATH_CAP], saves[PATH_CAP], python[PATH_CAP];
@@ -247,6 +341,8 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
 #else
     _snwprintf(game, PATH_CAP, L"%ls\\game\\Archipepsi.exe", dir);
 #endif
+    if (!join_game(dir, game))
+        return 2;                       /* join_game has already said why */
     if (GetFileAttributesW(python) == INVALID_FILE_ATTRIBUTES
         || GetFileAttributesW(game) == INVALID_FILE_ATTRIBUTES) {
         tell(L"This build is incomplete: the game or its bundled Python is "
@@ -272,18 +368,28 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
     SetInformationJobObject(job, JobObjectExtendedLimitInformation, &lim,
                             sizeof lim);
 
-    /* The bridge reads nothing from the environment that matters here: the
-     * embedded interpreter's python312._pth ignores PYTHONPATH/PYTHONHOME,
-     * and every choice the bridge would read from a variable is given on
-     * the command line. Bytecode is not written: the install folder may be
-     * read-only, and the build stays exactly what was checksummed. */
-    SetEnvironmentVariableW(L"PYTHONDONTWRITEBYTECODE", L"1");
-    SetEnvironmentVariableW(L"PYTHONNOUSERSITE", L"1");
-    SetEnvironmentVariableW(L"PYTHONUTF8", L"1");
-    SetEnvironmentVariableW(L"PYTHONUNBUFFERED", L"1");
+    /* -B AND -X utf8 ON THE COMMAND LINE, not in the environment.
+     *
+     * The embeddable distribution has a python312._pth, which puts the
+     * interpreter in isolated mode: it IGNORES every PYTHON* environment
+     * variable. Setting PYTHONDONTWRITEBYTECODE here is what the first
+     * version did, and the bundled interpreter duly wrote 121 __pycache__
+     * files into the installation folder on its first run -- so the folder
+     * no longer matched SHA256SUMS.txt, and an installation on a
+     * read-only path would have been a different failure again. `-B` is
+     * read before any of that and does work.
+     *
+     * -X utf8 for the same reason: the bridge logs Zone names with
+     * arrows and other non-ASCII in them, and the console it inherits
+     * need not be a UTF-8 code page.
+     *
+     * Everything else the bridge would take from the environment is given
+     * on the command line, deliberately: the scale, the provider, the AP
+     * mode and the save folder. */
     _snwprintf(cmdline, CMD_CAP,
-               L"\"%ls\" -m archipepsi_bridge --ap=mock --epsilon=fallback "
-               L"--mock-scale=prototype --save-dir \"%ls\"", python, saves);
+               L"\"%ls\" -B -X utf8 -m archipepsi_bridge --ap=mock "
+               L"--epsilon=fallback --mock-scale=prototype "
+               L"--save-dir \"%ls\"", python, saves);
     note(L"bridge: %ls", cmdline);
 
     ZeroMemory(&si, sizeof si);

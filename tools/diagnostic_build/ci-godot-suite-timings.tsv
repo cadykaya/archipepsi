@@ -1,0 +1,33 @@
+# Per-target wall time (seconds) for the Integration workflow's "Headless
+# Godot suites" step, measured on a shared 4-core container on 2026-10-08,
+# for the shape of a CI split (see ci-timeout-proposal.md). 27 of 65 targets:
+# the run was stopped early, and godot-rail-junction's non-zero exit is port
+# contention with another bridge on this box, not a repository failure.
+# target	seconds	exit
+godot-boot	26	0
+godot-test	34	0
+godot-hud	26	0
+godot-rules	26	0
+godot-stats	25	0
+godot-lab	25	0
+godot-affordance	26	0
+godot-verbs	27	0
+godot-blink	28	0
+godot-content	27	0
+godot-activity	44	0
+godot-room	27	0
+godot-room-contract	195	0
+godot-graphs	146	0
+godot-movement	25	0
+godot-zone-audit	25	0
+godot-legible	22	0
+godot-physics	136	0
+godot-traverse	63	0
+godot-return-placement	20	0
+godot-build-failure	25	0
+godot-exit-reach	35	0
+godot-passenger-carry	43	0
+godot-rail-carrier	26	0
+godot-rail-junction	108	2
+godot-passing-platforms	94	0
+godot-counterfire	84	0

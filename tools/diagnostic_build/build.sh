@@ -194,15 +194,55 @@ python3 "$HERE/notices.py" \
 
 # -- 7. checksums, manifest, zip ----------------------------------------------
 say "checksums and zip"
-find "$PKG" -exec touch -h -d "@$EPOCH" {} +
 (cd "$PKG" && find . -type f ! -name SHA256SUMS.txt ! -name archipepsi-build.json \
 	| sed 's|^\./||' | LC_ALL=C sort | while IFS= read -r f; do sha256sum -- "$f"; done \
 	> SHA256SUMS.txt)
 python3 "$HERE/manifest.py" "$PKG" --branch "$BRANCH" --commit "$COMMIT" \
 	--zip "$(basename "$ZIP")" --built-at "$EPOCH"
-touch -d "@$EPOCH" "$PKG/SHA256SUMS.txt" "$PKG/archipepsi-build.json"
+# AFTER the last file is written, and over the whole tree: writing a file
+# also changes its DIRECTORY's mtime, and the top folder's own entry in
+# the zip is what made two builds of one commit differ by two bytes.
+find "$PKG" -exec touch -h -d "@$EPOCH" {} +
 (cd "$OUT" && find "$NAME" | LC_ALL=C sort | zip -q -X -9 "$ZIP" -@)
-rm -rf "$WORK"
+
+# -- 8. THE SAME FOLDER IN TWO PARTS ------------------------------------------
+# For every channel that will not carry the one zip (the chat's upload
+# limit, the 30 MB per file this project's file transfer allows). The game
+# is cut in two; the starter joins it on its first run, checks the joined
+# size against game/Archipepsi.exe.size and deletes the parts. Same
+# convention as the review builds, so the launcher reads it unchanged.
+say "the same folder in two parts"
+SPLIT="$OUT/$NAME-split"
+rm -rf "$SPLIT"
+mkdir -p "$SPLIT"
+cp -R "$PKG" "$SPLIT/$NAME"
+S="$SPLIT/$NAME"
+EXE="$S/game/Archipepsi.exe"
+SIZE=$(stat -c %s "$EXE")
+echo "$SIZE" > "$EXE.size"
+# THE CUT SITS AT A FIFTH, not at half. Part 1 also carries everything
+# else in the folder (the bundled Python and bridge, about 20 MB zipped),
+# so cutting the game down the middle made part 1 37 MB and part 2 16 MB.
+# A fifth balances the two zips at about 26 MB each, under the 30 MB per
+# file this project's file transfer allows. `test.sh` step 10 measures
+# both, so a build that grows past it fails rather than surprising anyone.
+CUT=$((SIZE / 5))
+head -c "$CUT" "$EXE" > "$EXE.part1"
+tail -c +"$((CUT + 1))" "$EXE" > "$EXE.part2"
+rm "$EXE"
+(cd "$S" && find . -type f ! -name SHA256SUMS.txt ! -name archipepsi-build.json \
+	| sed 's|^\./||' | LC_ALL=C sort | while IFS= read -r f; do sha256sum -- "$f"; done \
+	> SHA256SUMS.txt)
+python3 "$HERE/manifest.py" "$S" --branch "$BRANCH" --commit "$COMMIT" \
+	--zip "$NAME-windows-part1of2.zip" --built-at "$EPOCH" --split
+find "$S" -exec touch -h -d "@$EPOCH" {} +
+P1="$OUT/$NAME-windows-part1of2.zip"
+P2="$OUT/$NAME-windows-part2of2.zip"
+rm -f "$P1" "$P2"
+(cd "$SPLIT" && find "$NAME" -path "*Archipepsi.exe.part2" -prune -o -print \
+	| LC_ALL=C sort | zip -q -X -9 "$P1" -@)
+(cd "$SPLIT" && zip -q -X -9 "$P2" "$NAME/game/Archipepsi.exe.part2")
+rm -rf "$SPLIT" "$WORK"
 say "done"
-ls -l "$ZIP"
-sha256sum "$ZIP"
+ls -l "$ZIP" "$P1" "$P2"
+sha256sum "$ZIP" "$P1" "$P2"

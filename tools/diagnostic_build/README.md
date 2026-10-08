@@ -108,10 +108,14 @@ untested in this form and is out of this build's scope.
   the build `project.godot` names) before anything is exported.
 - The bridge port is read out of `schemas/constants.py` and compared with
   GDScript's `BRIDGE_PORT`; the starter is compiled with that number.
-- Every file is stamped with the packaged commit's own date, the starter
-  links with `--no-insert-timestamp`, and the zip is built from a sorted
-  file list, so two builds of one commit on one toolchain produce the
-  same bytes.
+- Every file is stamped with the packaged commit's own date (after the
+  last of them is written: writing a file also changes its directory's
+  mtime, and the top folder's zip entry is what made two builds differ
+  by two bytes before this was fixed), the starter links with
+  `--no-insert-timestamp`, and each zip is built from a sorted file
+  list. Two independent builds of one commit on one toolchain produce
+  byte-identical zips, which is checked by building twice and comparing
+  digests.
 - `BUILD-INFO.txt` records the commit, the Godot build, the wheels, the
   compiler and the lock digests.
 
@@ -142,3 +146,22 @@ two; a double-clicker gets the second `.bat`.
   bridge has no `.git`. `BUILD-INFO.txt` and `README.txt` carry it.
 - Windows only. A Linux build would be a second preset and is not needed
   for this review.
+
+## The two-part delivery
+
+`build.sh` also writes `-windows-part1of2.zip` and `-part2of2.zip`, the
+same folder with `game/Archipepsi.exe` cut in two (at a fifth, so both
+zips land near 26 MB rather than 37 and 16). The starter joins the parts
+on its first run, checks the result against `game/Archipepsi.exe.size`,
+and deletes them; `archipepsi-build.json` records each part's size and
+digest and the whole file's, under `integrity.game`. This exists because
+not every channel the build travels carries a 50 MB file — the review
+builds split for the same reason — and because the project's file
+transfer allows 30 MB per file.
+
+Note that `Archipepsi.console.exe` is a 184 kB wrapper that launches
+`Archipepsi.exe`, so the console starter needs the joined file too. The
+first version of the join keyed on "the executable I am about to start",
+which the console build already had, so it skipped the join and started a
+wrapper with nothing behind it. `test.sh` step 10 is there because that
+happened.

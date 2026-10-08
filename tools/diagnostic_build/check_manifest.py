@@ -69,6 +69,7 @@ def main(argv: list[str]) -> int:
     want(m.get("recommended_mode") in ids,
          f"recommended_mode {m.get('recommended_mode')!r} is not one of {ids}")
 
+    limits = m.get("limitations") or []
     integrity = m.get("integrity") or {}
     want(integrity.get("sums_file") == "SHA256SUMS.txt", "integrity.sums_file is wrong")
     rec = integrity.get("executable") or {}
@@ -85,9 +86,46 @@ def main(argv: list[str]) -> int:
     want("files" not in integrity,
          "integrity.files is present, so SHA256SUMS.txt misses something")
 
+    game = integrity.get("game")
+    if game is None:
+        want((pkg / "game" / "Archipepsi.exe").is_file(),
+             "no integrity.game, so the game should be whole, and it is not")
+    else:
+        # The split delivery. Each part must be here, match its own record,
+        # and the parts together must be the size and digest claimed for the
+        # whole game -- the figures the starter checks the join against.
+        want(not (pkg / "game" / "Archipepsi.exe").is_file(),
+             "integrity.game says the game is split, but the whole file is here")
+        size_file = pkg / "game" / "Archipepsi.exe.size"
+        want(size_file.is_file(), "no game/Archipepsi.exe.size for the starter to check")
+        if size_file.is_file():
+            want(int(size_file.read_text()) == game.get("size"),
+                 "the .size file and integrity.game.size disagree")
+        whole = hashlib.sha256()
+        total = 0
+        for rec in (game.get("split") or {}).get("parts", []):
+            part = pkg / rec.get("name", "")
+            want(part.is_file(), f"part {rec.get('name')!r} is not in the folder")
+            if not part.is_file():
+                continue
+            data = part.read_bytes()
+            whole.update(data)
+            total += len(data)
+            want(rec.get("size") == len(data), f"{rec['name']}: size is wrong")
+            want(rec.get("sha256") == hashlib.sha256(data).hexdigest(),
+                 f"{rec['name']}: sha256 is wrong")
+        want(total == game.get("size"),
+             f"the parts total {total} bytes, not integrity.game.size "
+             f"{game.get('size')}")
+        want(whole.hexdigest() == game.get("sha256"),
+             "the joined parts do not match integrity.game.sha256")
+        want(len((game.get("split") or {}).get("zips", [])) == 2,
+             "integrity.game.split.zips does not name two zips")
+        want(any("two-part delivery" in s for s in limits),
+             "limitations do not say this is the two-part delivery")
+
     readme = m.get("readme")
     want(readme and (pkg / readme).is_file(), "readme is not in the folder")
-    limits = m.get("limitations") or []
     want(any("NOT a public release" in s or "not a release" in s.lower()
              for s in limits),
          "limitations do not say this is not a release")
