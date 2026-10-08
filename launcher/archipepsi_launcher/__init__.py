@@ -1,0 +1,3 @@
+"""Archipepsi Development Launcher: a small, offline library of review builds."""
+
+__version__ = "0.2.0-rc1"
