@@ -13,6 +13,8 @@ extends SceneTree
 ##       -s res://tests/_arty_dcap.gd -- --crossing-d [--empty-yard] \
 ##       --dcap=<spec.json> --out=<dir>
 ##
+## or, for the Impact Lab: `-- --impact-lab` with "host" set in the spec.
+##
 ## The spec (JSON):
 ##   "texture_swap": {"wall": "/abs/x.png", ...}  a theme role -> image;
 ##       every cached theme material painted from
@@ -30,7 +32,7 @@ extends SceneTree
 
 var _spec: Dictionary = {}
 var _out := ""
-var _host: Node3D = null
+var _host: Node = null
 
 
 func _initialize() -> void:
@@ -45,7 +47,11 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	_host = load("res://scripts/content/crossing_d.gd").new()
+	# The review host to build: Crossing D by default; the Impact Lab
+	# (`res://scripts/content/impact_lab.gd`, flag `--impact-lab`) works
+	# the same way -- `room` and `player` members, isolated by its flag.
+	_host = load(str(_spec.get("host",
+			"res://scripts/content/crossing_d.gd"))).new()
 	root.add_child(_host)
 	for _i in int(_spec.get("settle_frames", 90)):
 		await physics_frame
@@ -93,7 +99,10 @@ func _run() -> void:
 	# because they are the solved trajectory. By list, not by name: Godot
 	# renames a duplicate sibling after its type.
 	for list_name: String in _spec.get("hide_boxes_of", []):
-		for owner_node in room.get(list_name):
+		var owners: Variant = room.get(list_name)
+		if owners is Node:
+			owners = [owners]
+		for owner_node in owners:
 			for mesh in _all(owner_node, "MeshInstance3D"):
 				if (mesh as MeshInstance3D).mesh is BoxMesh:
 					(mesh as Node3D).visible = false
@@ -117,6 +126,25 @@ func _run() -> void:
 		room.callv(str(call[0]), call[1] if call.size() > 1 else [])
 	for item: Dictionary in _spec.get("glbs", []):
 		_place(room, item)
+	# A material made to emit, by its name in the placed GLBs:
+	# {"ca_orange": {"color": "#f48a36", "energy": 2.0}} -- for a state
+	# that lives on a shared material (a seal's seam collars).
+	var emits: Dictionary = _spec.get("material_emit", {})
+	if not emits.is_empty():
+		for node in _all(room, "MeshInstance3D"):
+			var part := node as MeshInstance3D
+			if part.mesh == null:
+				continue
+			for i in part.mesh.get_surface_count():
+				var m := part.mesh.surface_get_material(i) as StandardMaterial3D
+				if m == null or not emits.has(m.resource_name):
+					continue
+				var want: Dictionary = emits[m.resource_name]
+				var lit := m.duplicate() as StandardMaterial3D
+				lit.emission_enabled = true
+				lit.emission = Color(str(want["color"]))
+				lit.emission_energy_multiplier = float(want["energy"])
+				part.set_surface_override_material(i, lit)
 	# Study lights: [{"at": [x, y, z], "color": "#rrggbb", "energy": e,
 	# "range": r}], omni, no shadows -- the overlay's own light.
 	for item: Dictionary in _spec.get("lights", []):
@@ -128,13 +156,13 @@ func _run() -> void:
 		room.add_child(lamp)
 	for _i in 10:
 		await physics_frame
-	if bool(_spec.get("freeze_enemies", true)):
+	if bool(_spec.get("freeze_enemies", true)) and room.get("enemies") != null:
 		for enemy in room.get("enemies"):
 			(enemy as Node).process_mode = Node.PROCESS_MODE_DISABLED
 	var camera := Camera3D.new()
 	root.add_child(camera)
 	camera.current = true
-	for enemy in room.get("enemies"):
+	for enemy in (room.get("enemies") if room.get("enemies") != null else []):
 		print("[dcap] enemy %s at %s" % [enemy.get("archetype"),
 				(enemy as Node3D).global_position])
 	for shot: Dictionary in _spec.get("shots", []):

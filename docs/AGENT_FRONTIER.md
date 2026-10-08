@@ -194,6 +194,19 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-08 (second pass): the Bloom transition study, selective noise
+  correction and the Impact Relay G1 kit (Batch 065) are DELIVERED;
+  STOP.** It's on `claude/archipepsi-art-bloom-g1-2026-10-08`, from
+  `463ef2f9`.
+  * Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
+  * Bloom: five stages from one camera; the foreign world is a
+    labelled placeholder.
+  * Noise: only the ceilings and the dead-end stair are quieted, so the
+    lift stays the busiest thing in the hall.
+  * G1: `ir_object_launcher` fits `ObjectPlate`; `ir_impact_seal` and
+    `ir_seal_jamb` fit `ImpactShutter`, read on `review/impact-lab-g0`.
+  * Enemy: waiting on Dess's charger design.
+  * Next: owner review. The runtime is Prod's and the room is Dess's.
 * **2026-10-08: Crossing identity studies and the blue/orange candidate
   kit (Batch 064) are DELIVERED; STOP.** It's on
   `claude/archipepsi-art-crossing-identity-2026-10-08`, from `9ae04155`.

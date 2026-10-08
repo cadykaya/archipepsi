@@ -3477,6 +3477,19 @@ Handoff: `docs/art/reports/2026-10-08-crossing-identity-and-affordances.md`.
 
 **Next: STOP** until the owner picks a direction and the room exists.
 
+### Delivered, 2026-10-08 (second pass) — Bloom transition, selective noise, Impact Relay G1 (Batch 065). STOPPED.
+
+It's on `claude/archipepsi-art-bloom-g1-2026-10-08`.
+Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
+* **Bloom:** station, intrusion, contamination, the visited world (a
+  TEMP-WORLD placeholder) and the way back.
+* **Noise:** the T2 targeted variant, measured; walls and the lift are
+  untouched.
+* **G1:** the launcher, seal and jamb, with their states mapped to
+  both Prod's and Dess's names.
+
+**Next: STOP** for the owner's review.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

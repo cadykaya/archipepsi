@@ -5149,6 +5149,22 @@ colours are the owner's 2026-10-02 meanings, kit-local
 
 Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
 
+## Batch 065 — Impact Relay G1: object launcher and impact seal (2026-10-08)
+
+*Arty — 2026-10-08*
+
+**CANDIDATE.** For D-18 Concept A on Prod's G0 mechanism
+(`review/impact-lab-g0`); not in the content pack; not integrated
+(`tools/blender/build_impact_relay.py`).
+
+| asset | metrics | what it is |
+|---|---|---|
+| `ir_object_launcher` | 476 tris · 2.46 × 2.46 × 0.90 m · 32.0 texels/m | the look for `ObjectPlate`: Prod's 2.0 × 0.25 × 2.0 m plate kept exactly, inside side lips with blue emitters, a rising front lip with blue fins, three deck chevrons that fill as it arms, a deck that kicks when it throws, a green-fed accumulator housing |
+| `ir_impact_seal` | 744 tris · 3.00 × 0.36 × 3.00 m · 32.0 texels/m | the look for `ImpactShutter`: six armour slabs, each its own node, with orange seam collars on what gives; three glance scuffs |
+| `ir_seal_jamb` | 108 tris · 3.50 × 0.10 × 3.25 m · 32.0 texels/m | the doorway's frame on the hall face; stays when the seal breaks |
+
+Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
+
 ## Batch 064 — blue movement and orange breakable, to the green kit's bar (2026-10-08)
 
 *Arty — 2026-10-08*
