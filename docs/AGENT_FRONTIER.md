@@ -205,7 +205,9 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     lift stays the busiest thing in the hall.
   * G1: `ir_object_launcher` fits `ObjectPlate`; `ir_impact_seal` and
     `ir_seal_jamb` fit `ImpactShutter`, read on `review/impact-lab-g0`.
-  * Enemy: waiting on Dess's charger design.
+  * Shunter (D-19, `21cc00a4`): disposable concept only -- a sketch
+    sheet and a throwaway maquette read in D's yard. No model until
+    its behaviour is tested at G3.
   * Next: owner review. The runtime is Prod's and the room is Dess's.
 * **2026-10-08: Crossing identity studies and the blue/orange candidate
   kit (Batch 064) are DELIVERED; STOP.** It's on

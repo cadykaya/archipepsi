@@ -138,9 +138,42 @@ The fins and the front lip are constant blue. They are what shows the device's c
 - `tools/blender/build_impact_relay.py` (in the art check's rebuild list);
 - the exports in `assets/models/batch065/impact_relay/`.
 
-## 5. Enemy design: waiting, as asked
+## 5. The Shunter (D-19): disposable concept exploration only
 
-There is no new enemy work: no model, and no concept sketches. This environment has no image-generation tool. Any exploratory sketch would come from outside the pipeline and be labelled exploratory. The deferred charger drawing from the 2026-10-08 report still stands, and nothing is built until Dess's charger design exists.
+Dess's D-19 (`21cc00a4`) gives the charger an identity, approved by the owner: **a station freight Shunter whose routing the Crossing scrambled.** As asked, this is exploration and not the enemy model. Nothing is built until its behaviour has been tested at G3.
+
+- **[The concept sketch](../review/bloom_g1_2026-10-08/E1_shunter_concept_sketch_DISPOSABLE.png).** Six states, side view, inside the unchanged 1.90 × 1.05 m envelope:
+  - silhouettes;
+  - livery and lamps on all six.
+
+  The shape explains its three jobs:
+  - **its freight work:** a broad hinged plough that butts crates into bays, and four short piston legs for decks full of thresholds;
+  - **its charge:** the plough drops, and its position *is* the state;
+  - **its recovery:** an open rear frame whose power pack glows white-hot while it is helpless.
+
+  **Colour,** per D-19:
+  - red only on its lamps, and on the plough edge when committed;
+  - pale freight livery with a stencilled lane number;
+  - Bloom veins for the scramble;
+  - no orange, green or yellow-and-black on the body.
+
+  These are authored polygons. I have no image-generation tool here, so there are no AI sketches.
+- **[A throwaway maquette in D's yard](../review/bloom_g1_2026-10-08/E2_shunter_maquette_read_DISPOSABLE.png),** working, braced and recovering, at 8 and 15 m, beside today's enemies. It is blocks and colours from `tools/blender/study_shunter_maquette.py`, writing outside `assets/`. **What it taught:**
+  1. **The pale livery works.** It separates from D's dark floor and from the black melee and ranged bodies, so the class reads before the eyes do.
+  2. **D-19's 15–20 cm plough drop is too small to read at the 15–18 m first contact.** With the game's lens it is about 5 px, and the red lamps and edge carry the brace more than the shape does. For Dess: make the plough's travel the big change. It should rise high like a visor when working, and slam flat to the deck when braced, a 0.3–0.4 m swing.
+  3. **The rear pack is invisible from the side.** It should vent *upward* through a hatch that opens in recovery, so "punish now" reads from any angle.
+  4. **In the sketch, the braced plough pokes about 5 cm past the envelope.** A real model must fit it.
+
+**Next, after G3:** one Shunter model through the authored pipeline, sized to the tested behaviour.
+
+## D-18 v2 (also in `21cc00a4`): what it changes for the kit
+
+**Already matching what Batch 065 built:**
+- Prod's 2.0 × 0.25 × 2.0 m plate;
+- the 0.6 s arming and the 1.0 s re-arm;
+- blue on the chevrons and leading lip, not the slab.
+
+**One fit note.** The lever moves to the plate's west, at about (−7, 0, −1). The launcher's inlet is at the west end of its rear face, plate-local (−0.90, 0.065, +1.26). The raceway needs **one floor turn** to reach it, or Prod can mirror the inlet to the front-west corner.
 
 ## Files, revision and checks
 
@@ -149,15 +182,16 @@ There is no new enemy work: no model, and no concept sketches. This environment 
 **Source:**
 - `tools/blender/build_impact_relay.py`: Batch 065;
 - `tools/blender/study_bloom_transition.py`: review-only;
-- `tools/crossing_capture/dcap.gd`: now also hosts the Impact Lab, resizes boxes and makes materials emit, for studies.
+- `tools/crossing_capture/dcap.gd`: now also hosts the Impact Lab, resizes boxes and makes materials emit, for studies;
+- `tools/crossing_capture/shunter_sketch.py` and `tools/blender/study_shunter_maquette.py`: disposable concept tools, outside `assets/`.
 
-**Views:** `docs/art/review/bloom_g1_2026-10-08/`, 11 images.
+**Views:** `docs/art/review/bloom_g1_2026-10-08/`, 13 images; the two `E*` images are labelled DISPOSABLE.
 
 **Checks:**
 - **The pipeline's own checks on each part:** 32.0 texels/m, flat shading, every part connected, within the `interactable` and `prop` budgets.
 - **Rebuild:** the Batch 065 rebuild is byte-identical; Batches 063 and 064 are unchanged.
 - **`check_docs_metrics.py`:** passes.
-- **`check_art_current.sh`:** the result is in the commit.
+- **`check_art_current.sh`:** **PASS**, "every generated asset matches its source". The run included a rebuild of every builder and took 12 m 45 s.
 
 **Not checked:**
 - any runtime driver or the pieces in motion;
@@ -169,6 +203,7 @@ There is no new enemy work: no model, and no concept sketches. This environment 
 
 1. **Bloom.** Does the S0→S4 grammar, push → leak → mass → foreign growth, read as one reality turning into another? Should S1's first intrusion be louder?
 2. **Noise.** T2 for the station: Prod's two material changes now, and the quiet ceiling and concrete stair textures as well?
-3. **G1.** Does the launcher read as "this throws things there", and the seal as "this breaks if hit hard enough"? Should the funnel lips collide?
+3. **Shunter.** Does the sketch's identity land? Should Dess take the larger plough swing and the upward vent into D-19?
+4. **G1.** Does the launcher read as "this throws things there", and the seal as "this breaks if hit hard enough"? Should the funnel lips collide?
 
 **STOP.** No watchers, subscriptions or merges.
