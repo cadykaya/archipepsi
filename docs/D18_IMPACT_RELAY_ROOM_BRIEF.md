@@ -1,465 +1,357 @@
-# D-18 — Impact Relay: one mixed-system room
+# D-18 — Impact Relay: one mixed-system room (build-ready, v2)
 
-**Dess → Skyiah, Prod and Arty, 2026-10-08. A proposal for review, not
-approved for building.** It answers `04_DESS_PLAN.md` in the post-D crew
-plan (2026-10-07): three different designs, one recommendation, and one
-buildable room brief. The reusable room grammar and the charger
-encounter at the end are plans for later gates, not commissions.
+**Dess → Prod and Arty, for Skyiah. 2026-10-08.**
 
-**Prod's P0 feasibility verdict had not been pushed when this was
-written** (newest remote ref: `review/crossing-d-readability` `0e54caab`,
-2026-10-07 20:06 UTC). So the room's key move, "the machine sends a
-heavy object into the barrier", comes in three mechanism tiers that
-share one layout, one state graph and one progression contract (§4.4).
-Prod's spike picks the tier; no second design round is needed.
+**Concept A is approved** (Skyiah, 2026-10-08). This version is the brief
+G1 builds from. It is reconciled to Prod's measured G0 lab: branch
+`review/impact-lab-g0` at `c45086e1`, build `3337769d`, report
+`docs/reports/2026-10-08-impact-lab-g0.md`.
+
+v1 (`fabab375`) is in history. Its three-design comparison and three
+mechanism tiers are settled and aren't repeated here.
 
 Source refs:
-- **[R]** = the readability build Skyiah played, `bb683ce0`.
-- **[T]** = the 0.4 team head `claude/archipepsi-0-4-blindside`, `a266d5da`.
-- **[D]** = the original D, `wip/crossing-d-review`, `4462be29`.
+- **[G0]** = `review/impact-lab-g0` `c45086e1`;
+- **[R]** = the readability build `bb683ce0`;
+- **[T]** = the 0.4 team head `claude/archipepsi-0-4-blindside` `a266d5da`.
 
 ---
 
-## 1. Reality check
+## 0. What G0 changed, and what this brief now says
 
-| Question | Answer in source | Ref |
-|---|---|---|
-| What must the base kit reach? | Every allocated Check, every key that matters to AP, and the Zone exit. Any of them may need an Echo only if the matching AP rule declares it, and the apworld declares none today. So today the **required** route uses the base kit plus Static Pulse's ranged hit. | [T] `docs/design-proposals/06_THE_AMALGAM.md:1494-1500`, check 23 at `:1780`; `apworld/archipepsi/__init__.py:111-123`; `bridge/archipepsi_bridge/topology.py:1183-1191, 1767-1786` |
-| Are optional Echo routes allowed? | Yes. Shortcuts, secrets, "flanks and alternate routes", optional rewards and optional traversal may need anything. No code refuses an extra route. | [T] `06_THE_AMALGAM.md:1504-1510` |
-| Echo picked up inside the room? | It may gate local rewards only (DESS-28). This room grants no Echo, so the rule is not engaged. | [T] `docs/ledgers/DESS_POST_PLAYTEST.md:1588` |
-| Can pads move objects? | No. `LaunchPad` and `BouncePad` act only on `body is Player` and write `Player.velocity`. Pads have no powered state. | [R] `godot/scripts/gameplay/affordance_nodes.gd` (LaunchPad ~282-449, BouncePad ~451-494) |
-| Can something push a prop? | Yes, through a narrow entry point that already exists: `ManipulableBody.receive_impulse()` (a `lightened` body takes double). Kinematic actuators push the bodies they meet and never apply force. | [R] `manipulable_body.gd` ~255-266; `actuator.gd` header |
-| What can the hand do? | Carry a flagged object up to 60 kg. A `MEDIUM` object (30–120 kg) slows the walk to ×0.85. The drop is zero-velocity, and there is **no throw** ("PUSH is the throw", an Echo verb). Carrying blocks the Static Pulse. | [R] `hand_carry.gd` header; `constants.gd:234-237` |
-| Is there a barrier only a heavy hit opens? | **Yes, already.** `BreakablePanel` refuses any single hit under `MIN_IMPACT` = 2 × Static Pulse (12 vs 6) and shows "NEEDS A HEAVIER HIT". `DestructibleCover` is different: 40 HP from any hits, which is pacing, not a gate. | [R] `affordance_nodes.gd` ~170-250; `destructible_cover.gd`; `constants.gd:188` |
-| Does a collision deal damage? | No. Nothing turns collision energy into damage, so the room needs one narrow impact sensor. | [R] same files |
-| What if the object is lost? | The carried-object rules send it home if it falls out of bounds (at once) or leaves its allowed volume (after 1 s). "At rest where the player cannot reach it" is **not implemented**, so the layout has to design it out. | [R] `transported_objects.gd:38-52` |
-| Does glass stop the Static Pulse? | Unverified (open question 3 in the packet's `07`). **This design does not depend on it.** | — |
+| Topic | v1 (proposed) | G0 (measured) | v2 (build this) | Why |
+|---|---|---|---|---|
+| Throw distance | ~17 m, apex ~3 m | 11 m, 1.0 s, apex 2.3 m, leaves at 12.4 m/s, **11.0 m/s into the face every time**; 40 of 40 broke it | **11 m**, Prod's arc | Measured and deterministic. A longer throw buys nothing the player feels, and 11 m keeps the impact readable from the plate. |
+| Weight | 45 kg, two in a rack | 36 kg, one; slows the carrier ×0.85 | **One 36 kg weight** | Still `MEDIUM`, and still costs something to carry. A spare would bring in the untested several-objects case for no gain: a lost weight comes home anyway. |
+| Activation | Rest 0.3 s, then a 1.0 s wind-up; re-arm 2 s | A settled, released body arms the plate for **0.6 s**, then it fires. Re-arm **1.0 s**. **One throw per arrival.** Unpowered gives a dud click. Powering a plate with a body already resting on it arms it. | **Prod's timings** | The 0.6 s ramp, from someone who has just put the weight down and stepped back, is the honest telegraph. A longer wait would only feel sluggish. |
+| Teaching crate | 12 kg, meant to glance | A thrown 10 kg crate brings ~600 J and counts; two would break the shutter | **4 kg crate** (~240 J, refused) | v1's crate would have broken the shutter on the second throw. 4 kg is always refused, with margin (see §3). |
+| Shutter | `BreakablePanel`, one qualifying impact | `ImpactShutter`: **40 HP, cumulative**. A blow under **12 HP** is refused. A body's blow is ½·m·v² into the face at **25 J per HP**. Wear shows on the seams. It breaks into slabs that collide only with the world. | **Prod's shutter as built**, 3 × 3 × 0.4 m | It is the same rated rule as the panel, now with a physical measure. |
+| Fallback tiers | Throw, lift-and-drop, ram | Direct throw deterministic; fallbacks not built | **Throw only.** The fallbacks are not needed. | — |
+| Window and Check | High window over the seal; Check on a 2.5 m dais | A low window beside the doorway (1.0–3.4 m), which stops shots | **Prod's window.** The Check sits behind it on a low dais (§2). | The eye line works from the gallery (§2). |
+| Hall | 26 × 22 × 10 m | 20 × 22 × 8 m | **20 × 22 × 8 m** (Prod's lab hall) | Nothing in v2 needs more, and a smaller room is quieter. |
 
----
-
-## 2. What D-18 corrects in D-17
-
-D-17 stays on record as written ([T] `docs/D17_CROSSING_D_ROOM_BRIEF.md`).
-For any room built from D-18, these replace it:
-
-1. **"One main activity" becomes "one question".** A room asks one
-   physical question, and up to two supporting systems may help answer
-   it. That replaces D-17's habit of one system per wing.
-2. **Rule 3 is narrowed.** Skipping the intended sequence is not a
-   defect. Only two kinds of thing count as one:
-   - a Check claimed without reaching its claim spot;
-   - an *accidental base-kit* bypass, meaning plain movement doing what
-     the room's machinery was meant to do. That is the actual scope of
-     the owner's Unweighted ruling ([T] `DESS_POST_PLAYTEST.md:926-929`).
-
-   Echo-enabled skips are legal and welcome. Softlocks, leaving the
-   world and broken required access are separate checks, never
-   reasons to ban an ability.
-3. **The Machine Hall's "so nothing skips the gap"** reason is withdrawn.
-4. **Rule 4 stays.** "The base kit reaches everything Archipelago counts"
-   is the real AP rule today, and §5 applies it here.
-5. **No area-only Echo limits.** The Courtyard-only swing in [D]
-   `crossing_d.gd:213-229` is not a pattern to repeat.
+**Prod's three questions to me:**
+1. **The `lightened` overshoot is a legal Echo outcome, not a defect. Don't
+   patch it.** The only requirement is that the weight ends somewhere
+   reachable, or comes home (§4).
+2. **The rated shutter plus glass is the rule.** The machine opens the
+   way because it hits hard, not because bullets are banned. Anything
+   else that hits hard enough is welcome (§5).
+3. **One target point:** the shutter's centre. No moving targets and no
+   tight gaps.
 
 ---
 
-## 3. Three designs, and the one to build
+## 1. The room direction this follows (owner, 2026-10-08)
 
-All three use only what exists: power, a blue movement device, an orange
-breakable. Each makes the systems depend on one another.
-
-### A — Impact Relay: power → the machine throws a weight → the impact opens the way
-- **Fantasy.** "That machine is aimed at that door. If I give it
-  something heavy enough..."
-- **Layout.** A high entry gallery overlooks a freight hall. Across the
-  hall is a vault: its Check is visible through a high window, and its
-  mouth is closed by an orange impact seal. On the floor, a blue
-  launch cradle points at the seal, and a dead green line runs from it
-  to a lever.
-- **Chain.** Lever on → cradle live → a heavy object settles in it → it
-  flies → the seal breaks → vault, Check and a loop shortcut.
-- **Clever legal skip.** Any single hit of 12 or more breaks the seal
-  directly, so the machine is skipped. A PUSH can shove a canister into
-  it.
-- **Base-kit route.** Yes: walk, carry, pull the lever.
-- **Biggest unknown.** A prop thrown repeatably, plus a reliable impact
-  sensor (P0 items 1–4).
-- **Expected delight.** High. A visible flight, a loud cause and effect,
-  and the owner's own idea.
-- **Failure case.** The throw is flaky: it misses, tunnels through, or
-  lands somewhere unreachable. Then it feels like a broken physics
-  toy.
-- **Smallest test.** One lever, one cradle, two canisters, one seal, one
-  room.
-
-### B — Powered Traverse: power → a live rail gives a new angle → shoot the exposed support
-- **Fantasy.** "From up there I could hit that bracket."
-- **Layout.** A dead rail loops high around a hall. A collapsed catwalk
-  hangs on an orange support whose weak seam faces only the rail's line,
-  hooded like `ImpactReceiver`'s plate ([R] `impact_receiver.gd`).
-- **Chain.** Lever on → rail live → ride it → shoot the seam (40 HP, any
-  weapon) → the catwalk swings down → a bridge to the destination.
-- **Clever legal skip.** Swing to a perch with the same angle; catch the
-  rail early with a timed jump.
-- **Base-kit route.** Yes.
-- **Biggest unknown.** A powered state for the rail, and whether a
-  hooded seam really can't be hit from the floor.
-- **Expected delight.** Medium-high: shooting while riding feels good.
-- **Failure case.** It reads as "aim at the orange thing". The weapon
-  becomes the key, and machinery and movement turn into delivery.
-- **Smallest test.** One rail loop, one seam, one swing-down catwalk.
-
-### C — Reconfigure the Space: break the casing → read the hidden machine → choose what to power
-- **Fantasy.** "There's a machine behind this wall, and I get to choose
-  what it runs."
-- **Layout.** A plant room whose orange panelling hides conduit. Breaking
-  panels shows where green lines run, and one exposed junction can feed
-  the lift **or** the pad. Each device reaches the destination
-  differently.
-- **Chain.** Break casing (any way) → junction visible → set it → one
-  device live → a route.
-- **Clever legal skip.** Swing past both devices; break panels in any
-  order.
-- **Base-kit route.** Yes.
-- **Biggest unknown.** Whether reading the conduit is interesting, and
-  whether the two outcomes are a real choice.
-- **Expected delight.** Medium: curiosity rather than spectacle.
-- **Failure case.** It collapses into "break box, flip switch", two
-  chores.
-- **Smallest test.** Three panels, one two-way junction, two devices.
-
-### Recommendation: A, built at whichever mechanism tier P0 supports
-
-- **Why A.** Its three systems form a single cause and effect. Each one
-  answers a question the previous one raised.
-- **It survives P0.** Its fallback tiers (§4.4) keep the same chain, so
-  a bad P0 result changes how the room is built, not what it is.
-- **Its skips are fun, not fatal.** The heavy-hit and PUSH skips come
-  from rules that already exist, so nothing has to be invented to allow
-  them.
-- **Why not B or C first.**
-  - **B** is cheaper but drifts toward combat-as-key.
-  - **C** is the right shape for a later "recontextualise" room, once
-    one chain has proved fun.
-- **Fallback if even tier 3 fails:** B.
+- **Compatible activities, chosen on purpose.** There is no
+  one-mechanic-per-room rule. Machinery, movement, destructibles and,
+  later, enemies may act on each other, but only where the combination
+  makes the room better.
+- **Quiet rooms can stay quiet.** A movement room can stay a movement
+  room. This one combines four systems because each answers the
+  question the last one raised:
+  - **power** wakes the plate;
+  - **carrying** is how the weight reaches it;
+  - **the plate's throw** is the movement;
+  - **the shutter** is the consequence.
+- **Echo equipment should open unexpected routes.** Clever skips are
+  part of the randomiser, and §5 is where this room keeps that promise.
 
 ---
 
-## 4. D-18 room brief: Impact Relay
+## 2. The room
 
-### 4.1 The first ten seconds
+### 2.1 The first ten seconds
 You step from the connector onto a glass-fronted gallery 4.5 m above a
-tall freight hall: cold station steel, roof trusses, quiet. Straight
-across the hall, a lit vault sits behind a tall window, and on a raised
-dais inside it stands the Check. Below the window, the vault's mouth is
-closed by a battered bulkhead with orange impact seams. In the middle
-of the floor, a squat blue-trimmed cradle points straight at that
-bulkhead, holding a packing crate. A dark green line runs from the
-cradle to a lever at the foot of the stairs below you. To the left is
-a rack holding two steel canisters.
+plain freight hall. Straight ahead, 18 m away, the far wall has a 3 m
+doorway sealed by an orange-banded steel shutter. Beside it, a window
+shows a lit stand-in Check on a low dais in the room beyond. Halfway
+down the hall a blue-trimmed floor plate faces the shutter, with a
+light plastic crate resting on it. A dark green line runs from the
+plate along the floor to a lever at the foot of the stair below you. To
+your right, a squat steel weight stands on its stand.
 
-In ten seconds the player has seen:
-- the **destination**: the Check;
-- the **barrier**: the orange seal;
-- the **machine aimed at it**: the cradle, which is the landmark;
-- **power**: the dark line to the lever;
-- the **material**: the canisters.
+So the player sees what they want, what's in the way, a machine aimed
+at it, where the power comes from, and something heavy. They don't
+yet know how those fit together.
 
-They don't yet know what any of it does.
-
-### 4.2 Layout (indicative; Prod measures and adjusts)
-Axes: x points east, z south, y up. The hall floor is at y = 0.
+### 2.2 Layout (lab coordinates: x east, z south, y up, hall floor at y = 0)
 
 ```
-                               N
-   +----------------------------------------+------------+
-   | stair ->  [lever]  [rack: 2 canisters] |            |
-   |   ^          :      ledge above, y 6   |   VAULT    |
-   | GALLERY      :                         |  8 x 8 m   |
-   | y 4.5,       :..green..[CRADLE]==lane==>SEAL   dais  |==> onward door
-   | glass front            blue, aimed east|(orange)    |
-   | south landing                          |            |
-   +--[door: opens from other side]---------+--[latch]---+
-      '----------- service corridor (loop) ----------'
+                           N   onward door
+              +---------------[====]----------------+
+              |  VAULT  4 m high  (dais @ x 5)       |---+
+              +-----[SHUTTER x -1.5..1.5]--[WINDOW x 3..7]   | loop
+  hall x -10..10   ledge (local)    ^                        | corridor
+  z -12..10        y 5, NW wall     | 11 m arc, peak 2.3 m   | (outside
+  8 m high                          |                        |  the east
+                 [lever]...green...[PLATE (0,-1)]            |  wall)
+              stair                          [weight stand]  |
+              (W wall)                         (6, 0, 2)     |
+              +--------------------------------------------+-+
+              |  GALLERY  y 4.5, z 6..10, glass front |door| <- "OPENS FROM
+              +--- arrival connector -------------------+    THE OTHER SIDE"
 ```
 
-| Part | Size or position | Why |
+| Part | Where and how big | Notes for Prod |
 |---|---|---|
-| **Hall** | 26 × 22 m. Closed roof at 10 m, with trusses. | Room for swing and arc recovery. Closed so nothing leaves the world. |
-| **Gallery** | West wall, y = 4.5, 4 m deep. Glass front. A stair runs down the north wall. The south landing has an open edge for dropping straight to the floor, which is legal. | Preview, plus a base-kit way down. |
-| **Lever** | Floor, at the stair foot (Arty's kit lever, Prod's mapping). Its raceway runs about 8 m along the floor to the cradle. | The first thing you reach. The line is the explanation. |
-| **Rack** | North wall, near the lever. Two **45 kg canisters** (`MEDIUM`, carriable). Rack top 1.2 m. | Heavy enough to count, light enough to carry. The spare makes retries trivial. |
-| **Cradle** | Floor, west of centre. 2.4 × 2.4 m tray with 0.3 m lips that funnel a dropped object onto one canonical seat (like `LaunchPad`'s canonical origin). About 17 m from the seal, aimed at its centre. | One seat gives one repeatable trajectory. |
-| **Seal** | In the east wall at floor level, a 3 × 3 m opening. Per-hit rated like `BreakablePanel` (`MIN_IMPACT` 12), sized up or built from panels. | A plain material reason it can't simply be shot. |
-| **Vault** | 8 × 8 m, ceiling 6 m. A west window at y 3.5–5.5 above the seal. The Check sits on a dais about 2.5 m high, with steps inside. **Prod confirms the eye line from the gallery to the Check.** | A destination visible early. |
-| **Onward door** | Vault, east wall. | The way on lies behind the room's question. |
-| **Loop shortcut** | A door in the vault's south wall, latched on the vault side. A corridor runs outside the hall's south wall to a door at the gallery's south end. The gallery side reads "OPENS FROM THE OTHER SIDE". | The return changes. On later visits it bypasses the hall. |
-| **Ledge** | North wall, y = 6, a 3 m alcove with a **local** stand-in. Base-kit reach from rack, cradle or floor stays far below it. Reached by swinging from a truss, or any mobility Echo. | An optional Echo reward with nothing required behind it. |
+| **Hall** | x −10…10, z −12…10, 8 m high. Closed roof, trusses near 7 m. | Your lab hall unchanged. The trusses are swing anchors. |
+| **Gallery** (arrival) | South wall, y = 4.5, z 6…10, full width. Glass front. Its east end is the loop door. | Dropping from the open stair head to the floor is legal and lands safely. |
+| **Stair** | Down the west wall from the gallery (z 6) to the floor (z ≈ −2). | The base-kit way down. |
+| **Lever** | Floor, near the stair foot, at about (−7, 0, −1). Arty's kit lever. | The raceway runs along the floor to the plate, about 7 m. |
+| **Plate** | **(0, 0, −1)**, 2.0 × 0.25 × 2.0 m, aimed at the shutter's centre. Your `ObjectPlate`. | 11 m to the shutter face, as measured. |
+| **Crate** | Rests on the plate at the start. **4 kg**, `LIGHT`, carriable, about 0.5 m. | §3: always refused. |
+| **Weight** | Home on a low stand at **(6, 0, 2)**. **36 kg** `ManipulableBody`, 0.45 × 0.6 × 0.45 m. | Out of the arc lane. About 7 m to the plate. |
+| **Shutter** | North wall doorway x −1.5…1.5, 3 m high. Your `ImpactShutter`. | — |
+| **Window** | North wall, x 3…7, y 1.0…3.4. Glass that stops shots. | Measured in G0. |
+| **Vault** | Behind the north wall, x −6…8, z −18…−12.5, 4 m high. **Dais** at (5, 0, −15), top 1.0 m, with the stand-in Check `relay_vault` on it. | Eye-line check from a gallery eye at (0, 6.1, 7): it crosses the north wall at about (4.3, 2.1), inside the window. **Please confirm in engine.** |
+| **Onward door** | The vault's north wall. | The exit. |
+| **Loop** | A door in the vault's east wall, opened from the vault side, leading into a corridor outside the hall's east wall. The corridor runs south with a stair up to 4.5 m and ends at the gallery's east-end door. From the gallery side the door reads "OPENS FROM THE OTHER SIDE" and is shut, so nobody walks to a dead end. | Your corridor stays enclosed: roof on, no gap into the hall. |
+| **Ledge** | North-west corner, an alcove at y = 5.0 near (−9, 5, −9). Local stand-in `relay_ledge`. | Base kit must not reach it from the stair, gallery, plate or stand. Please run your D-9 reach measurement. |
 
-### 4.3 States, not button order
+### 2.3 What the player does, base kit only
+1. **Pull the lever.** Green runs to the plate, the chevrons wake, the
+   plate arms for 0.6 s and throws the crate. It hits the shutter and
+   glances off: refused flash, a dull knock, "NEEDS A HEAVIER HIT". The
+   crate drops by the shutter.
+2. **Carry the weight to the plate** and set it down. The player is
+   slowed and can't fire while carrying.
+3. **Step back.** 0.6 s arming, then the throw: a short flight, a heavy
+   impact, the seams flare and the shutter breaks into slabs. Light
+   from the vault floods the hall.
+4. **Walk in** and claim the Check on the dais.
+5. **Open the loop door,** then take the onward door or walk the
+   corridor back to the gallery.
 
-```
-power:   OFF <--lever--> ON                    (live; recomputed, not stored)
-cradle:  DARK --power ON--> COCKED --occupant at rest, not held, 0.3 s--> WIND-UP (1.0 s)
-         WIND-UP --> FIRED --> RE-ARM (2 s) --> COCKED
-         any state --power OFF--> DARK          (wind-up cancelled; nothing fires)
-object:  AT REST <-> CARRIED ; AT REST --fired--> IN FLIGHT --> AT REST | LOST --> HOME (rack)
-seal:    INTACT --glance (light, slow or weak hit)--> INTACT + scuff
-         INTACT --qualifying impact or a hit of 12 or more--> BROKEN   (irreversible)
-check:   UNCLAIMED --claim on the dais--> CLAIMED  (stand-in; sends nothing)
-loop:    LATCHED --interact on the vault side--> OPEN  (irreversible)
-```
-
-| State | Owner | What the player sees and hears | What changes it | On restart | Reached another way? |
-|---|---|---|---|---|---|
-| **power ON** | Room (lever) | The lever handle throws. Green runs along the raceway to the cradle. The cradle's green pilot lights. | Lever | OFF | — |
-| **cradle COCKED** | Room | The tray settles back with a clunk. The blue emitter rails glow, with a low hum. | power ON | DARK | — |
-| **WIND-UP** | Room | A rising whine, the tray tilts, and the blue rails pulse faster. Telegraphed so you can step out of the lane. | Occupant at rest and not held | — | — |
-| **FIRED / IN FLIGHT** | Physics | The object leaves along an arc of about 1.0 s with an apex near 3 m. | Wind-up done | Objects back to their start poses | PUSH (Echo) can also send a canister |
-| **seal glance** | Room | Dull thud, a spark along the seam, a scuff mark. Static Pulse hits spark too. The short plain label is allowed. | Light object, slow object, or a hit under 12 | Scuffs cleared | — |
-| **seal BROKEN** | Room | The casing splits along its orange seams, panels fall, and the vault light floods the hall. | Qualifying impact, or a single hit of 12 or more | INTACT | **Yes.** A heavy-hit Echo or a PUSHed canister reaches the same state. |
-| **loop OPEN** | Room | The latch swings and the corridor lights. | Interact on the vault side | LATCHED | Any route into the vault |
-| **Check CLAIMED** | Bridge stand-in | The usual stand-in pickup. | The claim volume on the dais | Unclaimed | Any route into the vault |
-
-- **Irreversible within a run:** the seal, the loop door, the Check.
-- **Temporary:** power and every cradle state.
-- **In a campaign later:** the seal and the loop would persist as accepted
-  consequences; power would not. That is the `PoweredLink` model,
-  "the signal is live and never saved" ([R] `powered_link.gd`).
-
-**The teaching beat is the light crate already in the cradle.** The
-first time the player pulls the lever, the cradle cocks, winds up and
-throws the 12 kg crate. It lands on the seal with a thud, a spark and a
-scuff, and the seal holds. In one beat the player has watched the
-machine's purpose, its aim, its arc and the seal's rating, with no text.
-"Something heavier" is the obvious next thought, and the canisters are
-in plain view.
-
-### 4.4 Physical contract, and the three mechanism tiers
-
-**What stays the same in every tier:**
-- **Canister.** 45 kg, `MEDIUM`, carriable. It leaves the hand only by
-  the zero-velocity drop. Drop it into the tray and the lips seat it.
-- **Fires only when ready.** The cradle fires only with power ON, a
-  non-player occupant at rest and not held (`HandCarry` holder null) for
-  0.3 s, after the 1.0 s wind-up. Only one shot per arm cycle.
-- **Not for players.** The cradle ignores the player, so it is not a
-  base-kit way over walls.
-- **What counts as qualifying.** A `ManipulableBody` that reads `MEDIUM`
-  or heavier, entering a sensor on the seal's face. Its speed **into
-  the face** (along the seal's normal) must be at least about 6 m/s.
-  That calls the seal's existing damage path once, with enough to break
-  it. A canister dropped or rolled against the face never counts, which
-  is physics, not a ban. A `lightened` canister reads `LIGHT` and
-  glances, which is EX50-033's own meaning, left as is.
-- **Lost canister.** It goes home to the rack if it falls out of bounds
-  or leaves the hall's volume, using the §10.4 semantics already in
-  `transported_objects.gd`. Nowhere in the hall may let a canister rest
-  out of reach. Prod proves this with a scatter test, for example 50
-  throws with ±10 % speed jitter. With the spare canister and the
-  review menu's restart, there is always a next try.
-- **The player in the lane.** A canister that hits the player just
-  bounces off and lands on the floor. That counts as a miss, with no
-  damage. Prod confirms no physics damage path exists.
-
-| Tier | Mechanism | New code | Pick it when |
-|---|---|---|---|
-| **1 — the throw (preferred)** | On fire, the cradle calls `receive_impulse(mass × v)` along one solved arc. That is a fixed velocity change, so every object follows the same painted arc and mass matters only at the impact. The tray animation is cosmetic and synced. | One object-only cradle node, plus the seal's impact sensor. The player `LaunchPad` is not touched. | P0 items 1–5 pass. The throw repeats, nothing tunnels at about 17 m/s, and the sensor fires once per qualifying hit. |
-| **2 — lift and drop** | The cradle becomes a loading tray beside the seal. A `LIFT` actuator raises it about 6 m, then a `DOOR`-kind slide pulls the tray floor out. The canister drops down a blue-edged steel chute that turns it into the seal's face. Gravity does the work. | Impact sensor only. The rest is existing actuators. | Tier 1 is flaky but rigid bodies ride actuators and fall reliably. |
-| **3 — the ram (minimum)** | A kinematic ram pushes the loaded tray about 4 m along a track into the seal. The break is decided by "the ram reached the end with a `MEDIUM` occupant", read by a `ClassPlate` on the tray. Contact is real, but this is an **authored machine** and is described as one. | A small rule reading the plate and the ram. No sensor. | Collisions at speed are unreliable in Godot's tick. |
-
-Tiers 2 and 3 move the device next to the seal, so the seal is no
-longer fired at from across the hall. Everything else stays: the light
-crate's lesson, the states, the AP contract.
-
-**Should the player be able to fire the cradle at themselves?** Not in
-this room. Riding the relay could be a later variant, but the room
-isn't notably less fun without it, so it is deferred.
-
-### 4.5 Progression contract
-
-| Item | Kind | Base-kit route | Echo routes |
-|---|---|---|---|
-| Stand-in Check `relay_vault` | **Required** (stands where an allocated Check would go) | Gallery → stair → lever → carry a canister → cradle → seal → dais. Walk, carry and interact only; no Echo, and no ranged hit needed. | Heavy hit or PUSH on the seal; any movement Echo anywhere |
-| Onward door | **Required** (the exit) | Same route | Same |
-| Loop door | Shortcut | From inside the vault | — |
-| Local stand-in `relay_ledge` | Optional local reward | None, by design | Swing or any mobility Echo. Allowed, because it is a local reward and not allocated (§29.5a). |
-
-- **Under today's apworld this is compliant.** No Echo, no AP key, and no
-  in-room Echo grant. The bridge sees rooms as wholes, so the engine
-  proves the in-room base-kit route (Prod's tests in P1.2).
-- **The only refusals:**
-  - claiming the Check from anywhere but the dais;
-  - an accidental base-kit bypass of the seal, the window or the vault
-    roof. None is intended. Prod's reach measurement (standable
-    surfaces plus the 1.40 m jump) confirms none exists.
-
-  Nothing else is refused.
-- **Separate checks, never solved by bans:**
-  - **No escape from the world:** run the swing everywhere, since it
-    hooks any `StaticBody3D` within 28 m.
-  - **No softlocks:** every rest point is reachable, a canister in the
-    vault can be walked back out, and power OFF strands nobody.
-- **A review instance only.** Offline, with stand-ins that send nothing.
-- **Campaign use later (G5).** The barrier uses `BreakablePanel`'s rated
-  semantics, and §13.2 keeps rated affordances off a mandatory route in
-  composed rooms. So the room would enter the campaign as a declared
-  package with its own base-kit opener, like the D12 minor cards, and
-  not as a generator affordance. That is a later decision, not part of
-  this build.
-
-### 4.6 Teaching, feedback and colour
-- **Colour is an accent on real hardware:**
-  - green on the lever pilot, the raceway and the cradle's pilot;
-  - blue on the cradle's emitter rails and its direction chevrons;
-  - orange on the seal's seams and scarring.
-
-  The arc lane may have blue chevrons at the cradle end only.
-- **Labels** state plain facts: "POWER OFF" on the lever, "IMPACT SEAL"
-  on the bulkhead, and "OPENS FROM THE OTHER SIDE" on the loop door. No
-  label gives away the solution.
-- **Sound** is part of the explanation:
-  - the hum when cocked;
-  - the wind-up whine;
-  - a thud for a glance, a crack for a break.
-
-  D's isolated host had no `Tones` bound ([R] `crossing_d.gd`), so Prod
-  binds sound before playtest.
-- **The seal's glance must look like "not enough", not "immune".** It
-  should spark and scuff, every time.
-
-### 4.7 Anti-frustration
-- **A miss is never far away.** The rack is 8 m from the cradle, there
-  is a spare, and lost canisters come home.
-- **No reach-only-the-floor trap.** Everything the room needs is on the
-  floor or the gallery.
-- **The machine shows its state.** It never fires without a wind-up. It
-  never fires a held object. It never fires at power OFF.
-- **After a failure it still makes sense.** The arc and the glance look
-  the same every time.
-
-### 4.8 Hand-offs
-- **To Prod.** Pick the tier from P0 and tell me which. Measure:
-  - throw repeatability;
-  - the sensor firing exactly once per qualifying impact;
-  - the scatter rest points;
-  - the eye line from the gallery to the Check;
-  - whether glass stops the Static Pulse (for the record only);
-  - whether any review-equippable action deals 12 or more per hit.
-    If none does, the heavy-hit skip stays a documented campaign
-    alternate and goes untested here.
-
-  Review kit: the base kit plus the swing tether **everywhere**, with no
-  area limit. Enemy-free.
-- **To Arty.** One blue device (the cradle: a tray, emitter rails, a
-  visible cocked/fired motion) and one orange seal (casing, seams, a
-  glance scuff state, a break-apart). Both with power-off, power-on and
-  impact states, and Prod's footprints.
-- **Cut order if time runs short:**
-  1. the ledge;
-  2. the loop corridor, replaced by walking out through the broken seal;
-  3. tier 1, falling back to tier 2.
-
-  Never cut: the light-crate lesson, the glance feedback, the visible
-  power line.
+The player could also do 2 before 1. Powering a plate with something
+already on it arms it, so either order works.
 
 ---
 
-## 5. Later gates: planned, not commissioned
+## 3. Mechanism numbers (from the G0 code, not invented)
 
-### 5.1 Ordinary-room grammar (G2, only after Skyiah approves a D-18 playtest)
-- **One question per room, plus zero to two supporting systems.** Not a
-  rule that every room needs all three.
-- **The verbs already exist:**
-  - power → launch;
-  - movement → destruction;
-  - destruction → access;
-  - power → bridge;
-  - traversal → machine control;
-  - cover → sightline.
-- **Intensities:**
-  - quiet connector;
-  - discovery room;
-  - physical puzzle;
-  - multi-step interaction;
-  - combat-ready room.
-- **Generated or hand-built.**
-  - Single-cause rooms ("introduce") can probably be generated from
-    existing affordances.
-  - Throw or impact chains like D-18 stay hand-built packages until
-    proven repeatable.
-- **Failure modes to check:**
-  - mixed systems that don't affect each other;
-  - colour painted over whole primitives;
-  - a false puzzle gate;
-  - interaction cycles that softlock;
-  - movement forced into cramped corridors;
-  - a clever skip wrongly nerfed.
-- **The AP side for every room:**
-  - a base-kit route to everything AP counts;
-  - optional Echo routes by default;
-  - persistence follows `PoweredLink`: consequences persist, live
-    signals don't.
+Throw speed into the face is **11.0 m/s**. The energy a thrown object
+brings is ½·m·11² = **60.5·m J**, which is **2.42·m HP** at 25 J/HP.
+The rating: a blow under 12 HP is refused, and the shutter holds 40 HP
+in total.
 
-### 5.2 One-charger encounter card (G3, design only)
-In the Upper Yard's geometry, one charger and nothing else.
+| Blow | HP | Result |
+|---|---|---|
+| The 4 kg crate, thrown | 9.7 | **Refused**: flash, knock, label. The teaching beat. |
+| Any thrown object under ~4.9 kg | under 12 | Refused |
+| A thrown object of 5–16 kg | 12–40 | **Wears** the shutter (seams brighten). Two or more throws break it. No such object is in this room (v2 option, §8). |
+| **The 36 kg weight, thrown** | **≈87** | **Breaks it in one throw** (2.2× the 40 HP) |
+| The weight dropped, carried into the face, or rolled | ≈0 | A carried body never counts, and a drop has no speed into the face |
+| Static Pulse (6) | 6 | Refused |
+| Any single hit ≥ 12 (an Echo) | 12+ | Counts, and adds up: 4 hits of 12 break it |
+| A PUSH that sends the weight in at ≥ 4.1 m/s | ≥ 12 | Counts. At ≥ 7.5 m/s it breaks in one blow. |
 
-- **Before it notices you.** It noses along the orange crates at the
-  ramp's foot, a guard checking its stack, visible from the glass
-  alcove.
-- **Notice.** Only on line of sight. Today notice is a distance and
-  works through walls ([R] `enemy.gd`); for this one enemy it should
-  need a clear view.
-- **Wind-up.** About 0.8 s: it stops, lowers its head, scrapes, and its
-  eyes flare, with sound.
-- **Commit.** It charges straight at where you were when the wind-up
-  ended, and stops tracking you.
-- **Miss.** It overruns about 3 m. Hitting a wall or full cover staggers
-  it for about 1.2 s, its weak window. Overrunning at the ramp's top
-  takes it off the edge for a longer recovery.
-- **Crates.** A charge into an orange crate breaks it, so the fight
-  changes the cover. This is a hypothesis: the charge would need to
-  reach the damageable group.
-- **Being hit.** Every hit visibly flinches it, with sound. Only a heavy
-  hit, or a burst inside the wind-up, cancels the charge. So the player
-  chooses: burst to interrupt, or dodge and punish the stagger.
-- **Pacing to measure:**
-  - from first sight, its first wind-up starts before baseline fire
-    could kill it;
-  - there are at least two charge cycles before it dies to a standing
-    player;
-  - HP is the last lever to touch.
-
-### 5.3 What this does not start
-No generator or composer changes, no schema, no AI framework, and no
-second room. Each later gate needs Skyiah's playtest of the previous
-one.
+| Timing | Value |
+|---|---|
+| Arming (settled and released, then the ramp) | 0.6 s |
+| Re-arm after a throw | 1.0 s |
+| Throws per arrival on the plate | 1. Lift the object off and set it down again to re-fire. |
+| Flight | 1.0 s |
+| Unpowered | Dud: flicker and click, nothing moves |
 
 ---
 
-## 6. Owner playtest card (play enemy-free, with sound on)
-1. What caught your eye first, and did you want to reach the vault?
-2. When the crate hit the seal, did you know what to try next?
-3. Did lever, cradle and seal feel like one machine, or three props?
-4. What else did you try? Did the room let you?
-5. When a throw missed or you got it wrong, did you want another go?
-6. After the seal broke, did the room feel different coming back
-   through it?
+## 4. Recovery and restart
+
+| Case | Rule |
+|---|---|
+| **Weight leaves its allowed volume, or falls under the floor** | It comes home to its stand. **The allowed volume is the hall plus the vault.** After the break, a weight that flies on through the doorway stays in the vault, where it can be reached. |
+| **Weight at rest out of reach** | Designed out (0 of 40 in G0). **Must also hold for:** a `lightened` overshoot (it hits the wall above the door, then falls; where does it settle?); a throw that hits a player standing in the arc; and the crate and weight on the plate together. |
+| **Crate** | Same home rule; its home is the plate. It is never needed again, so it may lie wherever it falls. |
+| **Several bodies on the plate** (crate left on it while the weight is set down beside it, then the lever) | **Prod measures what happens.** Acceptable outcome: the weight still reaches the shutter at ≥1,000 J, **or** lands somewhere reachable for a retry. If neither holds, throw the bodies one at a time, oldest first, each with its own 0.6 s arming. |
+| **Pause mid-flight** | It resumes (measured). |
+| **RESTART** (review menu) | Everything back, as measured in G0: unpowered, lever OFF, line dark, shutter whole, weight home, crate on the plate. Also: the loop door latched again, the Check stand-in unclaimed. |
+| **Inside the vault with power OFF** | Nobody is stranded. The broken doorway is open on foot, and so are the onward and loop doors. |
+
+The weight never has to be carried back through other rooms. The
+deepest retry is: walk to the stand, carry it about 7 m, set it down.
+
+---
+
+## 5. Progression and Echo-skip rules
+
+**Required, with base-kit routes:**
+
+| Item | Route | Uses |
+|---|---|---|
+| Stand-in Check `relay_vault` (where an allocated Check would go) | Stair → lever → weight → plate → shutter → dais | Walk, carry, interact. No Echo, and no ranged hit needed. |
+| Onward door (the exit) | Same | Same |
+
+- **Under today's AP rule this is compliant.** An Echo may gate a
+  Check, an AP-relevant key or an exit only if AP declares it, and AP
+  declares none ([T] `docs/design-proposals/06_THE_AMALGAM.md:1494-1500`;
+  `apworld/archipepsi/__init__.py:111-123`). This room has no AP key and
+  grants no Echo, so the in-Zone Echo limit (DESS-28) isn't engaged.
+- **The base-kit route is proven** by G0's 40 of 40, and G1's test
+  repeats it in the real room.
+
+**Optional:**
+- the local stand-in `relay_ledge` (swing from a truss, or any movement
+  Echo);
+- the loop shortcut.
+
+**Legal, never blocked:**
+1. **Heavy hits.** Any Echo dealing ≥ 12 per hit wears the shutter, and
+   enough hits open it. This skips the whole machine.
+2. **PUSH or PULL.** Shove the weight onto the plate instead of carrying
+   it, or straight into the shutter. Its speed decides whether the blow
+   counts.
+3. **`lightened`.** The weight is lighter to carry, and the plate throws
+   it twice as hard, so it overshoots and misses. That is a harmless,
+   legal discovery. Let the Status run out, then throw again.
+4. **Movement Echoes.** Reach the ledge, skip the stair, or any line
+   the player finds.
+5. **The swing tether everywhere** in the review kit, with no area
+   limit.
+6. **Anything else** that reaches the same state by the room's own
+   physics.
+
+**Refused, and only these:**
+- **Claiming the Check** from anywhere but its claim volume on the
+  dais. Not through the window, not through the doorway.
+- **An accidental base-kit bypass** of the shutter, the window or the
+  vault roof, if one exists. None is intended. Prod's reach measurement
+  confirms there is none.
+
+**Separate checks, never solved by banning an ability:**
+- **No escape from the world.** The roof, corridor and vault are closed.
+  Probe it with the tether hooking any solid surface, everywhere.
+- **No softlock.** §4.
+- **AP correctness.** Above.
+
+**Campaign note, for later (G5), not part of G1:** a generated world feature "may never
+lie on the mandatory path, host an AP reward, an exit or an objective"
+(ECHOES §13.2, enforced by `validate_zone`: [T]
+`bridge/archipepsi_bridge/schemas/zone.py:377`, `layout.py:967`). So this room would join the campaign as a declared,
+hand-built package with its own base-kit opener, like the D12 minor
+cards. It would not be a generator affordance.
+
+---
+
+## 6. Feedback and colour
+
+**Colour is an accent on hardware:**
+- **green** on the lever pilot, the raceway and the plate's power
+  terminal;
+- **blue** on the plate's chevrons and leading lip (not the slab);
+- **orange** on the shutter's bands and seams.
+
+**Sound and light carry the explanation.** These are Prod's states, as
+already listed for Arty:
+
+| Moment | What you hear and see |
+|---|---|
+| Lever on | Clunk, then the line lights |
+| Plate idle | Hum |
+| Arming | Rising tick, chevron ramp |
+| Throw | Thump and flash |
+| Refused hit | Dull knock and seam flash |
+| Wear | A heavier clang; the seams stay bright |
+| Break | Crack, then the slabs fall |
+
+The lab already wires the game's sound bank. G1 adds sounds for the
+plate and the shutter; existing bank tones or simple placeholders are
+fine.
+
+**Labels, plain facts only:**
+- "POWER OFF" on the lever;
+- "IMPACT SHUTTER" on the shutter;
+- "NEEDS A HEAVIER HIT" (already in the shutter);
+- "OPENS FROM THE OTHER SIDE".
+
+There is no instruction text.
+
+**The crate and weight must look their mass.**
+- **The crate:** a flimsy, open-sided plastic tote that wobbles when it
+  lands.
+- **The weight:** dense steel, a squat block with a carry handle. Before
+  it moves, it should look like it would hurt.
+
+---
+
+## 7. G1 build list for Prod (all reuse, nothing general)
+
+1. **Reuse from G0:** `ObjectPlate`, `Flight` and `ImpactShutter`
+   (`impact_lab_parts.gd`), the recovery rule and the restart.
+2. **Geometry per §2.2:**
+   - the gallery and stair;
+   - the vault with its dais, onward door and loop door (latched,
+     opened from the vault side);
+   - the enclosed loop corridor;
+   - the ledge with its local stand-in.
+3. **The crate** (4 kg) on the plate at the start; the weight on its
+   stand.
+4. **Live checks:**
+   - lever first: the crate is refused and the shutter is unharmed;
+   - the weight breaks it (repeat your 40-throw spread);
+   - weight first, then the lever;
+   - the crate and the weight on the plate together (§4);
+   - `lightened`: where it settles;
+   - a player standing in the arc;
+   - the loop door opens from the vault only;
+   - RESTART resets all the §4 items;
+   - the eye line from the gallery to the Check;
+   - a reach measurement on the ledge and the vault roof;
+   - the tether everywhere, with no escape;
+   - 0 bridge connections, and the stand-ins send nothing.
+5. **Launch modes:**
+   - **default:** enemy-free, base kit plus the swing tether
+     everywhere;
+   - **second:** a labelled heavy-hit mode, **only if** an existing
+     Echo action deals ≥ 12 per hit. If none does, say so and don't
+     invent one.
+6. **The delivery note says what each thing does, not how to solve
+   the room.**
+
+**Cut order if time runs short:**
+1. the ledge;
+2. the loop corridor (exit through the broken doorway instead);
+3. the crate's wobble polish.
+
+**Never cut:** the crate's refused throw, the wear and refusal feedback,
+the visible power line, the vault's view.
+
+---
+
+## 8. Options deferred: not in G1
+- **A 10 kg toolbox** somewhere in the room, so two throws open the
+  shutter too. It's a second legal solution, but it muddies the first
+  lesson. Revisit after Skyiah plays.
+- **Riding the plate.** It throws objects only. Player launches stay on
+  the validated `LaunchPad`.
+- **A charger baited into the shutter.** Its rush is about 13 m/s, which
+  would be far more than 1,000 J. That makes it a strong combat-ready
+  variant of this room, after G3 (see D-19).
+
+---
+
+## 9. Owner playtest card (enemy-free, sound on)
+1. What caught your eye first? Did you want to reach the vault?
+2. When the crate bounced off, did you know what to try next?
+3. Did lever, plate and shutter feel like one machine?
+4. What else did you try, and did the room let you?
+5. Did a miss or a mistake make you want another go?
+6. Did coming back by the loop feel like the room had changed?
 7. Would you happily play another empty room built like this?
-8. Did it make you want one more interaction, or just promise future
-   content?
 
-A bot finishing the intended sequence is not a pass. Skyiah is.
+A bot completing the sequence is not a pass. Skyiah is.
 
 ---
 
-## 7. Decisions for Skyiah
-1. **Which concept:** A Impact Relay (recommended), B, C, or a hybrid.
-2. **If the throw isn't reliable:** is the lift-and-drop version
-   (tier 2) acceptable for this test? Recommended: yes. It is the same
-   puzzle without the long arc.
-3. **Review kit:** base kit plus the swing tether everywhere, with no
-   area limit? Recommended: yes.
-4. **The onward door inside the vault,** so the room gates the way on
-   like a real campaign room? Recommended: yes. The alternative is a
-   loop with the exit outside.
+## 10. Later gates (planned, not commissioned)
+- **Room grammar (G2), after Skyiah approves G1:**
+  - one question per room, plus zero to two supporting systems;
+  - quiet rooms remain;
+  - a base-kit route to everything AP counts, and Echo routes open by
+    default;
+  - live signals aren't saved, but consequences persist (the
+    `PoweredLink` model).
+- **Encounters:** the charger's identity and behaviour study is **D-19**
+  (`docs/D19_CHARGER_STUDY.md`). It is design only.
+- **No generator, composer or schema changes,** and no second room.
