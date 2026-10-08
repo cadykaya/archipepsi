@@ -5149,6 +5149,22 @@ colours are the owner's 2026-10-02 meanings, kit-local
 
 Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
 
+## Batch 064 — blue movement and orange breakable, to the green kit's bar (2026-10-08)
+
+*Arty — 2026-10-08*
+
+**CANDIDATE.** For review after the owner's Crossing D playtest; not in
+the content pack; not integrated. Fitted to Production's `LaunchPad` and
+`DestructibleCover` contracts (`tools/blender/build_crossing_affordances.py`).
+
+| asset | metrics | what it is |
+|---|---|---|
+| `ca_launch_cradle` | 384 tris · 2.40 × 2.40 × 1.47 m · 32.0 texels/m | launch cradle for a 2.4 m `LaunchPad`: kick tray, blue wedge fins (folded inward when unfed), emitter rails, a boom for BLOCKED, green-fed rear housing; colliders on frame and housing |
+| `ca_breakable_brace` | 372 tris · 1.50 × 0.90 × 1.40 m · 32.0 texels/m | shoring frame for `DestructibleCover`: station panels in orange break-away clamps, orange scored top rails and end straps; four panels hinged for dented and breaching |
+| `ca_breakable_brace_wreck` | 168 tris · 1.50 × 1.24 × 0.49 m · 32.0 texels/m | what a broken brace leaves: skids, low panels, post stubs, a fallen panel, sprung clamps; no collision |
+
+Handoff: `docs/art/reports/2026-10-08-crossing-identity-and-affordances.md`.
+
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
 
 **All four large shells are `review: "pass"`.** Three authorities had to

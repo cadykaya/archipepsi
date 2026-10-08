@@ -194,6 +194,24 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-08: Crossing identity studies and the blue/orange candidate
+  kit (Batch 064) are DELIVERED; STOP.** It's on
+  `claude/archipepsi-art-crossing-identity-2026-10-08`, from `9ae04155`.
+  This was asked after the owner's Crossing D playtest.
+  * Handoff: `docs/art/reports/2026-10-08-crossing-identity-and-affordances.md`.
+  * What it is:
+    * three overlay studies and a recommended hybrid, from one camera
+      in D;
+    * a measured station-noise A/B: the ceilings use the trim
+      texture, and the wall's base course repeats every 4 m;
+    * `ca_launch_cradle` (fits `LaunchPad`) and `ca_breakable_brace`
+      plus a wreck (fits `DestructibleCover`);
+    * a proposed green-stripe cap, not applied;
+    * the enemy read from D, and a deferred charger drawing.
+  * Nothing integrated; no production colour changed; Batch 063 and
+    PR #19 are untouched.
+  * Next: the owner picks a direction. The runtime is Prod's and the
+    room is Dess's.
 * **2026-10-07: the kit's mapping onto Crossing D is handed to Prod;
   STOP.** It's on the same branch. The owner asked for support of
   Prod's trial, not a new kit. Prod's trial isn't pushed, so there was
