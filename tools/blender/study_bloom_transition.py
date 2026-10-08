@@ -9,6 +9,17 @@ rooms that belong to the visited game, then Bloom again on the way back
 to station. Bloom is the TRANSFORMATION -- what turns one reality's
 architecture into the other's -- not a decoration of every room.
 
+APPROVED DIRECTION, later on 2026-10-08 (owner), KEPT FOR FUTURE USE --
+not a production implementation. What is approved is the approach:
+Bloom physically displaces station panels, and the foreign architecture
+enters through the affected surfaces, in the order station -> first
+intrusion -> contamination -> visited-world architecture -> Bloom ->
+station. The owner found the hand-over into the visited world still
+somewhat abrupt; that waits for a real Multiworld identity to test,
+because the TEMP-WORLD look here is a placeholder. Not approved, and not
+to be built from this: a universal crystal decoration, a global Crossing
+reskin, or a procedural world-transformation system.
+
 Five stages, each one .glb authored in Crossing D's Central Hall
 coordinates, photographed from the same camera by
 `tools/crossing_capture/dcap.gd` on the quieted station (ceilings and the

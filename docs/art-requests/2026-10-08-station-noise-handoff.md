@@ -59,3 +59,44 @@ T2 is R plus two local textures, applied to these seven nodes as their own mater
 | **T2** | The lift clearly loudest. It costs two new local textures and the promotion step above. |
 
 The two can be done in order: R first, then T2's ceiling variant, if the owner wants the last step.
+
+## Update, later on 2026-10-08: the stair, and the owner's preference
+
+**The owner:**
+- prefers T2's direction, and for the ceiling, T2's **local** quieter treatment, with no global texture replacement;
+- finds that the stair still has too much visual noise;
+- wants the lift to attract attention, while the stair stays subordinate on first arrival but still recognisable as a route and a later shortcut.
+
+**Why the stair stays noisy after T2.** Crossing D's `_stair()` builds the yard stair from 36 full-height boxes, one per 0.25 m rise. Its open side (z −9.5, the side the hall sees) is a 12 × 9 m sawtooth of stacked box faces. T2 quiets that face's texture but not its geometry.
+
+**The candidate, C2: T2 plus one visual-only stringer.** It's a single thin plate (0.08 m) on the open side.
+- **Its top:** it runs 5 cm above the line through the step nosings and flattens over the last tread, so every step's side corner is hidden behind one calm face.
+- **Its material:** the stair's own. After T2 that's the quiet floor role, so the flight reads as one concrete mass.
+- **Treads and risers:** they stay in that quiet concrete, which has no stripes, and light alone tells them apart. From the foot of the stair, the treads still read along the top edge.
+- **What doesn't change:** no box, collider, step count or traversal number, and nothing about the stair generator. The plate sits outside the 2.5 m walk width, with no collision.
+
+| Variant (hall-stair view, same camera) | lift tower | dead-end stair | ceiling | lift ÷ stair |
+|---|---|---|---|---|
+| A as played | 30.2 | 29.5 | 46.7 | 1.02 |
+| T2 | 30.2 | 22.1 | 21.8 | 1.36 |
+| C1: stringer in the wall material (tried, not recommended) | 30.2 | 21.6 | 21.8 | 1.40 |
+| **C2: stringer in the stair's quiet concrete** | 30.2 | **13.4** | 21.8 | **2.26** |
+
+[N4: A, T2 and C2 from the hall-stair, first-arrival and stair-foot cameras](../art/review/bloom_g1_2026-10-08/N4_stair_skirt_A_T2_C2.png)
+
+C1 merged the stair into the north wall behind it. The stair lost its mass, and the wall's courses kept the noise.
+
+**For Prod: the stringer, for `_yard_stair()` only.** Add it after the `_stair("YardStair", …)` call, as one visual-only node: a `MeshInstance3D` with a prism mesh, or a `CSGPolygon3D` with `use_collision = false`, which is what the study used. The polygon is in (x, y), extruded over z from `STAIR_Z.y` to `STAIR_Z.y + 0.08`:
+
+```
+steps = ceili(YARD_FLOOR / STAIR_RISE)                 # 36
+tread = (STAIR_TOP_X - STAIR_FOOT_X) / steps           # 0.3306
+cap   = 0.05
+points = [(STAIR_FOOT_X, 0), (STAIR_TOP_X, 0),
+          (STAIR_TOP_X, YARD_FLOOR + cap),
+          (STAIR_FOOT_X + (steps - 1) * tread, YARD_FLOOR + cap),
+          (STAIR_FOOT_X, STAIR_RISE + cap)]
+material = the stair's own (_mat(kind), after T2's local quiet floor)
+```
+
+The study's source is `tools/crossing_capture/stair_skirt_study.py`. It writes the A, T2 and C2 specs, and the capture driver's `profiles` op draws the plate.

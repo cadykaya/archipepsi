@@ -508,13 +508,13 @@
       "lands": {
         "root": "WOBBLE -- Prod's code, not a pose: a damped rock of the visual child about the floor's centre, about 6 degrees, 3 swings in 0.4 s, on a landing harder than a set-down. D-18 section 7 lists this polish as cuttable"
       },
-      "reads_without_colour": "open on every side and the palest loose thing in the room: you see through it",
+      "reads_without_colour": "a thin moulded container with round vents and a thick rolled rim: you see the floor through it, and it is the palest loose thing in the room",
       "refused": "nothing on the tote: the shutter's flash and knock say it",
       "rest": "as built"
     },
     "status": "CANDIDATE -- for Impact Relay G1 (D-18 Concept A on Prod's G0 mechanism); not in the content pack; not integrated",
     "texel_density": 32.0,
     "texels_per_metre": 32,
-    "triangles": 228
+    "triangles": 282
   }
 }

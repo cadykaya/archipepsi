@@ -194,6 +194,22 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-08 (fourth pass): Batch 065 APPROVED for G1 integration;
+  tote v2; stair stringer comparison. STOP.** Same branch.
+  * Report: `docs/art/reports/2026-10-08-g1-approval-tote-v2-stair-skirt.md`.
+  * G1: all five pieces are approved as candidate art. The mechanics are
+    unchanged, so the placeholder and art versions can be compared. The
+    handoff is updated, and the launcher's optional colliders stay off.
+  * Tote v2 (282 tris, same box and nodes): a moulded satin-ivory
+    container with round vents and a rolled rim. The weight is unchanged.
+  * Stair: C2, T2 plus one visual-only stringer. Stair 13.4 against
+    T2's 22.1; lift ÷ stair 2.26. The code sketch is in the noise handoff.
+  * The quiet ceiling is preferred; promoting it to a builder is still
+    to do.
+  * Bloom: the direction is approved and kept, with no implementation.
+    Shunter: the plough and vent are gameplay-test candidates, with no
+    model.
+  * Next: only Prod's specific fit, collision and state issues.
 * **2026-10-08 (third pass): Batch 065 HANDED TO PROD for G1; tote and
   weight added; noise split into R and T2. STOP.** Same branch.
   * Owner: there is no new launcher or barrier design round before the

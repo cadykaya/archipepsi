@@ -88,7 +88,10 @@ WEIGHT = (0.45, 0.45, 0.60)       # WEIGHT_SIZE, 36 kg, MEDIUM
 #: module cannot be imported here without building its family.)
 HANDLING = "#191d23"
 LIGHTENED_REST = "#4a5058"
-TOTE_PLASTIC = "#c9ccc4"          # pale, no gameplay hue
+TOTE_PLASTIC = "#d8ccb0"          # satin ivory: warm, no gameplay hue
+TOTE_RIM = "#e6ddc8"              # the rolled rim, a shade lighter
+#: v1's plastic, kept for the record: "#c9ccc4", a pale cold grey the
+#: owner read as a developer placeholder (2026-10-08).
 WEIGHT_CAST = "#43474d"           # dark cast steel
 WEIGHT_MACHINED = "#8a8f95"       # the bright worn edges of a heavy thing
 
@@ -118,9 +121,16 @@ def _canvas(name):
                 canvas.set(x, y, trim[0])
         return canvas
     if name == "ir_tote":
-        # Thin moulded plastic: pale, almost flat, a faint mould drift.
+        # Moulded satin plastic: warm ivory, a soft flow mottle so it is
+        # not one flat value, nothing like the station's painted steel.
         canvas = paintkit.Canvas(SIZE, TOTE_PLASTIC)
-        paintkit.tonal_drift(canvas, surface, amount=0.02, cell_metres=1.0)
+        paintkit.tonal_drift(canvas, surface, amount=0.035, cell_metres=0.6)
+        paintkit.broad_patches(canvas, surface, [TOTE_RIM], cell_metres=0.5,
+                               density=0.25, strength=0.08)
+        return canvas
+    if name == "ir_tote_rim":
+        canvas = paintkit.Canvas(SIZE, TOTE_RIM)
+        paintkit.tonal_drift(canvas, surface, amount=0.02, cell_metres=0.8)
         return canvas
     if name == "ir_cast":
         # Cast steel: dark, heavy, a slow mottle -- nothing painted on it.
@@ -366,51 +376,166 @@ def _rough(name, value):
     return name
 
 
+def _outline(half, radius, z):
+    """A rounded rectangle at height `z`: 12 points, counter-clockwise
+    from +X, three a corner (two 45-degree segments), so the corners
+    read as moulded, not cut. Corner c owns points 3c..3c+2; the straight
+    side c runs from point 3c+2 to point 3c+3."""
+    points = []
+    for cx, cy, a0 in ((1, 1, 0), (-1, 1, 90), (-1, -1, 180), (1, -1, 270)):
+        for k in range(3):
+            a = math.radians(a0 + 45 * k)
+            points.append((cx * (half - radius) + radius * math.cos(a),
+                           cy * (half - radius) + radius * math.sin(a), z))
+    return points
+
+
+def _lerp(a, b, f):
+    return tuple(a[i] + (b[i] - a[i]) * f for i in range(3))
+
+
+def _mesh(name, verts, faces, mat):
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    common.assign(obj, kit._material(mat))
+    return obj
+
+
+#: The vents, in a side panel's own (s along, t up) parameters: three
+#: upright stadium slots, about 4.7 cm wide and 17 cm tall, round-ended.
+VENT_S = (0.22, 0.5, 0.78)
+VENT_HALF_S = 0.065
+VENT_T = (0.16, 0.70)
+VENT_ARC = 4                       # segments in each round end
+
+
+def _vent_panel(b0, b1, t0, t1, verts, faces):
+    """One straight side, from bottom edge b0-b1 up to top edge t0-t1,
+    with VENT_S's round-ended slots cut through it. Built as bands, posts
+    and two small fans a slot end, so it stays a few dozen triangles."""
+    def at(s, t):
+        return _lerp(_lerp(b0, b1, s), _lerp(t0, t1, s), t)
+
+    def quad(a, b_, c, d):
+        base = len(verts)
+        verts.extend([a, b_, c, d])
+        faces.append((base, base + 1, base + 2, base + 3))
+
+    def tri(a, b_, c):
+        base = len(verts)
+        verts.extend([a, b_, c])
+        faces.append((base, base + 1, base + 2))
+
+    side = math.dist(b0, b1) * 0.5 + math.dist(t0, t1) * 0.5
+    height = math.dist(_lerp(b0, b1, 0.5), _lerp(t0, t1, 0.5))
+    rt = VENT_HALF_S * side / height          # a round end's t radius
+    lo, hi = VENT_T
+    quad(at(0, 0), at(1, 0), at(1, lo), at(0, lo))
+    quad(at(0, hi), at(1, hi), at(1, 1), at(0, 1))
+    edges = [0.0]
+    for sc in VENT_S:
+        edges += [sc - VENT_HALF_S, sc + VENT_HALF_S]
+    edges.append(1.0)
+    for k in range(0, len(edges), 2):
+        quad(at(edges[k], lo), at(edges[k + 1], lo),
+             at(edges[k + 1], hi), at(edges[k], hi))
+    for sc in VENT_S:
+        def arc(cen_t, deg):
+            a = math.radians(deg)
+            return at(sc + VENT_HALF_S * math.cos(a), cen_t + rt * math.sin(a))
+        step = 180.0 / VENT_ARC
+        half = VENT_ARC // 2
+        bottom, top = lo + rt, hi - rt
+        for k in range(half):       # the two corners under the lower end
+            tri(at(sc - VENT_HALF_S, lo), arc(bottom, 270 - step * k),
+                arc(bottom, 270 - step * (k + 1)))
+            tri(at(sc + VENT_HALF_S, lo), arc(bottom, 360 - step * k),
+                arc(bottom, 360 - step * (k + 1)))
+        for k in range(half):       # and the two over the upper end
+            tri(at(sc + VENT_HALF_S, hi), arc(top, step * k),
+                arc(top, step * (k + 1)))
+            tri(at(sc - VENT_HALF_S, hi), arc(top, 90 + step * k),
+                arc(top, 90 + step * (k + 1)))
+    return at
+
+
 def tote():
     """`relay_crate`: 4 kg, carriable, thrown and refused. Dess: "a
     flimsy, open-sided plastic tote that wobbles when it lands".
 
-    Open on every side: four corner posts, a top rim, a floor and two
-    slender ribs a face, so you see the floor through it from across the
-    hall. Pale and almost flat, so it is the brightest loose thing in the
-    room and it has no mass in it. The two hand slots under the end rims
-    are the only dark parts: Batch 043's handling colour, where a hand
-    takes it.
+    v2, later on 2026-10-08 (owner: v1 "still looks too much like a gray
+    developer placeholder rather than a lightweight plastic container").
+    A moulded container, not a cage:
+    * thin walls with a slight draft (0.43 m at the floor, 0.47 m under
+      the rim), rounded corners, and three ROUND-ENDED vents a side;
+    * a thick rolled rim all round, the widest part, a shade lighter;
+    * satin ivory plastic -- warm, not the station's cold grey, low
+      roughness so it takes a soft highlight, never metallic;
+    * dark moulded hand recesses on the two end walls, Batch 043's
+      handling colour, where a hand takes it.
+    The walls are single, double-sided surfaces: thin is the point.
+    The box, origin and everything Prod tests are unchanged.
     """
-    _rough("ir_tote", 0.55)
+    _rough("ir_tote", 0.40)
+    _rough("ir_tote_rim", 0.36)
     _rough("ir_grip", 0.62)
     w, d, h = TOTE
-    t = 0.025
     lo, hi = -h / 2.0, h / 2.0
-    floor_top = lo + t
-    rim = 0.03
-    body = [b("tote_floor", (w, d, t), (0.0, 0.0, lo + t / 2.0), "ir_tote")]
-    post = 0.04
-    for sx in (-1.0, 1.0):
-        for sy in (-1.0, 1.0):
-            body.append(b("tote_post", (post, post, h - t),
-                          (sx * (w - post) / 2.0, sy * (d - post) / 2.0,
-                           floor_top + (h - t) / 2.0), "ir_tote"))
-    for sy in (-1.0, 1.0):
-        body.append(b("tote_rim", (w - 2 * post, t, rim),
-                      (0.0, sy * (d - t) / 2.0, hi - rim / 2.0), "ir_tote"))
-    for sx in (-1.0, 1.0):
-        body.append(b("tote_rim", (t, d - 2 * post, rim),
-                      (sx * (w - t) / 2.0, 0.0, hi - rim / 2.0), "ir_tote"))
-    rib_h = h - t - rim
-    rib_z = floor_top + rib_h / 2.0
-    for k in (-1.0, 1.0):
-        for sy in (-1.0, 1.0):
-            body.append(b("tote_rib", (0.03, t, rib_h),
-                          (k * 0.085, sy * (d - t) / 2.0, rib_z), "ir_tote"))
-        for sx in (-1.0, 1.0):
-            body.append(b("tote_rib", (t, 0.03, rib_h),
-                          (sx * (w - t) / 2.0, k * 0.085, rib_z), "ir_tote"))
+    wall_top = hi - 0.03
+    bottom = _outline(0.215, 0.04, lo)
+    top = _outline(0.235, 0.05, wall_top)
+    verts, faces = [], []
+    # The floor, one moulded plate 1 cm up on the walls' foot: at the
+    # box's own bottom it would be coplanar with whatever the tote rests
+    # on (the plate's deck) and z-fight there.
+    faces.append(tuple(range(len(verts), len(verts) + 12)))
+    verts.extend(_outline(0.215, 0.04, lo + 0.01))
+    # The rounded corners: two facets each, floor to rim.
+    for c in range(4):
+        for k in range(2):
+            i, j = 3 * c + k, 3 * c + k + 1
+            base = len(verts)
+            verts.extend([bottom[i], bottom[j], top[j], top[i]])
+            faces.append((base, base + 1, base + 2, base + 3))
+    panels = []
+    for c in range(4):
+        i, j = 3 * c + 2, (3 * c + 3) % 12
+        panels.append(_vent_panel(bottom[i], bottom[j], top[i], top[j],
+                                  verts, faces))
+    shell = _mesh("tote_shell", verts, faces, "ir_tote")
+    # The rolled rim: up the inside, over the crown, down the outside to
+    # a short lip. Its outer face is the box's 0.50 m.
+    rings = [top, _outline(0.232, 0.047, hi - 0.008),
+             _outline(0.242, 0.057, hi), _outline(0.25, 0.065, hi - 0.015),
+             _outline(0.25, 0.065, hi - 0.042)]
+    verts, faces = [], []
+    for r in range(len(rings) - 1):
+        for i in range(12):
+            j = (i + 1) % 12
+            base = len(verts)
+            verts.extend([rings[r][i], rings[r][j], rings[r + 1][j],
+                          rings[r + 1][i]])
+            faces.append((base, base + 1, base + 2, base + 3))
+    rim = _mesh("tote_rim", verts, faces, "ir_tote_rim")
+    body = [shell, rim]
     kit._tile(body)
+    # Hand recesses: a round-ended dark plate on each end wall's upper
+    # band, 1.5 mm proud of the wall (inside the parts-touch tolerance).
     grips = []
-    for i, sx in enumerate((-1.0, 1.0)):
-        g = b("grip_hand_%d" % i, (t, 0.16, 0.04),
-              (sx * (w - t) / 2.0, 0.0, hi - rim - 0.02), "ir_grip")
+    for i, c in enumerate((1, 3)):      # side 1 faces -X, side 3 faces +X
+        at = panels[c]
+        normal = (-1.0 if c == 1 else 1.0, 0.0, 0.0)
+        pts = []
+        for sc, a0 in ((0.5 + 0.14, -90), (0.5 - 0.14, 90)):
+            for k in range(VENT_ARC + 1):
+                a = math.radians(a0 + 180.0 * k / VENT_ARC)
+                p = at(sc + 0.06 * math.cos(a), 0.85 + 0.17 * math.sin(a))
+                pts.append(tuple(p[n] + normal[n] * 0.0015 for n in range(3)))
+        g = _mesh("grip_hand_%d" % i, pts, [tuple(range(len(pts)))],
+                  "ir_grip")
         g.name = "grip_hand_%d" % i
         grips.append(g)
     kit._tile(grips)
@@ -429,8 +554,10 @@ TOTE_STATES = {
                       "harder than a set-down. D-18 section 7 lists this "
                       "polish as cuttable"},
     "refused": "nothing on the tote: the shutter's flash and knock say it",
-    "reads_without_colour": "open on every side and the palest loose "
-                            "thing in the room: you see through it",
+    "reads_without_colour": "a thin moulded container with round vents "
+                            "and a thick rolled rim: you see the floor "
+                            "through it, and it is the palest loose thing "
+                            "in the room",
 }
 
 

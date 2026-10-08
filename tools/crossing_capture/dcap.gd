@@ -25,6 +25,9 @@ extends SceneTree
 ##   "hide": ["NameFragment", ...]  any room node whose name contains one.
 ##   "hide_boxes_of": ["pads", "covers"]  the BoxMesh visuals of a room list.
 ##   "retexture": [{"match": "Ceiling", "png": "/abs.png"}]  per-node repaint.
+##   "profiles": [{"name", "points": [[x, y], ...], "z": [z0, z1],
+##       "like": "NameFragment", "png": "/abs.png"}]  visual-only
+##       extruded polygons (CSG, no collision), for a skirt or stringer.
 ##   "calls": [["method", [args]]]  on the room, before shooting.
 ##   "shots": [{"name": n, "eye": [x, y, z], "look": [x, y, z],
 ##       "fov": 90, "gray": false}]
@@ -154,6 +157,42 @@ func _run() -> void:
 		lamp.light_energy = float(item.get("energy", 1.0))
 		lamp.omni_range = float(item.get("range", 10.0))
 		room.add_child(lamp)
+	# Visual-only extruded profiles (a study's skirt or stringer):
+	# [{"name": n, "points": [[a, b], ...], "plane": "xy", "z": [z0, z1],
+	#   "like": "NameFragment", "png": "/abs.png"}]. The polygon is in
+	# (x, y) at depth z0..z1, painted with the material of the first room
+	# mesh whose name contains `like` (after any retexture), or that
+	# material repainted from `png`. CSG with use_collision OFF: nothing
+	# the player or a body touches changes.
+	for item: Dictionary in _spec.get("profiles", []):
+		var shape := CSGPolygon3D.new()
+		shape.name = str(item.get("name", "StudyProfile"))
+		var points := PackedVector2Array()
+		for p: Array in item["points"]:
+			points.append(Vector2(float(p[0]), float(p[1])))
+		shape.polygon = points
+		shape.mode = CSGPolygon3D.MODE_DEPTH
+		var span: Array = item["z"]
+		shape.depth = absf(float(span[1]) - float(span[0]))
+		shape.position = Vector3(0, 0, maxf(float(span[0]), float(span[1])))
+		shape.use_collision = false
+		var source: StandardMaterial3D = null
+		for node in _all(room, "MeshInstance3D"):
+			if str(item.get("like", "")) in str(node.name):
+				var part := node as MeshInstance3D
+				source = part.material_override as StandardMaterial3D
+				if source == null and part.mesh != null:
+					source = part.mesh.surface_get_material(0) as StandardMaterial3D
+				if source != null:
+					break
+		var paint := (source.duplicate() if source != null
+				else StandardMaterial3D.new()) as StandardMaterial3D
+		if item.has("png"):
+			paint.albedo_texture = ImageTexture.create_from_image(
+					Image.load_from_file(str(item["png"])))
+		shape.material = paint
+		room.add_child(shape)
+		print("[dcap] profile %s like %s" % [shape.name, item.get("like", "")])
 	for _i in 10:
 		await physics_frame
 	if bool(_spec.get("freeze_enemies", true)) and room.get("enemies") != null:

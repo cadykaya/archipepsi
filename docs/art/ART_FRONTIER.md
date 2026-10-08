@@ -3506,6 +3506,23 @@ Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
 
 **Next: STOP.** Support only Prod's specific fit and state issues.
 
+### Delivered, 2026-10-08 (fourth pass) — G1 approved; tote v2; stair stringer. STOPPED.
+
+* **G1:** Batch 065 is approved as candidate art for Prod's playable,
+  with the mechanics unchanged and the two versions comparable. The
+  handoff is updated.
+* **Tote v2:** rounded vents, moulded corners, a rolled rim and satin
+  ivory plastic, at the same box, mass and collider (G6, G8).
+* **Stair:** C2 (stringer plus T2) against A and T2 from the same cameras
+  (N4). Visual only, with no collider.
+* **Bloom:** the approved direction is preserved in
+  `study_bloom_transition.py`'s header; nothing else is built.
+* **Shunter:** the larger plough and the upward vent are candidates for
+  gameplay testing.
+
+**Next: STOP.** Support only Prod's specific fit, collision and state
+issues.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.
