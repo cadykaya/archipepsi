@@ -90,3 +90,22 @@ Nothing here conflicts with the optional `archipepsi-build.json`
 - running its names through `_unsafe_name` like the checksum list.
 
 That is left for when the standard is agreed.
+
+## 0.2.0-rc1
+
+- **Upgrade from 0.1.0:** at first start, every build recorded by 0.1.0
+  is checked in full once. The launcher then says whether they are all
+  intact. A damaged one is reported and kept, never dropped.
+  `tests/test_release.py` runs this against `fixtures/library-0.1.0.zip`,
+  a real library written by 0.1.0.
+- **Newer formats:** Impact Relay G1 and its art candidate (two launchers,
+  heavy-hit mode) install with the right modes.
+- **Layout:** the build list could be squeezed to nothing when the window
+  opened slowly (seen under Wine when opening with a ZIP). The divider is
+  now placed once the window is laid out.
+- **Real build (under Wine):** Skyiah's Impact Lab `3337769d` two-part
+  download installed from part 1 alone in 2–3 s and joined to `0e006640…`.
+  With the other part missing it was refused, and with an altered part 2
+  it was refused by checksum. Play started the real game. It stopped at
+  Godot's video-driver warning, because the container has no GPU.
+- 50 tests pass under Linux Python and Windows Python (Wine).

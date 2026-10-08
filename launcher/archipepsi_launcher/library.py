@@ -676,6 +676,22 @@ class Library:
         shutil.rmtree(self.staging_dir, ignore_errors=True)
         known = {b["id"] for b in self.builds}
         changed = False
+        # Builds recorded by launcher 0.1.0 carry no file time yet: check each
+        # once in full now, so later checks can be quick.
+        legacy = [b for b in self.builds if "exe_mtime" not in b]
+        if legacy:
+            bad = []
+            for b in legacy:
+                if self.check(b, full=True) == "ok":
+                    self._stamp(b)
+                else:
+                    bad.append("%s %s" % (b.get("title", b["id"]), b.get("revision", "")))
+            changed = True
+            self.notices.append(
+                "The launcher was updated. It checked the %d build(s) already installed: "
+                "%s" % (len(legacy), "all are intact and kept." if not bad else
+                        "%d intact and kept; missing or damaged (install its ZIP again to repair): %s."
+                        % (len(legacy) - len(bad), ", ".join(bad))))
         for name in sorted(os.listdir(self.builds_dir)):
             path = os.path.join(self.builds_dir, name)
             if name.startswith((".incoming-", ".trash-")):

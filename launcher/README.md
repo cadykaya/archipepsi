@@ -71,7 +71,7 @@ launcher change.
 
 ## Develop
 
-    python -m unittest discover -s tests -t .     # stdlib only, 43 tests
+    python -m unittest discover -s tests -t .     # stdlib only, 50 tests
     python -m archipepsi_launcher                  # run from source
 
 `tests/fixtures/` holds packages made by the review builds' own

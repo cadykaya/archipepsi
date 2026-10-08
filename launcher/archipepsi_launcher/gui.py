@@ -30,9 +30,7 @@ class LauncherApp:
         self._build()
         self.refresh()
         self.root.after(100, self._poll)
-        # Once the window is on screen, give the build list its share. (Long
-        # details text must not push it off: the labels below wrap instead.)
-        self.root.after(250, lambda: self.panes.sashpos(0, 430))
+        self.root.after(50, self._place_divider)
         root.protocol("WM_DELETE_WINDOW", self.close)
         if initial_zips:
             self.root.after(200, lambda: self.import_zips(list(initial_zips)))
@@ -112,6 +110,15 @@ class LauncherApp:
         self.readme.pack(side="left", fill="both", expand=True)
         rsb.pack(side="left", fill="y")
         panes.add(right, weight=3)
+
+    def _place_divider(self, tries=50):
+        """Once the window is laid out, give the build list its share. Set
+        once only, so the divider stays where the player drags it."""
+        width = self.panes.winfo_width()
+        if width < 300 and tries:
+            self.root.after(100, lambda: self._place_divider(tries - 1))
+            return
+        self.panes.sashpos(0, min(430, int(width * 0.42)))
 
     # ------------------------------------------------------------ library view
     def refresh(self, select=None):
