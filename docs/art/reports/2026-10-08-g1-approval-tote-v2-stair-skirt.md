@@ -106,6 +106,10 @@ Not checked: Prod's integration in motion, the pinned-Production run (FU-1), and
 - **For Prod:** `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md`, one note for the tote, the ceiling and C2.
 - **Recorded as a deferred tooling idea, not an assignment:** procedural stair meshes along paths or splines, with variable heights, widths and curves at a consistent UV density. It's in `docs/art/ART_FRONTIER.md`.
 
-**Checks:** `check_art_current.sh` is listed below once run.
+**Checks:**
+- `check_docs_metrics.py`: passes.
+- `check_art_current.sh`: **PASS**, "every generated asset matches its source", including the new `build_station_quiet_ceiling` rebuild; 13 m 3 s.
+
+Not checked: Prod's integration in the running game, the pinned-Production run (FU-1), and Windows.
 
 **STOP.** No watchers, subscriptions or merges.
