@@ -1,0 +1,36 @@
+{
+  "defaults": {
+    "size": [
+      1440,
+      810
+    ],
+    "ambient": 0.16,
+    "lens": 35
+  },
+  "shots": [
+    {
+      "name": "C1_cradle",
+      "scene": "model:batch064/crossing_affordances/ca_launch_cradle.glb",
+      "frame": 0.7,
+      "azimuth": -28,
+      "elevation": 26,
+      "variants": [
+        "grey"
+      ],
+      "caption": "LAUNCH CRADLE - AS BUILT: FINS RAISED, BOOM UP, RAILS UNLIT, POWER IDLE",
+      "note": "FOR LAUNCHPAD 2.4 X 2.4 M. HEADING IS AWAY FROM THE HOUSING"
+    },
+    {
+      "name": "C2_brace",
+      "scene": "model:batch064/crossing_affordances/ca_breakable_brace.glb",
+      "frame": 0.66,
+      "azimuth": -20,
+      "elevation": 18,
+      "variants": [
+        "grey"
+      ],
+      "caption": "BREAKABLE BRACE - INTACT",
+      "note": "FOR DESTRUCTIBLECOVER 1.5 X 1.4 X 0.9 M. ORANGE ON CLAMPS, TOP RAILS, END STRAPS"
+    }
+  ]
+}

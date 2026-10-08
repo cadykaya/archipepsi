@@ -3459,6 +3459,24 @@ Handoff: `docs/art/reports/2026-10-07-crossing-d-kit-mapping.md`.
 **Next: STOP** until Prod's trial exists, then the fitted review at
 player height.
 
+### Delivered, 2026-10-08 — Crossing identity studies and Batch 064. STOPPED.
+
+It's on `claude/archipepsi-art-crossing-identity-2026-10-08`.
+Handoff: `docs/art/reports/2026-10-08-crossing-identity-and-affordances.md`.
+* **Studies:**
+  * Bloom, Cabinet, Splice and the recommended hybrid, on D's Central
+    Hall;
+  * the noise A/B/C with every changed painter number listed.
+* **Candidates:** `ca_launch_cradle`, `ca_breakable_brace` and
+  `ca_breakable_brace_wreck`, fitted to Production's contracts.
+* **Proposals only:**
+  * the stripe cap;
+  * the ceiling-role change;
+  * the quiet textures;
+  * the charger drawing.
+
+**Next: STOP** until the owner picks a direction and the room exists.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.
