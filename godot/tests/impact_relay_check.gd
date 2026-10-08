@@ -164,11 +164,17 @@ func _isolation_and_build() -> void:
 	_check(room.duds_announced == 0 and not room.plate.powered,
 			"at load, the crate resting on the dark plate says nothing (the "
 			+ "plate's own count: %d quiet dud)" % room.plate.duds)
+	# Read at the shot itself, right after the host's own handler (signals
+	# run in connection order): the blip is 50 ms long, so a frame or two
+	# later it may already have ended.
 	var pulse: AudioStreamPlayer = host.tones._players.get("pulse")
+	var heard := [false]
+	var listen := func() -> void:
+		heard[0] = pulse != null and pulse.playing
+	body.fired_pulse.connect(listen)
 	await _aim_and_fire(Vector3(0.0, 7.5, 8.0))
-	await _settle(1)
-	_check(pulse != null and (pulse.playing or pulse.get_playback_position() > 0.0),
-			"a shot plays the pulse sound (the bank D's host never built)")
+	body.fired_pulse.disconnect(listen)
+	_check(heard[0], "a shot plays the pulse sound (the bank D's host never built)")
 	var eye := Vector3(0.0, 6.1, 7.0)
 	var crossed := _line_crosses(eye, room.check.global_position
 			+ Vector3(0, 0.6, 0))
