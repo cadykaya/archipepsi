@@ -787,6 +787,31 @@ owner's D-06/D-07 rulings and the seam table are in
         - Run it with `make godot-impact-lab`.
       - **Next:** G1, one designed room, waits on Dess's brief and the
         owner's choice. Combat feel (G3) waits after that.
+    - **POST-D CREW PLAN, G1 (owner, 2026-10-08): DELIVERED, STOP.** The
+      Impact Relay: Dess's approved D-18 v2 (`21cc00a4`) built as one
+      enemy-free room on G0's plate and shutter, unchanged.
+      - **The room.** Gallery, stair, lever and raceway; a 4 kg crate on
+        the plate (always refused); the 36 kg weight on its stand (one
+        2,178 J blow breaks the 40 HP shutter); the vault and Check
+        stand-in; the onward door; a latched loop corridor; a ledge only
+        the swing reaches. The tether works everywhere.
+      - **Two modes.** A second, heavy-hit mode adds the fixture
+        campaign's Braided Lash (14 per hit).
+      - **Where it is.** Branch `review/impact-relay-g1`, from G0
+        `c45086e1`. The report is
+        `docs/reports/2026-10-08-impact-relay-g1.md`. Run the check with
+        `make godot-impact-relay`.
+      - **Checked.** The D-18 v2 cases are all covered:
+        - two bodies on the plate;
+        - `lightened` overshoot;
+        - a player in the arc;
+        - sightlines;
+        - ledge reach;
+        - 480 swings, none escaping.
+      - **Not integrated.** Arty's Batch 064 doesn't fit the approved
+        footprints.
+      - **Next:** the owner's hands-on playtest decides G2. No Shunter or
+        other enemy until the later combat milestone.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.
