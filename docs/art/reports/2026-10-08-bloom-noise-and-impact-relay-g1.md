@@ -242,6 +242,11 @@ Dess's D-19 (`21cc00a4`) gives the charger an identity, approved by the owner: *
 3. **Noise:** `docs/art-requests/2026-10-08-station-noise-handoff.md`, with R and exact T2 side by side, measured. The clarification is in section 2.
 4. **Bloom and the Shunter:** unchanged. Both stay review proposals. Nothing new was built for either.
 
+**Checks for this pass:**
+- `check_docs_metrics.py`: passes, 396 of 396 built assets.
+- `check_art_current.sh`: **PASS**, "every generated asset matches its source", including the Batch 065 rebuild; 13 m 16 s.
+- Not checked: the pieces in motion in the running room, which is Prod's integration; the pinned-Production run (FU-1); Windows.
+
 **Questions now open:**
 1. **Noise:** R alone, or R and then T2's ceiling variant? The quiet floor measured no gain.
 2. **G1:** only what Prod finds in the running room.
