@@ -1,0 +1,24 @@
+{
+  "schema": "archipepsi-build-spec/1",
+  "title": "Impact Lab",
+  "executable": "Archipepsi-Impact-Lab",
+  "description": "A small technical fixture, not a designed room: one hall that tests whether power, a movement device and a breakable can work together in one real physical interaction. No enemies. Offline: nothing of yours is saved or changed.",
+  "limitations": [
+    "Placeholder looks for the plate and the shutter; the lever and the green power line are Arty's candidate kit, as in Crossing D.",
+    "The existing shot sound is a very short, quiet blip and the recoil is small: this build only reconnects them.",
+    "The reward behind the glass is a stand-in: nothing is sent."
+  ],
+  "modes": [
+    {
+      "id": "lab",
+      "label": "Impact Lab",
+      "args": [],
+      "description": "The one hall, no enemies.",
+      "launchers": {
+        "windows": "START HERE - Impact Lab (Windows).bat",
+        "linux": "play-impact-lab.sh"
+      }
+    }
+  ],
+  "recommended_mode": "lab"
+}

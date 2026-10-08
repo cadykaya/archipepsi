@@ -1,0 +1,33 @@
+{
+  "schema": "archipepsi-build-spec/1",
+  "title": "Crossing D, Review Build",
+  "executable": "Archipepsi-Crossing-D",
+  "description": "A comparison build for review: one combined Crossing, four rooms. Offline: nothing of yours is saved or changed.",
+  "limitations": [],
+  "modes": [
+    {
+      "id": "with-enemies",
+      "label": "Crossing D, with enemies",
+      "args": [],
+      "description": "The full Crossing, enemies included.",
+      "launchers": {
+        "windows": "1 - Join the game, run once (Windows).bat",
+        "linux": "play-crossing-d.sh"
+      }
+    },
+    {
+      "id": "no-enemies",
+      "label": "Crossing D, no enemies",
+      "args": [
+        "--",
+        "--empty-yard"
+      ],
+      "description": "The same four rooms, the Upper Yard empty.",
+      "launchers": {
+        "windows": "Play Crossing D - no enemies (Windows).bat",
+        "linux": "play-crossing-d.sh"
+      }
+    }
+  ],
+  "recommended_mode": "with-enemies"
+}

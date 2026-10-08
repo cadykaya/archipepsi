@@ -1,0 +1,36 @@
+{
+  "schema": "archipepsi-build-spec/1",
+  "title": "Crossing D, Readability Review Build",
+  "executable": "Archipepsi-Crossing-D",
+  "description": "Crossing D wearing Arty's candidate lever and power-line pieces in place of D's own. Offline: nothing of yours is saved or changed.",
+  "limitations": [
+    "Candidate art: Arty's kit is still in review, not approved.",
+    "The raceway does not collide: feet pass through its 13 cm where it crosses a floor.",
+    "Its lit stripe is 4 cm wide: clear up close, faint from across the Machine Hall.",
+    "The ON / OFF status labels and the signs are still D's.",
+    "The swing tether is still Courtyard-only: an open review question, not a final rule."
+  ],
+  "modes": [
+    {
+      "id": "no-enemies",
+      "label": "Crossing D, no enemies",
+      "args": ["--", "--empty-yard"],
+      "description": "The whole Crossing with the Upper Yard empty. Play this first.",
+      "launchers": {
+        "windows": "1 - START HERE - Crossing D, NO ENEMIES (Windows).bat",
+        "linux": "play-crossing-d.sh"
+      }
+    },
+    {
+      "id": "with-enemies",
+      "label": "Crossing D, with enemies",
+      "args": [],
+      "description": "The whole Crossing, the Upper Yard's fight included.",
+      "launchers": {
+        "windows": "2 - Crossing D, with enemies (Windows).bat",
+        "linux": "play-crossing-d.sh"
+      }
+    }
+  ],
+  "recommended_mode": "no-enemies"
+}
