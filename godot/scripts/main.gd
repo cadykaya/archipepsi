@@ -193,6 +193,13 @@ func _ready() -> void:
 		switch.disconnected = "--disconnected" in user_args
 		add_child(switch)
 		return
+	# THE IMPACT LAB (post-D plan, G0): a technical fixture, isolated the
+	# same way, no enemies.
+	if ImpactLab.requested():
+		add_child(ImpactLab.new())
+		if ImpactLabCheck.requested():
+			add_child(ImpactLabCheck.new())
+		return
 	# CROSSING D, THE REVIEW BUILD (D-17), by name or as the exported
 	# review executable (`crossing_review`), for the reasons above: four
 	# authored rooms, not a Zone, no campaign -- and `BridgeClient` has

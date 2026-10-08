@@ -6,6 +6,10 @@ godot-crossing-d`).
     python3 tools/crossing_review_probe.py [path/to/godot] [project root]
     python3 tools/crossing_review_probe.py --exported path/to/Archipepsi-Crossing-D.x86_64
     python3 tools/crossing_review_probe.py --wine path/to/Archipepsi-Crossing-D.exe
+    python3 tools/crossing_review_probe.py --lab [--exported ... | --wine ...]
+
+`--lab` probes the Impact Lab (the post-D G0 fixture) instead: one mode,
+no enemies, its own banner and live check (`impact_lab_check.gd`).
 
 The first form runs the source tree through the real startup path
 (`--path godot -- --crossing-d`, the main scene and autoloads the game
@@ -40,6 +44,16 @@ import threading
 import time
 
 HOST, PORT = "127.0.0.1", 38290
+# What each review build is called, how it is started from source, what it
+# prints when it starts, its live check's flag and line prefix, its modes.
+SCENARIOS = {
+    "crossing": {"flag": "--crossing-d", "banner": "crossing-d: review build",
+                 "check": "--crossing-d-check", "prefix": "[crossing]",
+                 "modes": (("populated", []), ("empty", ["--empty-yard"]))},
+    "lab": {"flag": "--impact-lab", "banner": "impact-lab: technical fixture",
+            "check": "--impact-lab-check", "prefix": "[lab]",
+            "modes": (("no enemies", []),)},
+}
 CONTROL_SECONDS = 20
 PLAYER_FILES = ("settings.cfg", "loadout.cfg", "equipment_seen.cfg")
 ENGINE_OWN = ("logs", "shader_cache", "vulkan")
@@ -107,8 +121,9 @@ def snapshot(folder):
 class Launch:
     """How this build is started, and where its player folder is."""
 
-    def __init__(self, args, scratch):
+    def __init__(self, args, scratch, scenario):
         self.args = args
+        self.scenario = scenario
         self.home = os.path.join(scratch, "player")
         self.env = dict(os.environ, XDG_DATA_HOME=self.home)
         if args.wine:
@@ -134,7 +149,7 @@ class Launch:
         if a.exported:
             return [os.path.abspath(a.exported)] + engine + ["--"] + extra
         return ([a.godot] + engine + ["--path", os.path.join(a.root, "godot"),
-                                      "--", "--crossing-d"] + extra)
+                                      "--", self.scenario["flag"]] + extra)
 
     def run(self, extra, seconds, check_run=False):
         cmd = self.command(extra, check_run)
@@ -159,11 +174,14 @@ def main():
     parser.add_argument("--exported")
     parser.add_argument("--wine")
     parser.add_argument("--log", help="keep each run's full output here")
+    parser.add_argument("--lab", action="store_true",
+                        help="probe the Impact Lab instead of Crossing D")
     args = parser.parse_args()
+    scenario = SCENARIOS["lab" if args.lab else "crossing"]
     args.godot = os.path.abspath(args.godot)
     args.root = os.path.abspath(args.root)
     scratch = tempfile.mkdtemp(prefix="crossing-probe-")
-    launch = Launch(args, scratch)
+    launch = Launch(args, scratch, scenario)
     what = ("the Windows build under Wine: %s" % args.wine) if args.wine \
         else ("the exported build: %s" % args.exported) if args.exported \
         else ("the source tree: %s" % args.root)
@@ -181,11 +199,11 @@ def main():
 
     listener = Listener()
     print("[probe] a stand-in bridge listens on %s:%d" % (HOST, PORT))
-    for mode in ("populated", "empty"):
-        extra = ["--empty-yard"] if mode == "empty" else []
+    for mode, extra in scenario["modes"]:
         code, out = launch.run(extra, seconds=15)
         if args.log:
-            with open(os.path.join(args.log, "launched-%s.log" % mode), "w") as f:
+            with open(os.path.join(args.log, "launched-%s.log"
+                                   % mode.replace(" ", "-")), "w") as f:
                 f.write(out)
         # The banner reaches stdout, or -- for a windowed Windows build,
         # whose stdout may go nowhere -- the engine's own log file.
@@ -194,19 +212,21 @@ def main():
         if os.path.exists(log_file):
             with open(log_file, encoding="utf-8", errors="replace") as handle:
                 logged = handle.read()
-        started = "crossing-d: review build" in out + logged
-        check(started, "%s, as launched: the Crossing starts (%s)"
+        started = scenario["banner"] in out + logged
+        check(started, "%s, as launched: the build starts (%s)"
               % (mode, "its banner line printed" if started else
                  "no banner; exit %s" % code))
         time.sleep(0.3)
         check(listener.count == 0, "%s, as launched, 15 s: %d connection "
               "attempt(s) to the bridge's address" % (mode, listener.count))
-        code, out = launch.run(extra + ["--crossing-d-check"], seconds=1200,
+        code, out = launch.run(extra + [scenario["check"]], seconds=1200,
                                check_run=True)
         if args.log:
-            with open(os.path.join(args.log, "check-%s.log" % mode), "w") as f:
+            with open(os.path.join(args.log, "check-%s.log"
+                                   % mode.replace(" ", "-")), "w") as f:
                 f.write(out)
-        lines = [l for l in out.splitlines() if l.startswith("[crossing]")]
+        lines = [l for l in out.splitlines()
+                 if l.startswith(scenario["prefix"])]
         fails = [l for l in lines if "  FAIL  " in l]
         verdict = [l for l in lines if "PASS" in l or "FAILED" in l]
         for line in fails:
