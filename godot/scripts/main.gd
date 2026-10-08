@@ -193,6 +193,13 @@ func _ready() -> void:
 		switch.disconnected = "--disconnected" in user_args
 		add_child(switch)
 		return
+	# THE IMPACT RELAY (G1, Dess's D-18): one enemy-free room on the G0
+	# mechanism, isolated the same way.
+	if ImpactRelay.requested():
+		add_child(ImpactRelay.new())
+		if ImpactRelayCheck.requested():
+			add_child(ImpactRelayCheck.new())
+		return
 	# THE IMPACT LAB (post-D plan, G0): a technical fixture, isolated the
 	# same way, no enemies.
 	if ImpactLab.requested():

@@ -7,9 +7,12 @@ godot-crossing-d`).
     python3 tools/crossing_review_probe.py --exported path/to/Archipepsi-Crossing-D.x86_64
     python3 tools/crossing_review_probe.py --wine path/to/Archipepsi-Crossing-D.exe
     python3 tools/crossing_review_probe.py --lab [--exported ... | --wine ...]
+    python3 tools/crossing_review_probe.py --relay [--exported ... | --wine ...]
 
 `--lab` probes the Impact Lab (the post-D G0 fixture) instead: one mode,
 no enemies, its own banner and live check (`impact_lab_check.gd`).
+`--relay` probes the Impact Relay (G1, D-18's room) the same way
+(`impact_relay_check.gd`).
 
 The first form runs the source tree through the real startup path
 (`--path godot -- --crossing-d`, the main scene and autoloads the game
@@ -53,6 +56,9 @@ SCENARIOS = {
     "lab": {"flag": "--impact-lab", "banner": "impact-lab: technical fixture",
             "check": "--impact-lab-check", "prefix": "[lab]",
             "modes": (("no enemies", []),)},
+    "relay": {"flag": "--impact-relay", "banner": "impact-relay: review room",
+              "check": "--impact-relay-check", "prefix": "[relay]",
+              "modes": (("no enemies", []), ("heavy-hit", ["--heavy-hit"]))},
 }
 CONTROL_SECONDS = 20
 PLAYER_FILES = ("settings.cfg", "loadout.cfg", "equipment_seen.cfg")
@@ -176,8 +182,11 @@ def main():
     parser.add_argument("--log", help="keep each run's full output here")
     parser.add_argument("--lab", action="store_true",
                         help="probe the Impact Lab instead of Crossing D")
+    parser.add_argument("--relay", action="store_true",
+                        help="probe the Impact Relay instead of Crossing D")
     args = parser.parse_args()
-    scenario = SCENARIOS["lab" if args.lab else "crossing"]
+    scenario = SCENARIOS["relay" if args.relay else "lab" if args.lab
+                         else "crossing"]
     args.godot = os.path.abspath(args.godot)
     args.root = os.path.abspath(args.root)
     scratch = tempfile.mkdtemp(prefix="crossing-probe-")
@@ -219,7 +228,7 @@ def main():
         time.sleep(0.3)
         check(listener.count == 0, "%s, as launched, 15 s: %d connection "
               "attempt(s) to the bridge's address" % (mode, listener.count))
-        code, out = launch.run(extra + [scenario["check"]], seconds=1200,
+        code, out = launch.run(extra + [scenario["check"]], seconds=2400,
                                check_run=True)
         if args.log:
             with open(os.path.join(args.log, "check-%s.log"
