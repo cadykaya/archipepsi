@@ -1,0 +1,12 @@
+# The bridge's Python dependencies, as bundled into the diagnostic build's
+# embedded CPython 3.12 (win_amd64). Installed with --require-hashes and
+# --only-binary, so the build either gets exactly these wheels or stops.
+#
+# websockets is pinned by bridge/pyproject.toml (AP 0.6.7's own pin).
+# pydantic is ">=2.6" there; this is the version the build was tested with.
+pydantic==2.14.0 --hash=sha256:15fab1bea6f1dc5003b54fc2ecab230c1fd1dbade2acd4addc52d81e32416d4b
+pydantic-core==2.50.0 --hash=sha256:1541c334af5d42cb9eb03862a9b4d2cfbfc670fd05172ec51f3ce02d704550f1
+annotated-types==0.8.0 --hash=sha256:f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0
+typing-extensions==4.16.0 --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8
+typing-inspection==0.4.4 --hash=sha256:65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147
+websockets==13.1 --hash=sha256:38377f8b0cdeee97c552d20cf1865695fcd56aba155ad1b4ca8779a5b6ef4ac3

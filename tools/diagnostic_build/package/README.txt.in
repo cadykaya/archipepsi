@@ -1,0 +1,82 @@
+ARCHIPEPSI - DIAGNOSTIC CAMPAIGN, PRIVATE BUILD   (revision @REVISION@)
+
+A private diagnostic build of the existing prototype-scale campaign, for hands-on review. It is not a release and not a release candidate. It starts the game and its bundled bridge together, so neither Godot nor Python needs installing.
+
+HOW TO PLAY
+
+  Double-click "START HERE - Mock Campaign (Windows).bat", or install the
+  zip in the Archipepsi Launcher and press Play.
+
+  On the title screen choose MOCK CAMPAIGN. That is the deterministic
+  offline campaign: thirty Checks over about ten Zones, the fallback
+  Epsilon, no server, no network, no API key.
+
+  Closing the game also stops the bridge.
+
+  "With log window - Mock Campaign (Windows).bat" is the same build with
+  the bridge and the game printing into one window, for when something
+  goes wrong and you want to watch it happen. (The launcher's own "log
+  window" option starts the same thing.)
+
+WHERE YOUR SAVE IS
+
+  %LOCALAPPDATA%\Archipepsi\Diagnostic Campaign\saves   the campaign
+  %LOCALAPPDATA%\Archipepsi\Diagnostic Campaign\logs    bridge and starter logs
+  %APPDATA%\Godot\app_userdata\Archipepsi               game settings and
+                                                        loadout (Godot's own
+                                                        folder, shared with a
+                                                        checkout's Godot runs)
+
+  Nothing is written into this build's folder, so deleting or replacing
+  the build keeps your campaign. To start over, delete the "saves" folder
+  above (paste the path into Explorer's address bar).
+
+  This campaign is separate from a checkout's bridge\saves and from the
+  checkout's diagnostic slots. It is the ordinary prototype-scale MOCK
+  CAMPAIGN, without the --candidate profile and without any review room.
+
+WHAT IS AND IS NOT IN THIS BUILD
+
+  Included and tested:  the game (Godot 4.5.1 export), the bridge, a
+                        private copy of Python 3.12 with the bridge's two
+                        libraries, the offline MOCK CAMPAIGN.
+
+  NOT included:         the real Archipelago connection. The bridge here
+                        runs in mock mode only, exactly as the checkout's
+                        "Start Archipepsi" does, so a server address typed
+                        into the game connects to the offline mock
+                        campaign, not to a server. Real Archipelago play
+                        still needs the developer setup (an Archipelago
+                        source checkout); it is untested in this form.
+
+  Not included either:  the candidate generation profile (minors, carry,
+                        lever routes, Bomb Bags), the review rooms
+                        (Crossing D, Impact Lab, Impact Relay, the
+                        Railway, 3A/3B), music, and any change to how the
+                        campaign plays.
+
+KNOWN LIMITATIONS
+
+  - Built and tested on Linux, and run under Wine. Nobody has run it on
+    native Windows yet; your hands-on review is that first run.
+  - The executables are not code-signed, so Windows SmartScreen may say
+    it "protected your PC". "More info" then "Run anyway" starts it.
+  - If another Archipepsi bridge is already running (a checkout's "Start
+    Archipepsi" window, say), this build refuses to start rather than
+    play against that bridge's saves. Close the other one first.
+  - The bridge banner reports its commit as "unknown": a packaged bridge
+    has no git. This file's revision line and BUILD-INFO.txt say which
+    commit it is.
+
+WHAT IS IN THIS FOLDER
+
+  Archipepsi-Diagnostic.exe          starts the bridge, then the game
+  Archipepsi-Diagnostic.console.exe  the same, with a log window
+  game\                              the Godot export (Archipepsi.exe)
+  runtime\python\                    Python 3.12.10 (embeddable) + libraries
+  runtime\bridge\                    the bridge, as committed at @REVISION@
+  runtime\godot\content\registry\    room shells the bridge reads
+  THIRD_PARTY_NOTICES.txt            Godot, Python, library and runtime notices
+  BUILD-INFO.txt                     source commit, toolchain, build command
+  SHA256SUMS.txt                     a checksum for every file here
+  archipepsi-build.json              the launcher's build description
