@@ -12,7 +12,7 @@ import tempfile
 import unittest
 import zipfile
 
-from archipepsi_launcher.library import ImportError_, Library, expand_selection
+from archipepsi_launcher.library import Library, expand_selection
 
 FIX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
 D = "Archipepsi-Crossing-D-review-4462be29"
@@ -72,8 +72,9 @@ class LibraryTest(unittest.TestCase):
         modes = {m["label"]: m["args"] for m in b["modes"]}
         self.assertEqual(modes["Crossing D - no enemies"], ["--", "--empty-yard"])
         self.assertEqual(modes["Standard (plain executable)"], [])
-        self.assertTrue(any("match SHA256SUMS" in n for n in b["verification"]))
-        self.assertTrue(any("size 30000 bytes" in n for n in b["verification"]))
+        self.assertTrue(any("match their checksums" in n for n in b["verification"]))
+        self.assertTrue(any("game size matches" in n for n in b["verification"]))
+        self.assertTrue(b["verified"])
         self.assertFalse(any(n.endswith((".part1", ".part2"))
                              for n in os.listdir(self.lib.folder(b))))
 
@@ -98,15 +99,17 @@ class LibraryTest(unittest.TestCase):
     def test_linux_zip_is_refused(self):
         b, msg = self.import_one(IL + "-linux.zip")
         self.assertIsNone(b)
-        self.assertIn("Linux package", msg)
+        self.assertIn("Linux version", msg)
 
     # ------------------------------------------------------------ two-part checks
     def test_missing_part_is_named(self):
         lonely = os.path.join(self.tmp, IL + "-windows-part1of2.zip")
         shutil.copy(fixture(IL + "-windows-part1of2.zip"), lonely)
-        with self.assertRaises(ImportError_) as cm:
-            expand_selection([lonely])
-        self.assertIn(IL + "-windows-part2of2.zip", str(cm.exception))
+        groups, problems = expand_selection([lonely])
+        self.assertEqual(groups, [])
+        [problem] = problems
+        self.assertIn("one is missing", problem)
+        self.assertIn(IL + "-windows-part2of2.zip", problem)
 
     def test_renamed_part_chosen_together(self):
         a = os.path.join(self.tmp, "a")
@@ -130,7 +133,7 @@ class LibraryTest(unittest.TestCase):
                     edit=(".exe.part2", flip))
         b, msg = self.import_one(os.path.join(d, RD + "-windows-part1of2.zip"))
         self.assertIsNone(b)
-        self.assertIn("does not match its checksum", msg)
+        self.assertIn("is damaged, or its parts come from two different downloads", msg)
         self.assertEqual(self.lib.builds, [])
         self.assertEqual(os.listdir(self.lib.staging_dir), [])
 
@@ -140,7 +143,7 @@ class LibraryTest(unittest.TestCase):
             z.writestr("../evil.txt", "x")
         b, msg = self.import_one(bad)
         self.assertIsNone(b)
-        self.assertIn("unsafe path", msg)
+        self.assertIn("tries to place a file where it should not", msg)
         self.assertFalse(os.path.exists(os.path.join(self.lib.home, "evil.txt")))
 
     # ------------------------------------------------------------ updates

@@ -26,16 +26,34 @@ What the install does:
 - reads the play modes from the build's own `.bat` launchers (for example
   Crossing D's *NO ENEMIES* and *with enemies*), the "START HERE" one first.
 
+What it refuses, leaving your library exactly as it was (each says what
+to do in plain words, with the technical reason underneath):
+- a ZIP that did not finish downloading, is damaged inside, is
+  password-protected or uses a compression the launcher cannot open;
+- a two-part build with a part missing, or parts from different builds
+  (other builds chosen at the same time still install);
+- a ZIP that would put files outside its folder or use names Windows
+  cannot create, and a checksum list pointing outside the build;
+- an install that would not fit on the disk (checked first, on the real
+  unpacked size).
+
+If the launcher is closed or the PC stops mid-install, the next start
+discards the unfinished install; a build that was fully in place but not
+yet listed is checked and listed again. Only one launcher window runs at a
+time, so two cannot overwrite each other's list.
+
 Updates and replacements:
 - a new revision of a build is installed beside the earlier ones, which
   stay playable; the list marks the latest installed one;
 - installing the same revision again changes nothing if it is identical;
   if its content differs, the new copy is kept beside the old one as
   "(2)";
-- a copy whose executable went missing is repaired by installing its ZIP
-  again;
+- a copy whose game file went missing or was damaged (it is re-checked
+  before playing whenever the file changed) is marked, cannot be started,
+  and is repaired by installing its ZIP again;
 - nothing is deleted unless you press **Remove this build...** (your
-  original ZIPs are never touched).
+  original ZIPs are never touched); a build that is running cannot be
+  removed or replaced, and nothing changes until you close it.
 
 The library lives in `%LOCALAPPDATA%\ArchipepsiLauncher` (**Open library
 folder**). Set `ARCHIPEPSI_LAUNCHER_HOME` to put it elsewhere.
@@ -53,7 +71,7 @@ launcher change.
 
 ## Develop
 
-    python -m unittest discover -s tests -t .     # stdlib only
+    python -m unittest discover -s tests -t .     # stdlib only, 43 tests
     python -m archipepsi_launcher                  # run from source
 
 `tests/fixtures/` holds packages made by the review builds' own

@@ -10,7 +10,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from . import __version__
-from .library import ImportError_, Library
+from .library import InstallError, Library
 
 PAD = 8
 
@@ -30,7 +30,10 @@ class LauncherApp:
         self._build()
         self.refresh()
         self.root.after(100, self._poll)
-        self.root.after_idle(lambda: self.panes.sashpos(0, 430))
+        # Once the window is on screen, give the build list its share. (Long
+        # details text must not push it off: the labels below wrap instead.)
+        self.root.after(250, lambda: self.panes.sashpos(0, 430))
+        root.protocol("WM_DELETE_WINDOW", self.close)
         if initial_zips:
             self.root.after(200, lambda: self.import_zips(list(initial_zips)))
 
@@ -69,9 +72,13 @@ class LauncherApp:
         panes.add(left, weight=2)
 
         right = ttk.Frame(panes, padding=(PAD, 0, 0, 0))
-        self.title_lbl = ttk.Label(right, text="", font=("Segoe UI", 14, "bold"))
-        self.title_lbl.pack(anchor="w")
-        self.meta_lbl = ttk.Label(right, text="", foreground="#555", justify="left")
+        self.title_lbl = ttk.Label(right, text="", font=("Segoe UI", 14, "bold"),
+                                   wraplength=400)
+        self.title_lbl.pack(anchor="w", fill="x")
+        self.title_lbl.bind("<Configure>",
+                            lambda e: self.title_lbl.config(wraplength=max(200, e.width - 4)))
+        self.meta_lbl = ttk.Label(right, text="", foreground="#555", justify="left",
+                                  width=40)
         self.meta_lbl.pack(anchor="w", fill="x", pady=(2, PAD))
         self.meta_lbl.bind("<Configure>",
                            lambda e: self.meta_lbl.config(wraplength=max(200, e.width - 4)))
@@ -117,7 +124,7 @@ class LauncherApp:
                 state = self.lib.status(b)
                 label = "latest" if i == 0 else "earlier"
                 if state != "ok":
-                    label += " (%s)" % state
+                    label += " (%s: reinstall)" % state
                 tags = ("bad",) if state != "ok" else (() if i == 0 else ("old",))
                 self.tree.insert(node, "end", iid="b:" + b["id"],
                                  text="%s - %s" % (b["title"], label) if b["title"] != title
@@ -164,8 +171,12 @@ class LauncherApp:
             "the latest installed version of this build" if newest else "an earlier version, kept")
         meta += "\nFrom: " + ", ".join(b["source_zips"])
         meta += "\nChecked: " + "; ".join(b.get("verification", []))
+        if b.get("verified") is False:
+            meta += ("\nWARNING: this package carried nothing to check its game against, "
+                     "so the launcher could not confirm it is intact.")
         if state != "ok":
-            meta += "\nPROBLEM: the executable is %s on disk. Install the ZIP(s) again." % state
+            meta += ("\nPROBLEM: this build's game file is %s, so it cannot be played. "
+                     "Install its ZIP(s) again to repair it." % state)
         if b.get("summary"):
             meta += "\n\n" + b["summary"]
         self.meta_lbl.config(text=meta)
@@ -194,8 +205,9 @@ class LauncherApp:
         mode = b["modes"][self.mode_var.get()]
         try:
             self.lib.launch(b, mode, console=self.console_var.get())
-        except (ImportError_, OSError) as e:
-            messagebox.showerror("Could not start the build", str(e))
+        except InstallError as e:
+            messagebox.showerror("Could not start the build", e.full())
+            self.refresh(select=b["id"])
             return
         self.status.config(text="Started %s: %s" % (b["title"], mode["label"]))
 
@@ -218,10 +230,13 @@ class LauncherApp:
                 results = self.lib.import_zips(
                     paths, progress=lambda m: self.events.put(("progress", m)))
                 self.events.put(("done", results))
-            except ImportError_ as e:
-                self.events.put(("failed", str(e)))
+            except InstallError as e:
+                self.events.put(("failed", e.full()))
             except Exception as e:  # keep the window alive on anything unexpected
-                self.events.put(("failed", "Unexpected error: %r" % (e,)))
+                self.events.put(("failed", InstallError(
+                    "Something unexpected went wrong, and the install was stopped. "
+                    "Builds already in your library are not affected.",
+                    "%s: %s" % (type(e).__name__, e)).full()))
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -238,15 +253,16 @@ class LauncherApp:
                     self._finish()
                     ok = [b for b, _ in payload if b]
                     self.refresh(select=ok[-1]["id"] if ok else None)
-                    text = "\n\n".join(msg for _, msg in payload)
-                    if ok:
+                    text = "\n\n----\n\n".join(msg for _, msg in payload)
+                    if ok and len(ok) == len(payload):
                         messagebox.showinfo("Install", text)
+                    elif ok:
+                        messagebox.showwarning("Install: some builds were not installed", text)
                     else:
                         messagebox.showerror("Install failed", text)
         except queue.Empty:
             pass
         self.root.after(100, self._poll)
-        self.root.after_idle(lambda: self.panes.sashpos(0, 430))
 
     def _finish(self):
         self.busy = False
@@ -262,14 +278,30 @@ class LauncherApp:
         b = self.selected()
         if b is None:
             return
+        if self.busy:
+            messagebox.showinfo("Remove build", "Wait for the install to finish first.")
+            return
         if not messagebox.askyesno(
                 "Remove build",
                 "Delete %s %s from the launcher's library?\n\nThis deletes its "
                 "installed folder. Your original ZIPs are not touched." % (
                     b["title"], b["revision"]), icon="warning", default="no"):
             return
-        self.lib.remove(b["id"])
+        try:
+            self.lib.remove(b["id"])
+        except InstallError as e:
+            messagebox.showerror("Could not remove the build", e.full())
         self.refresh()
+
+    def close(self):
+        if self.busy and not messagebox.askyesno(
+                "Install in progress",
+                "A build is still being installed. Close anyway? The unfinished install "
+                "is discarded the next time the launcher starts; builds already in your "
+                "library are not affected.", icon="warning", default="no"):
+            return
+        self.lib.unlock()
+        self.root.destroy()
 
 
 def _open_path(path):
@@ -286,11 +318,25 @@ def main(argv=None):
     root = tk.Tk()
     try:
         lib = Library()
+        if not lib.lock():
+            root.withdraw()
+            messagebox.showinfo(
+                "Archipepsi Launcher",
+                "The launcher is already open. Use the window that is already running "
+                "(it may be behind other windows or minimised).")
+            return 1
+        notices = lib.startup()
     except OSError as e:
         root.withdraw()
-        messagebox.showerror("Archipepsi Launcher", "Cannot open the library folder:\n%s" % e)
+        messagebox.showerror(
+            "Archipepsi Launcher",
+            "The launcher could not open its library folder, so it cannot start.\n\n"
+            "Details: %s" % e)
         return 1
     zips = [a for a in argv if a.lower().endswith(".zip") and os.path.isfile(a)]
     LauncherApp(root, lib, initial_zips=zips)
+    if notices:
+        root.after(300, lambda: messagebox.showinfo(
+            "Archipepsi Launcher", "\n\n".join(notices)))
     root.mainloop()
     return 0
