@@ -1,34 +1,38 @@
 {
   "schema": "archipepsi-build-spec/1",
-  "title": "Impact Relay",
-  "executable": "Archipepsi-Impact-Relay",
-  "description": "One review room from Dess's D-18 v2 brief: power, a floor plate that throws, a rated steel shutter and a vault, in one hall. No enemies. Offline: nothing of yours is saved or changed.",
+  "title": "Impact Relay (art candidate)",
+  "executable": "Archipepsi-Impact-Relay-Art",
+  "description": "The Impact Relay G1 room with Arty's candidate art fitted (Batch 065: the object launcher, the impact seal and its jamb). Same room, same mechanics and physics as the G1 baseline build, for side-by-side comparison. No enemies. Offline: nothing of yours is saved or changed.",
   "limitations": [
-    "Placeholder looks on the plate, the shutter, the weight and the crate; the lever and the green power line are Arty's candidate kit.",
+    "Candidate art, not approved: Batch 065 on the plate and the shutter, a Batch 043 prop on the weight.",
+    "The tote keeps its placeholder look: no art for it yet.",
     "The Check in the vault and the reward up high are stand-ins: nothing is sent.",
     "Existing placeholder sounds only."
   ],
   "modes": [
     {
-      "id": "relay",
-      "label": "Impact Relay",
+      "id": "relay-art",
+      "label": "Impact Relay, art candidate",
       "args": [],
       "description": "The room as designed: base kit plus the swing tether everywhere, no enemies.",
       "launchers": {
-        "windows": "1 - START HERE - Impact Relay (Windows).bat",
-        "linux": "play-impact-relay.sh"
+        "windows": "1 - START HERE - Impact Relay ART candidate (Windows).bat",
+        "linux": "play-impact-relay-art.sh"
       }
     },
     {
-      "id": "heavy-hit",
-      "label": "Impact Relay, heavy-hit mode",
-      "args": ["--", "--heavy-hit"],
+      "id": "relay-art-heavy-hit",
+      "label": "Impact Relay, art candidate, heavy-hit mode",
+      "args": [
+        "--",
+        "--heavy-hit"
+      ],
       "description": "The same room plus the Braided Lash (an existing Echo, 14 per hit) on F.",
       "launchers": {
-        "windows": "2 - Impact Relay, heavy-hit mode (Windows).bat",
-        "linux": "play-impact-relay-heavy-hit.sh"
+        "windows": "2 - Impact Relay ART candidate, heavy-hit mode (Windows).bat",
+        "linux": "play-impact-relay-art-heavy-hit.sh"
       }
     }
   ],
-  "recommended_mode": "relay"
+  "recommended_mode": "relay-art"
 }

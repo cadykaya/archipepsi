@@ -1,14 +1,16 @@
-ARCHIPEPSI - IMPACT RELAY   (revision @REVISION@)
+ARCHIPEPSI - IMPACT RELAY, ART CANDIDATE   (revision @REVISION@)
 
-One room for a hands-on review, built from Dess's D-18 v2 brief: a freight
-hall, a lever, a floor plate, a light crate, a heavy weight, a steel
-shutter, and a vault behind it. No enemies. Offline: no bridge, no
-campaign, nothing of yours is saved or changed.
+The Impact Relay G1 room with Arty's candidate art fitted: the object
+launcher on the floor plate, the impact seal on the shutter and its jamb
+on the wall (Batch 065), and a Batch 043 prop on the weight. The room,
+its mechanics and its physics are the G1 baseline's, unchanged: install
+both in the Archipepsi Launcher and compare. No enemies. Offline: no
+bridge, no campaign, nothing of yours is saved or changed.
 
 START (Windows)
   1. Unzip into one new, empty folder. If it came as two zips (part1of2
      and part2of2), unzip BOTH into that same folder.
-  2. Double-click  "1 - START HERE - Impact Relay (Windows).bat"
+  2. Double-click  "1 - START HERE - Impact Relay ART candidate (Windows).bat"
      (On its first run it joins the two parts into the game and checks it.)
   Or install the zip(s) in the Archipepsi Launcher and pick a mode.
   Nothing to install. Windows may warn about an unsigned program: More
@@ -42,9 +44,11 @@ WHAT IS REAL HERE
     blow is measured from the speed they actually bring.
 
 LIMITATIONS
-  - Placeholder looks on the plate, the shutter, the weight and the crate;
-    their art is Arty's to come. The lever and the green power line are
-    her candidate kit.
+  - Candidate art, not approved. The tote keeps its placeholder look (no
+    art for it yet). The lever and the green power line are Arty's
+    candidate kit, as in the baseline. The lever stands a little further
+    east than in the baseline, so its line reaches the launcher's inlet
+    with one floor turn.
   - The Check in the vault and the reward up high are stand-ins: nothing
     is sent anywhere.
   - Existing placeholder sounds only (no new audio).

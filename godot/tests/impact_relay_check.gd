@@ -153,6 +153,7 @@ func _isolation_and_build() -> void:
 			+ "whole, weight on its stand, crate on the plate, loop latched")
 	_check(room.lever.kit_model != null and _pieces() > 0,
 			"the kit lever and the kit raceway (%d lit-able pieces)" % _pieces())
+	await _art_fitted()
 	_check(not (body.runtimes["echo_a"] as EchoRuntime).equipped.is_empty()
 			and (body.runtimes["echo_b"] as EchoRuntime).equipped.is_empty(),
 			"the swing tether is equipped from the start, and nothing else")
@@ -183,6 +184,47 @@ func _isolation_and_build() -> void:
 			% ", ".join(crossed))
 
 
+## ARTY'S CANDIDATE ART IS ON, AND THE MECHANISM IS G0'S: the launcher on
+## the plate with the plate's code looks hidden and its collider and sensor
+## as G0 built them; no collider of the kit's own (the optional funnel is
+## off); the raceway arriving at the launcher's inlet after one floor turn;
+## the seal on the shutter with G0's looks hidden and its collider G0's;
+## the jamb on the wall; the tote and the weight wearing their props.
+func _art_fitted() -> void:
+	var art := room.launcher_art
+	_check(art != null, "Arty's launcher (Batch 065) is fitted to the plate")
+	if art == null:
+		return
+	var slab := room.plate.get_node("Slab") as MeshInstance3D
+	var slab_shape := slab.get_child(0).get_child(0) as CollisionShape3D
+	_check(not slab.visible and not (room.plate.get_node("Deck") as Node3D).visible
+			and not (room.plate.get_node("PowerLamp") as Node3D).visible
+			and (slab_shape.shape as BoxShape3D).size.is_equal_approx(PL.SIZE)
+			and room.plate.get_node_or_null("Sensor") != null,
+			"the plate's code looks are hidden; its 2.0 x 0.25 x 2.0 m collider "
+			+ "and its sensor are G0's")
+	_check(art.colliders() == 0, "the kit brings no collider of its own: the "
+			+ "optional funnel lips and housing are off (%d)" % art.colliders())
+	var path: Array = room._lines["plate"].get_meta("path")
+	var inlet := room.plate.to_global(room.INLET)
+	_check(path.size() == 3 and Vector2(path[2].x, path[2].z).distance_to(
+			Vector2(inlet.x, inlet.z)) < 0.01,
+			"the raceway reaches the launcher's inlet with one floor turn")
+	var seal := room.shutter as ImpactRelayParts.RelayShutter
+	var shape := seal.get_child(0) as CollisionShape3D
+	_check(seal.art != null and (shape.shape as BoxShape3D).size.is_equal_approx(
+			seal.size) and seal.get_children().all(_hidden_if_mesh),
+			"Arty's seal is on the shutter; G0's looks hidden, its collider G0's")
+	_check(room.jamb != null and room.jamb.get_parent() == room,
+			"the jamb is on the wall, not the shutter")
+	var hull := room.weight.get_node("hull") as CollisionShape3D
+	_check(room.weight.get_node_or_null("Look") != null
+			and room.weight.get_node("Look").get_child_count() > 0
+			and (hull.shape as BoxShape3D).size.is_equal_approx(room.WEIGHT_SIZE),
+			"the weight wears phys_power_cell inside its unchanged 0.45 x 0.6 x "
+			+ "0.45 m box")
+
+
 func _fresh(what: String) -> void:
 	var crate_at := room.crate.global_position - room.plate.global_position
 	_check(not room.powered and not room.plate.powered and not room.line_live()
@@ -193,7 +235,26 @@ func _fresh(what: String) -> void:
 			and room.weight.global_position.distance_to(room.WEIGHT_HOME) < 0.3
 			and absf(crate_at.x) < 0.8 and absf(crate_at.z) < 0.8
 			and not room.loop_open and not room.vault_door.is_open
-			and not room.gallery_door.is_open and not room.check.claimed, what)
+			and not room.gallery_door.is_open and not room.check.claimed
+			and _art_at_rest(), what)
+
+
+## Arty's candidate pieces at their start: the launcher dark, its lens
+## idle, its deck at rest; the seal whole with no scuff; the jamb on the
+## wall. True when the candidate files are absent (G0's looks then).
+func _art_at_rest() -> bool:
+	var art := room.launcher_art
+	if art == null:
+		return true
+	var seal := room.shutter as ImpactRelayParts.RelayShutter
+	var lens_lit := false
+	for node in art._power:
+		lens_lit = lens_lit or CrossingDParts.is_lit(node)
+	var launcher_rests := art.state == "dark" and art.chevrons_lit == 0 \
+			and art._hinge.rotation.x == 0.0 and not lens_lit
+	var seal_whole := seal != null and seal.art != null and seal.scuffs_shown == 0
+	return launcher_rests and seal_whole and room.jamb != null \
+			and room.jamb.is_inside_tree()
 
 
 ## Every collider along a line, by its block's name.
@@ -237,7 +298,8 @@ func _lever_first() -> void:
 			"it does not open from the gallery (\"OPENS FROM THE OTHER SIDE\")")
 	_check(await _down_the_stair(), "down the stair to the hall floor (at %s)"
 			% _v(body.global_position))
-	_check(await _walk(room.LEVER_AT + Vector3(0, 0, 1.4), 0.4), "to the lever")
+	_check(await _to_lever(), "to the lever")
+	var watch := _watch_launcher()
 	await _use(room.lever.global_position + Vector3(0, 0.05, 0))
 	await _hold(0.3)
 	_check(room.powered and room.line_live() and _lit() == _pieces()
@@ -247,6 +309,8 @@ func _lever_first() -> void:
 	_check(thrown >= PL.SETTLE_SECONDS - 0.35,
 			"the crate already on it arms and is thrown (%.2f s after the pull)"
 			% (thrown + 0.3))
+	await _hold(0.6)
+	await _judge_launcher(watch)
 	await _until(func() -> bool: return not room.last_impact.is_empty(), 2.0)
 	await _hold(1.0)
 	_check(room.shutter.refused >= 1 and is_equal_approx(room.shutter.hp, SH.HP)
@@ -254,6 +318,12 @@ func _lever_first() -> void:
 			"the crate is refused, the shutter unharmed (%s: a %.1f HP blow, "
 			% [_impact_text(), float(room.last_impact.get("joules", 0.0))
 				/ SH.JOULES_PER_HP] + "under the %.0f a blow needs)" % SH.MIN_HIT)
+	var seal := room.shutter as ImpactRelayParts.RelayShutter
+	if seal.art != null:
+		_check(seal.glances == 1 and seal.scuffs_shown == 1
+				and seal.collar_peak <= seal.WEAR_TO + 0.001,
+				"on the seal: a glance -- one scuff shows, the collars flicker, "
+				+ "never above %.1f" % seal.WEAR_TO)
 	_check(await _walk(Vector3(-0.5, 0, -8.5), 0.5), "up to the shutter")
 	var refused := room.shutter.refused
 	for _i in 3:
@@ -265,6 +335,14 @@ func _lever_first() -> void:
 	_check(_reachable(room.crate.global_position),
 			"the crate lies where the player can reach it (%s)"
 			% _v(room.crate.global_position))
+	_check(await _carry(room.crate) and body.carry.speed_factor() == 1.0,
+			"the tote (4 kg) is picked up, and does not slow the carrier")
+	Input.action_press("interact")
+	await get_tree().physics_frame
+	Input.action_release("interact")
+	await _hold(1.0)
+	_check(not body.carry.holding() and _reachable(room.crate.global_position),
+			"and put down again where it can be reached")
 	# THROUGH THE WINDOW: seen, not claimed.
 	_check(await _walk(Vector3(5.0, 0, -10.6), 0.4), "to the window")
 	_aim(room.check.global_position + Vector3(0, 0.6, 0))
@@ -294,6 +372,15 @@ func _the_weight_and_the_route() -> void:
 	await _until(func() -> bool: return room.shutter_broken, 3.0)
 	_check(room.shutter_broken and room.blows == 1,
 			"its one blow breaks the shutter (%s)" % _impact_text())
+	if room.launcher_art != null:
+		await _settle(2)
+		var slabs := room.get_children().filter(func(c: Node) -> bool:
+			return c is RigidBody3D and c.has_meta("seal_slab"))
+		_check(slabs.size() == 6 and slabs.all(_world_only_slab),
+				"the seal falls as Arty's six slabs (%d), colliding with the world "
+				% slabs.size() + "only")
+		_check(room.jamb.is_inside_tree() and room.jamb.visible,
+				"and the jamb stays on the wall, an empty frame")
 	await _hold(2.5)
 	_check(_reachable(room.weight.global_position),
 			"the weight comes to rest where the player can reach it (%s)"
@@ -346,7 +433,7 @@ func _the_cases() -> void:
 	var record := func(b: ManipulableBody, _v: Vector3) -> void:
 		order.append(String(b.name))
 	room.plate.fired.connect(record)
-	_check(await _walk(room.LEVER_AT + Vector3(0, 0, 1.4), 0.4), "to the lever")
+	_check(await _to_lever(), "to the lever")
 	await _use(room.lever.global_position + Vector3(0, 0.05, 0))
 	await _until(func() -> bool: return room.plate.launches >= 2, 4.0)
 	await _until(func() -> bool: return room.shutter_broken, 3.0)
@@ -367,7 +454,7 @@ func _the_cases() -> void:
 	_phase("a player standing in the arc")
 	await _restart()
 	_check(await _walk(Vector3(0.0, 0, 8.0), 0.5) and await _down_the_stair()
-			and await _walk(room.LEVER_AT + Vector3(0, 0, 1.4), 0.4), "to the lever")
+			and await _to_lever(), "to the lever")
 	await _use(room.lever.global_position + Vector3(0, 0.05, 0))
 	await _until(func() -> bool: return room.plate.launches > 0, 2.0)
 	await _hold(1.5)
@@ -536,6 +623,23 @@ func _walk_off(goal: Vector3) -> void:
 		await get_tree().physics_frame
 	Input.action_release("move_forward")
 	await _land()
+
+
+## From the stair's foot, round its corner, to the lever's handle.
+## (The lever stands between its handle and the plate: walking to it from
+## the east, or away from it to the east, goes round its north side.)
+func _to_lever() -> bool:
+	if body.global_position.x < -7.6:
+		await _walk(Vector3(-7.4, 0, -3.0), 0.4)
+	elif body.global_position.x > room.LEVER_AT.x:
+		await _walk(room.LEVER_AT + Vector3(0, -1.0, -1.6), 0.4)
+	return await _walk(room.lever_stand(), 0.4)
+
+
+func _round_the_lever() -> void:
+	if body.global_position.distance_to(room.lever_stand()) < 1.5:
+		await _walk(room.LEVER_AT + Vector3(-1.2, -1.0, -1.6), 0.4)
+		await _walk(room.LEVER_AT + Vector3(0.6, -1.0, -1.6), 0.4)
 
 
 ## From the gallery, west along it to the stair's head and down to the
@@ -780,6 +884,7 @@ func _heavy_hit() -> void:
 	_check(await _walk(Vector3(0.0, 0, 8.0), 0.5) and await _down_the_stair()
 			and await _walk(Vector3(0.0, 0, -7.0), 0.5), "to the shutter")
 	var hp := [room.shutter.hp]
+	var collar: Array[float] = []
 	for i in 6:
 		if room.shutter_broken:
 			break
@@ -791,7 +896,17 @@ func _heavy_hit() -> void:
 		await _hold(1.4)
 		if is_instance_valid(room.shutter):
 			hp.append(room.shutter.hp)
+			var seal := room.shutter as ImpactRelayParts.RelayShutter
+			if seal.art != null:
+				collar.append(seal.collar_energy)
 	_note("the shutter's HP after each lash: %s" % str(hp))
+	if room.launcher_art != null:
+		_check(collar.size() >= 2 and collar.all(_orange_energy),
+				"as it wears, its collars brighten within %.1f..%.1f, never past "
+				% [ImpactRelayParts.RelayShutter.WEAR_FROM,
+					ImpactRelayParts.RelayShutter.WEAR_TO]
+				+ "(%s)" % ", ".join(collar.map(func(e: float) -> String:
+					return "%.2f" % e)))
 	_check(room.shutter_broken and room.blows >= 3,
 			"each lash is accepted and wears it; the blows add up and it breaks "
 			+ "(%d accepted blows)" % room.blows)
@@ -801,7 +916,85 @@ func _heavy_hit() -> void:
 
 # ============================================================ helpers
 
+func _world_only_slab(node: Node) -> bool:
+	return (node as RigidBody3D).collision_layer == 0 and node.get_child_count() == 2
+
+
+func _orange_energy(energy: float) -> bool:
+	return energy >= ImpactRelayParts.RelayShutter.WEAR_FROM - 0.001 \
+			and energy <= ImpactRelayParts.RelayShutter.WEAR_TO + 0.001
+
+
+func _hidden_if_mesh(node: Node) -> bool:
+	return not (node is MeshInstance3D) or not (node as MeshInstance3D).visible
+
+
+## Watch the launcher frame by frame (from the pull until the throw is
+## over): every state it showed, the most chevrons lit while arming, and
+## its deck's kick.
+func _watch_launcher() -> Dictionary:
+	var seen := {"states": [], "chevrons": [], "kick": 0.0, "kick_at": -1.0,
+			"rest_after": -1.0, "lens_mismatch": 0}
+	var art := room.launcher_art
+	if art == null:
+		return seen
+	var frames := [0]
+	var tick := func() -> void:
+		frames[0] += 1
+		if seen["states"].is_empty() or seen["states"][-1] != art.state:
+			seen["states"].append(art.state)
+		if art.state == "arming" and (seen["chevrons"].is_empty()
+				or seen["chevrons"][-1] != art.chevrons_lit):
+			seen["chevrons"].append(art.chevrons_lit)
+		var angle := rad_to_deg(art._hinge.rotation.x)
+		if angle > seen["kick"]:
+			seen["kick"] = angle
+			seen["kick_at"] = frames[0]
+		if seen["kick"] > 0.0 and angle == 0.0 and seen["rest_after"] < 0.0:
+			seen["rest_after"] = frames[0] - seen["kick_at"]
+		var lit := art._power.all(func(n: MeshInstance3D) -> bool:
+			return CrossingDParts.is_lit(n))
+		if lit != room.plate.powered:
+			seen["lens_mismatch"] += 1
+	get_tree().physics_frame.connect(tick)
+	seen["tick"] = tick
+	return seen
+
+
+func _judge_launcher(seen: Dictionary) -> void:
+	if room.launcher_art == null:
+		return
+	get_tree().physics_frame.disconnect(seen["tick"])
+	_note("the launcher showed %s; chevrons while arming %s; deck kick %.1f deg"
+			% [" > ".join(seen["states"]), str(seen["chevrons"]), seen["kick"]])
+	var order: Array = seen["chevrons"]
+	var sorted := order.duplicate()
+	sorted.sort()
+	# Powered with the crate already resting on it, the plate goes straight
+	# from dark to arming (G0: power arms what is there); it shows cocked
+	# once it has re-armed with nothing left on it.
+	var states: Array = seen["states"]
+	var order_ok: bool = states.size() >= 4 and states[0] == "dark" \
+			and states.find("arming") < states.find("fired") \
+			and states.find("fired") < states.find("re_arm") and states.has("arming")
+	await _until(func() -> bool: return room.launcher_art.state == "cocked", 2.0)
+	_check(order_ok and room.launcher_art.state == "cocked",
+			"its look follows the plate: dark, arming, fired, re-arming, then "
+			+ "cocked with the plate empty (now %s)" % room.launcher_art.state)
+	_check(order == sorted and order.size() >= 2 and order[-1] >= 2,
+			"while arming, the chevrons light one by one, back to front (%s)"
+			% str(order))
+	_check(seen["kick"] > 9.0 and seen["kick"] <= 10.0 + 0.001
+			and seen["rest_after"] > 0.0 and seen["rest_after"] <= 20,
+			"the deck kicks to %.1f deg on the throw and is back at rest %d "
+			% [seen["kick"], seen["rest_after"]] + "frames later")
+	_check(seen["lens_mismatch"] <= 1,
+			"its power lens is lit while the plate is powered and only then "
+			+ "(%d frame behind, at the pull)" % seen["lens_mismatch"])
+
+
 func _carry(thing: ManipulableBody) -> bool:
+	await _round_the_lever()
 	if not await _walk(thing.global_position, 1.3):
 		return false
 	var said := [""]
