@@ -70,13 +70,13 @@ func _ready() -> void:
 
 
 func _check(ok: bool, what: String) -> void:
-	print(("[relay] ok    " if ok else "[relay] FAIL  ") + what)
+	print(("[relay]   ok    " if ok else "[relay]   FAIL  ") + what)
 	if not ok:
 		failures += 1
 
 
 func _note(what: String) -> void:
-	print("[relay] note  " + what)
+	print("[relay]   note  " + what)
 
 
 func _phase(name_in: String) -> void:
@@ -291,7 +291,7 @@ func _the_weight_and_the_route() -> void:
 	_check(await _walk(Vector3(0.0, 0, -11.0), 0.5)
 			and await _walk(Vector3(2.5, 0, -15.0), 0.4),
 			"through the broken doorway into the vault")
-	_check(await _walk(Vector3(4.35, 0, -15.6), 0.25)
+	_check(await _walk(Vector3(3.95, 0, -16.0), 0.25)
 			and absf(body.global_position.y - room.DAIS_TOP) < 0.15,
 			"up the step onto the dais (at %s)" % _v(body.global_position))
 	await _use(room.check.global_position + Vector3(0, 0.6, 0))
