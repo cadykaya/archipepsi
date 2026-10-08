@@ -4,7 +4,8 @@ extends RefCounted
 ##
 ## Three launches promise "no bridge connection, and none of the player's
 ## files written": the concourse-pier playtest (`RoomPlaytest`), Crossing
-## D's review build (`CrossingD`) and the Impact Lab (`ImpactLab`). Every guard -- the bridge
+## D's review build (`CrossingD`), the Impact Lab (`ImpactLab`) and the Impact
+## Relay (`ImpactRelay`). Every guard -- the bridge
 ## client before it opens a socket, and the three client-file writers --
 ## asks `active()`, so the promise is kept by the same four lines for both.
 ##
@@ -20,6 +21,9 @@ const CROSSING_FEATURE := "crossing_review"
 ## The Impact Lab (the post-D G0 fixture), by name and as an export.
 const LAB_FLAG := "--impact-lab"
 const LAB_FEATURE := "impact_lab"
+## The Impact Relay (G1, D-18's room), by name and as an export.
+const RELAY_FLAG := "--impact-relay"
+const RELAY_FEATURE := "impact_relay"
 
 
 static func crossing() -> bool:
@@ -32,5 +36,10 @@ static func lab() -> bool:
 			or OS.has_feature(LAB_FEATURE)
 
 
+static func relay() -> bool:
+	return RELAY_FLAG in OS.get_cmdline_user_args() \
+			or OS.has_feature(RELAY_FEATURE)
+
+
 static func active() -> bool:
-	return RoomPlaytest.requested() or crossing() or lab()
+	return RoomPlaytest.requested() or crossing() or lab() or relay()

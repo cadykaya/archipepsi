@@ -73,8 +73,9 @@ NOT_A_SUITE = {"godot-import", "godot-integration",
                "godot-crossing-d",
                # AND FOR THE IMPACT LAB (post-D plan, 2026-10-07, G0): a
                # technical fixture on its own review branch, probed the
-               # same way and run by hand; not a Zone.
-               "godot-impact-lab"}
+               # same way and run by hand; not a Zone. The Impact Relay
+               # (G1, D-18's room) likewise.
+               "godot-impact-lab", "godot-impact-relay"}
 
 
 #: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the
