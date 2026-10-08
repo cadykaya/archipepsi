@@ -152,14 +152,14 @@ def main() -> int:
                 "parts": [{"name": f"game/{p.name}",
                            "size": p.stat().st_size,
                            "sha256": sha256(p)} for p in parts],
-                "zips": [f"{folder}-windows-part1of2.zip",
-                         f"{folder}-windows-part2of2.zip"],
+                "zips": [f"{folder}-windows-part{n}of{len(parts)}.zip"
+                         for n in range(1, len(parts) + 1)],
             },
         }
         manifest["limitations"] = manifest["limitations"] + [
-            "This is the two-part delivery: the game arrives as "
-            "game\\Archipepsi.exe.part1 and .part2 (both ZIPs needed), and "
-            "the starter joins them on its first run."
+            "This is the multi-part delivery: the game arrives as "
+            "game\\Archipepsi.exe.part1 and its siblings (EVERY part ZIP is "
+            "needed), and the starter joins them on its first run."
         ]
     # Files SHA256SUMS.txt does not cover (per the standard's
     # `integrity.files`). There should be none: this build's sums list

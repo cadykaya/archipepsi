@@ -12,11 +12,11 @@ change.
 Either way is fine:
 
 - **The launcher.** Install the zip in the Archipepsi Launcher and press
-  Play. (If you take the two-part delivery, select both part zips
-  together, as with every review build.)
+  Play. (If you take the three-part delivery, select all three part
+  zips together, as with every review build.)
 - **By hand.** Unpack the zip anywhere you can write to and double-click
-  `START HERE - Mock Campaign (Windows).bat`. If you took the two parts,
-  unpack both into the same folder first; the first start joins the game
+  `START HERE - Mock Campaign (Windows).bat`. If you took the three parts,
+  unpack all of them into the same folder first; the first start joins the game
   and removes the parts, which takes a few seconds.
 
 Then press **MOCK CAMPAIGN** on the title screen. Nothing else to install:
@@ -74,7 +74,7 @@ Run by `tools/diagnostic_build/test.sh`, which anyone can re-run:
 | `archipepsi-build.json` | consistent with the folder; the launcher imports and verifies the package and offers its mode |
 | Notices | Godot's MIT grant, CPython's licence, each bundled wheel, the MinGW-w64 runtime |
 | Two builds of the same commit | all three zips byte-identical |
-| The two-part delivery | both zips under 30 MB, unpack into one folder that matches its checksums, and the starter joins the game on its first run |
+| The three-part delivery | each zip under 25 MB, they unpack into one folder that matches its checksums, and the starter joins the game on its first run |
 
 **All of that ran under Wine 11 on Linux, not on Windows.** Wine is a
 different runtime; it is good evidence that the build is wired up

@@ -205,13 +205,21 @@ python3 "$HERE/manifest.py" "$PKG" --branch "$BRANCH" --commit "$COMMIT" \
 find "$PKG" -exec touch -h -d "@$EPOCH" {} +
 (cd "$OUT" && find "$NAME" | LC_ALL=C sort | zip -q -X -9 "$ZIP" -@)
 
-# -- 8. THE SAME FOLDER IN TWO PARTS ------------------------------------------
-# For every channel that will not carry the one zip (the chat's upload
-# limit, the 30 MB per file this project's file transfer allows). The game
-# is cut in two; the starter joins it on its first run, checks the joined
-# size against game/Archipepsi.exe.size and deletes the parts. Same
-# convention as the review builds, so the launcher reads it unchanged.
-say "the same folder in two parts"
+# -- 8. THE SAME FOLDER IN THREE PARTS ---------------------------------------
+# For every channel that will not carry the one 50 MB zip: the chat's
+# upload limit, and the 25 MB per file this project's file transfer to her
+# PC turned out to allow (it refused a 28 MB part, which is why this is
+# three and not two). The game is cut in three; the starter joins the
+# parts on its first run, checks the joined size against
+# game/Archipepsi.exe.size and deletes them. Same convention as the review
+# builds' -partNofM sets, so the launcher reads it unchanged.
+#
+# Part 1 also carries everything else in the folder -- the bundled Python
+# and bridge, about 20 MB zipped -- so it takes only a sliver of the game
+# and parts 2 and 3 halve the rest. `test.sh` step 10 measures every zip,
+# so a build that grows past the limit fails here rather than at the point
+# of handing it over.
+say "the same folder in three parts"
 SPLIT="$OUT/$NAME-split"
 rm -rf "$SPLIT"
 mkdir -p "$SPLIT"
@@ -220,29 +228,30 @@ S="$SPLIT/$NAME"
 EXE="$S/game/Archipepsi.exe"
 SIZE=$(stat -c %s "$EXE")
 echo "$SIZE" > "$EXE.size"
-# THE CUT SITS AT A FIFTH, not at half. Part 1 also carries everything
-# else in the folder (the bundled Python and bridge, about 20 MB zipped),
-# so cutting the game down the middle made part 1 37 MB and part 2 16 MB.
-# A fifth balances the two zips at about 26 MB each, under the 30 MB per
-# file this project's file transfer allows. `test.sh` step 10 measures
-# both, so a build that grows past it fails rather than surprising anyone.
-CUT=$((SIZE / 5))
-head -c "$CUT" "$EXE" > "$EXE.part1"
-tail -c +"$((CUT + 1))" "$EXE" > "$EXE.part2"
+C1=$((SIZE * 4 / 100))
+C2=$((C1 + (SIZE - C1) / 2))
+head -c "$C1" "$EXE" > "$EXE.part1"
+tail -c +"$((C1 + 1))" "$EXE" | head -c "$((C2 - C1))" > "$EXE.part2"
+tail -c +"$((C2 + 1))" "$EXE" > "$EXE.part3"
+JOINED=$(cat "$EXE.part1" "$EXE.part2" "$EXE.part3" | wc -c)
+[ "$JOINED" = "$SIZE" ] || { echo "the parts total $JOINED, not $SIZE" >&2; exit 1; }
 rm "$EXE"
 (cd "$S" && find . -type f ! -name SHA256SUMS.txt ! -name archipepsi-build.json \
 	| sed 's|^\./||' | LC_ALL=C sort | while IFS= read -r f; do sha256sum -- "$f"; done \
 	> SHA256SUMS.txt)
 python3 "$HERE/manifest.py" "$S" --branch "$BRANCH" --commit "$COMMIT" \
-	--zip "$NAME-windows-part1of2.zip" --built-at "$EPOCH" --split
+	--zip "$NAME-windows-part1of3.zip" --built-at "$EPOCH" --split
 find "$S" -exec touch -h -d "@$EPOCH" {} +
-P1="$OUT/$NAME-windows-part1of2.zip"
-P2="$OUT/$NAME-windows-part2of2.zip"
-rm -f "$P1" "$P2"
-(cd "$SPLIT" && find "$NAME" -path "*Archipepsi.exe.part2" -prune -o -print \
+P1="$OUT/$NAME-windows-part1of3.zip"
+P2="$OUT/$NAME-windows-part2of3.zip"
+P3="$OUT/$NAME-windows-part3of3.zip"
+rm -f "$P1" "$P2" "$P3"
+(cd "$SPLIT" && find "$NAME" \( -path "*Archipepsi.exe.part2" -o \
+	-path "*Archipepsi.exe.part3" \) -prune -o -print \
 	| LC_ALL=C sort | zip -q -X -9 "$P1" -@)
 (cd "$SPLIT" && zip -q -X -9 "$P2" "$NAME/game/Archipepsi.exe.part2")
+(cd "$SPLIT" && zip -q -X -9 "$P3" "$NAME/game/Archipepsi.exe.part3")
 rm -rf "$SPLIT" "$WORK"
 say "done"
-ls -l "$ZIP" "$P1" "$P2"
-sha256sum "$ZIP" "$P1" "$P2"
+ls -l "$ZIP" "$P1" "$P2" "$P3"
+sha256sum "$ZIP" "$P1" "$P2" "$P3"

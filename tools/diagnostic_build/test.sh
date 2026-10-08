@@ -200,24 +200,25 @@ else
 	wait $OTHER 2>/dev/null || true
 fi
 
-step "10  the two-part delivery of the same build"
-P1="$(dirname "$PKG")/$(basename "$PKG")-windows-part1of2.zip"
-P2="$(dirname "$PKG")/$(basename "$PKG")-windows-part2of2.zip"
-if [ ! -f "$P1" ] || [ ! -f "$P2" ]; then
+step "10  the multi-part delivery of the same build"
+PARTS=$(ls "$(dirname "$PKG")/$(basename "$PKG")"-windows-part*.zip 2>/dev/null || true)
+if [ -z "$PARTS" ]; then
 	skip "no part zips beside the folder; build.sh writes them"
 else
-	for z in "$P1" "$P2"; do
+	# 25 MB, which is what the project's file transfer to her PC allows --
+	# it refused a 28 MB part, and that is why the delivery is in three.
+	for z in $PARTS; do
 		MB=$(( ($(stat -c %s "$z") + 1048575) / 1048576 ))
-		[ "$MB" -le 30 ] && pass "$(basename "$z") is ${MB} MB (fits a 30 MB limit)" \
-			|| fail "$(basename "$z") is ${MB} MB, over a 30 MB limit"
+		[ "$MB" -le 25 ] && pass "$(basename "$z") is ${MB} MB (fits a 25 MB limit)" \
+			|| fail "$(basename "$z") is ${MB} MB, over a 25 MB limit"
 	done
 	SP="$TMP/split"
 	mkdir -p "$SP"
-	( cd "$SP" && unzip -q "$P1" && unzip -q "$P2" )
+	for z in $PARTS; do ( cd "$SP" && unzip -q "$z" ); done
 	SPKG="$SP/$(basename "$PKG")"
 	(cd "$SPKG" && sha256sum -c --quiet SHA256SUMS.txt) \
-		&& pass "the two zips unpack into one folder whose checksums match" \
-		|| fail "the unpacked two-part folder does not match its checksums"
+		&& pass "the part zips unpack into one folder whose checksums match" \
+		|| fail "the unpacked multi-part folder does not match its checksums"
 	"$PY" "$HERE/check_manifest.py" "$SPKG" \
 		&& pass "its manifest records the split, and the parts match it" \
 		|| fail "the split manifest does not describe the folder"

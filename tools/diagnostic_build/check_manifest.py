@@ -119,10 +119,13 @@ def main(argv: list[str]) -> int:
              f"{game.get('size')}")
         want(whole.hexdigest() == game.get("sha256"),
              "the joined parts do not match integrity.game.sha256")
-        want(len((game.get("split") or {}).get("zips", [])) == 2,
-             "integrity.game.split.zips does not name two zips")
-        want(any("two-part delivery" in s for s in limits),
-             "limitations do not say this is the two-part delivery")
+        zips = (game.get("split") or {}).get("zips", [])
+        parts = (game.get("split") or {}).get("parts", [])
+        want(len(zips) == len(parts) and len(zips) >= 2,
+             f"integrity.game.split names {len(zips)} zips for "
+             f"{len(parts)} parts")
+        want(any("multi-part delivery" in s for s in limits),
+             "limitations do not say this is the multi-part delivery")
 
     readme = m.get("readme")
     want(readme and (pkg / readme).is_file(), "readme is not in the folder")

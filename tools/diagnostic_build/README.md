@@ -147,17 +147,21 @@ two; a double-clicker gets the second `.bat`.
 - Windows only. A Linux build would be a second preset and is not needed
   for this review.
 
-## The two-part delivery
+## The multi-part delivery
 
-`build.sh` also writes `-windows-part1of2.zip` and `-part2of2.zip`, the
-same folder with `game/Archipepsi.exe` cut in two (at a fifth, so both
-zips land near 26 MB rather than 37 and 16). The starter joins the parts
-on its first run, checks the result against `game/Archipepsi.exe.size`,
-and deletes them; `archipepsi-build.json` records each part's size and
-digest and the whole file's, under `integrity.game`. This exists because
-not every channel the build travels carries a 50 MB file — the review
-builds split for the same reason — and because the project's file
-transfer allows 30 MB per file.
+`build.sh` also writes `-windows-part1of3.zip` through `-part3of3.zip`:
+the same folder with `game/Archipepsi.exe` cut in three. Part 1 carries
+everything else in the folder (about 20 MB zipped) plus a sliver of the
+game; parts 2 and 3 halve the rest, so each zip is around 17–21 MB. The
+starter joins the parts on its first run, checks the result against
+`game/Archipepsi.exe.size`, and deletes them; `archipepsi-build.json`
+records each part's size and digest and the whole file's, under
+`integrity.game`.
+
+This exists because not every channel the build travels carries a 50 MB
+file — the review builds split for the same reason. Three rather than two
+because the file transfer to her PC refused a 28 MB part: the limit is
+25 MB each, and `test.sh` step 10 now measures every zip against it.
 
 Note that `Archipepsi.console.exe` is a 184 kB wrapper that launches
 `Archipepsi.exe`, so the console starter needs the joined file too. The
