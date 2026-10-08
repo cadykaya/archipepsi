@@ -194,6 +194,21 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-08 (fifth pass): final instructions handed to Prod. STOP.**
+  Same branch.
+  * Owner: tote v2 is approved for G1, and C2 as a candidate for
+    integration. The quiet ceiling is approved as a pipeline asset,
+    restricted to its ceilings.
+  * Batch 066: `build_station_quiet_ceiling.py` writes
+    `assets/textures/station_local/concrete_facility_ceiling_quiet.png`
+    (Crossing D's five ceilings only; not a pack row). It's in the art check.
+  * Final note: `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md`.
+    The stair and landing take the shipped floor role, plus the C2
+    stringer. Measured final: stair 13.5, lift ÷ stair 2.23.
+  * Deferred tooling idea, recorded in ART_FRONTIER: procedural stair meshes
+    along paths or splines.
+  * Next: no more art studies or redesigns until the owner has played
+    G1. Only Prod's fit, collision and state issues.
 * **2026-10-08 (fourth pass): Batch 065 APPROVED for G1 integration;
   tote v2; stair stringer comparison. STOP.** Same branch.
   * Report: `docs/art/reports/2026-10-08-g1-approval-tote-v2-stair-skirt.md`.

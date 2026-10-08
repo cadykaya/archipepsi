@@ -496,7 +496,8 @@ SCRIPTS="build_materials build_architecture build_props
   build_theme_candidate build_clockwork build_brink build_wreck
   build_twilight build_foundry build_lothric
   build_pack_materials build_crossing_kit
-  build_crossing_affordances build_impact_relay"
+  build_crossing_affordances build_impact_relay
+  build_station_quiet_ceiling"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.

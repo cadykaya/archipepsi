@@ -3523,6 +3523,29 @@ Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
 **Next: STOP.** Support only Prod's specific fit, collision and state
 issues.
 
+### Delivered, 2026-10-08 (fifth pass) — final G1, ceiling and C2 instructions. STOPPED.
+
+* **Approved:** tote v2 for G1, and C2 as a candidate for integration.
+* **Batch 066:** the quiet ceiling is now a reproducible local asset
+  (`build_station_quiet_ceiling.py`, in the art check), for Crossing D's
+  five ceilings only.
+* **For Prod:** `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md`.
+  The stair takes the shipped floor role, and the final configuration
+  is measured (N5).
+
+**Next: STOP.** No more art studies or model redesigns until the owner has
+played G1. Support only Prod's specific fit, collision and state issues.
+
+### Deferred tooling ideas (recorded, NOT assignments)
+
+* **Procedural stair meshes along paths or splines** (owner, 2026-10-08):
+  generated stair geometry following a path or spline, with variable
+  heights, widths and curves, at a consistent UV density (the pipeline's
+  32 texels/m), for the future room-building tools. Not started. C2's
+  visual stringer is enough for Crossing D. When it's picked up, its first
+  test should be the same three Crossing D cameras (N4/N5), and it
+  must leave traversal and collision with the room's own rules.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

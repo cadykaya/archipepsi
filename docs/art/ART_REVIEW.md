@@ -5168,6 +5168,19 @@ Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
 Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
 **Later on 2026-10-08:** the owner sent Batch 065 to Prod for G1, with no new design round before the room is played. The tote and weight were added at G1's tested sizes (`review/impact-relay-g1`, `a3b59c46`); neither ships a collider, so the physics is unchanged. Prod's handoff: `docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`.
 
+
+## Batch 066 — the station's quiet ceiling, a local texture (2026-10-08)
+
+*Arty — 2026-10-08*
+
+**APPROVED (owner, 2026-10-08)** for Crossing D's five ceilings only. It's built by `tools/blender/build_station_quiet_ceiling.py`.
+- **The texture:** `assets/textures/station_local/concrete_facility_ceiling_quiet.png`, 128 px covering 4.0 m.
+- **How it differs from the shipped ceiling:** it's painted by the study's ceiling painter with QUIET's five ceiling numbers changed and nothing else. That means double the rib pitch, no rib highlight line, and less patching, speckle and edge wear.
+- **Provenance:** the builder first checks that the same painter, QUIET off, still reproduces the shipped ceiling.
+- **Restriction:** `STATION_LOCAL.json` records the five nodes it's for. It is not a theme-pack row, and the shipped `concrete_facility` ceiling is unchanged.
+
+Measured on the T2 hall-stair view: the ceiling's edge strength goes from 46.7 to 21.8. Handoff: `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md`.
+
 ## Batch 064 — blue movement and orange breakable, to the green kit's bar (2026-10-08)
 
 *Arty — 2026-10-08*

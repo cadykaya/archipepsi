@@ -5,6 +5,8 @@
 **For:** Prod, for the G1 candidate integration in `impact_relay_room.gd`.
 **Owner's ruling, 2026-10-08:** Batch 065 goes to Prod for G1, as is. **There is no new launcher or barrier design round before the room is played.** The art lane supports any specific fit or state issue Prod finds. It doesn't redesign.
 
+**FINAL, later on 2026-10-08:** `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md` holds the final instructions for Prod (tote v2 approved, the quiet-ceiling asset, C2). Where this note differs, that one wins.
+
 ## Update, later on 2026-10-08: approved for integration
 
 **The owner approved all five Batch 065 pieces as candidate art for G1's playable**: the launcher, the impact seal, the permanent frame, the teaching tote and the heavy weight. **G1's mechanics stay exactly as tested.** The owner wants to compare the placeholder version with the art-integrated one, so:

@@ -1,0 +1,43 @@
+{
+  "batch": "066",
+  "covers_m": 4.0,
+  "for_nodes": {
+    "crossing_d_room.gd": [
+      "HallCeiling",
+      "ArrivalCeiling",
+      "CourtCeiling",
+      "MachineCeiling",
+      "YardCeiling"
+    ]
+  },
+  "measured": "T2 hall-stair view: ceiling edge strength 46.7 as played -> 29.9 with the shipped ceiling role -> 21.8 with this texture (docs/art-requests/2026-10-08-station-noise-handoff.md)",
+  "not_for": "any other surface, theme or room; never written over assets/textures/theme/ or the pack's `ceiling` row",
+  "quiet_numbers": {
+    "ceiling.broad_patches.strength": [
+      0.28,
+      0.12
+    ],
+    "ceiling.edge_wear.strength": [
+      0.7,
+      0.3
+    ],
+    "ceiling.rib_highlight_line": [
+      1,
+      0
+    ],
+    "ceiling.rib_pitch_m": [
+      0.6,
+      1.2
+    ],
+    "ceiling.speckle.density": [
+      0.22,
+      0.04
+    ]
+  },
+  "sha256": "dc3836f2d89fd57353ced7c25a266dc0e906f9e67b61ae3db7ba900014b1fc47",
+  "size_px": 128,
+  "source": "tools/blender/study_station_quiet.py, ceiling painter, QUIET on",
+  "status": "APPROVED (owner, 2026-10-08) for Crossing D's five ceilings only; not a theme-pack row; the shipped concrete_facility ceiling is unchanged",
+  "texels_per_metre": 32.0,
+  "texture": "station_local/concrete_facility_ceiling_quiet.png"
+}

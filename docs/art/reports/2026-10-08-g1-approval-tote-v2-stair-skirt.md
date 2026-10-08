@@ -92,4 +92,20 @@ The code sketch for Prod is in `docs/art-requests/2026-10-08-station-noise-hando
 
 Not checked: Prod's integration in motion, the pinned-Production run (FU-1), and Windows.
 
+## Addendum, later on 2026-10-08: final instructions
+
+**The owner approved** tote v2 for G1 and C2 as a candidate for integration. They asked for T2's quieter ceiling as a proper, reproducible pipeline asset, restricted to its ceilings, and for **no more art studies or model redesigns until G1 has been played**.
+
+**What I did:**
+- **Batch 066:** `tools/blender/build_station_quiet_ceiling.py` writes `assets/textures/station_local/concrete_facility_ceiling_quiet.png` and `STATION_LOCAL.json`.
+  - It is byte-identical to the texture T2 was measured with.
+  - It is deterministic, and it's in `check_art_current.sh`.
+  - It checks first that its painter still reproduces the shipped ceiling.
+  - It's no theme-pack row, and the shipped ceiling is unchanged.
+- **The final configuration, photographed:** the asset on the five ceilings, the **shipped** floor role on the stair and landing (so there's no second local texture), and the C2 stringer. It gives stair 13.5, ceiling 21.8 and lift ÷ stair 2.23, against C2's 13.4 and 2.26. [N5](../review/bloom_g1_2026-10-08/N5_final_crossing_d_config.png)
+- **For Prod:** `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md`, one note for the tote, the ceiling and C2.
+- **Recorded as a deferred tooling idea, not an assignment:** procedural stair meshes along paths or splines, with variable heights, widths and curves at a consistent UV density. It's in `docs/art/ART_FRONTIER.md`.
+
+**Checks:** `check_art_current.sh` is listed below once run.
+
 **STOP.** No watchers, subscriptions or merges.

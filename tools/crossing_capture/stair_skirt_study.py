@@ -3,9 +3,11 @@
 
     python3 tools/crossing_capture/stair_skirt_study.py QUIET_DIR OUT_DIR
 
-Writes three `dcap.gd` specs -- A (as played), T2 (the targeted quiet
-ceiling and stair) and C2 (T2 plus a skirt) -- with the same three
-cameras, so the three can be photographed in one review checkout of
+Writes four `dcap.gd` specs -- A (as played), T2 (the targeted quiet
+ceiling and stair), C2 (T2 plus a skirt) and FINAL (what Prod is handed,
+later on 2026-10-08: the committed quiet-ceiling asset on the ceilings,
+the SHIPPED floor role on the stair and landing, and the skirt) -- with
+the same three cameras, so all four can be photographed in one review checkout of
 `review/crossing-d-readability`. QUIET_DIR holds `study_station_quiet.py`'s
 output (`quiet_ceiling.png`, `quiet_floor.png`).
 
@@ -68,7 +70,17 @@ def specs(quiet_dir):
                              "points": skirt_profile(),
                              "z": [OPEN_SIDE_Z, OPEN_SIDE_Z + THICKNESS],
                              "like": "YardStair"}])
-    return {"A": a, "T2": t2, "C2": c2}
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))))
+    shipped_floor = os.path.join(repo, "assets", "textures", "theme",
+                                 "concrete_facility_floor.png")
+    final = dict(c2, retexture=[
+        {"match": "Ceiling", "png": os.path.join(
+            repo, "assets", "textures", "station_local",
+            "concrete_facility_ceiling_quiet.png")},
+        {"match": "YardStair", "png": shipped_floor},
+        {"match": "StairLanding", "png": shipped_floor}])
+    return {"A": a, "T2": t2, "C2": c2, "FINAL": final}
 
 
 def main(quiet_dir, out_dir):

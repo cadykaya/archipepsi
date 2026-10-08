@@ -12,6 +12,8 @@ Both options touch the same seven nodes and nothing else: the five ceilings and 
 | `HallCeiling`, `ArrivalCeiling`, `CourtCeiling`, `MachineCeiling`, `YardCeiling` | painted with the trim strip |
 | `YardStair` (to a gate that opens only from the yard) and `StairLanding` | painted with the trim strip |
 
+**FINAL, later on 2026-10-08:** `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md` holds the final instructions for Prod (tote v2 approved, the quiet-ceiling asset, C2). Where this note differs, that one wins.
+
 ## The two options
 
 | | **R: role reassignment only** | **Exact T2** |
