@@ -772,6 +772,21 @@ owner's D-06/D-07 rulings and the seam table are in
         - D's status labels stay.
       - **Not merged and not released.** The swing tether is still
         Courtyard-only, an open review question.
+    - **POST-D CREW PLAN, G0 (owner plan, 2026-10-07): DELIVERED, STOP.**
+      Prod's first gate: the Impact Lab, a no-enemy technical fixture in
+      which a powered object plate throws a real 36 kg weight into a rated
+      shutter. It also wires the sound bank Crossing D never built.
+      - **Where it is.** Branch `review/impact-lab-g0`, from readable D
+        `0e54caab`. The build is `3337769d`. The report and the handoff to
+        Dess and Arty are in `docs/reports/2026-10-08-impact-lab-g0.md`.
+      - **Verdict:** feasible, narrowly. The player's pads are untouched.
+        - 40 of 40 throws break the shutter, each at 2,178 J (2.2× the
+          break).
+        - The live check passes 33, in source, exported Linux and under
+          Wine; 0 connections.
+        - Run it with `make godot-impact-lab`.
+      - **Next:** G1, one designed room, waits on Dess's brief and the
+        owner's choice. Combat feel (G3) waits after that.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.

@@ -70,7 +70,11 @@ NOT_A_SUITE = {"godot-import", "godot-integration",
                # yards' live checks play the four rooms, a few minutes;
                # it lives on the review branch and is run by hand. The
                # Crossing is not a Zone and no campaign builds it.
-               "godot-crossing-d"}
+               "godot-crossing-d",
+               # AND FOR THE IMPACT LAB (post-D plan, 2026-10-07, G0): a
+               # technical fixture on its own review branch, probed the
+               # same way and run by hand; not a Zone.
+               "godot-impact-lab"}
 
 
 #: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the
