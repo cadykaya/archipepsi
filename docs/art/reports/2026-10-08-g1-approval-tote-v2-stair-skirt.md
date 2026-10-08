@@ -88,7 +88,7 @@ The code sketch for Prod is in `docs/art-requests/2026-10-08-station-noise-hando
 
 - `check_docs_metrics.py`: passes, 396 of 396.
 - The Batch 065 rebuild is deterministic: only `ir_teaching_tote.glb` and the manifest changed, and the other four GLBs are byte-identical.
-- `check_art_current.sh`: see the line below.
+- `check_art_current.sh`: **PASS**, "every generated asset matches its source", including the Batch 065 rebuild; 14 m 6 s.
 
 Not checked: Prod's integration in motion, the pinned-Production run (FU-1), and Windows.
 
