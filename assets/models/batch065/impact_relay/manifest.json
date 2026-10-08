@@ -15,7 +15,8 @@
         0.25,
         2.0
       ],
-      "read_at": "review/impact-lab-g0 3337769d"
+      "read_at": "review/impact-lab-g0 3337769d",
+      "rechecked_at": "review/impact-relay-g1 a3b59c46: plate and shutter unchanged; CRATE_SIZE [0.5, 0.36, 0.5] 4 kg and WEIGHT_SIZE [0.45, 0.6, 0.45] 36 kg read there"
     },
     "fits": "Production's ImpactShutter: inside its 3.0 x 3.0 x 0.4 m box, origin at the box centre, hall face Godot +Z (the shutter's `normal`)",
     "hinges": [
@@ -200,7 +201,8 @@
         0.25,
         2.0
       ],
-      "read_at": "review/impact-lab-g0 3337769d"
+      "read_at": "review/impact-lab-g0 3337769d",
+      "rechecked_at": "review/impact-relay-g1 a3b59c46: plate and shutter unchanged; CRATE_SIZE [0.5, 0.36, 0.5] 4 kg and WEIGHT_SIZE [0.45, 0.6, 0.45] 36 kg read there"
     },
     "fits": "Production's ObjectPlate (impact_lab_parts.gd): its 2.0 x 0.25 x 2.0 m collider is kept exactly -- the deck's top is at 0.25 m. Everything else sits round it inside D-18's 2.4 m",
     "hinges": [
@@ -279,7 +281,7 @@
     },
     "states": {
       "arming": {
-        "dess": "WIND-UP",
+        "dess": "WIND-UP (v1; v2 takes Prod's 0.6 s arming)",
         "move_chevron_1..3": "light one by one, back to front, as the ramp passes 1/3, 2/3, 3/3",
         "move_rail_*": "pulse, faster as it fills",
         "power_*": "live",
@@ -313,10 +315,10 @@
         "move_*": "flash to live x2.5 for 0.12 s",
         "prod": "throw flash"
       },
-      "names": "Prod's ObjectPlate states, with Dess's D-18 names beside them",
+      "names": "Prod's ObjectPlate states, with D-18 v1's names beside them; D-18 v2 (21cc00a4) adopts Prod's states and timings",
       "reads_without_colour": "fins and front lip rise toward the throw; the chevrons point it; the deck kicks only when it throws",
       "rearm": {
-        "dess": "RE-ARM (2 s)",
+        "dess": "RE-ARM (v1 said 2 s; v2 takes Prod's 1.0 s)",
         "move_chevron_*": "fade to idle",
         "prod": "REARM_SECONDS (1.0)"
       }
@@ -325,6 +327,82 @@
     "texel_density": 32.0,
     "texels_per_metre": 32,
     "triangles": 476
+  },
+  "ir_relay_weight": {
+    "anchor": "as-built",
+    "batch": "065",
+    "carriable": true,
+    "colliders": [],
+    "collision": "none in the GLB: ManipulableBody.create's BoxShape3D from the size above, unchanged. Mass, size, damping and every tested number stay as they are",
+    "contracts": {
+      "ImpactShutter.size": [
+        3.0,
+        3.0,
+        0.4
+      ],
+      "ObjectPlate.SIZE": [
+        2.0,
+        0.25,
+        2.0
+      ],
+      "read_at": "review/impact-lab-g0 3337769d",
+      "rechecked_at": "review/impact-relay-g1 a3b59c46: plate and shutter unchanged; CRATE_SIZE [0.5, 0.36, 0.5] 4 kg and WEIGHT_SIZE [0.45, 0.6, 0.45] 36 kg read there"
+    },
+    "family_rule": "Batch 043: bare dark metal (#191d23) only where a hand takes hold",
+    "fits": "Production's `relay_weight` (impact_relay_room.gd, a3b59c46): exactly its 0.45 x 0.60 x 0.45 m box (x, y, z), 36 kg",
+    "kind": "impact_relay_g1",
+    "library_check": {
+      "asked": "the 4 kg teaching tote and the 36 kg weight must look materially different (owner, 2026-10-08; D-18 v2 section 6)",
+      "closest": {
+        "int_carryable / dec_crate_fixed": "handled industrial crate, 0.58 x 0.50 x 0.51 m: heavy-looking by design",
+        "phys_generic": "15 kg crate, 0.645 x 0.646 x 0.625 m: a solid lidded crate, too big, and it reads heavy",
+        "phys_mechanical_part": "55 kg, 0.475 x 0.403 x 0.43 m: a machine part, not a weight",
+        "phys_power_cell": "40 kg, 0.34 x 0.34 x 0.60 m: an energy cell, the wrong object and the wrong footprint",
+        "prop_crate": "decoration, painted end to end, no handling"
+      },
+      "searched": "docs/art/ART_REVIEW.md and every manifest under assets/models for crates, totes, weights and ballast",
+      "verdict": "nothing at the tested sizes says 'light' or 'dense'; rescaling a library body would change what it is, so two minimal props in the Batch 043 family rule"
+    },
+    "mass_class": "MEDIUM",
+    "mass_kg": 36.0,
+    "mount": "child of the ManipulableBody at identity; hide Prod's Look, Band, HandlePost and Handle boxes",
+    "origin": "the box centre -- ManipulableBody.create's own origin, where its BoxShape3D is centred",
+    "parts": [
+      "grip_handle",
+      "lightened_panel_0",
+      "lightened_panel_1"
+    ],
+    "path": "batch065/impact_relay/ir_relay_weight.glb",
+    "reuses": [
+      "Batch 064 materials and helpers",
+      "Batch 063 power state and hinges"
+    ],
+    "size": [
+      0.45,
+      0.45,
+      0.6
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime": [
+      0.45,
+      0.6,
+      0.45
+    ],
+    "states": {
+      "carried": {
+        "grip_handle": "may light while held (section 33.7); optional"
+      },
+      "drive": "Prod's ManipulableBody: carried, set down on the plate, thrown, recovered to its stand",
+      "lightened": {
+        "lightened_panel_*": "override the one slot `ir_lightened` while the status holds, as Batch 043 does"
+      },
+      "reads_without_colour": "a solid squat block on a foot, a strap and a handle: nothing in it is air",
+      "rest": "as built"
+    },
+    "status": "CANDIDATE -- for Impact Relay G1 (D-18 Concept A on Prod's G0 mechanism); not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 108
   },
   "ir_seal_jamb": {
     "anchor": "as-built",
@@ -341,7 +419,8 @@
         0.25,
         2.0
       ],
-      "read_at": "review/impact-lab-g0 3337769d"
+      "read_at": "review/impact-lab-g0 3337769d",
+      "rechecked_at": "review/impact-relay-g1 a3b59c46: plate and shutter unchanged; CRATE_SIZE [0.5, 0.36, 0.5] 4 kg and WEIGHT_SIZE [0.45, 0.6, 0.45] 36 kg read there"
     },
     "kind": "impact_relay_g1",
     "mount": "on the wall, NOT under the shutter: same origin as the shutter (the opening's centre), frame on the hall face. It stays when the seal breaks",
@@ -361,5 +440,81 @@
     "texel_density": 32.0,
     "texels_per_metre": 32,
     "triangles": 108
+  },
+  "ir_teaching_tote": {
+    "anchor": "as-built",
+    "batch": "065",
+    "carriable": true,
+    "colliders": [],
+    "collision": "none in the GLB: ManipulableBody.create's BoxShape3D from the size above, unchanged. Mass, size, damping and every tested number stay as they are",
+    "contracts": {
+      "ImpactShutter.size": [
+        3.0,
+        3.0,
+        0.4
+      ],
+      "ObjectPlate.SIZE": [
+        2.0,
+        0.25,
+        2.0
+      ],
+      "read_at": "review/impact-lab-g0 3337769d",
+      "rechecked_at": "review/impact-relay-g1 a3b59c46: plate and shutter unchanged; CRATE_SIZE [0.5, 0.36, 0.5] 4 kg and WEIGHT_SIZE [0.45, 0.6, 0.45] 36 kg read there"
+    },
+    "family_rule": "Batch 043: bare dark metal (#191d23) only where a hand takes hold",
+    "fits": "Production's `relay_crate` (impact_relay_room.gd, a3b59c46): exactly its 0.50 x 0.36 x 0.50 m box (x, y, z), 4 kg",
+    "kind": "impact_relay_g1",
+    "library_check": {
+      "asked": "the 4 kg teaching tote and the 36 kg weight must look materially different (owner, 2026-10-08; D-18 v2 section 6)",
+      "closest": {
+        "int_carryable / dec_crate_fixed": "handled industrial crate, 0.58 x 0.50 x 0.51 m: heavy-looking by design",
+        "phys_generic": "15 kg crate, 0.645 x 0.646 x 0.625 m: a solid lidded crate, too big, and it reads heavy",
+        "phys_mechanical_part": "55 kg, 0.475 x 0.403 x 0.43 m: a machine part, not a weight",
+        "phys_power_cell": "40 kg, 0.34 x 0.34 x 0.60 m: an energy cell, the wrong object and the wrong footprint",
+        "prop_crate": "decoration, painted end to end, no handling"
+      },
+      "searched": "docs/art/ART_REVIEW.md and every manifest under assets/models for crates, totes, weights and ballast",
+      "verdict": "nothing at the tested sizes says 'light' or 'dense'; rescaling a library body would change what it is, so two minimal props in the Batch 043 family rule"
+    },
+    "mass_class": "LIGHT",
+    "mass_kg": 4.0,
+    "mount": "child of the ManipulableBody at identity; hide Prod's Base, Side and End boxes",
+    "origin": "the box centre -- ManipulableBody.create's own origin, where its BoxShape3D is centred",
+    "parts": [
+      "grip_hand_0",
+      "grip_hand_1"
+    ],
+    "path": "batch065/impact_relay/ir_teaching_tote.glb",
+    "reuses": [
+      "Batch 064 materials and helpers",
+      "Batch 063 power state and hinges"
+    ],
+    "size": [
+      0.5,
+      0.5,
+      0.36
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime": [
+      0.5,
+      0.36,
+      0.5
+    ],
+    "states": {
+      "carried": {
+        "grip_hand_*": "may light while held (section 33.7, 'attach point available'); optional"
+      },
+      "drive": "Prod's ManipulableBody: carried, released, thrown by the plate, and its own contacts",
+      "lands": {
+        "root": "WOBBLE -- Prod's code, not a pose: a damped rock of the visual child about the floor's centre, about 6 degrees, 3 swings in 0.4 s, on a landing harder than a set-down. D-18 section 7 lists this polish as cuttable"
+      },
+      "reads_without_colour": "open on every side and the palest loose thing in the room: you see through it",
+      "refused": "nothing on the tote: the shutter's flash and knock say it",
+      "rest": "as built"
+    },
+    "status": "CANDIDATE -- for Impact Relay G1 (D-18 Concept A on Prod's G0 mechanism); not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 228
   }
 }

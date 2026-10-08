@@ -5162,8 +5162,11 @@ Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
 | `ir_object_launcher` | 476 tris · 2.46 × 2.46 × 0.90 m · 32.0 texels/m | the look for `ObjectPlate`: Prod's 2.0 × 0.25 × 2.0 m plate kept exactly, inside side lips with blue emitters, a rising front lip with blue fins, three deck chevrons that fill as it arms, a deck that kicks when it throws, a green-fed accumulator housing |
 | `ir_impact_seal` | 744 tris · 3.00 × 0.36 × 3.00 m · 32.0 texels/m | the look for `ImpactShutter`: six armour slabs, each its own node, with orange seam collars on what gives; three glance scuffs |
 | `ir_seal_jamb` | 108 tris · 3.50 × 0.10 × 3.25 m · 32.0 texels/m | the doorway's frame on the hall face; stays when the seal breaks |
+| `ir_teaching_tote` | 228 tris · 0.50 × 0.50 × 0.36 m · 32.0 texels/m | added later on 2026-10-08: the look for G1's 4 kg `relay_crate`, filling its box exactly. Open on every side, pale plastic; dark hand slots are its only grips |
+| `ir_relay_weight` | 108 tris · 0.45 × 0.45 × 0.60 m · 32.0 texels/m | added later on 2026-10-08: the look for G1's 36 kg `relay_weight`, filling its box exactly. A squat cast-steel block on a foot, with a strap, a worn-bright cap, a bare bail handle and two `lightened` panels |
 
 Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
+**Later on 2026-10-08:** the owner sent Batch 065 to Prod for G1, with no new design round before the room is played. The tote and weight were added at G1's tested sizes (`review/impact-relay-g1`, `a3b59c46`); neither ships a collider, so the physics is unchanged. Prod's handoff: `docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`.
 
 ## Batch 064 — blue movement and orange breakable, to the green kit's bar (2026-10-08)
 

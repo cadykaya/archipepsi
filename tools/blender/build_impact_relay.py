@@ -23,6 +23,16 @@ Prod proved in G0 (`review/impact-lab-g0`, `impact_lab_parts.gd`):
 * `ir_seal_jamb` -- the frame round the doorway, on the hall face. A
   separate asset, so it stays when the seal is gone: an empty frame is
   the destroyed state you can read from across the hall.
+* `ir_teaching_tote` and `ir_relay_weight` (added 2026-10-08, owner: the
+  lesson depends on the 4 kg tote and the 36 kg weight "looking materially
+  different") -- the looks for Prod's two `ManipulableBody`s in
+  `impact_relay_room.gd` (G1, a3b59c46). Each fills its tested box exactly
+  (0.50 x 0.36 x 0.50 and 0.45 x 0.60 x 0.45 m) with the origin at the box
+  centre, where `ManipulableBody.create` puts its `BoxShape3D`; neither
+  ships a collider, so mass, size and physics are untouched. The library
+  had nothing to reuse at these sizes (see `_LIBRARY_CHECK`), so they are
+  minimal new props in Batch 043's family rule: bare dark metal only where
+  a hand takes hold.
 
 The look borrows the grammar the owner liked in the green kit: neutral
 construction, colour on the parts that act. The blue modules are
@@ -67,6 +77,21 @@ SHUTTER = (3.0, 0.4, 3.0)         # ImpactShutter.size: x, z(depth), y
 DEVICE = 2.4                      # D-18: the cradle's 2.4 m tray
 IR_MOVE_IDLE = "#1b2d66"
 
+#: Production's two bodies, read on review/impact-relay-g1 (a3b59c46,
+#: impact_relay_room.gd): x, z(depth), y -- the BoxShape3D
+#: `ManipulableBody.create` derives, centred on the body's origin.
+TOTE = (0.50, 0.50, 0.36)         # CRATE_SIZE, 4 kg, LIGHT
+WEIGHT = (0.45, 0.45, 0.60)       # WEIGHT_SIZE, 36 kg, MEDIUM
+#: Batch 043's family colours, reused rather than restated differently:
+#: `HANDLING` is where a hand takes hold; `LIGHTENED_REST` is the panel a
+#: runtime lights for `lightened`. (build_physics_props.py, by value: that
+#: module cannot be imported here without building its family.)
+HANDLING = "#191d23"
+LIGHTENED_REST = "#4a5058"
+TOTE_PLASTIC = "#c9ccc4"          # pale, no gameplay hue
+WEIGHT_CAST = "#43474d"           # dark cast steel
+WEIGHT_MACHINED = "#8a8f95"       # the bright worn edges of a heavy thing
+
 _PREVIOUS = kit._canvas
 
 
@@ -92,6 +117,22 @@ def _canvas(name):
             for x in range(4, SIZE, 8):
                 canvas.set(x, y, trim[0])
         return canvas
+    if name == "ir_tote":
+        # Thin moulded plastic: pale, almost flat, a faint mould drift.
+        canvas = paintkit.Canvas(SIZE, TOTE_PLASTIC)
+        paintkit.tonal_drift(canvas, surface, amount=0.02, cell_metres=1.0)
+        return canvas
+    if name == "ir_cast":
+        # Cast steel: dark, heavy, a slow mottle -- nothing painted on it.
+        canvas = paintkit.Canvas(SIZE, WEIGHT_CAST)
+        paintkit.tonal_drift(canvas, surface, amount=0.05, cell_metres=0.5)
+        return canvas
+    if name == "ir_machined":
+        return paintkit.Canvas(SIZE, WEIGHT_MACHINED)
+    if name == "ir_grip":
+        return paintkit.Canvas(SIZE, HANDLING)
+    if name == "ir_lightened":
+        return paintkit.Canvas(SIZE, LIGHTENED_REST)
     return _PREVIOUS(name)
 
 
@@ -177,14 +218,15 @@ def launcher():
 
 
 LAUNCHER_STATES = {
-    "names": "Prod's ObjectPlate states, with Dess's D-18 names beside them",
+    "names": "Prod's ObjectPlate states, with D-18 v1's names beside them; "
+             "D-18 v2 (21cc00a4) adopts Prod's states and timings",
     "dark":     {"prod": "unpowered", "dess": "DARK",
                  "move_rail_*": "idle", "move_chevron_*": "idle",
                  "power_*": "idle", "deck_hinge": 0.0},
     "cocked":   {"prod": "powered idle", "dess": "COCKED",
                  "move_rail_*": "live, steady", "move_chevron_*": "idle",
                  "power_*": "live", "deck_hinge": 0.0},
-    "arming":   {"prod": "arming (0.6 s ramp)", "dess": "WIND-UP",
+    "arming":   {"prod": "arming (0.6 s ramp)", "dess": "WIND-UP (v1; v2 takes Prod's 0.6 s arming)",
                  "move_chevron_1..3": "light one by one, back to front, "
                                       "as the ramp passes 1/3, 2/3, 3/3",
                  "move_rail_*": "pulse, faster as it fills",
@@ -193,7 +235,7 @@ LAUNCHER_STATES = {
                  "deck_hinge": "kick to 10 deg in 0.06 s, back in 0.25 s, "
                                "on ObjectPlate.fired only",
                  "move_*": "flash to live x2.5 for 0.12 s"},
-    "rearm":    {"prod": "REARM_SECONDS (1.0)", "dess": "RE-ARM (2 s)",
+    "rearm":    {"prod": "REARM_SECONDS (1.0)", "dess": "RE-ARM (v1 said 2 s; v2 takes Prod's 1.0 s)",
                  "move_chevron_*": "fade to idle"},
     "dud":      {"prod": "dud flicker", "dess": "--",
                  "move_chevron_*": "one dim flicker", "power_*": "stay idle "
@@ -288,6 +330,194 @@ SEAL_STATES = {
 }
 
 
+# --- ir_teaching_tote and ir_relay_weight --------------------------------------
+
+_LIBRARY_CHECK = {
+    "asked": "the 4 kg teaching tote and the 36 kg weight must look "
+             "materially different (owner, 2026-10-08; D-18 v2 section 6)",
+    "searched": "docs/art/ART_REVIEW.md and every manifest under "
+                "assets/models for crates, totes, weights and ballast",
+    "closest": {
+        "phys_generic": "15 kg crate, 0.645 x 0.646 x 0.625 m: a solid "
+                        "lidded crate, too big, and it reads heavy",
+        "phys_power_cell": "40 kg, 0.34 x 0.34 x 0.60 m: an energy cell, "
+                           "the wrong object and the wrong footprint",
+        "phys_mechanical_part": "55 kg, 0.475 x 0.403 x 0.43 m: a "
+                                "machine part, not a weight",
+        "int_carryable / dec_crate_fixed": "handled industrial crate, "
+                                           "0.58 x 0.50 x 0.51 m: heavy-"
+                                           "looking by design",
+        "prop_crate": "decoration, painted end to end, no handling",
+    },
+    "verdict": "nothing at the tested sizes says 'light' or 'dense'; "
+               "rescaling a library body would change what it is, so two "
+               "minimal props in the Batch 043 family rule",
+}
+
+
+def _rough(name, value):
+    """The theme roughness suits painted steel. Plastic and bare grips
+    are set here, once, on the cached material: Batch 043 measured a
+    grip at roughness 0.30 catching the room's specular and arriving
+    BRIGHTER than its body, so the grip is 0.62 as there."""
+    mat = kit._material(name)
+    mat.node_tree.nodes["Principled BSDF"].inputs["Roughness"]\
+        .default_value = value
+    return name
+
+
+def tote():
+    """`relay_crate`: 4 kg, carriable, thrown and refused. Dess: "a
+    flimsy, open-sided plastic tote that wobbles when it lands".
+
+    Open on every side: four corner posts, a top rim, a floor and two
+    slender ribs a face, so you see the floor through it from across the
+    hall. Pale and almost flat, so it is the brightest loose thing in the
+    room and it has no mass in it. The two hand slots under the end rims
+    are the only dark parts: Batch 043's handling colour, where a hand
+    takes it.
+    """
+    _rough("ir_tote", 0.55)
+    _rough("ir_grip", 0.62)
+    w, d, h = TOTE
+    t = 0.025
+    lo, hi = -h / 2.0, h / 2.0
+    floor_top = lo + t
+    rim = 0.03
+    body = [b("tote_floor", (w, d, t), (0.0, 0.0, lo + t / 2.0), "ir_tote")]
+    post = 0.04
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            body.append(b("tote_post", (post, post, h - t),
+                          (sx * (w - post) / 2.0, sy * (d - post) / 2.0,
+                           floor_top + (h - t) / 2.0), "ir_tote"))
+    for sy in (-1.0, 1.0):
+        body.append(b("tote_rim", (w - 2 * post, t, rim),
+                      (0.0, sy * (d - t) / 2.0, hi - rim / 2.0), "ir_tote"))
+    for sx in (-1.0, 1.0):
+        body.append(b("tote_rim", (t, d - 2 * post, rim),
+                      (sx * (w - t) / 2.0, 0.0, hi - rim / 2.0), "ir_tote"))
+    rib_h = h - t - rim
+    rib_z = floor_top + rib_h / 2.0
+    for k in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            body.append(b("tote_rib", (0.03, t, rib_h),
+                          (k * 0.085, sy * (d - t) / 2.0, rib_z), "ir_tote"))
+        for sx in (-1.0, 1.0):
+            body.append(b("tote_rib", (t, 0.03, rib_h),
+                          (sx * (w - t) / 2.0, k * 0.085, rib_z), "ir_tote"))
+    kit._tile(body)
+    grips = []
+    for i, sx in enumerate((-1.0, 1.0)):
+        g = b("grip_hand_%d" % i, (t, 0.16, 0.04),
+              (sx * (w - t) / 2.0, 0.0, hi - rim - 0.02), "ir_grip")
+        g.name = "grip_hand_%d" % i
+        grips.append(g)
+    kit._tile(grips)
+    return body, grips
+
+
+TOTE_STATES = {
+    "drive": "Prod's ManipulableBody: carried, released, thrown by the "
+             "plate, and its own contacts",
+    "rest": "as built",
+    "carried": {"grip_hand_*": "may light while held (section 33.7, "
+                               "'attach point available'); optional"},
+    "lands": {"root": "WOBBLE -- Prod's code, not a pose: a damped rock "
+                      "of the visual child about the floor's centre, "
+                      "about 6 degrees, 3 swings in 0.4 s, on a landing "
+                      "harder than a set-down. D-18 section 7 lists this "
+                      "polish as cuttable"},
+    "refused": "nothing on the tote: the shutter's flash and knock say it",
+    "reads_without_colour": "open on every side and the palest loose "
+                            "thing in the room: you see through it",
+}
+
+
+def weight():
+    """`relay_weight`: 36 kg, carriable, MEDIUM. Dess: "dense steel, a
+    squat block with a carry handle. Before it moves, it should look
+    like it would hurt."
+
+    Inside Prod's 0.45 x 0.60 x 0.45 m box, the handle takes the top
+    0.14 m, so the block itself is squat: 0.42 wide and 0.46 tall on a
+    full-width foot, under a strap and a narrower cap. Dark cast steel,
+    with the cap and foot worn bright (the edges a heavy thing loses its
+    paint from). Solid on every side, so nothing in it is air. The bail
+    handle is the only grip: one handle, hand-scale, bare dark metal.
+    Two `lightened_panel_*` nodes on the flanks, as on every Batch 043
+    body, because D-18 v2 names `lightened` on this object.
+    """
+    _rough("ir_grip", 0.62)
+    w, d, h = WEIGHT
+    lo, hi = -h / 2.0, h / 2.0
+    foot_h, cap_h = 0.04, 0.06
+    block_w = 0.42
+    block_top = hi - 0.14 - cap_h
+    body = [b("weight_foot", (w, d, foot_h), (0.0, 0.0, lo + foot_h / 2.0),
+              "ir_machined"),
+            b("weight_block", (block_w, block_w, block_top - lo - foot_h),
+              (0.0, 0.0, (lo + foot_h + block_top) / 2.0), "ir_cast"),
+            b("weight_strap", (w, d, 0.07), (0.0, 0.0, lo + 0.18),
+              "ir_cast"),
+            b("weight_cap", (0.34, 0.34, cap_h),
+              (0.0, 0.0, block_top + cap_h / 2.0), "ir_machined")]
+    kit._tile(body)
+    top = block_top + cap_h
+    posts = [brushkit.block("grip_post", (0.05, 0.05, hi - top - 0.02),
+                            (x, 0.0, top + (hi - top - 0.02) / 2.0))
+             for x in (-0.12, 0.12)]
+    bar = brushkit.block("grip_bar", (0.30, 0.06, 0.04), (0.0, 0.0, hi - 0.02))
+    handle = common.join(posts + [bar], "grip_handle")
+    common.assign(handle, kit._material("ir_grip"))
+    handle.name = "grip_handle"
+    panels = []
+    for i, sx in enumerate((-1.0, 1.0)):
+        p = b("lightened_panel_%d" % i, (0.01, 0.22, 0.10),
+              (sx * (block_w / 2.0 + 0.005), 0.0, lo + 0.29), "ir_lightened")
+        p.name = "lightened_panel_%d" % i
+        panels.append(p)
+    kit._tile([handle] + panels)
+    return body, [handle] + panels
+
+
+WEIGHT_STATES = {
+    "drive": "Prod's ManipulableBody: carried, set down on the plate, "
+             "thrown, recovered to its stand",
+    "rest": "as built",
+    "carried": {"grip_handle": "may light while held (section 33.7); "
+                               "optional"},
+    "lightened": {"lightened_panel_*": "override the one slot "
+                                       "`ir_lightened` while the status "
+                                       "holds, as Batch 043 does"},
+    "reads_without_colour": "a solid squat block on a foot, a strap and a "
+                            "handle: nothing in it is air",
+}
+
+
+def _body_entry(entry, box, kg, mass_class, prod_name, placeholders,
+                states):
+    entry.update({
+        "fits": "Production's `%s` (impact_relay_room.gd, a3b59c46): "
+                "exactly its %.2f x %.2f x %.2f m box (x, y, z), %g kg"
+                % (prod_name, box[0], box[2], box[1], kg),
+        "size_runtime": [box[0], box[2], box[1]],
+        "mass_kg": kg, "mass_class": mass_class, "carriable": True,
+        "origin": "the box centre -- ManipulableBody.create's own origin, "
+                  "where its BoxShape3D is centred",
+        "mount": "child of the ManipulableBody at identity; hide Prod's "
+                 "%s" % placeholders,
+        "collision": "none in the GLB: ManipulableBody.create's BoxShape3D "
+                     "from the size above, unchanged. Mass, size, damping "
+                     "and every tested number stay as they are",
+        "family_rule": "Batch 043: bare dark metal (%s) only where a hand "
+                       "takes hold" % HANDLING,
+        "states": states,
+        "library_check": _LIBRARY_CHECK,
+    })
+    return entry
+
+
 def build(name):
     common.reset_scene()
     kit._IMAGES.clear()
@@ -330,6 +560,17 @@ def build(name):
                           "through the collar material")
         entry["collision"] = "none in the GLB: the shutter's own box"
         entry["states"] = SEAL_STATES
+    elif name == "ir_teaching_tote":
+        body, grips = tote()
+        entry = _body_entry(ca._export(name, body, grips, [], (), "prop"),
+                            TOTE, 4.0, "LIGHT", "relay_crate",
+                            "Base, Side and End boxes", TOTE_STATES)
+    elif name == "ir_relay_weight":
+        body, parts = weight()
+        entry = _body_entry(ca._export(name, body, parts, [], (), "prop"),
+                            WEIGHT, 36.0, "MEDIUM", "relay_weight",
+                            "Look, Band, HandlePost and Handle boxes",
+                            WEIGHT_STATES)
     else:
         body = jamb()
         entry = ca._export(name, body, [], [], (), "prop")
@@ -339,7 +580,8 @@ def build(name):
     return entry
 
 
-ASSETS = ["ir_object_launcher", "ir_impact_seal", "ir_seal_jamb"]
+ASSETS = ["ir_object_launcher", "ir_impact_seal", "ir_seal_jamb",
+          "ir_teaching_tote", "ir_relay_weight"]
 
 
 def main():
@@ -357,7 +599,12 @@ def main():
                   "integrated",
         "contracts": {"ObjectPlate.SIZE": [2.0, 0.25, 2.0],
                       "ImpactShutter.size": [3.0, 3.0, 0.4],
-                      "read_at": "review/impact-lab-g0 3337769d"},
+                      "read_at": "review/impact-lab-g0 3337769d",
+                      "rechecked_at": "review/impact-relay-g1 a3b59c46: "
+                                      "plate and shutter unchanged; "
+                                      "CRATE_SIZE [0.5, 0.36, 0.5] 4 kg "
+                                      "and WEIGHT_SIZE [0.45, 0.6, 0.45] "
+                                      "36 kg read there"},
         "reuses": ["Batch 064 materials and helpers",
                    "Batch 063 power state and hinges"],
         "texels_per_metre": kit.DENSITY,

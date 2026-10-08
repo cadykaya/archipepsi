@@ -194,6 +194,23 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-08 (third pass): Batch 065 HANDED TO PROD for G1; tote and
+  weight added; noise split into R and T2. STOP.** Same branch.
+  * Owner: there is no new launcher or barrier design round before the
+    room is played. Arty supports specific fit and state issues only.
+  * Prod handoff: `docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`.
+    It is read against G1 `a3b59c46`; the one fit issue is the raceway's end
+    (waypoint change given).
+  * `ir_teaching_tote` (4 kg) and `ir_relay_weight` (36 kg) fill G1's
+    tested boxes exactly and ship no collider, so the physics is unchanged.
+  * Noise: `docs/art-requests/2026-10-08-station-noise-handoff.md`.
+    * R, roles only with shipped textures: lift ÷ ceiling 1.01.
+    * Exact T2, R plus two local quiet variants: 1.39.
+    * No global texture replacement.
+  * Bloom stages, and the Shunter's larger plough and upward vent, stay
+    review proposals. No enemy model, and no broad studies.
+  * Next: wait for Prod's fit or state issues, or the owner's choice
+    between R and T2.
 * **2026-10-08 (second pass): the Bloom transition study, selective noise
   correction and the Impact Relay G1 kit (Batch 065) are DELIVERED;
   STOP.** It's on `claude/archipepsi-art-bloom-g1-2026-10-08`, from

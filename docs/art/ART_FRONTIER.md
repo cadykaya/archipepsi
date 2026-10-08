@@ -3490,6 +3490,22 @@ Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
 
 **Next: STOP** for the owner's review.
 
+### Delivered, 2026-10-08 (third pass) — Batch 065 to Prod; tote and weight; noise R vs T2. STOPPED.
+
+* **G1:** Batch 065 handed to Prod
+  (`docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`).
+  * The owner ruled out a new design round before the room is played.
+  * The one fit issue: the G1 raceway ends under the launcher's west lip.
+    The handoff gives the waypoint change.
+* **The tote and the weight:** `ir_teaching_tote` and `ir_relay_weight`,
+  at G1's exact boxes, with Batch 043's family rule and no collider.
+  They read apart at 2.5 m, at 6–7 m and from the gallery, in grey too.
+* **Noise:** R (roles only) and exact T2 (plus two local quiet variants)
+  are separate handoffs (`docs/art-requests/2026-10-08-station-noise-handoff.md`).
+* **Bloom and the Shunter:** they stay review proposals.
+
+**Next: STOP.** Support only Prod's specific fit and state issues.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

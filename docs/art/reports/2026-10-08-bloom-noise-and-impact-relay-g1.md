@@ -75,6 +75,14 @@ As played, the ceiling was the busiest thing in the hall, half as busy again as 
 1. **Change two material assignments in the room code.** Ceilings take the ceiling role; non-critical stairs and landings take the floor role. These are shipped textures. On 2026-10-08, B showed that this step alone removes most of the ceiling noise.
 2. **The owner's decision:** T2 also uses the quiet versions of just those two roles, from `study_station_quiet.py`. The wall, trim and floor textures used elsewhere stay as shipped.
 
+**CLARIFIED, later on 2026-10-08 (owner: keep the two versions clearly separate).** Step 1 alone is now its own option, **R**: roles only, shipped textures. It was not measured before; it is now. R gives lift 30.2, stair 22.1, ceiling 29.9, a lift ÷ ceiling ratio of 1.01, against T2's 1.39. "B showed that this step alone removes most of the ceiling noise" was an inference from the earlier whole-station study, B. On this view R does about two-thirds of what T2 does on the ceiling, and all of it on the stair.
+
+Two other points in step 1 above are not as simple as written:
+- "Ceilings take the ceiling role" has **no public accessor** in `ThemeMaterials`. The cache key also leaves out `role`, so `_material(THEME, "ceiling")` is the safe call.
+- Exact T2's two textures are **local** variants, never a change to the pack's rows.
+
+See `docs/art-requests/2026-10-08-station-noise-handoff.md` and the [N3 sheet](../review/bloom_g1_2026-10-08/N3_noise_roles_only_R_vs_T2.png). The text above is kept as written.
+
 ## 3 and 4. The Impact Relay G1 kit (Batch 065)
 
 The kit is fitted to **Prod's G0 mechanism**, read at `review/impact-lab-g0`, `3337769d` (`impact_lab_parts.gd`), and to **Dess's D-18 Concept A** room. Every view is in Prod's own Impact Lab, at gameplay distances.
@@ -175,6 +183,8 @@ Dess's D-19 (`21cc00a4`) gives the charger an identity, approved by the owner: *
 
 **One fit note.** The lever moves to the plate's west, at about (−7, 0, −1). The launcher's inlet is at the west end of its rear face, plate-local (−0.90, 0.065, +1.26). The raceway needs **one floor turn** to reach it, or Prod can mirror the inlet to the front-west corner.
 
+**Read against Prod's G1 build, later on 2026-10-08** (`review/impact-relay-g1`, `a3b59c46`). The lever is at (−7, 1, 0), and the line ends at the middle of the plate's **west face**: under the launcher's west lip, and short of the inlet. The handoff gives the waypoint change, one more floor segment ending at world (−0.90, 0, +0.26).
+
 ## Files, revision and checks
 
 **Branch:** `claude/archipepsi-art-bloom-g1-2026-10-08`, from `463ef2f9`.
@@ -185,7 +195,7 @@ Dess's D-19 (`21cc00a4`) gives the charger an identity, approved by the owner: *
 - `tools/crossing_capture/dcap.gd`: now also hosts the Impact Lab, resizes boxes and makes materials emit, for studies;
 - `tools/crossing_capture/shunter_sketch.py` and `tools/blender/study_shunter_maquette.py`: disposable concept tools, outside `assets/`.
 
-**Views:** `docs/art/review/bloom_g1_2026-10-08/`, 13 images; the two `E*` images are labelled DISPOSABLE.
+**Views:** `docs/art/review/bloom_g1_2026-10-08/`, 13 images (16 after the addendum's G4, G5 and N3); the two `E*` images are labelled DISPOSABLE.
 
 **Checks:**
 - **The pipeline's own checks on each part:** 32.0 texels/m, flat shading, every part connected, within the `interactable` and `prop` budgets.
@@ -205,5 +215,35 @@ Dess's D-19 (`21cc00a4`) gives the charger an identity, approved by the owner: *
 2. **Noise.** T2 for the station: Prod's two material changes now, and the quiet ceiling and concrete stair textures as well?
 3. **Shunter.** Does the sketch's identity land? Should Dess take the larger plough swing and the upward vent into D-19?
 4. **G1.** Does the launcher read as "this throws things there", and the seal as "this breaks if hit hard enough"? Should the funnel lips collide?
+
+## Addendum, later on 2026-10-08: the owner's rulings, and what followed
+
+**The rulings:**
+- **G1.** Batch 065 goes to Prod for the G1 candidate integration. **There is no new launcher or barrier design round before the room is played.** Arty supports specific fit and state issues only.
+- **The tote and the weight** must look materially different, at the tested dimensions and with physics unchanged. Check the library first.
+- **Noise.** Keep the roles-only version separate from exact T2. No global texture replacement.
+- **Bloom's staged transition, and the Shunter's larger plough and upward vent**, stay **review proposals**. No final enemy model and no further broad studies yet.
+
+**What followed:**
+1. **The Prod handoff:** `docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`. It is read against G1 `a3b59c46`:
+   - the plate and shutter are unchanged from G0, so the launcher, seal and jamb fit as built;
+   - one fit issue, the raceway's end (above), with the waypoint change;
+   - every state in Prod's names;
+   - the art-side answer to his packaging note: the candidate files are first-party. I didn't touch his registry.
+2. **The tote and the weight, Batch 065 additions.** The library search found nothing at the tested sizes. The manifest's `library_check` records the search, and the handoff lists the near misses.
+   - **`ir_teaching_tote`:** 228 tris, exactly 0.50 × 0.36 × 0.50 m, 4 kg. Open on every side, pale plastic; the only dark parts are its two hand slots.
+   - **`ir_relay_weight`:** 108 tris, exactly 0.45 × 0.60 × 0.45 m, 36 kg. A squat cast-steel block on a foot, with a strap, a worn-bright cap, a bare bail handle and two `lightened` panels.
+   - Both use Batch 043's family rule, put the origin at the box centre and ship no collider. Prod's mass, size and physics are untouched.
+   - In Prod's own G1 room they read apart at 2.5 m, at 6–7 m and from the gallery, in colour and in grey:
+     - [G4: 2.5 m](../review/bloom_g1_2026-10-08/G4_tote_weight_2m5_before_after.png)
+     - [G5: distance](../review/bloom_g1_2026-10-08/G5_tote_weight_distance_before_after.png)
+   - The rebuild is byte-identical. The three earlier GLBs are unchanged.
+   - The manifest's state labels now say which names are D-18 v1's: v2 adopts Prod's states and timings. A dated correction in metadata only.
+3. **Noise:** `docs/art-requests/2026-10-08-station-noise-handoff.md`, with R and exact T2 side by side, measured. The clarification is in section 2.
+4. **Bloom and the Shunter:** unchanged. Both stay review proposals. Nothing new was built for either.
+
+**Questions now open:**
+1. **Noise:** R alone, or R and then T2's ceiling variant? The quiet floor measured no gain.
+2. **G1:** only what Prod finds in the running room.
 
 **STOP.** No watchers, subscriptions or merges.
