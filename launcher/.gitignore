@@ -1,0 +1,6 @@
+build/
+dist/
+*.spec
+.wine-build/
+.wine-build-dl/
+__pycache__/
