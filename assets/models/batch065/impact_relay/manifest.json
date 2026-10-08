@@ -1,0 +1,365 @@
+{
+  "ir_impact_seal": {
+    "anchor": "as-built",
+    "batch": "065",
+    "colliders": [],
+    "collision": "none in the GLB: the shutter's own box",
+    "contracts": {
+      "ImpactShutter.size": [
+        3.0,
+        3.0,
+        0.4
+      ],
+      "ObjectPlate.SIZE": [
+        2.0,
+        0.25,
+        2.0
+      ],
+      "read_at": "review/impact-lab-g0 3337769d"
+    },
+    "fits": "Production's ImpactShutter: inside its 3.0 x 3.0 x 0.4 m box, origin at the box centre, hall face Godot +Z (the shutter's `normal`)",
+    "hinges": [
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slab_1_mesh"
+        ],
+        "drive": "rotate the `slab_1` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slab_1",
+        "pivot_runtime": [
+          -1.02,
+          -0.765,
+          0.0
+        ],
+        "positions_degrees": {
+          "intact": 0.0
+        }
+      },
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slab_2_mesh"
+        ],
+        "drive": "rotate the `slab_2` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slab_2",
+        "pivot_runtime": [
+          0.0,
+          -0.765,
+          0.0
+        ],
+        "positions_degrees": {
+          "intact": 0.0
+        }
+      },
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slab_3_mesh"
+        ],
+        "drive": "rotate the `slab_3` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slab_3",
+        "pivot_runtime": [
+          1.02,
+          -0.765,
+          0.0
+        ],
+        "positions_degrees": {
+          "intact": 0.0
+        }
+      },
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slab_4_mesh"
+        ],
+        "drive": "rotate the `slab_4` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slab_4",
+        "pivot_runtime": [
+          -1.02,
+          0.765,
+          0.0
+        ],
+        "positions_degrees": {
+          "intact": 0.0
+        }
+      },
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slab_5_mesh"
+        ],
+        "drive": "rotate the `slab_5` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slab_5",
+        "pivot_runtime": [
+          0.0,
+          0.765,
+          0.0
+        ],
+        "positions_degrees": {
+          "intact": 0.0
+        }
+      },
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slab_6_mesh"
+        ],
+        "drive": "rotate the `slab_6` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slab_6",
+        "pivot_runtime": [
+          1.02,
+          0.765,
+          0.0
+        ],
+        "positions_degrees": {
+          "intact": 0.0
+        }
+      }
+    ],
+    "kind": "impact_relay_g1",
+    "mount": "child of the ImpactShutter at identity; hide its Casing, Band and Seam boxes; drive `_seams` through the collar material",
+    "parts": [
+      "slab_1",
+      "slab_1_mesh",
+      "slab_2",
+      "slab_2_mesh",
+      "slab_3",
+      "slab_3_mesh",
+      "slab_4",
+      "slab_4_mesh",
+      "slab_5",
+      "slab_5_mesh",
+      "slab_6",
+      "slab_6_mesh",
+      "scuff_1",
+      "scuff_2",
+      "scuff_3"
+    ],
+    "path": "batch065/impact_relay/ir_impact_seal.glb",
+    "reuses": [
+      "Batch 064 materials and helpers",
+      "Batch 063 power state and hinges"
+    ],
+    "size": [
+      3.0,
+      0.36,
+      3.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "states": {
+      "broken": {
+        "ir_seal_jamb": "stays: an empty frame",
+        "seal_core": "freed with the shutter",
+        "slab_1..6": "each becomes a RigidBody at its own node transform (origin at the slab's centre), colliding with the world only; ~60 kg each"
+      },
+      "drive": "ImpactShutter's own events: hp, struck(amount, accepted), broken",
+      "glance": {
+        "collars": "spark flash 0.15 s",
+        "scuff_n": "show the next one (1, 2, 3, then cycle)"
+      },
+      "intact": {
+        "scuff_*": "hidden (hide at build)",
+        "slab_*": "in place"
+      },
+      "reads_without_colour": "six heavy slabs with dark gaps: it is built in pieces, and it falls in pieces",
+      "refused": {
+        "collars": "flash 0.25 s; nothing else changes"
+      },
+      "wear": {
+        "collars": "the seams brighten as hp falls -- the shutter's own `_paint(0.4 + 2.0 * wear)` on the collar material, emissive orange"
+      }
+    },
+    "status": "CANDIDATE -- for Impact Relay G1 (D-18 Concept A on Prod's G0 mechanism); not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 744
+  },
+  "ir_object_launcher": {
+    "anchor": "as-built",
+    "batch": "065",
+    "colliders": [
+      "lip_l-convcolonly",
+      "lip_r-convcolonly",
+      "housing-convcolonly"
+    ],
+    "collision": "Prod's plate box, unchanged. Convex twins on the side lips and the rear housing: they funnel a weight dropped near an edge, which is a physics change -- Prod's and Dess's call whether to keep them",
+    "contracts": {
+      "ImpactShutter.size": [
+        3.0,
+        3.0,
+        0.4
+      ],
+      "ObjectPlate.SIZE": [
+        2.0,
+        0.25,
+        2.0
+      ],
+      "read_at": "review/impact-lab-g0 3337769d"
+    },
+    "fits": "Production's ObjectPlate (impact_lab_parts.gd): its 2.0 x 0.25 x 2.0 m collider is kept exactly -- the deck's top is at 0.25 m. Everything else sits round it inside D-18's 2.4 m",
+    "hinges": [
+      {
+        "as_built": "rest",
+        "axis": "x",
+        "carries": [
+          "deck",
+          "move_chevron_1",
+          "move_chevron_2",
+          "move_chevron_3"
+        ],
+        "drive": "rotate the `deck_hinge` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "deck_hinge",
+        "pivot_runtime": [
+          0.0,
+          0.21,
+          0.95
+        ],
+        "positions_degrees": {
+          "kick": 10.0,
+          "rest": 0.0
+        }
+      }
+    ],
+    "kind": "impact_relay_g1",
+    "mount": "child of the ObjectPlate at identity, yawed as the plate yaws its own deck (Godot -Z along the throw). Hide the plate's code boxes (Slab, Chevron, Lip, PowerLamp); keep its Sensor",
+    "parts": [
+      "deck_hinge",
+      "deck",
+      "move_chevron_1",
+      "move_chevron_2",
+      "move_chevron_3",
+      "move_rail_l",
+      "move_rail_r",
+      "move_rail_l_side",
+      "move_rail_r_side",
+      "move_rail_drum_l",
+      "move_rail_drum_r",
+      "power_lens",
+      "power_core"
+    ],
+    "path": "batch065/impact_relay/ir_object_launcher.glb",
+    "power_exit": {
+      "at_runtime": [
+        -0.9,
+        0.065,
+        1.26
+      ],
+      "note": "the inlet's rear face at the green raceway's pipe height; mirror x for a feed from the east"
+    },
+    "reuses": [
+      "Batch 064 materials and helpers",
+      "Batch 063 power state and hinges"
+    ],
+    "size": [
+      2.46,
+      2.46,
+      0.9
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "state_nodes": {
+      "move_fin_*, move_lip": {
+        "constant": "#3266ee"
+      },
+      "move_rail_*, move_chevron_*": {
+        "idle": "#1b2d66",
+        "live": "#3266ee"
+      },
+      "power_*": {
+        "how": "as built the state nodes carry the idle colour. Live: set their albedo to `live` and emit it. Unpowered stays dark green, so an off line still reads as a power line.",
+        "idle": "#347b46",
+        "live": "#55e078",
+        "node_prefix": "power_"
+      }
+    },
+    "states": {
+      "arming": {
+        "dess": "WIND-UP",
+        "move_chevron_1..3": "light one by one, back to front, as the ramp passes 1/3, 2/3, 3/3",
+        "move_rail_*": "pulse, faster as it fills",
+        "power_*": "live",
+        "prod": "arming (0.6 s ramp)"
+      },
+      "cocked": {
+        "deck_hinge": 0.0,
+        "dess": "COCKED",
+        "move_chevron_*": "idle",
+        "move_rail_*": "live, steady",
+        "power_*": "live",
+        "prod": "powered idle"
+      },
+      "dark": {
+        "deck_hinge": 0.0,
+        "dess": "DARK",
+        "move_chevron_*": "idle",
+        "move_rail_*": "idle",
+        "power_*": "idle",
+        "prod": "unpowered"
+      },
+      "dud": {
+        "dess": "--",
+        "move_chevron_*": "one dim flicker",
+        "power_*": "stay idle (the reason: no power)",
+        "prod": "dud flicker"
+      },
+      "fired": {
+        "deck_hinge": "kick to 10 deg in 0.06 s, back in 0.25 s, on ObjectPlate.fired only",
+        "dess": "FIRED",
+        "move_*": "flash to live x2.5 for 0.12 s",
+        "prod": "throw flash"
+      },
+      "names": "Prod's ObjectPlate states, with Dess's D-18 names beside them",
+      "reads_without_colour": "fins and front lip rise toward the throw; the chevrons point it; the deck kicks only when it throws",
+      "rearm": {
+        "dess": "RE-ARM (2 s)",
+        "move_chevron_*": "fade to idle",
+        "prod": "REARM_SECONDS (1.0)"
+      }
+    },
+    "status": "CANDIDATE -- for Impact Relay G1 (D-18 Concept A on Prod's G0 mechanism); not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 476
+  },
+  "ir_seal_jamb": {
+    "anchor": "as-built",
+    "batch": "065",
+    "colliders": [],
+    "contracts": {
+      "ImpactShutter.size": [
+        3.0,
+        3.0,
+        0.4
+      ],
+      "ObjectPlate.SIZE": [
+        2.0,
+        0.25,
+        2.0
+      ],
+      "read_at": "review/impact-lab-g0 3337769d"
+    },
+    "kind": "impact_relay_g1",
+    "mount": "on the wall, NOT under the shutter: same origin as the shutter (the opening's centre), frame on the hall face. It stays when the seal breaks",
+    "parts": [],
+    "path": "batch065/impact_relay/ir_seal_jamb.glb",
+    "reuses": [
+      "Batch 064 materials and helpers",
+      "Batch 063 power state and hinges"
+    ],
+    "size": [
+      3.5,
+      0.105,
+      3.25
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "CANDIDATE -- for Impact Relay G1 (D-18 Concept A on Prod's G0 mechanism); not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 108
+  }
+}

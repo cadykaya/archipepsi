@@ -56,10 +56,23 @@ const LOOP_DOOR_Z := Vector2(-16.0, -14.0)
 const GALLERY_DOOR_Z := Vector2(7.0, 9.0)
 const LATCH_AT := Vector3(6.6, 1.0, -13.4)
 const PLATE_AT := Vector3(0.0, 0.0, -1.0)
-const LEVER_AT := Vector3(-7.0, 1.0, 0.0)
+## The lever stands by the stair's foot, turned so its rear gland faces
+## east: its raceway runs along the floor and makes ONE floor turn north
+## into the launcher's inlet (Batch 065: plate-local (-0.90, 0.065, +1.26),
+## the west end of its rear face).
+const LEVER_AT := Vector3(-5.5, 1.0, 1.3)
+const LEVER_YAW := -PI * 0.5
+const INLET := Vector3(-0.90, 0.0, 1.26)
 const STAND := Rect2(5.5, 1.5, 1.0, 1.0)
 const STAND_TOP := 0.15
 const WEIGHT_KG := 36.0
+## The weight's and the tote's boxes are G1's, unchanged: the art candidate
+## keeps the mechanics exactly. The weight WEARS an existing prop of Arty's
+## Batch 043 physics family that fits inside its box: `phys_power_cell`, a
+## MEDIUM carriable, 0.34 x 0.6 x 0.34 m with a grip on top -- dense
+## machined steel, the box's own height. Arty made no tote; it keeps its
+## placeholder, a thin-walled open plastic tub. Dense beside flimsy is the
+## lesson D-18 v2 wants the room to show before anything moves.
 const WEIGHT_SIZE := Vector3(0.45, 0.6, 0.45)
 const WEIGHT_HOME := Vector3(6.0, STAND_TOP + 0.31, 2.0)
 const CRATE_KG := 4.0
@@ -73,6 +86,8 @@ signal said(text: String)
 signal stand_in_found(id: String)
 
 var lever: P.Lever
+var launcher_art: R.LauncherArt
+var jamb: Node3D
 var latch: P.Lever
 var plate: L.ObjectPlate
 var shutter: L.ImpactShutter
@@ -176,7 +191,8 @@ func _hall() -> void:
 		for x in [-5.0, 0.0, 5.0]:
 			_block("TrussHanger", Vector3(x - 0.08, TRUSS_Y + 0.15, z - 0.08),
 					Vector3(x + 0.08, h, z + 0.08), "trim")
-	P.plain_sign(self, "IMPACT SHUTTER", Vector3(0, DOOR_TOP + 0.4, z0 + 0.02),
+	# Above the seal's jamb (which stands 0.1 m proud of the wall to 3.25 m).
+	P.plain_sign(self, "IMPACT SHUTTER", Vector3(0, DOOR_TOP + 0.62, z0 + 0.14),
 			30, P.DESTRUCTIBLE)
 
 
@@ -334,41 +350,48 @@ func _devices() -> void:
 	plate.flight_seconds = FLIGHT_SECONDS
 	plate.target = shutter_at + Vector3(0, 0, WALL * 0.5)
 	plate.build(plate.target - plate.global_position)
+	# Arty's launcher, worn by the G0 plate (candidate; G0's looks if absent).
+	launcher_art = R.LauncherArt.fit(plate)
 	plate.dud.connect(func(b: ManipulableBody) -> void:
 		if announces_dud(b):
 			duds_announced += 1
 			said.emit("The plate clicks. Nothing happens."))
 	_build_shutter()
+	# The seal's jamb is on the WALL, not the shutter: it stays, an empty
+	# frame, when the seal is gone.
+	jamb = R.kit("ir_seal_jamb")
+	if jamb != null:
+		jamb.name = "SealJamb"
+		jamb.position = shutter.position
+		add_child(jamb)
 	# THE LEVER AND ITS LINE: the kit lever by the stair's foot, its
-	# raceway out of the rear gland and across the floor into the plate's
-	# west face, lit only once it is thrown.
+	# raceway out of the rear gland, east along the floor and one floor
+	# turn north into the launcher's inlet, lit only once it is thrown.
 	lever = P.Lever.mounted("POWER THE PLATE", P.POWER, THEME)
 	lever.position = LEVER_AT
+	lever.rotation.y = LEVER_YAW
 	add_child(lever)
 	P.cap_emission(lever)
 	lever.pulled.connect(_on_lever)
 	var gland := lever.gland()
+	var inlet := plate.to_global(INLET)
 	_lines["plate"] = P.raceway(self, "plate", [gland,
-			Vector3(gland.x, 0.0, PLATE_AT.z),
-			Vector3(PLATE_AT.x - L.ObjectPlate.SIZE.x * 0.5, 0.0, PLATE_AT.z)],
+			Vector3(inlet.x, 0.0, gland.z), Vector3(inlet.x, 0.0, inlet.z)],
 			[Vector3.UP, Vector3.UP], "gland", "face")
-	_power_sign = P.plain_sign(self, "POWER OFF", LEVER_AT + Vector3(0, 0.95, 0.3), 18)
-	# THE WEIGHT: dense steel, a squat block with a carry handle.
+	_power_sign = P.plain_sign(self, "POWER OFF", LEVER_AT + Vector3(0, 0.95, 0), 18)
+	# THE WEIGHT: dense steel, a grip on top.
 	weight = ManipulableBody.create("relay_weight", WEIGHT_KG, WEIGHT_SIZE)
 	weight.carriable = true
-	var steel := ThemeMaterials.trim_mat(THEME)
-	L.box(weight, "Look", Vector3.ZERO, WEIGHT_SIZE, steel)
-	P.strip(weight, "Band", Vector3(0, -0.12, 0), Vector3(WEIGHT_SIZE.x + 0.02, 0.1,
-			WEIGHT_SIZE.z + 0.02), P.NEUTRAL, 0.15)
-	for x in [-0.13, 0.13]:
-		L.box(weight, "HandlePost", Vector3(x, WEIGHT_SIZE.y * 0.5 + 0.05, 0),
-				Vector3(0.04, 0.1, 0.04), steel)
-	L.box(weight, "Handle", Vector3(0, WEIGHT_SIZE.y * 0.5 + 0.1, 0),
-			Vector3(0.3, 0.04, 0.05), steel)
+	if not _wear(weight, "phys_power_cell", WEIGHT_SIZE):
+		var steel := ThemeMaterials.trim_mat(THEME)
+		L.box(weight, "Look", Vector3.ZERO, WEIGHT_SIZE, steel)
+		L.box(weight, "Handle", Vector3(0, WEIGHT_SIZE.y * 0.5 + 0.05, 0),
+				Vector3(0.3, 0.04, 0.05), steel)
 	add_child(weight)
 	weight.global_position = WEIGHT_HOME
 	homes[weight] = WEIGHT_HOME
-	# THE CRATE: a flimsy open-topped plastic tote, resting on the plate.
+	# THE CRATE: a flimsy open-topped plastic tote, resting on the plate
+	# (G1's placeholder: Arty has not made one).
 	crate = ManipulableBody.create("relay_crate", CRATE_KG, CRATE_SIZE)
 	crate.carriable = true
 	var plastic := StandardMaterial3D.new()
@@ -389,8 +412,25 @@ func _devices() -> void:
 	homes[crate] = crate_home
 
 
+## A carryable wears a candidate prop: the prop stands on its own floor at
+## its origin, so it sits half the box down from the body's centre.
+func _wear(body: ManipulableBody, piece: String, size: Vector3) -> bool:
+	var look := R.kit(piece)
+	if look == null:
+		return false
+	look.name = "Look"
+	look.position = Vector3(0, -size.y * 0.5, 0)
+	body.add_child(look)
+	return true
+
+
+## Where a player stands to pull the lever: in front of its handle.
+func lever_stand() -> Vector3:
+	return lever.to_global(Vector3(0.0, -1.0, 1.4))
+
+
 func _build_shutter() -> void:
-	shutter = L.ImpactShutter.new()
+	shutter = R.RelayShutter.new()
 	shutter.name = "ImpactShutter"
 	shutter.size = Vector3(DOOR_X.y - DOOR_X.x, DOOR_TOP, 0.4)
 	shutter.normal = Vector3.BACK

@@ -107,6 +107,7 @@ func _ready() -> void:
 	add_child(_overlay)
 	var title := _label(Vector2(24, 18), 20)
 	title.text = "IMPACT RELAY — review room (no enemies)" + (
+			" · ART CANDIDATE" if art_candidate() else "") + (
 			" · HEAVY-HIT MODE" if heavy else "")
 	_note = _label(Vector2(24, 48), 18)
 	var keys := _label(Vector2(24, 624), 15)
@@ -114,8 +115,15 @@ func _ready() -> void:
 			+ "E use / carry / put down\nRMB swing tether (jump, then hold) · "
 			+ ("F Braided Lash (14 per hit) · " if heavy else "")
 			+ "R back to the start · Esc menu")
-	printerr("impact-relay: review room, no enemies%s; isolated "
-			% (", heavy-hit mode" if heavy else "") + "(no bridge, no save)")
+	printerr("impact-relay: review room, no enemies%s%s; isolated "
+			% [", art candidate" if art_candidate() else "",
+				", heavy-hit mode" if heavy else ""] + "(no bridge, no save)")
+
+
+## Arty's candidate pieces are in this build (Batch 065 on the plate and
+## the shutter): the art-integrated G1 candidate, not the G1 baseline.
+func art_candidate() -> bool:
+	return room != null and room.launcher_art != null
 
 
 func spawn() -> Transform3D:
