@@ -155,8 +155,9 @@ func _sound() -> void:
 	plate.fired.connect(func(_b: ManipulableBody, _v: Vector3) -> void:
 		tones.play("land", 1.4)
 		tones.play("pulse", 0.45))
-	plate.dud.connect(func(_b: ManipulableBody) -> void:
-		tones.play("denied"))
+	plate.dud.connect(func(b: ManipulableBody) -> void:
+		if room.announces_dud(b):
+			tones.play("denied"))
 	room.latch.pulled.connect(func(_l: CallLever) -> void:
 		tones.play("purchase", 0.6))
 	_bind_shutter()

@@ -91,6 +91,12 @@ var blows := 0
 ## The last blow the shutter took (kept here: a broken shutter is freed).
 var last_impact := {}
 var homes := {}
+## Duds said aloud (a click and a line), not the plate's own count.
+var duds_announced := 0
+## The crate starts on the plate. Its first rest there, before anyone has
+## touched it, is not something the player did: the unpowered plate's dud
+## stays quiet for it, so the room does not click and talk at load.
+var _crate_untouched := true
 var _lines := {}
 var _flood: SpotLight3D
 var _power_sign: Label3D
@@ -328,8 +334,10 @@ func _devices() -> void:
 	plate.flight_seconds = FLIGHT_SECONDS
 	plate.target = shutter_at + Vector3(0, 0, WALL * 0.5)
 	plate.build(plate.target - plate.global_position)
-	plate.dud.connect(func(_b: ManipulableBody) -> void:
-		said.emit("The plate clicks. Nothing happens."))
+	plate.dud.connect(func(b: ManipulableBody) -> void:
+		if announces_dud(b):
+			duds_announced += 1
+			said.emit("The plate clicks. Nothing happens."))
 	_build_shutter()
 	# THE LEVER AND ITS LINE: the kit lever by the stair's foot, its
 	# raceway out of the rear gland and across the floor into the plate's
@@ -457,6 +465,10 @@ func _on_latch(_l: CallLever) -> void:
 	said.emit("Somewhere above, a door unlatches.")
 
 
+func announces_dud(body: ManipulableBody) -> bool:
+	return not (body == crate and _crate_untouched)
+
+
 func line_live() -> bool:
 	return bool((_lines["plate"] as Node).get_meta("live", false))
 
@@ -485,6 +497,8 @@ func inside(at: Vector3) -> bool:
 ## the vault, or falls under the floor, comes home -- the weight to its
 ## stand, the crate to the plate. In the hands, nothing comes home.
 func _physics_process(_delta: float) -> void:
+	if _crate_untouched and crate.carried_by != null:
+		_crate_untouched = false
 	for body: ManipulableBody in homes.keys():
 		if not is_instance_valid(body) or body.carried_by != null:
 			continue

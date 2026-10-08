@@ -160,6 +160,10 @@ func _isolation_and_build() -> void:
 			and room.weight.mass_class() == MassClass.MEDIUM,
 			"the crate reads LIGHT (%.0f kg), the weight MEDIUM (%.0f kg)"
 			% [room.crate.mass, room.weight.mass])
+	await _hold(1.0)
+	_check(room.duds_announced == 0 and not room.plate.powered,
+			"at load, the crate resting on the dark plate says nothing (the "
+			+ "plate's own count: %d quiet dud)" % room.plate.duds)
 	var pulse: AudioStreamPlayer = host.tones._players.get("pulse")
 	await _aim_and_fire(Vector3(0.0, 7.5, 8.0))
 	await _settle(1)
@@ -326,8 +330,9 @@ func _the_cases() -> void:
 	await _set_down_on_plate()
 	await _hold(1.6)
 	var crate_at := room.crate.global_position - room.plate.global_position
-	_check(room.plate.launches == 0 and room.plate.duds >= 1 and _on_plate(room.weight),
-			"on the unpowered plate beside the crate: a dud, and both stay "
+	_check(room.plate.launches == 0 and room.duds_announced == 1
+			and _on_plate(room.weight),
+			"on the unpowered plate beside the crate: a dud (heard), and both stay "
 			+ "(weight at %s, crate at %s from its centre)"
 			% [_v(room.weight.global_position - room.plate.global_position),
 				_v(crate_at)])
