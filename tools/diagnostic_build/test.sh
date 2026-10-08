@@ -177,7 +177,10 @@ else
 		|| { fail "the run left $NEW new file(s) in the package:"
 		     comm -23 "$TMP/present-after.txt" "$TMP/listed.txt" | head -3; }
 
-	( cd "$PKG/runtime/bridge" && timeout 120 "$WINE" ../python/python.exe \
+	# `timeout 45` is how this bridge STOPS: killing the pipeline kills the
+	# `timeout` and the shell, not the Windows process behind Wine, and a
+	# bridge left holding the port made step 10 skip itself every run.
+	( cd "$PKG/runtime/bridge" && timeout 45 "$WINE" ../python/python.exe \
 		-m archipepsi_bridge --ap=mock --epsilon=fallback \
 		--save-dir "Z:$(printf '%s' "$TMP/other" | tr '/' '\\')" 2>&1 \
 		| cat > "$TMP/other.log" ) & OTHER=$!
@@ -232,7 +235,7 @@ else
 		# Step 9 left a bridge dying; wait for the port before starting,
 		# or the starter correctly refuses and tests nothing.
 		i=0
-		while [ $i -lt 30 ]; do
+		while [ $i -lt 120 ]; do
 			"$PY" -c "import socket,sys;sys.exit(0 if socket.socket().connect_ex(('127.0.0.1',38290))==0 else 1)" || break
 			sleep 1; i=$((i + 1))
 		done
