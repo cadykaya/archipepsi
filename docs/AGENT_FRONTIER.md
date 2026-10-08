@@ -812,6 +812,22 @@ owner's D-06/D-07 rulings and the seam table are in
         footprints.
       - **Next:** the owner's hands-on playtest decides G2. No Shunter or
         other enemy until the later combat milestone.
+    - **G1, ART CANDIDATE (owner, 2026-10-08): DELIVERED, STOP.** Arty's
+      Batch 065, from `be673117` (PR #26), fitted to the G1 room as a
+      separate build.
+      - **The pieces.** The object launcher is on the plate, the impact
+        seal on the shutter, the jamb on the wall. The weight wears Batch
+        043's power cell.
+      - **Mechanics and physics unchanged.** The seeded measurement is
+        identical to the baseline's. The optional funnel colliders are off
+        (measured worse); the lever turns to reach the inlet with one floor
+        turn.
+      - **Where it is.** Branch `review/impact-relay-g1-art`; product
+        `Archipepsi-Impact-Relay-Art`. The report is
+        `docs/reports/2026-10-08-impact-relay-g1-art.md`.
+      - **Side by side.** The baseline (`review/impact-relay-g1`,
+        `a3b59c46`) is untouched; both install together in Condi's
+        launcher.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.
