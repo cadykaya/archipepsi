@@ -181,8 +181,7 @@ treatments. A stand-in bridge listens on the bridge's address.
 The measurements are line-for-line identical in all three environments,
 in all four modes; only the frame numbers in the notes differ.
 
-**Python:** the packaging test passes (10 of 10); the full bridge suite
-re-run follows in the next commit. The one failure G1 had
+**Python:** the bridge suite passes, 2,143 of 2,143. The one failure G1 had
 (`test_every_bundled_binary_is_first_party_or_licensed`, the
 `godot/candidate/crossing_kit/` copies) is fixed here. The fix is the art
 branch's own registration line, ported. The boot suite passes.
