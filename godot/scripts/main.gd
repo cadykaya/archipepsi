@@ -193,6 +193,13 @@ func _ready() -> void:
 		switch.disconnected = "--disconnected" in user_args
 		add_child(switch)
 		return
+	# THE WEAPON-FEEL RANGE: the Static Pulse's firing feedback, four
+	# selectable treatments against one fixed target, isolated the same way.
+	if WeaponFeel.requested():
+		add_child(WeaponFeel.new())
+		if WeaponFeelCheck.requested():
+			add_child(WeaponFeelCheck.new())
+		return
 	# THE IMPACT RELAY (G1, Dess's D-18): one enemy-free room on the G0
 	# mechanism, isolated the same way.
 	if ImpactRelay.requested():

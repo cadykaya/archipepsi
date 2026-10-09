@@ -35,7 +35,8 @@
       "godot/content/theme/",
       "godot/content/ui/",
       "godot/content/ways_out/",
-      "tools/artpreview/"
+      "tools/artpreview/",
+      "godot/candidate/crossing_kit/"
     ]
   },
   "approved_licenses": {
