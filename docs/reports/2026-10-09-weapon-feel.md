@@ -178,6 +178,9 @@ treatments. A stand-in bridge listens on the bridge's address.
 | Bridge connections (15 s as launched, plus every check) | 0 | 0 | 0 |
 | The player's three files | byte-identical | byte-identical | byte-identical |
 
+The measurements are line-for-line identical in all three environments,
+in all four modes; only the frame numbers in the notes differ.
+
 **Python:** the packaging test passes (10 of 10); the full bridge suite
 re-run follows in the next commit. The one failure G1 had
 (`test_every_bundled_binary_is_first_party_or_licensed`, the
@@ -203,8 +206,16 @@ branch's own registration line, ported. The boot suite passes.
 - The baseline mode is the bare launch. That way the launcher lists
   exactly the four modes and no duplicate "plain executable" entry.
 
-**Fresh-folder Windows test, under Wine:** pending (running when this
-was written; the result follows in the next commit).
+**Fresh-folder Windows test, under Wine:**
+- Both parts were unzipped into one new folder whose path has spaces.
+  "1 - START HERE … Baseline" joins them into one executable. Its sha256
+  is `ea83a5d6…`, matching, and the parts are removed.
+- That launcher starts the range in the baseline, and it is still
+  running at 60 s.
+- Launchers 2, 3 and 4 start it in A, B and C. Each is still running at
+  40 s, and the screen names the treatment.
+- The executable on its own starts in the baseline.
+- 0 connections throughout.
 
 **In the review zip, not the repository:**
 - `Weapon-Feel-four-treatments.mp4`: 16 s, first person, by real input,
