@@ -1,0 +1,54 @@
+{
+  "schema": "archipepsi-build-spec/1",
+  "title": "Weapon Feel",
+  "executable": "Archipepsi-Weapon-Feel",
+  "description": "A firing range for judging how the Static Pulse feels to fire: the game's own weapon against one fixed target, under the baseline and three firing-feedback treatments. Same damage, same rate of fire, no enemies. Keys 1-4 switch treatments in play. Offline: nothing of yours is saved or changed.",
+  "limitations": [
+    "Only the feedback differs: recoil and recovery, the muzzle, the firing sound, the impact and the hit confirmation. Damage (6 a hit) and the rate of fire (one shot per 0.35 s) are the game's, unchanged.",
+    "The target is the Echo Lab's dummy: it takes and counts damage and never dies, so there is no kill confirmation to compare.",
+    "Sounds are new recipes in the game's existing procedural bank; no recorded audio."
+  ],
+  "modes": [
+    {
+      "id": "baseline",
+      "label": "Weapon Feel, Baseline",
+      "args": [],
+      "description": "Starts in the baseline: the Static Pulse exactly as it ships.",
+      "launchers": {
+        "windows": "1 - START HERE - Weapon Feel, Baseline (Windows).bat",
+        "linux": "play-weapon-feel.sh"
+      }
+    },
+    {
+      "id": "a",
+      "label": "Weapon Feel, A Heavy report",
+      "args": ["--", "--feel=a"],
+      "description": "Starts in treatment A: a big, slow-settling kick, a warm fireball flash, a low boom, sparks and a chunky hit marker.",
+      "launchers": {
+        "windows": "2 - Weapon Feel, A Heavy report (Windows).bat",
+        "linux": "play-weapon-feel-a.sh"
+      }
+    },
+    {
+      "id": "b",
+      "label": "Weapon Feel, B Crisp snap",
+      "args": ["--", "--feel=b"],
+      "description": "Starts in treatment B: a short, sharp kick back in 0.08 s, a cold white snap, a bright crack and a crisp tick.",
+      "launchers": {
+        "windows": "3 - Weapon Feel, B Crisp snap (Windows).bat",
+        "linux": "play-weapon-feel-b.sh"
+      }
+    },
+    {
+      "id": "c",
+      "label": "Weapon Feel, C Echo resonance",
+      "args": ["--", "--feel=c"],
+      "description": "Starts in treatment C: a medium kick, a cyan ring and a flash that flares twice, a shot that echoes, an impact ring and a delayed chime.",
+      "launchers": {
+        "windows": "4 - Weapon Feel, C Echo resonance (Windows).bat",
+        "linux": "play-weapon-feel-c.sh"
+      }
+    }
+  ],
+  "recommended_mode": "baseline"
+}
