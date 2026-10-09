@@ -3536,6 +3536,19 @@ issues.
 **Next: STOP.** No more art studies or model redesigns until the owner has
 played G1. Support only Prod's specific fit, collision and state issues.
 
+### Delivered, 2026-10-09 — Shunter pose study (disposable). STOPPED.
+
+* Six states on the throwaway maquette (`study_shunter_poses.py`),
+  photographed in D's empty yard at gameplay distances
+  (`shunter_pose_study.py`): D-19 as written against the recommended
+  cues.
+* Recommendations for Prod's combat prototype are a table of plough,
+  body, lamp and vent values per state, with timings; it's a code
+  blockout, not a model. Dess's open decisions are marked DESS.
+* Report: `docs/art/reports/2026-10-09-shunter-pose-study.md`.
+
+**Next: STOP.** No production model until the combat is proven fun.
+
 ### Deferred tooling ideas (recorded, NOT assignments)
 
 * **Procedural stair meshes along paths or splines** (owner, 2026-10-08):

@@ -194,6 +194,21 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-09: Shunter pose study (disposable), with recommendations
+  for Prod's later combat prototype. STOP.** Same branch.
+  * Report: `docs/art/reports/2026-10-09-shunter-pose-study.md`.
+  * Six states (work, notice, brace, charge, miss, recover), D-19 as
+    written (A) against the recommended cues (B). Photographed in the
+    engine at the game's 90 degree field of view: front at 20 and 14 m, side at 8 m,
+    rear quarter at 6 m, raised, and over cover.
+  * Findings:
+    * D-19's under-lip lamps are hidden by the plough, so A's notice
+      changes zero pixels from every view.
+    * B's plough travel and brow lamp bar read.
+    * Only B's upward vent and plume read over cover and from above.
+  * Dess's encounter brief does not exist yet. Her decisions are marked
+    DESS. No production model, no animation library. G1 and the station
+    are unchanged.
 * **2026-10-08 (fifth pass): final instructions handed to Prod. STOP.**
   Same branch.
   * Owner: tote v2 is approved for G1, and C2 as a candidate for
