@@ -13,7 +13,7 @@ for %%F in ("Archipepsi-Weapon-Feel.exe") do set JOINED=%%~zF
 if not "%JOINED%"=="@SIZE@" goto broken
 del "Archipepsi-Weapon-Feel.exe.part1" "Archipepsi-Weapon-Feel.exe.part2"
 :play
-start "" "%~dp0Archipepsi-Weapon-Feel.exe" -- --feel=baseline
+start "" "%~dp0Archipepsi-Weapon-Feel.exe"
 exit /b 0
 :missing
 echo Unzip BOTH parts (part1of2 and part2of2) into this same folder,

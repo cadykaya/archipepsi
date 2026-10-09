@@ -12,7 +12,7 @@
     {
       "id": "baseline",
       "label": "Weapon Feel, Baseline",
-      "args": ["--", "--feel=baseline"],
+      "args": [],
       "description": "Starts in the baseline: the Static Pulse exactly as it ships.",
       "launchers": {
         "windows": "1 - START HERE - Weapon Feel, Baseline (Windows).bat",

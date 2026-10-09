@@ -63,7 +63,7 @@ SCENARIOS = {
               "modes": (("no enemies", []), ("heavy-hit", ["--heavy-hit"]))},
     "weapon": {"flag": "--weapon-feel", "banner": "weapon-feel: range",
                "check": "--weapon-feel-check", "prefix": "[feel]",
-               "modes": (("baseline", ["--feel=baseline"]),
+               "modes": (("baseline", []),
                          ("A heavy report", ["--feel=a"]),
                          ("B crisp snap", ["--feel=b"]),
                          ("C echo resonance", ["--feel=c"]))},
