@@ -812,6 +812,31 @@ owner's D-06/D-07 rulings and the seam table are in
         footprints.
       - **Next:** the owner's hands-on playtest decides G2. No Shunter or
         other enemy until the later combat milestone.
+      - **The art candidate** (Arty's Batch 065 fitted, physics identical)
+        is a separate product on `review/impact-relay-g1-art`, build
+        `df2c7fc7`; its frontier entry is on that branch.
+    - **WEAPON FEEL (owner, 2026-10-09): DELIVERED, STOP.** A separate,
+      isolated firing range for comparing how the Static Pulse feels to
+      fire. "The Echo hand-cannon" names no existing weapon, so it is the
+      Pulse. "SigmaAudio" is on no branch, so the sounds come from the
+      `Tones` bank's own recipe.
+      - **What it is.** The baseline (the shipped feedback, untouched)
+        and three treatments: A heavy report, B crisp snap, C Echo
+        resonance. They vary recoil and recovery, the camera jolt (never
+        the aim), the muzzle, the report, the impact and the hit marker,
+        against the Echo Lab's dummy. Keys 1–4 switch.
+      - **Same weapon under all four (measured):** 6 shots in 2.1 s at
+        22-frame gaps, the same hit points, 6 damage a hit. Every
+        treatment is back at rest before the next shot can fire.
+      - **Where it is.** Branch `review/weapon-feel`, from G1's head
+        `21b5fb2f`; build `b8295b6a`. The report is
+        `docs/reports/2026-10-09-weapon-feel.md`. Run the check with
+        `make godot-weapon-feel`.
+      - **Caution recorded.** Every treatment's report is louder than the
+        baseline's, by 10–13 dB.
+      - **Next:** the owner judges the feel by hand. Porting a winner to
+        the Echo hitscans would change `EchoRuntime`, a campaign change,
+        so it is its own task.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.
