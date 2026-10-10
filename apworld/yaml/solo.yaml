@@ -1,0 +1,11 @@
+# Solo testing variant: generation and connection smoke tests ONLY.
+# A solo seed places every item on Archipepsi's own locations, so it produces
+# zero Echoes, zero shop stock and 10 unspendable Coins — it cannot
+# demonstrate the POC. Use Mock Campaign or a multiworld for that.
+name: SkyiahTest
+game: Archipepsi
+
+Archipepsi:
+  accessibility: full
+  progression_balancing: 0
+  # no non_local_items - everything stays local and reachable solo

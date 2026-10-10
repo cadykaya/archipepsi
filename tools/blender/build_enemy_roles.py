@@ -1,0 +1,1102 @@
+"""Batch 030 -- the ten approved enemy roles, at their published envelopes.
+
+VISUAL TREATMENT ONLY. Nothing invents an attack, an AI, health, a status
+effect, boss behaviour or telegraph timing.
+
+## The audit, read-only -- and it corrects the art lane's own frontier
+
+`claude/archipepsi-echoes-continuation-b1adno`.
+
+**Interface requirement 7 is RESOLVED.** The art frontier still says seven of
+the ten roles "wait on colliders". They do not. `schemas/constants.py`
+publishes `ENEMY_ENVELOPES` for all ten, with the reason stated in its own
+comment: *"the envelope is the box the art lane declared for the role, so a
+model and a collider cannot be built to different numbers."*
+
+    melee     0.80 w  1.60 h  0.80 d
+    ranged    0.70     1.40     0.70
+    brute     1.80     2.60     1.80
+    charger   0.90     1.05     1.90     <- long and low
+    bulwark   1.45     2.05     0.85     <- wide and thin
+    scuttler  1.30     0.62     1.20     <- flat
+    artillery 1.25     1.55     1.25
+    beacon    0.62     2.20     0.62     <- tall and narrow
+    diver     0.70     0.50     1.20     hover 1.90
+    drifter   1.35     0.95     1.35     hover 2.55
+
+`hover_height` is the collider's CENTRE above the floor, and the docstring
+says why: *"a flyer described by its base can be given a height that puts its
+crown through a doorway, and the reader cannot tell which was meant."*
+
+**Interface requirement 14 is RESOLVED too.** `godot/scripts/enemies/enemy.gd`
+carries `signal telegraph_started(kind, duration)`,
+`signal telegraph_finished(kind, completed)`, `telegraph_progress()` returning
+0..1, and a named attachment point:
+
+    var telegraph_origin: Marker3D   # at ENEMY_ENVELOPES[role].centre_y,
+                                     # OUTSIDE `visual`
+
+and a `visual: Node3D` container with a rule attached: *"EVERY mesh hangs off
+this and nothing else does, so a hit flinch or a windup swell scales the LOOK
+and can never move the collider -- which is what `scale` on the body did, and
+it grew the brute's hitbox 12% for the half second it was winding up."*
+
+**So this batch is not a proposal in the way 023-029 were.** It is authored
+to numbers Production has already published, and every model here is built to
+its role's exact envelope and asserts it. What remains missing is narrower
+and is recorded as requirement 31: `ENEMY_ARCHETYPES` -- the set a Zone may
+actually place -- is still `("melee", "ranged", "brute")`. Seven of the ten
+have an agreed body and no way to be spawned.
+
+## What "stronger visual treatment" means when the box is fixed
+
+The envelope is not a suggestion, so silhouette variety has to come from
+INSIDE a given box rather than from changing its size. That is the discipline
+of this batch, and it is why the roles are built around the proportion the
+envelope already implies:
+
+| role | what the envelope already says | the treatment that follows |
+|---|---|---|
+| melee | human-ish, 1.6 m | upright, forward-weighted, arms as the threat |
+| ranged | slighter, 1.4 m | upright but recessed; the emitter is the read |
+| brute | 1.8 x 2.6 x 1.8 | mass over reach: a slab of shoulders, small head |
+| charger | 1.9 m DEEP, 1.05 m tall | a battering ram -- the long axis IS the attack |
+| bulwark | 1.45 wide, 0.85 thin | a wall that walks: broad face, no depth |
+| scuttler | 1.3 x 0.62 x 1.2 | flat and splayed; legs out, body low |
+| artillery | 1.25 cube-ish, 1.55 tall | a seated mortar: braced base, elevated barrel |
+| beacon | 0.62 x 2.2 x 0.62 | a mast, not a creature. It is a fixture that took sides |
+| diver | 1.2 m deep, 0.5 tall, hover 1.9 | a stooping shape, nose down |
+| drifter | 1.35 cube, hover 2.55 | a hanging bell, slow, no front |
+
+## Threat legibility without inventing behaviour
+
+A player has to read DANGER FROM WHERE before an attack exists, and that is a
+shape question, not an AI one:
+
+- **the threat end is the heavy end.** Charger's mass is forward, artillery's
+  is at the barrel, brute's is in the shoulders.
+- **a telegraph needs somewhere to happen.** Every role carries a marked
+  telegraph seat at `centre_y`, matching `telegraph_origin`. It is geometry
+  reserved for a thing Production owns, not a telegraph.
+- **flyers do not stand.** Both hover roles are modelled around their
+  collider centre at the published `hover_height`, so a flyer's silhouette
+  sits where the contract says it sits.
+
+## Palette
+
+Enemies wear `propkit.enemy_skin`, the approved family treatment. `hazard`
+appears ONLY on the beacon, which is the one role whose envelope is a fixture
+rather than a body -- and even there it is a marked band, never a wash. No
+enemy takes `signal`, `identity` or `send`: a thing that hurts you is not a
+thing you can use, is not Epsilon, and does not leave for the multiworld.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import brushkit  # noqa: E402
+import common  # noqa: E402
+import propkit  # noqa: E402
+import palette as pal  # noqa: E402
+
+THEME = common.THEME
+
+#: TIER 1 -- THE VALUE BANDS. RULED 2026-09-26: *"Approve the measured
+#: two-band candidate ... Keep the shared enemy hue/material identity and
+#: semantic markings; this is a value treatment, not six unrelated
+#: palettes."* The factor scales the body ramp's CIE L* with a* and b*
+#: held (`propkit.value_band`); geometry, anchors, materials and the
+#: marking band are identical in both sets, which
+#: `tools/content/check_enemy_bands.py` proves byte for byte.
+#:
+#: Measured, not chosen: `tools/content/run_enemy_value_sweep.sh` and
+#: `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
+VALUE_BANDS = {"standard": 0.40, "deep": 0.10}
+#: Which band a room's enemies wear. Every room exactly once.
+ROOM_BAND = {
+    "concrete_facility": "standard",
+    "neon_transit": "standard",
+    "gothic_stone": "standard",
+    "temple_ruin": "standard",
+    "rusted_industrial": "deep",
+    "void_glitch": "deep",
+}
+#: The standard band keeps the path every consumer already reads.
+BAND_OUT = {"standard": "batch030/enemies", "deep": "batch030/enemies_deep"}
+#: The ruling's acceptance, recorded where the treatment is: 0.10 against
+#: the room at 18 m on walls, floors and in dim light; 0.18 is a reference,
+#: not a gate. Two measured exceptions accepted as they are, and dark
+#: fogged OPENINGS a documented limitation until Tier 2, the motion review
+#: and integrated evidence say otherwise.
+ACCEPTANCE = {
+    "min_separation": 0.10,
+    "aspirational_separation": 0.18,
+    "cases": ["wall", "floor", "dim"],
+    # RULED 2026-09-26: aggregate and per-role are labelled separately.
+    "graded_on": "the AGGREGATE: all ten roles' body pixels pooled against "
+                 "what is behind them. Each role's own separation is "
+                 "recorded beside it in the evidence and reported, not "
+                 "graded; a pooled cell can clear with single roles short",
+    "exceptions": [
+        {"room": "void_glitch", "case": "floor",
+         "accepted_because": "on the 0.10 boundary (measured 0.0999)",
+         "status": "NOT retired (RULED 2026-09-26): the aggregate now "
+                   "reads 0.100, but per role five of ten are below "
+                   "0.10, the diver lowest at 0.088"},
+        {"room": "rusted_industrial", "case": "dim",
+         "accepted_because": "paint cannot clear it (measured 0.093; "
+                             "pure black matte reaches 0.104). If it is "
+                             "unreadable in the integrated build it is a "
+                             "room-lighting/runtime issue for Production"},
+    ],
+    "limitation": "dark fogged openings: measured and documented, not "
+                  "fixed by value. Tier 2 and the motion review are done "
+                  "(2026-09-26); it is revisited only on integrated "
+                  "gameplay evidence",
+}
+
+#: EXPLORATION: `ENEMY_LIGHTNESS=<k>` builds ONE set at that factor into a
+#: scratch tree beside the other non-shipping builds and never touches
+#: `assets/models/`. Keyed on the variable being SET, not on its value:
+#: since the bands landed the shipped sets are k 0.40 and k 0.10, so
+#: "1.00" is now a candidate like any other and must never be mistaken
+#: for the default build.
+_EXPLORE = os.environ.get("ENEMY_LIGHTNESS")
+if _EXPLORE is not None:
+    _scratch = os.path.join(common.REPO_ROOT, "assets", "themed",
+                            "_enemy_lightness_%.2f" % float(_EXPLORE))
+    common.MODEL_DIR = os.path.join(_scratch, "models")
+    common.TEXTURE_DIR = os.path.join(_scratch, "textures")
+    BUILD = {"explore": (float(_EXPLORE), "batch030/enemies")}
+else:
+    BUILD = {band: (k, BAND_OUT[band]) for band, k in VALUE_BANDS.items()}
+
+#: Read from Production, never redefined here. If these drift, the models
+#: and the colliders drift with them and the whole point is lost.
+ENVELOPES = {
+    "melee":     (0.80, 1.60, 0.80, 0.0),
+    "ranged":    (0.70, 1.40, 0.70, 0.0),
+    "brute":     (1.80, 2.60, 1.80, 0.0),
+    "charger":   (0.90, 1.05, 1.90, 0.0),
+    "bulwark":   (1.45, 2.05, 0.85, 0.0),
+    "scuttler":  (1.30, 0.62, 1.20, 0.0),
+    "artillery": (1.25, 1.55, 1.25, 0.0),
+    "beacon":    (0.62, 2.20, 0.62, 0.0),
+    "diver":     (0.70, 0.50, 1.20, 1.90),
+    "drifter":   (1.35, 0.95, 1.35, 2.55),
+}
+
+PLACEABLE = ("melee", "ranged", "brute")
+
+#: WHICH WAY AN ENEMY FACES. `enemy.gd` builds its own enemies facing -Z
+#: ("the eye on the nose (-z, the way it faces)") and `look_at` turns -Z
+#: onto the target; the ANCHORS were placed for exactly that (front = +y
+#: here, which the glTF export turns into -Z). The role builders draw
+#: their fronts at -y, so until 2026-09-26 every model faced +Z -- away
+#: from its own anchors: the bulwark's shield anchor sat behind the shield
+#: and the ranged muzzle anchor behind the emitter. A silhouette is the
+#: same from the front and the back, and the readiness harness listed a
+#: facing check it never made, so nothing noticed.
+#:
+#: `_face_forward` turns every part 180 degrees before anything is joined
+#: or measured, and refuses a role whose declared front part does not end
+#: up in front. None: a fixture and a deliberately faceless bell.
+FRONT = {
+    "melee": "arm_1", "ranged": "emitter", "brute": "fist_1",
+    "charger": "ram", "bulwark": "shield", "scuttler": "maw",
+    "artillery": "muzzle", "diver": "nose", "beacon": None, "drifter": None,
+}
+
+
+def _face_forward(role, parts):
+    from mathutils import Matrix
+    turn = Matrix.Rotation(math.pi, 4, "Z")
+    # Every part is drawn at absolute coordinates with its object at the
+    # world origin (see `brushkit.spin`), so this turns the whole role
+    # about its own vertical axis.
+    for obj, _ in parts:
+        obj.data.transform(turn)
+        obj.data.update()
+    front = FRONT[role]
+    if front is None:
+        return
+    named = [obj for obj, _ in parts if obj.name == front]
+    if len(named) != 1:
+        raise SystemExit("%s: FRONT names %r, and %d part(s) have that name"
+                         % (role, front, len(named)))
+    lo, hi = common.world_box(named[0])
+    if (lo[1] + hi[1]) * 0.5 <= 0.0:
+        raise SystemExit("%s: its front part %r is not in front (+y, which "
+                         "the export makes -Z) -- the model would face away "
+                         "from its anchors and from enemy.gd" % (role, front))
+
+
+def _tag(objs, role):
+    return [(o, role) for o in (objs if isinstance(objs, list) else [objs])]
+
+
+def _seat(z):
+    """The telegraph seat, at the collider centre. Geometry RESERVED for a
+    thing Production owns -- it is not a telegraph and does not animate."""
+    return _tag(brushkit.tube("telegraph_seat", 0.13, 0.09, 0.05, 8,
+                              (0.0, 0.0, z)), "mark")
+
+
+#: A10.3 -- the named attachment anchors, per role.
+#:
+#: **They are NODES, not decoration, and not behaviour.** Each is a
+#: 40 mm marker embedded inside the body, exported as its own object so
+#: a runtime can fetch it by name and hang a muzzle flash, a warning, a
+#: status glyph or a hit effect on it. Nothing here animates, nothing
+#: carries a hitbox, and no damage logic lives in a model.
+#:
+#: The one thing every role has is `anchor_centre`, because the
+#: telegraph seat already agreed that point with Production:
+#: `ENEMY_ENVELOPES[role].centre_y`, which is where `enemy.gd` puts its
+#: `TelegraphOrigin` Marker3D.
+#:
+#: The others are "where specified", which is A10.3's own wording -- a
+#: melee role has no muzzle and a drifter deliberately gives away no
+#: facing, so neither gets one.
+#:
+#: Positions are FRACTIONS of the published envelope, so an anchor
+#: cannot drift from the collider it hangs off. Blender +Y is the
+#: front: the exporter maps (x, y, z) -> (x, z, -y), so +Y becomes
+#: Godot's -Z.
+ANCHOR_RADIUS = 0.02
+ANCHORS = {
+    #                  name             x      front(+y)  height(z)
+    "melee":     [("anchor_strike",   0.26,   0.42,  0.72),
+                  ("anchor_warn",     0.0,    0.18,  0.92),
+                  ("anchor_effect",   0.0,    0.0,   0.60)],
+    # At the shroud on the tip of the long emitter (Tier 2).
+    "ranged":    [("anchor_muzzle",   0.43,   0.41,  0.95),
+                  ("anchor_warn",     0.0,    0.20,  0.90),
+                  ("anchor_effect",   0.0,    0.0,   0.62)],
+    "brute":     [("anchor_strike",   0.34,   0.34,  0.52),
+                  ("anchor_warn",     0.0,    0.22,  0.88),
+                  ("anchor_weak",     0.0,   -0.40,  0.58),
+                  ("anchor_effect",   0.0,    0.0,   0.56)],
+    "charger":   [("anchor_strike",   0.0,    0.46,  0.55),
+                  ("anchor_warn",     0.0,    0.30,  0.86),
+                  ("anchor_weak",     0.0,   -0.44,  0.52),
+                  ("anchor_effect",   0.0,    0.0,   0.55)],
+    # The shield IS the front, so the weak side is behind it. That is
+    # the role's whole proposition and the anchor says so.
+    # anchor_warn sits in the shield just under the sighting notch (Tier 2):
+    # at 0.90 it was in the notch's air and walked sideways onto an ear.
+    "bulwark":   [("anchor_shield",   0.0,    0.44,  0.62),
+                  ("anchor_weak",     0.0,   -0.42,  0.56),
+                  ("anchor_warn",     0.0,    0.20,  0.87),
+                  ("anchor_effect",   0.0,    0.0,   0.58)],
+    "scuttler":  [("anchor_strike",   0.0,    0.42,  0.58),
+                  ("anchor_warn",     0.0,    0.14,  0.86),
+                  ("anchor_effect",   0.0,    0.0,   0.55)],
+    "artillery": [("anchor_muzzle",   0.0,    0.34,  0.84),
+                  ("anchor_warn",     0.0,    0.10,  0.92),
+                  ("anchor_weak",     0.0,   -0.38,  0.40),
+                  ("anchor_effect",   0.0,    0.0,   0.58)],
+    "beacon":    [("anchor_muzzle",   0.0,    0.0,   0.94),
+                  ("anchor_warn",     0.0,    0.14,  0.86),
+                  ("anchor_effect",   0.0,    0.0,   0.55)],
+    "diver":     [("anchor_muzzle",   0.0,    0.44,  0.50),
+                  ("anchor_warn",     0.0,    0.10,  0.84),
+                  ("anchor_effect",   0.0,    0.0,   0.50)],
+    # No muzzle and no weak side: the drifter's read is that it gives
+    # away no facing, and an anchor on its front would be Art deciding
+    # a thing the silhouette deliberately refuses to say.
+    "drifter":   [("anchor_warn",     0.0,    0.0,   0.88),
+                  ("anchor_effect",   0.0,    0.0,   0.50)],
+}
+
+
+def _part_planes(parts):
+    """Every part as (centre, face planes), in world space.
+
+    Every part here is CONVEX -- a block, a prism, a wedge -- so a point is
+    inside a part exactly when it is behind all of that part's planes, and
+    its vertex average is inside it. Snapshotted before the parts are
+    joined, because after that there is one mesh of overlapping solids and
+    "inside" stops being a local test.
+    """
+    from mathutils import Vector
+    out = []
+    for obj, _ in parts:
+        mw = obj.matrix_world
+        rot = mw.to_3x3()
+        planes = [(mw @ poly.center, (rot @ poly.normal).normalized())
+                  for poly in obj.data.polygons]
+        verts = [mw @ v.co for v in obj.data.vertices]
+        if planes and verts:
+            centre = sum(verts, Vector()) / len(verts)
+            out.append((centre, planes))
+    return out
+
+
+def _embed(at, parts_planes, depth):
+    """`at` if the marker fits inside a part there; otherwise the first
+    point that does, walking from `at` toward the centre of each part in
+    turn, nearest part first. None if no part can hold it.
+
+    Toward a PART, not toward the body's axis: the first cut walked to the
+    axis, and on `ranged` the axis sits in front of the head -- the emitter
+    stretches the box forward -- so the warn marker walked right past the
+    head and never went in.
+    """
+    from mathutils import Vector
+
+    def inside(p, planes):
+        return all((p - c).dot(n) <= -depth for c, n in planes)
+
+    start = Vector(at)
+    if any(inside(start, planes) for _, planes in parts_planes):
+        return start
+    for centre, planes in sorted(parts_planes,
+                                 key=lambda cp: (cp[0] - start).length):
+        toward = centre - start
+        steps = int(toward.length / 0.005) + 1
+        for i in range(1, steps + 1):
+            p = start + toward * (i / steps)
+            if inside(p, planes):
+                return p
+    return None
+
+
+def _anchors(role, body, parts_planes):
+    """The role's named attachment points, as their own objects.
+
+    **Placed off the BODY'S MEASURED BOX, not off the envelope**, and
+    that is a repair. The first cut used envelope fractions, and the
+    bodies do not fill their envelopes -- the scuttler is 0.34 m tall
+    inside a 0.62 m one -- so eight anchors across six roles ended up
+    outside the geometry they are supposed to be points on. The
+    readiness harness refuses an anchor that is not inside the body,
+    and it refused these.
+
+    Embedded at 40 mm so they do not read as fittings on an enemy that
+    has none; they exist to be FETCHED, not seen. The one anchor that
+    stays envelope-derived is the telegraph seat, because its whole
+    job is to agree with `ENEMY_ENVELOPES[role].centre_y`.
+
+    **And inside a PART, not just inside the box.** A body's box includes
+    the air between its arms and above its shoulders, and "inside the box"
+    let a marker stand proud of the actual surface -- which surfaced when
+    the models were turned to face -Z (2026-09-26) and the front anchors
+    landed on thinner parts: two to three pixels of bump at 18 m. So each
+    anchor is walked toward the body's axis until the whole marker is
+    inside some part (`_embed`), and a role where that fails does not
+    build.
+    """
+    lo, hi = common.world_box(body)
+    span = [hi[i] - lo[i] for i in range(3)]
+    # Half the marker, plus a little, kept inside every face.
+    inset = ANCHOR_RADIUS * 1.6
+    out = []
+    for name, fx, fy, fz in ANCHORS.get(role, []):
+        at = []
+        for i, frac in enumerate((fx, fy, fz)):
+            if i == 2:
+                # Height is a fraction of the body's own height, from
+                # its foot.
+                value = lo[2] + span[2] * frac
+            else:
+                value = (lo[i] + hi[i]) * 0.5 + span[i] * frac
+            at.append(min(max(value, lo[i] + inset), hi[i] - inset))
+        # The marker is a prism of radius r and height 2r: its farthest
+        # point from its centre is r * sqrt(2).
+        placed = _embed(at, parts_planes, ANCHOR_RADIUS * 1.5)
+        if placed is None:
+            raise SystemExit("%s: %s cannot be placed inside any part of "
+                             "the body -- it would stand proud of the surface"
+                             % (role, name))
+        out.append(brushkit.prism(name, ANCHOR_RADIUS,
+                                  ANCHOR_RADIUS * 2.0, 8, tuple(placed)))
+    return out
+
+
+def _melee(w, h, d):
+    out = []
+    out += _tag(brushkit.block("legs", (w * 0.62, d * 0.52, h * 0.42),
+                               (0.0, 0.0, h * 0.21)), "body")
+    out += _tag(brushkit.block("torso", (w * 0.86, d * 0.66, h * 0.36),
+                               (0.0, -0.03, h * 0.60)), "body")
+    # The threat is the arms, so they are forward and they are the mass.
+    for sx in (-1.0, 1.0):
+        out += _tag(brushkit.block("arm_%d" % int(sx),
+                                   (w * 0.20, d * 0.80, h * 0.30),
+                                   (sx * w * 0.39, -d * 0.16, h * 0.58)),
+                    "plate")
+    out += _tag(brushkit.block("head", (w * 0.40, d * 0.42, h * 0.14),
+                               (0.0, -0.02, h * 0.90)), "plate")
+    return out
+
+
+def _ranged(w, h, d):
+    """A braced gunner. TIER 2 (RULED 2026-09-26): *"ranged gets a
+    non-width silhouette tell"*.
+
+    Track B measured it as a narrower melee -- the same head, the same
+    T of shoulders, the same block of legs; 0.856 on the scaled overlap
+    at 45 degrees. The tell is two SHAPES, and neither is a width:
+
+    * the emitter is LONG and carried DIAGONALLY across the body, from
+      the back of one hip to above the opposite shoulder, so its muzzle is
+      the highest point on the figure -- a line through the outline from
+      every angle, and the thing that shoots is the thing you see;
+    * the legs stand APART, braced to fire. The melee stands on
+      one block; this has daylight between its feet.
+
+    Inside the same 0.70 x 1.40 x 0.70 envelope, which the build asserts.
+    """
+    out = []
+    for sx in (-1.0, 1.0):
+        out += _tag(brushkit.block("leg_%d" % int(sx),
+                                   (w * 0.18, d * 0.34, h * 0.44),
+                                   (sx * w * 0.22, 0.0, h * 0.22)), "body")
+    out += _tag(brushkit.block("pelvis", (w * 0.52, d * 0.36, h * 0.08),
+                               (0.0, 0.0, h * 0.47)), "body")
+    out += _tag(brushkit.block("torso", (w * 0.58, d * 0.52, h * 0.30),
+                               (0.0, d * 0.04, h * 0.66)), "body")
+    # Hunched to the sight: the head sits lower than the melee's, so the
+    # muzzle clears it.
+    out += _tag(brushkit.block("head", (w * 0.30, d * 0.34, h * 0.11),
+                               (0.0, d * 0.02, h * 0.865)), "plate")
+    # The barrel, from the back of its left hip to above its right
+    # shoulder: the builder's front is -y, so the figure's right is -x.
+    # Built along +y and turned into line; `_diagonal` checks where its
+    # ends landed.
+    base = (w * 0.33, d * 0.16, h * 0.40)
+    tip = (-w * 0.36, -d * 0.36, h * 0.93)
+    out += _tag(_diagonal("emitter", base, tip, w * 0.115), "plate")
+    # The shroud at the muzzle: it holds anchor_muzzle, and at 18 m it is
+    # the knot at the end of the line.
+    along = [t - b for b, t in zip(base, tip)]
+    length = sum(a * a for a in along) ** 0.5
+    near = tuple(t - a / length * 0.05 for t, a in zip(tip, along))
+    far = tuple(t + a / length * 0.03 for t, a in zip(tip, along))
+    out += _tag(_diagonal("muzzle", near, far, w * 0.16), "plate")
+    return out
+
+
+def _diagonal(name, start, end, thick):
+    """A square bar from `start` to `end`, whatever its direction.
+
+    `brushkit.spin` turns geometry about its own centre, so the bar is
+    built along +y at the midpoint and turned twice: about x to lift it,
+    then about z to aim it. The turn signs are Blender's and easy to get
+    backwards, so the ends are measured afterwards and a bar that did not
+    land where it was sent does not build.
+    """
+    from mathutils import Vector
+    a, b = Vector(start), Vector(end)
+    along = b - a
+    length = along.length
+    mid = (a + b) * 0.5
+    bar = brushkit.block(name, (thick, length, thick), tuple(mid))
+    u = along.normalized()
+    lift = math.degrees(math.asin(max(-1.0, min(1.0, u.z))))
+    aim = math.degrees(math.atan2(-u.x, u.y))
+    brushkit.spin(bar, "x", lift)
+    brushkit.spin(bar, "z", aim)
+    # The four corners nearest each end must average to that end, to
+    # within the bar's thickness.
+    pts = [bar.matrix_world @ v.co for v in bar.data.vertices]
+    ends = sorted(pts, key=lambda p: (p - a).length)
+    near_a = sum(ends[:4], Vector()) / 4.0
+    near_b = sum(ends[-4:], Vector()) / 4.0
+    if (near_a - a).length > thick or (near_b - b).length > thick:
+        raise SystemExit("%s: the bar was sent from %s to %s and landed at "
+                         "%s .. %s -- the turn is the wrong way round"
+                         % (name, tuple(a), tuple(b), tuple(near_a),
+                            tuple(near_b)))
+    return bar
+
+
+def _brute(w, h, d):
+    out = []
+    # Mass over reach. Shoulders are the widest thing and the head is small,
+    # so the silhouette says WEIGHT rather than span.
+    out += _tag(brushkit.block("legs", (w * 0.70, d * 0.62, h * 0.38),
+                               (0.0, 0.0, h * 0.19)), "body")
+    out += _tag(brushkit.block("hips", (w * 0.78, d * 0.70, h * 0.14),
+                               (0.0, 0.0, h * 0.44)), "body")
+    out += _tag(brushkit.block("shoulders", (w, d * 0.86, h * 0.30),
+                               (0.0, 0.0, h * 0.66)), "plate")
+    for sx in (-1.0, 1.0):
+        out += _tag(brushkit.block("fist_%d" % int(sx),
+                                   (w * 0.28, d * 0.44, h * 0.26),
+                                   (sx * w * 0.33, -d * 0.24, h * 0.40)),
+                    "plate")
+    out += _tag(brushkit.block("head", (w * 0.26, d * 0.28, h * 0.11),
+                               (0.0, -0.06, h * 0.87)), "body")
+    return out
+
+
+def _charger(w, h, d):
+    out = []
+    # 1.9 m of DEPTH and 1.05 m of height: the long axis is the attack, so
+    # the mass is at the front and the body tapers away behind it.
+    out += _tag(brushkit.block("ram", (w, d * 0.22, h * 0.72),
+                               (0.0, -d * 0.38, h * 0.44)), "plate")
+    out += _tag(brushkit.wedge("prow", (w * 0.92, d * 0.24, h * 0.50),
+                               (0.0, -d * 0.16, h * 0.36), axis="y"), "plate")
+    out += _tag(brushkit.block("spine", (w * 0.66, d * 0.44, h * 0.44),
+                               (0.0, d * 0.06, h * 0.42)), "body")
+    out += _tag(brushkit.block("haunch", (w * 0.52, d * 0.24, h * 0.34),
+                               (0.0, d * 0.36, h * 0.30)), "body")
+    for sx in (-1.0, 1.0):
+        for i, y in enumerate((-0.24, 0.10, 0.34)):
+            out += _tag(brushkit.block("leg_%d_%d" % (int(sx), i),
+                                       (w * 0.15, d * 0.10, h * 0.30),
+                                       (sx * w * 0.40, d * y, h * 0.15)),
+                        "body")
+    return out
+
+
+def _bulwark(w, h, d):
+    """A wall that walks: a mantlet. TIER 2 (RULED 2026-09-26): *"bulwark
+    gets a clear head-on shield tell"*.
+
+    Track B measured it as the brute head-on -- two big dark slabs, 0.825
+    on the scaled overlap. Head-on the shield IS this silhouette, so the
+    tell is the shield's own outline, and it is drawn as the brute's
+    NEGATIVE at both ends:
+
+    * where the brute has its small head, the shield has its sighting
+      NOTCH, between two ears at its top corners;
+    * where the brute stands on one block of legs, the shield stands on
+      two RUNNERS at its own edges, with floor showing between them.
+
+    Nothing may fill either gap, so the body behind starts above the
+    shield's lower edge, the legs are the runners, and the ribs stop
+    inside the face. The face itself is still one uninterrupted plate
+    (037-R). All inside 1.45 x 2.05 x 0.85.
+    """
+    out = []
+    y_face, thick = -d * 0.32, d * 0.30
+    z_lo, z_hi = h * 0.22, h * 0.86        # the shield's lower, upper edge
+    out += _tag(brushkit.block("shield", (w, thick, z_hi - z_lo),
+                               (0.0, y_face, (z_lo + z_hi) * 0.5)), "plate")
+    for sx in (-1.0, 1.0):
+        # An ear at each top corner; the notch between them is 0.40 w.
+        out += _tag(brushkit.block("ear_%d" % int(sx),
+                                   (w * 0.30, thick, h * 0.10),
+                                   (sx * w * 0.35, y_face, z_hi + h * 0.05)),
+                    "plate")
+        # A runner under each edge, deep enough to stand on: the shield's
+        # own edge carried to the floor.
+        out += _tag(brushkit.block("runner_%d" % int(sx),
+                                   (w * 0.14, d * 0.86, z_lo + h * 0.04),
+                                   (sx * w * 0.43, -d * 0.04,
+                                    (z_lo + h * 0.04) * 0.5)), "body")
+    # Ribs down the face, inside its outline.
+    for i, x in enumerate((-w * 0.30, 0.0, w * 0.30)):
+        out += _tag(brushkit.block("rib_%d" % i,
+                                   (w * 0.10, d * 0.16, h * 0.58),
+                                   (x, -d * 0.44, h * 0.54)), "body")
+    # The body behind, carried on a yoke between the runners; both start
+    # at the shield's lower edge, so the floor shows under it head-on.
+    out += _tag(brushkit.block("body", (w * 0.52, d * 0.52, h * 0.47),
+                               (0.0, d * 0.18, h * 0.475)), "body")
+    out += _tag(brushkit.block("yoke", (w * 0.86, d * 0.20, h * 0.06),
+                               (0.0, d * 0.22, z_lo + h * 0.03)), "body")
+    return out
+
+
+def _scuttler(w, h, d):
+    out = []
+    # Flat and splayed: 0.62 m tall over a 1.3 m span. Legs OUT, body low.
+    # `body`, NOT `plate`. The surface pass captions this role "barely
+    # armoured at all" and then adds one small cap -- so tagging its single
+    # largest mass as armour made the sheet contradict the rule it exists to
+    # prove. Armour is what the surface pass BOLTS ON; the chassis under it
+    # is chassis.
+    out += _tag(brushkit.prism("carapace", w * 0.34, h * 0.52, 8,
+                               (0.0, 0.0, h * 0.42), top_radius=w * 0.22,
+                               organic=True), "body")
+    for i in range(6):
+        a = -60.0 + i * 24.0
+        sx = -1.0 if i % 2 == 0 else 1.0
+        out += _tag(brushkit.block("leg_%d" % i,
+                                   (w * 0.34, d * 0.10, h * 0.14),
+                                   (sx * w * 0.30, d * (-0.30 + 0.12 * i),
+                                    h * 0.20), rotation_z=a), "body")
+    out += _tag(brushkit.block("maw", (w * 0.26, d * 0.20, h * 0.20),
+                               (0.0, -d * 0.36, h * 0.24)), "body")
+    return out
+
+
+def _artillery(w, h, d):
+    out = []
+    # A seated mortar: braced base, elevated barrel. The threat end is the
+    # muzzle and it is the heaviest thing on the model.
+    out += _tag(brushkit.block("base", (w * 0.94, d * 0.94, h * 0.24),
+                               (0.0, 0.0, h * 0.12)), "body")
+    for i in range(4):
+        out += _tag(brushkit.wedge("brace_%d" % i,
+                                   (w * 0.28, d * 0.30, h * 0.22),
+                                   (0.0, 0.0, h * 0.26), rotation_z=i * 90.0,
+                                   axis="y"), "body")
+    out += _tag(brushkit.prism("turret", w * 0.34, h * 0.34, 8,
+                               (0.0, 0.0, h * 0.52)), "body")
+    out += _tag(brushkit.block("barrel", (w * 0.28, d * 0.62, h * 0.28),
+                               (0.0, -d * 0.16, h * 0.76)), "plate")
+    out += _tag(brushkit.prism("muzzle", w * 0.20, d * 0.22, 8,
+                               (0.0, -d * 0.42, h * 0.82)), "plate")
+    muzzle = out[-1][0]
+    brushkit.spin(muzzle, "x", 90.0)
+    return out
+
+
+def _beacon(w, h, d):
+    out = []
+    # A mast, not a creature: 0.62 square and 2.2 tall. This is the one role
+    # whose envelope is a FIXTURE that took sides, and the only one that
+    # wears a hazard band.
+    out += _tag(brushkit.prism("foot", w * 0.46, h * 0.10, 8,
+                               (0.0, 0.0, h * 0.05)), "body")
+    out += _tag(brushkit.block("mast", (w * 0.30, d * 0.30, h * 0.74),
+                               (0.0, 0.0, h * 0.46)), "body")
+    for i, z in enumerate((0.30, 0.52, 0.74)):
+        out += _tag(brushkit.block("collar_%d" % i,
+                                   (w * 0.52, d * 0.52, h * 0.05),
+                                   (0.0, 0.0, h * z)), "body")
+    # `body` for the same reason as the scuttler's carapace: the beacon is
+    # captioned "no armour at all" and wears service hardware instead.
+    out += _tag(brushkit.prism("head", w * 0.44, h * 0.20, 8,
+                               (0.0, 0.0, h * 0.90), organic=True), "body")
+    # The band. Marked, never a wash.
+    out += _tag(brushkit.tube("band", w * 0.48, w * 0.40, h * 0.07, 8,
+                              (0.0, 0.0, h * 0.80)), "warn")
+    return out
+
+
+def _diver(w, h, d):
+    out = []
+    # Nose down, 1.2 m deep over 0.5 m tall. A stooping shape, and it reads
+    # as committed to a direction even at rest.
+    out += _tag(brushkit.wedge("nose", (w, d * 0.46, h * 0.80),
+                               (0.0, -d * 0.26, 0.0), axis="y"), "plate")
+    out += _tag(brushkit.block("spine", (w * 0.60, d * 0.50, h * 0.56),
+                               (0.0, d * 0.20, h * 0.06)), "body")
+    for sx in (-1.0, 1.0):
+        out += _tag(brushkit.block("fin_%d" % int(sx),
+                                   (w * 0.28, d * 0.30, h * 0.16),
+                                   (sx * w * 0.34, d * 0.28, h * 0.10)),
+                    "body")
+    return out
+
+
+def _drifter(w, h, d):
+    out = []
+    # A hanging bell: 1.35 square, slow, and with NO front. It is the one
+    # role whose silhouette deliberately gives away no facing.
+    out += _tag(brushkit.prism("bell", w * 0.48, h * 0.62, 8,
+                               (0.0, 0.0, h * 0.06), top_radius=w * 0.24,
+                               organic=True), "plate")
+    out += _tag(brushkit.tube("skirt", w * 0.50, w * 0.38, h * 0.20, 8,
+                              (0.0, 0.0, -h * 0.28)), "body")
+    for i in range(4):
+        out += _tag(brushkit.block("tendril_%d" % i,
+                                   (w * 0.07, d * 0.07, h * 0.30),
+                                   (0.0, 0.0, -h * 0.30),
+                                   rotation_z=45.0 + i * 90.0), "body")
+    return out
+
+
+
+# ----------------------------------------------------------------------
+# Batch 030-R (037): ROLE IDENTITY IN THE SURFACE
+#
+# The 030 review found the honest limit of that pass: all ten wore one skin,
+# so at distance the family read as ten brown panelled masses of different
+# shapes. Silhouette did all the work and surface did none.
+#
+# The bodies and the envelopes are NOT touched. What is added is a system,
+# and it is one rule rather than ten decorations:
+#
+#     ARMOUR GOES WHERE THE ROLE TAKES OR DEALS IMPACT.
+#     MECHANISM SHOWS WHERE IT DOES NOT.
+#
+# That is functional rather than arbitrary, which is what keeps ten roles
+# looking like one ecosystem: every member is the same machine underneath,
+# plated differently because it does a different job. A brute is armoured
+# everywhere because everything hits it; a scuttler is barely armoured
+# because its answer to being hit is not to be there; a bulwark's front is
+# one uninterrupted plate and its back is all drive.
+#
+# Explicitly NOT ten colours. Three surface treatments carry it:
+#
+#     plate  -- armour. Clean, thick, unbroken.
+#     mech   -- exposed working: drives, linkages, feed. Darker, greasier.
+#     body   -- the shared chassis every role is built on.
+#
+# `hazard` stays reserved for the beacon's band and for real danger
+# telegraphing. No role gets a colour of its own.
+# ----------------------------------------------------------------------
+
+def _surface(role, w, h, d):
+    """Role-specific armour and exposed mechanism, inside the envelope."""
+    out = []
+
+    # 037-R. The first surface pass told armour from mechanism by ROUGHNESS
+    # alone, and at 3.4 m that reads as shadow rather than as a different
+    # kind of thing. Roughness is kept, but the difference is now carried by
+    # CONSTRUCTION -- which is what the owner asked for and is also what
+    # actually survives a mid-range look:
+    #
+    #   plate -> a slab with a PROUD LIP round it, so armour reads as
+    #            something bolted ON rather than as more body
+    #   mech  -> RIBBED: three slats and a rod, so mechanism reads as
+    #            machinery rather than as a dark box
+    #
+    # No role colours. The two treatments differ in how they are BUILT.
+    def plate(name, size, at, rot=0.0):
+        # The plate SHRINKS and the backing keeps the declared extent, so
+        # the pair reads as armour seated in a recess without the footprint
+        # growing. The first attempt grew the lip instead and pushed the
+        # brute's pauldrons 6 cm outside ENEMY_ENVELOPES -- the assertion
+        # caught it, which is what it is for.
+        face = (size[0] * 0.88, size[1] * 0.88, size[2] * 1.16)
+        out.append((brushkit.block(name, face, at, rotation_z=rot), "plate"))
+        out.append((brushkit.block(name + "_seat", size, at, rotation_z=rot),
+                    "body"))
+
+    def mech(name, size, at, rot=0.0):
+        # Ribbing along the longest horizontal axis, plus a rod through it.
+        span = max(size[0], size[1])
+        thin = min(size[0], size[1])
+        wide = size[0] >= size[1]
+        for j in range(3):
+            off = -span * 0.30 + j * span * 0.30
+            rib = ((span * 0.20, thin, size[2]) if wide
+                   else (thin, span * 0.20, size[2]))
+            pos = ((at[0] + off, at[1], at[2]) if wide
+                   else (at[0], at[1] + off, at[2]))
+            out.append((brushkit.block("%s_rib%d" % (name, j), rib, pos,
+                                       rotation_z=rot), "mech"))
+        rod = ((span * 1.02, thin * 0.34, thin * 0.34) if wide
+               else (thin * 0.34, span * 1.02, thin * 0.34))
+        out.append((brushkit.block(name + "_rod", rod, at, rotation_z=rot),
+                    "mech"))
+
+    if role == "melee":
+        # Light. Armour only on the leading forearms; the shoulders are open
+        # linkage, because speed is its answer to being hit.
+        for sx in (-1.0, 1.0):
+            plate("bracer_%d" % int(sx), (w * 0.14, d * 0.30, h * 0.13),
+                  (sx * w * 0.39, -d * 0.34, h * 0.58))
+            mech("shoulder_%d" % int(sx), (w * 0.11, d * 0.16, h * 0.09),
+                 (sx * w * 0.30, d * 0.06, h * 0.72))
+        mech("spine_link", (w * 0.16, d * 0.12, h * 0.20),
+             (0.0, d * 0.24, h * 0.58))
+
+    elif role == "ranged":
+        # A housing over the emitter, and a sensor block on the head: it
+        # aims, so the protected things are the barrel and the eye.
+        # The housing is where the long emitter is held, across the
+        # front of the torso; the feed is open at the barrel's butt.
+        plate("emitter_housing", (w * 0.30, d * 0.22, h * 0.14),
+              (-w * 0.02, -d * 0.20, h * 0.64))
+        plate("sensor", (w * 0.22, d * 0.14, h * 0.06),
+              (0.0, -d * 0.18, h * 0.87))
+        mech("feed", (w * 0.14, d * 0.20, h * 0.16),
+             (w * 0.20, d * 0.20, h * 0.58))
+
+    elif role == "brute":
+        # Armoured EVERYWHERE and nothing exposed. Mass is the whole idea,
+        # so interrupting the plating would argue against it.
+        plate("pauldron_l", (w * 0.34, d * 0.44, h * 0.12),
+              (-w * 0.33, 0.0, h * 0.76))
+        plate("pauldron_r", (w * 0.34, d * 0.44, h * 0.12),
+              (w * 0.33, 0.0, h * 0.76))
+        plate("chest", (w * 0.52, d * 0.10, h * 0.22),
+              (0.0, -d * 0.44, h * 0.64))
+        plate("belt", (w * 0.72, d * 0.14, h * 0.07),
+              (0.0, -d * 0.36, h * 0.46))
+
+    elif role == "charger":
+        # Armour on the FRONT THIRD only; the rear is open drive. The one
+        # role whose plating distribution is a sentence about its attack.
+        plate("prow_plate", (w * 0.86, d * 0.10, h * 0.44),
+              (0.0, -d * 0.46, h * 0.44))
+        plate("cheek_l", (w * 0.12, d * 0.22, h * 0.30),
+              (-w * 0.40, -d * 0.30, h * 0.42))
+        plate("cheek_r", (w * 0.12, d * 0.22, h * 0.30),
+              (w * 0.40, -d * 0.30, h * 0.42))
+        for i, y in enumerate((0.16, 0.32)):
+            mech("drive_%d" % i, (w * 0.44, d * 0.09, h * 0.20),
+                 (0.0, d * y, h * 0.50))
+
+    elif role == "bulwark":
+        # The face is ONE uninterrupted plate -- that is what a shield is --
+        # and everything behind it is mechanism.
+        plate("face", (w * 0.92, d * 0.09, h * 0.60),
+              (0.0, -d * 0.47, h * 0.54))
+        for i, z in enumerate((0.30, 0.52)):
+            mech("actuator_%d" % i, (w * 0.30, d * 0.20, h * 0.10),
+                 (0.0, d * 0.34, h * z))
+        mech("hinge", (w * 0.10, d * 0.30, h * 0.46),
+             (w * 0.30, d * 0.10, h * 0.50))
+
+    elif role == "scuttler":
+        # Barely armoured: a carapace cap and nothing else. Its legs are all
+        # exposed drive, which is also what makes it read as skittering.
+        plate("cap", (w * 0.34, d * 0.34, h * 0.10),
+              (0.0, 0.0, h * 0.62))
+        for i in range(4):
+            mech("hip_%d" % i, (w * 0.13, d * 0.11, h * 0.13),
+                 (0.0, 0.0, h * 0.34), rot=45.0 + i * 90.0)
+
+    elif role == "artillery":
+        # Heavy housing low, open breech high: it is a served weapon, and
+        # the part that is worked on is the part left open.
+        plate("apron", (w * 0.88, d * 0.88, h * 0.10),
+              (0.0, 0.0, h * 0.22))
+        mech("breech", (w * 0.30, d * 0.26, h * 0.18),
+             (0.0, d * 0.24, h * 0.70))
+        mech("elevator", (w * 0.12, d * 0.16, h * 0.24),
+             (w * 0.26, d * 0.10, h * 0.62))
+
+    elif role == "beacon":
+        # NO armour at all. It is a fixture that took sides, so it wears
+        # service hardware instead: a conduit and two junctions up the mast.
+        for i, z in enumerate((0.36, 0.62)):
+            mech("junction_%d" % i, (w * 0.26, d * 0.22, h * 0.07),
+                 (0.0, -d * 0.16, h * z))
+        mech("conduit", (w * 0.10, d * 0.10, h * 0.56),
+             (0.0, -d * 0.20, h * 0.52))
+
+    elif role == "diver":
+        # The nose takes the impact and is solid; the tail is open.
+        plate("nose_cap", (w * 0.62, d * 0.22, h * 0.44),
+              (0.0, -d * 0.36, h * 0.02))
+        mech("tail", (w * 0.30, d * 0.18, h * 0.30),
+             (0.0, d * 0.36, h * 0.06))
+
+    elif role == "drifter":
+        # A plated crown and an entirely mechanical skirt. It hangs, so the
+        # protection is above and the working is below.
+        plate("crown", (w * 0.52, d * 0.52, h * 0.12),
+              (0.0, 0.0, h * 0.34))
+        for i in range(4):
+            mech("winch_%d" % i, (w * 0.10, d * 0.10, h * 0.16),
+                 (0.0, 0.0, -h * 0.16), rot=i * 90.0)
+
+    return out
+
+
+#: What each role's plating distribution says. Recorded per asset so the
+#: sheet can be read without the builder.
+SURFACE_STORY = {
+    "melee": "bracers only -- speed is its answer to being hit",
+    "ranged": "the barrel and the eye are housed; the feed is open",
+    "brute": "plated everywhere, nothing exposed -- mass is the argument",
+    "charger": "armour on the FRONT THIRD, open drive behind it",
+    "bulwark": "one uninterrupted face plate; all mechanism behind",
+    "scuttler": "a carapace cap and four exposed hip drives",
+    "artillery": "heavy apron low, open breech high -- a served weapon",
+    "beacon": "no armour at all; service conduit and junctions",
+    "diver": "solid nose cap, open tail",
+    "drifter": "plated crown, entirely mechanical skirt",
+}
+
+ROLES = {
+    "melee": (_melee, "upright, forward-weighted; the arms are the threat"),
+    "ranged": (_ranged, "a braced gunner: a long emitter across the body, "
+                        "its muzzle the highest point, daylight between "
+                        "its feet"),
+    "brute": (_brute, "mass over reach: a slab of shoulders, a small head"),
+    "charger": (_charger, "a battering ram -- the long axis IS the attack"),
+    "bulwark": (_bulwark, "a wall that walks: a mantlet on two runners, "
+                          "a sighting notch between its ears"),
+    "scuttler": (_scuttler, "flat and splayed, legs out, body low"),
+    "artillery": (_artillery, "a seated mortar: braced base, elevated barrel"),
+    "beacon": (_beacon, "a mast, not a creature -- a fixture that took sides"),
+    "diver": (_diver, "nose down; committed to a direction even at rest"),
+    "drifter": (_drifter, "a hanging bell -- deliberately gives away no facing"),
+}
+
+
+def main():
+    for band, (lightness, out_dir) in BUILD.items():
+        _build_band(band, lightness, out_dir)
+    if _EXPLORE is None:
+        _write_band_map()
+
+
+def _write_band_map():
+    """The ruling as data, for whoever integrates the models. Generated:
+    the constants above are the source."""
+    for room in ROOM_BAND:
+        if room not in pal.palette()["themes"]:
+            raise SystemExit("ROOM_BAND names %r, which the palette does not "
+                             "know" % room)
+    missing = set(pal.palette()["themes"]) - set(ROOM_BAND)
+    if missing:
+        raise SystemExit("ROOM_BAND leaves %s without a band" % sorted(missing))
+    data = {
+        "_about": "GENERATED by tools/blender/build_enemy_roles.py from "
+                  "VALUE_BANDS / ROOM_BAND / ACCEPTANCE. Do not hand-edit.",
+        "ruled": "2026-09-26",
+        "status": "art treatment APPROVED. NOT active in the shipping game: "
+                  "Production's enemies are built in code in the room's own "
+                  "accent and trim (enemy.gd) and load none of these models "
+                  "until integration.",
+        "review_distance_m": 18.0,
+        "bands": {band: {"body_lightness": k, "models": BAND_OUT[band],
+                         "rooms": sorted(r for r, b in ROOM_BAND.items()
+                                         if b == band)}
+                  for band, k in VALUE_BANDS.items()},
+        "room_band": dict(sorted(ROOM_BAND.items())),
+        "acceptance": ACCEPTANCE,
+        "evidence": "docs/art/review/enemies_2026-09-25/",
+    }
+    out = os.path.join(common.MODEL_DIR, "batch030", "enemy_value_bands.json")
+    with open(out, "w", encoding="utf-8") as handle:
+        json.dump(data, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+    common.log("[batch030] value bands -> %s" % out)
+
+
+def _build_band(band, lightness, out_dir):
+    report = {}
+    for role, (builder, reads_as) in ROLES.items():
+        common.reset_scene()
+        w, h, d, hover = ENVELOPES[role]
+        # `enemy_role_*`, NOT `enemy_*`. Batch 002 already owns
+        # `enemy_scuttler`, `enemy_charger`, `enemy_bulwark`,
+        # `enemy_artillery`, `enemy_beacon`, `enemy_drifter` and
+        # `enemy_diver`, and those are PASS. Ids are the ledger's
+        # key, so reusing one silently redefines approved work --
+        # check_docs_metrics caught it reading THIS build's numbers
+        # against Batch 002's approved rows.
+        name = "enemy_role_%s" % role
+        parts = builder(w, h, d) + _surface(role, w, h, d)
+        centre_z = hover if hover else h / 2.0
+        parts += _seat(centre_z - (hover if hover else 0.0))
+        _face_forward(role, parts)
+        planes = _part_planes(parts)
+        # THE ANCHORS STAY OUT OF THE BUCKETS, and are built AFTER the
+        # body, because they are placed off its measured box. Everything
+        # else is joined by material role and then joined again into one
+        # body, which is how all ten shipped as a SINGLE node -- and a
+        # role that arrives as one mesh has nowhere to hang a muzzle
+        # flash. The readiness harness found exactly that: ten roles,
+        # one node each, no named attachment point anywhere.
+
+        buckets = {}
+        for obj, r in parts:
+            buckets.setdefault(r, []).append(obj)
+        painted = []
+        # Exposed mechanism is told from armour by MATERIAL, not by colour:
+        # armour is matte and mechanism is oily. Both keep `enemy_skin`, so
+        # neither shifts with the room -- L-08's rule that an enemy never
+        # wears its room's colours applies to the working parts too.
+        for r, marking, rough in (("body", "dead", None),
+                                  ("plate", "dead", None),
+                                  ("mech", "dead", 0.42),
+                                  ("mark", "dead", None),
+                                  ("warn", "hazard", None)):
+            got = buckets.get(r)
+            if not got:
+                continue
+            obj = common.join(got, "%s_%s" % (name, r))
+            common.uv_project_world(obj, propkit.PROP_DENSITY,
+                                    propkit.PROP_SIZE)
+            common.assign(obj, common.make_textured_material(
+                "%s_%s" % (name, r),
+                propkit.enemy_skin(THEME, "%s_%s" % (name, r),
+                                   lightness=lightness,
+                                   marking=marking).to_blender(
+                    "%s_%s_t" % (name, r)),
+                roughness=pal.roughness(THEME) if rough is None
+                else rough))
+            painted.append(obj)
+
+        obj = common.join(painted, name)
+        # `set_origin` moves the VERTICES by the floor-centre offset; the
+        # part planes snapshotted above must move with them.
+        lo, hi = common.world_box(obj)
+        from mathutils import Vector
+        shift = Vector(((lo[0] + hi[0]) * 0.5, (lo[1] + hi[1]) * 0.5, lo[2]))
+        common.set_origin(obj, "floor")
+        planes = [(centre - shift, [(c - shift, n) for c, n in part])
+                  for centre, part in planes]
+        # The anchors are painted in the body material and moved with
+        # the body's own origin shift, so they stay where the envelope
+        # fractions put them.
+        anchors = _anchors(role, obj, planes)
+        anchor_names = [a.name for a in anchors]
+        for anchor in anchors:
+            if obj.data.materials:
+                common.assign(anchor, obj.data.materials[0])
+        # The envelope is a CONTRACT, not a guide. A model that overruns it
+        # is a model whose collider disagrees with it.
+        common.assert_fits(obj, name, (w, d, h),
+                           "ENEMY_ENVELOPES[%r] is %.2f x %.2f x %.2f m and "
+                           "Production builds the collider from the same "
+                           "numbers." % (role, w, h, d))
+        record = common.export_glb(obj, "%s/%s.glb" % (out_dir, name),
+                                   "enemy", check_flat=False, parts=anchors)
+        record["parts"] = anchor_names
+        record.update({
+            "batch": "030",
+            "kind": "enemy_role",
+            "role": role,
+            "reads_as": reads_as,
+            "surface_story": SURFACE_STORY[role],
+            "surface_rule": "armour goes where the role takes or deals impact; mechanism shows where it does not",
+            "envelope_w_h_d_m": [w, h, d],
+            "hover_height_m": hover,
+            "is_flying": hover > 0.0,
+            "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never "
+                               "redefined by art",
+            "telegraph_seat_at_centre_y_m": centre_z,
+            "telegraph_seat_is": "reserved geometry matching enemy.gd's "
+                                 "telegraph_origin Marker3D. NOT a telegraph "
+                                 "and it does not animate",
+            "placeable_today": role in PLACEABLE,
+            "placeable_source": "Constants.ENEMY_ARCHETYPES is still "
+                                "('melee', 'ranged', 'brute')",
+            "invents_no_behaviour": True,
+            "integration_ready": False,
+            "scale_basis": "authored to the published envelope",
+            "anchors": anchor_names,
+            "anchors_are": "named attachment NODES for a runtime to "
+                           "fetch. Not decoration, not behaviour, no "
+                           "hitbox and no damage logic. Positions are "
+                           "fractions of ENEMY_ENVELOPES, so an anchor "
+                           "cannot drift from the collider it hangs off.",
+            "faces": "-Z, as enemy.gd's enemies do; the front part is "
+                     "checked at build time",
+            "front_part": FRONT[role],
+            "value_band": band,
+            "body_lightness": lightness,
+            "value_band_rooms": sorted(r for r, b in ROOM_BAND.items()
+                                       if b == band),
+        })
+        report[name] = record
+
+    # Through MODEL_DIR, not a hardcoded shipped path. Before 2026-09-25
+    # this wrote to assets/models/ unconditionally, so ANY scratch build
+    # -- an ART_THEME run as much as a lightness candidate -- would have
+    # replaced the shipped manifest with a scratch one while exporting
+    # its models somewhere else entirely.
+    out = os.path.join(common.MODEL_DIR, out_dir, "manifest.json")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w", encoding="utf-8") as handle:
+        json.dump(report, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+    common.log("[batch030] %s band, body L* x %.2f: %d assets -> %s"
+               % (band, lightness, len(report), out_dir))
+
+
+if __name__ == "__main__":
+    main()

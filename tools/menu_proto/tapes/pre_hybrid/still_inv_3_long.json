@@ -1,0 +1,45 @@
+{
+ "about": "Inventory, resting: the longest name, with a long description. Scripted input, a still.",
+ "steps": [
+  {
+   "at": 0.3,
+   "key": "Right"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 1.2,
+   "quit": true
+  }
+ ]
+}

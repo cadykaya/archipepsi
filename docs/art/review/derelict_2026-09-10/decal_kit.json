@@ -1,0 +1,367 @@
+{
+  "_comment": [
+    "The deep_space_derelict decal extension. TRIAL ART: it ships nowhere,",
+    "is in no content manifest, and changes no approved asset. Physical size",
+    "is authoritative -- a card is built from `metres`, never from pixels.",
+    "Nothing here is interactive or semantic.",
+    "",
+    "decal_drip and decal_splatter from the neutral kit are deliberately NOT",
+    "carried over: a warm brown run and a splatter belong to a wet, dirty",
+    "building, and this one is cold and dry."
+  ],
+  "glyph_root": "/home/user/ecms-glyph",
+  "glyph_sha": "6c80b6315912a70b44c28d566ddff608eafa234a",
+  "owner": "act_owner_skyiah",
+  "artist": "act_agent_arty",
+  "texels_per_metre": 32,
+  "decals": [
+    {
+      "id": "decal_coolant",
+      "title": "condensation / coolant trail",
+      "origin": "new for deep_space_derelict",
+      "native_size": [
+        16,
+        40
+      ],
+      "metres": [
+        0.5,
+        1.25
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall"
+      ],
+      "orientation": "upright only",
+      "why": "it runs down. And it is COLD and pale where `decal_drip` is warm and brown, so it reads as a line that froze rather than as dirt.",
+      "palette": [
+        {
+          "name": "wet",
+          "rgba": [
+            132,
+            154,
+            154,
+            175
+          ]
+        },
+        {
+          "name": "film",
+          "rgba": [
+            132,
+            154,
+            154,
+            95
+          ]
+        },
+        {
+          "name": "haze",
+          "rgba": [
+            97,
+            118,
+            118,
+            55
+          ]
+        },
+        {
+          "name": "shade",
+          "rgba": [
+            29,
+            42,
+            44,
+            70
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_coolant.png",
+        "enlarged": "decals/decal_coolant_8x.png",
+        "on_wall": "decals/decal_coolant_on_wall.png",
+        "on_checker": "decals/decal_coolant_checker.png"
+      },
+      "render_sha256": "9df8339663575e7aee46bf49851df5c18a79d42429de3c55ad4be77bb62a72c6",
+      "verified": true
+    },
+    {
+      "id": "decal_corroded_seam",
+      "title": "corroded seam",
+      "origin": "new for deep_space_derelict",
+      "native_size": [
+        32,
+        8
+      ],
+      "metres": [
+        1,
+        0.25
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall"
+      ],
+      "orientation": "aligned to a seam: horizontal on a weld, rotated 90 deg on a stringer. Never free-floating.",
+      "why": "corrosion follows the joint it started in. Placed off a seam it is a stain, and this theme already has one of those.",
+      "palette": [
+        {
+          "name": "bloom",
+          "rgba": [
+            123,
+            106,
+            96,
+            165
+          ]
+        },
+        {
+          "name": "oxide",
+          "rgba": [
+            78,
+            67,
+            60,
+            195
+          ]
+        },
+        {
+          "name": "pit",
+          "rgba": [
+            36,
+            31,
+            28,
+            205
+          ]
+        },
+        {
+          "name": "creep",
+          "rgba": [
+            123,
+            106,
+            96,
+            80
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_corroded_seam.png",
+        "enlarged": "decals/decal_corroded_seam_8x.png",
+        "on_wall": "decals/decal_corroded_seam_on_wall.png",
+        "on_checker": "decals/decal_corroded_seam_checker.png"
+      },
+      "render_sha256": "9e84009f0e00a1807cb3435b1b0a82c07b42b22ea5bee57e1e9ddbd37dcb8748",
+      "verified": true
+    },
+    {
+      "id": "decal_panel_removed",
+      "title": "removed-panel outline",
+      "origin": "new for deep_space_derelict",
+      "native_size": [
+        24,
+        24
+      ],
+      "metres": [
+        0.75,
+        0.75
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall"
+      ],
+      "orientation": "upright only",
+      "why": "a bay is square to the structure it sits in. Rotated off axis it stops reading as a missing cover and starts reading as damage.",
+      "palette": [
+        {
+          "name": "clean",
+          "rgba": [
+            132,
+            154,
+            154,
+            120
+          ]
+        },
+        {
+          "name": "rim",
+          "rgba": [
+            13,
+            27,
+            33,
+            190
+          ]
+        },
+        {
+          "name": "hole",
+          "rgba": [
+            13,
+            27,
+            33,
+            225
+          ]
+        },
+        {
+          "name": "lip",
+          "rgba": [
+            132,
+            154,
+            154,
+            150
+          ]
+        },
+        {
+          "name": "dirt",
+          "rgba": [
+            78,
+            67,
+            60,
+            90
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_panel_removed.png",
+        "enlarged": "decals/decal_panel_removed_8x.png",
+        "on_wall": "decals/decal_panel_removed_on_wall.png",
+        "on_checker": "decals/decal_panel_removed_checker.png"
+      },
+      "render_sha256": "1519e752fb9c3565ec9c42b268a591f8d4f7faf7c6b81f68bc1803af00f2b249",
+      "verified": true
+    },
+    {
+      "id": "decal_inspection",
+      "title": "maintenance inspection mark",
+      "origin": "new for deep_space_derelict",
+      "native_size": [
+        16,
+        8
+      ],
+      "metres": [
+        0.5,
+        0.25
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall"
+      ],
+      "orientation": "upright only",
+      "why": "it is lettering, and it is small on purpose: an inspection mark is for whoever is standing at the panel, not for the room.",
+      "palette": [
+        {
+          "name": "ink",
+          "rgba": [
+            0,
+            71,
+            91,
+            200
+          ]
+        },
+        {
+          "name": "faded",
+          "rgba": [
+            2,
+            120,
+            141,
+            120
+          ]
+        },
+        {
+          "name": "box",
+          "rgba": [
+            132,
+            154,
+            154,
+            90
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_inspection.png",
+        "enlarged": "decals/decal_inspection_8x.png",
+        "on_wall": "decals/decal_inspection_on_wall.png",
+        "on_checker": "decals/decal_inspection_checker.png"
+      },
+      "render_sha256": "15033d078d8599fb5ece1bf7b5e31116f5bec06e0cdf320c267b2bbc03bd8ad4",
+      "verified": true
+    }
+  ],
+  "reused": [
+    {
+      "id": "decal_grime",
+      "title": "accumulated grime patch",
+      "origin": "reused from the Batch 041 neutral kit",
+      "why": "dirt is dirt in any theme",
+      "native_size": [
+        32,
+        32
+      ],
+      "metres": [
+        1,
+        1
+      ],
+      "surfaces": [
+        "wall",
+        "floor",
+        "ceiling"
+      ],
+      "orientation": "any rotation",
+      "source": "docs/art/review/glyph_layers_2026-09-10/decals/",
+      "render_sha256": "9e41b6854b1c19a73697a860b5279f3e31888d193fae26d7ddf42426dd684e26"
+    },
+    {
+      "id": "decal_scorch",
+      "title": "scorch mark",
+      "origin": "reused from the Batch 041 neutral kit",
+      "why": "restrained impact damage, already neutral",
+      "native_size": [
+        32,
+        32
+      ],
+      "metres": [
+        1,
+        1
+      ],
+      "surfaces": [
+        "wall",
+        "floor",
+        "ceiling"
+      ],
+      "orientation": "any rotation",
+      "source": "docs/art/review/glyph_layers_2026-09-10/decals/",
+      "render_sha256": "5131afae4f77d76b25163b009d0f4deb4afdf37aa9326d99af79b68ec4b8754d"
+    },
+    {
+      "id": "decal_scuff",
+      "title": "scuff / scrape",
+      "origin": "reused from the Batch 041 neutral kit",
+      "why": "wear where things pass",
+      "native_size": [
+        24,
+        8
+      ],
+      "metres": [
+        0.75,
+        0.25
+      ],
+      "surfaces": [
+        "wall",
+        "floor"
+      ],
+      "orientation": "wall: horizontal only, 0.3-1.1 m up; floor: any rotation",
+      "source": "docs/art/review/glyph_layers_2026-09-10/decals/",
+      "render_sha256": "1c44384178658768e9f63bbb1239febb48f971fbf8a3e623ebcc22f12ed64483"
+    },
+    {
+      "id": "decal_stencil",
+      "title": "compartment stencil",
+      "origin": "reused from the Batch 041 neutral kit",
+      "why": "the non-gameplay label already serves",
+      "native_size": [
+        24,
+        16
+      ],
+      "metres": [
+        0.75,
+        0.5
+      ],
+      "surfaces": [
+        "wall"
+      ],
+      "orientation": "upright only",
+      "source": "docs/art/review/glyph_layers_2026-09-10/decals/",
+      "render_sha256": "730bb5aeaf2c83c17aca3361a2293c3099e7897ca46f7466c8372584026b16fe"
+    }
+  ],
+  "elapsed_ms": 251
+}

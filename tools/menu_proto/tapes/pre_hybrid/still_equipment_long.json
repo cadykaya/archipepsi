@@ -1,0 +1,45 @@
+{
+ "about": "A still at gameplay size. Scripted input.",
+ "steps": [
+  {
+   "at": 0.2,
+   "key": "Right"
+  },
+  {
+   "after": 0.1,
+   "key": "Down"
+  },
+  {
+   "after": 0.1,
+   "key": "Down"
+  },
+  {
+   "after": 0.1,
+   "key": "Down"
+  },
+  {
+   "after": 0.1,
+   "key": "Down"
+  },
+  {
+   "after": 0.1,
+   "key": "Down"
+  },
+  {
+   "after": 0.1,
+   "key": "Down"
+  },
+  {
+   "after": 0.1,
+   "key": "Down"
+  },
+  {
+   "after": 0.1,
+   "key": "Down"
+  },
+  {
+   "after": 1.0,
+   "quit": true
+  }
+ ]
+}

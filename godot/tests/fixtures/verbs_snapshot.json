@@ -1,0 +1,266 @@
+{
+ "type": "campaign_snapshot",
+ "interpretations": [],
+ "mechanics": {
+  "owned": [
+   {
+    "component": {
+     "component_id": "res_fuel",
+     "display_name": "Fuel",
+     "description": "x",
+     "kind": "resource",
+     "max_value": 100.0,
+     "initial_fraction": 1.0,
+     "regen_per_second": 0.0,
+     "regen_delay": 0.0,
+     "presentation": "bar",
+     "pip_count": null,
+     "palette_color": "tide"
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 0,
+      "source_location_id": 89100011,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Fuel"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "res_spark",
+     "display_name": "Spark",
+     "description": "x",
+     "kind": "resource",
+     "max_value": 100.0,
+     "initial_fraction": 1.0,
+     "regen_per_second": 0.0,
+     "regen_delay": 0.0,
+     "presentation": "bar",
+     "pip_count": null,
+     "palette_color": "tide"
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 0,
+      "source_location_id": 89100011,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Spark"
+     },
+     {
+      "interpretation_seq": 5,
+      "source_location_id": 89100016,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "link",
+      "note": "fills from act_blink"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "act_blink",
+     "display_name": "Blink",
+     "description": "x",
+     "kind": "action",
+     "slot": "echo_a",
+     "cooldown": 5.0,
+     "primitive": {
+      "type": "blink",
+      "range": 12.0,
+      "clearance": 0.4
+     },
+     "modifiers": []
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 1,
+      "source_location_id": 89100012,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Blink"
+     },
+     {
+      "interpretation_seq": 5,
+      "source_location_id": 89100016,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "link",
+      "note": "powers from res_fuel"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "act_charge",
+     "display_name": "Charge",
+     "description": "x",
+     "kind": "action",
+     "slot": "echo_b",
+     "cooldown": 5.0,
+     "primitive": {
+      "type": "charge_shot",
+      "min_damage": 2.0,
+      "max_damage": 30.0,
+      "charge_time": 1.0,
+      "speed": 40.0
+     },
+     "modifiers": []
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 2,
+      "source_location_id": 89100013,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Charge"
+     },
+     {
+      "interpretation_seq": 7,
+      "source_location_id": 89100018,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "link",
+      "note": "powers from res_spark"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "act_hover",
+     "display_name": "Hover",
+     "description": "x",
+     "kind": "action",
+     "slot": "mobility",
+     "cooldown": 5.0,
+     "primitive": {
+      "type": "hover",
+      "gravity_multiplier": 0.2,
+      "drain_per_second": 5.0,
+      "max_duration": 8.0
+     },
+     "modifiers": []
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 3,
+      "source_location_id": 89100014,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Hover"
+     },
+     {
+      "interpretation_seq": 6,
+      "source_location_id": 89100017,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "link",
+      "note": "powers from res_fuel"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "act_beam",
+     "display_name": "Beam",
+     "description": "x",
+     "kind": "action",
+     "slot": "utility",
+     "cooldown": 5.0,
+     "primitive": {
+      "type": "beam_sustained",
+      "damage_per_second": 10.0,
+      "range": 20.0,
+      "drain_per_second": 10.0
+     },
+     "modifiers": []
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 4,
+      "source_location_id": 89100015,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Beam"
+     },
+     {
+      "interpretation_seq": 6,
+      "source_location_id": 89100017,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "link",
+      "note": "powers from res_fuel"
+     }
+    ]
+   }
+  ],
+  "aliases": [],
+  "links": [
+   {
+    "link": "powers",
+    "source": "res_fuel",
+    "target": "act_blink",
+    "strength": 20.0
+   },
+   {
+    "link": "fills",
+    "source": "act_blink",
+    "target": "res_spark",
+    "strength": 15.0
+   },
+   {
+    "link": "powers",
+    "source": "res_fuel",
+    "target": "act_hover",
+    "strength": 5.0
+   },
+   {
+    "link": "powers",
+    "source": "res_fuel",
+    "target": "act_beam",
+    "strength": 10.0
+   },
+   {
+    "link": "powers",
+    "source": "res_spark",
+    "target": "act_charge",
+    "strength": 10.0
+   }
+  ],
+  "channel_order": [
+   "res_fuel",
+   "res_spark"
+  ]
+ },
+ "slots": {
+  "echo_a": "act_blink",
+  "echo_b": "act_charge",
+  "mobility": "act_hover",
+  "utility": "act_beam"
+ }
+}

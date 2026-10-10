@@ -1,0 +1,99 @@
+{
+ "about": "The same journey with reduced motion. Scripted input for a capture, not hands-on.",
+ "steps": [
+  {
+   "at": 0.0,
+   "set": {
+    "reduced": true
+   }
+  },
+  {
+   "at": 0.0,
+   "say": "REDUCED MOTION (MOTION: OFF) -- EVERY TURN AND LENS MOVE IS A CUT; THE GATES HOLD STILL"
+  },
+  {
+   "at": 0.4,
+   "key": "Q"
+  },
+  {
+   "at": 1.4,
+   "key": "BracketRight"
+  },
+  {
+   "at": 2.0,
+   "key": "BracketRight"
+  },
+  {
+   "at": 2.8,
+   "key": "Left"
+  },
+  {
+   "at": 3.1,
+   "key": "Left"
+  },
+  {
+   "at": 3.6,
+   "key": "Equal"
+  },
+  {
+   "at": 4.8,
+   "mark": "context"
+  },
+  {
+   "at": 4.9,
+   "say": "REDUCED -- THE THREAD IS SIMPLY THERE; THE SAME INFORMATION, THE SAME ACTIONS"
+  },
+  {
+   "at": 5.2,
+   "key": "Q"
+  },
+  {
+   "at": 7.0,
+   "mark": "thread"
+  },
+  {
+   "at": 7.2,
+   "say": "REDUCED -- DOWN: THE NEXT SHUT WAY, THE NEW THREAD AT ONCE"
+  },
+  {
+   "at": 7.6,
+   "key": "Down"
+  },
+  {
+   "at": 9.0,
+   "mark": "recast"
+  },
+  {
+   "at": 9.2,
+   "say": "REDUCED -- E: FOLLOW IT; THE MAP AS IT WAS LEFT"
+  },
+  {
+   "at": 9.6,
+   "key": "E"
+  },
+  {
+   "at": 11.4,
+   "mark": "followed"
+  },
+  {
+   "at": 11.6,
+   "say": "REDUCED -- TAB, THEN Q: OUT AND BACK, NOTHING LOST"
+  },
+  {
+   "at": 12.0,
+   "key": "Tab"
+  },
+  {
+   "at": 13.4,
+   "key": "Q"
+  },
+  {
+   "at": 15.0,
+   "mark": "returned"
+  },
+  {
+   "at": 15.4,
+   "quit": true
+  }
+ ]
+}

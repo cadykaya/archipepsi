@@ -1,0 +1,126 @@
+# TIER 2 — the full integration gate.
+#
+# Everything Tier 1 skips: the real Archipelago checkout, the APWorld
+# generating real seeds, and every headless Godot suite including the
+# whole-campaign run. Budget about six minutes.
+#
+# This is the gate that proves the game still plays, so it runs on every
+# PR as well — it is affordable, and a Godot regression that only nightly
+# catches is a Godot regression that lands.
+name: Integration
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.5.1
+  GODOT_BUILD: stable
+  # The exact build the project pins. `project.godot` says so in a
+  # comment and `--version` reports it; the check below compares them.
+  GODOT_COMMIT: f62fdbde1
+  ARCHIPELAGO_TAG: 0.6.7
+
+jobs:
+  full:
+    name: full suite + headless Godot
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install the bridge
+        run: python -m pip install -e './bridge[dev]'
+
+      # The checkout is keyed on the PINNED TAG, so bumping the pin
+      # invalidates the cache rather than silently reusing the old one.
+      - name: Cache the Archipelago checkout
+        id: ap-cache
+        uses: actions/cache@v4
+        with:
+          path: .archipelago
+          key: archipelago-${{ env.ARCHIPELAGO_TAG }}-${{ runner.os }}
+
+      - name: Obtain Archipelago ${{ env.ARCHIPELAGO_TAG }}
+        if: steps.ap-cache.outputs.cache-hit != 'true'
+        run: make setup
+
+      - name: Install Archipelago's requirements
+        # Always, cache hit or not: the checkout is cached, the site-packages
+        # are not, and a cached tree with no installed requirements is
+        # exactly the "cache hides a missing dependency" failure.
+        run: python -m pip install -r .archipelago/requirements.txt
+
+      - name: Link the APWorld
+        run: make world-install
+
+      - name: Full Python suite
+        run: make test
+
+      - name: Headless bridge smoke
+        run: make smoke
+
+      - name: Cache the Godot binary
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: godot-bin
+          key: godot-${{ env.GODOT_VERSION }}-${{ env.GODOT_BUILD }}-${{ runner.os }}
+
+      - name: Obtain Godot ${{ env.GODOT_VERSION }}-${{ env.GODOT_BUILD }}
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          NAME="Godot_v${GODOT_VERSION}-${GODOT_BUILD}_linux.x86_64"
+          URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_BUILD}/${NAME}.zip"
+          curl -fsSL -o godot.zip "$URL"
+          unzip -q godot.zip
+          mkdir -p godot-bin
+          mv "$NAME" godot-bin/godot
+          chmod +x godot-bin/godot
+
+      - name: The Godot build is the one the project pins
+        # `project.godot` names the build in a comment and the suites are
+        # written against its behaviour. A silently different build is how
+        # a green CI stops meaning anything.
+        run: |
+          set -euo pipefail
+          REPORTED="$(godot-bin/godot --version | head -1)"
+          echo "godot reports: $REPORTED"
+          case "$REPORTED" in
+            *"${GODOT_VERSION}.${GODOT_BUILD}"*"${GODOT_COMMIT}"*) ;;
+            *) echo "::error::expected ${GODOT_VERSION}.${GODOT_BUILD} (${GODOT_COMMIT}), got $REPORTED"
+               exit 1 ;;
+          esac
+
+      - name: Godot project imports
+        run: make godot-import
+
+      - name: Headless Godot suites
+        run: |
+          make godot-test
+          make godot-hud
+          make godot-rules
+          make godot-stats
+          make godot-lab
+          make godot-affordance
+          make godot-verbs
+          make godot-blink
+
+      - name: Whole campaign, headlessly
+        run: make godot-integration
+
+      - name: Build metadata
+        if: always()
+        run: make version

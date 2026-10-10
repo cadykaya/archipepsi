@@ -1,0 +1,9 @@
+{
+  "defaults": { "size": [1280, 720], "lens": 35, "ambient": 0.14 },
+  "shots": [
+    { "name": "A_028_switch_and_plate",
+      "scene": "model:batch028/interaction/int_wall_switch.glb + batch028/interaction/int_weight_button.glb@1.6,0,0",
+      "frame": 0.72, "azimuth": 20, "elevation": 12,
+      "caption": "OLDER 028 (AS REVISED AT 035-R): THE WALL SWITCH POST AND THE WEIGHT BUTTON" }
+  ]
+}

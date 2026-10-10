@@ -1,0 +1,51 @@
+{
+  "pack": "tp_super_mario_64",
+  "models": "batch056/clockwork",
+  "prefix": "CK",
+  "caption_note": "Material treatment MISSING: painted in rusted_industrial, which is not the pack's own -- and not the family THEME_BY_GAME_HINT names either.",
+  "surround": "tp_ck_door_bezel",
+  "light": {
+    "ambient": [0.60, 0.63, 0.72],
+    "ambient_energy": 0.26,
+    "fog": 0.020,
+    "fog_color": [0.16, 0.17, 0.22],
+    "lamps": [
+      {"at": [4.2, 1.9, -1.0], "range": 6.0, "energy": 2.6,
+       "color": [0.98, 0.90, 0.72],
+       "why": "what the pendulum housing would hold -- pale, not the temple's firelight. A clock room is lit to be read, not to be atmospheric."},
+      {"at": [0.0, 3.0, -7.0], "range": 16.0, "energy": 2.0,
+       "color": [0.72, 0.78, 0.92],
+       "why": "daylight down the shaft the opening leads to, cold"},
+      {"at": [-3.0, 3.2, -2.0], "range": 9.0, "energy": 1.6,
+       "color": [0.88, 0.86, 0.80],
+       "why": "a high gleam off the works: without it the gears read as flat cut-outs"}
+    ]
+  },
+  "place": [
+    {"id": "tp_ck_door_bezel", "at": [0.0, 0.0, -4.78], "yaw": 0,
+     "why": "on the opening, chamber side"},
+    {"id": "tp_ck_gear_column", "at": [-2.7, 0.0, -3.4], "yaw": 0,
+     "why": "clear of the approach -- the pack dresses the room, it does not narrow the route"},
+    {"id": "tp_ck_gear_column", "at": [2.7, 0.0, -3.4], "yaw": 22},
+    {"id": "tp_ck_wall_movement", "at": [-4.85, 0.0, -1.2], "yaw": 90,
+     "why": "the works face into the room; the plate sits back in the wall"},
+    {"id": "tp_ck_pendulum_lamp", "at": [4.75, 1.6, -1.0], "yaw": -90,
+     "why": "hung at reading height on the opposite wall"},
+    {"id": "tp_ck_key_escutcheon", "at": [1.82, 1.15, -4.74], "yaw": 0,
+     "why": "batch043's wall-switch contract: beside the door, at hand height, same place as T01's"},
+    {"id": "tp_ck_fallen_hand", "at": [-3.2, 0.0, 0.9], "yaw": 20},
+    {"id": "tp_ck_fallen_hand", "at": [3.4, 0.0, 2.1], "yaw": -70,
+     "why": "off the walked line, the way something that fell and was left would be"}
+  ],
+  "shots": [
+    {"name": "CK_approach", "eye": [0.0, 1.7, 4.4], "look": [0.0, 1.6, -5.0],
+     "check_opening": true,
+     "caption": "Approach -- grey is Production's; the pack is what sits on it"},
+    {"name": "CK_movement", "eye": [1.6, 1.7, 1.4], "look": [-4.7, 1.7, -1.6],
+     "caption": "The parted panel and its gear train, seen in passing"},
+    {"name": "CK_threshold", "eye": [0.0, 1.7, -9.6], "look": [0.0, 1.6, -2.0],
+     "caption": "Through the 2.4 x 3.2 opening -- dressing clear of both jambs"},
+    {"name": "CK_chamber", "eye": [3.9, 3.1, 4.4], "look": [-0.7, 0.7, -2.2],
+     "caption": "The chamber -- six pieces, one place, routes unchanged"}
+  ]
+}

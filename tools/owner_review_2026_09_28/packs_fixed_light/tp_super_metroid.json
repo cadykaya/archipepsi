@@ -1,0 +1,166 @@
+{
+ "pack": "tp_super_metroid",
+ "models": "batch058/wreck",
+ "prefix": "WS",
+ "caption_note": "Material treatment MISSING: painted in rusted_industrial. This game has NO entry in THEME_BY_GAME_HINT -- nor do 74 others.",
+ "surround": "tp_ws_pressure_door",
+ "light": {
+  "ambient": [
+   0.62,
+   0.64,
+   0.68
+  ],
+  "ambient_energy": 0.32,
+  "fog": 0.018,
+  "fog_color": [
+   0.22,
+   0.24,
+   0.26
+  ],
+  "lamps": [
+   {
+    "at": [
+     3.6,
+     2.4,
+     -1.0
+    ],
+    "range": 8.0,
+    "energy": 2.6,
+    "color": [
+     1.0,
+     0.93,
+     0.84
+    ],
+    "why": "fixed review key, the same for every pack"
+   },
+   {
+    "at": [
+     -3.6,
+     2.4,
+     -3.0
+    ],
+    "range": 8.0,
+    "energy": 2.0,
+    "color": [
+     0.88,
+     0.93,
+     1.0
+    ],
+    "why": "fixed review fill"
+   },
+   {
+    "at": [
+     0.0,
+     2.8,
+     2.5
+    ],
+    "range": 9.0,
+    "energy": 0.9,
+    "color": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "why": "fixed front fill"
+   }
+  ]
+ },
+ "place": [
+  {
+   "id": "tp_ws_pressure_door",
+   "at": [
+    0.0,
+    0.0,
+    -4.8
+   ],
+   "yaw": 0,
+   "why": "on the opening, chamber side. No coaming -- floor is Production's."
+  },
+  {
+   "id": "tp_ws_stanchion",
+   "at": [
+    -2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 0,
+   "why": "clear of the approach; the burst faces into the room"
+  },
+  {
+   "id": "tp_ws_stanchion",
+   "at": [
+    2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 180,
+   "why": "turned away, so only one of the two shows its tear -- two identical wounds read as a pattern, not as damage"
+  },
+  {
+   "id": "tp_ws_bulkhead_panel",
+   "at": [
+    -4.8,
+    0.0,
+    -1.2
+   ],
+   "yaw": 90,
+   "why": "the hull faces the room and its plate must SHOW: at -4.90 the 0.14 m plate sat entirely inside the 0.4 m wall and the frame read as ribs floating on grey"
+  },
+  {
+   "id": "tp_ws_lamp_cage",
+   "at": [
+    4.78,
+    2.3,
+    -1.0
+   ],
+   "yaw": -90,
+   "why": "high on the opposite wall, hanging off true"
+  },
+  {
+   "id": "tp_ws_dogging_lever",
+   "at": [
+    1.82,
+    1.15,
+    -4.74
+   ],
+   "yaw": 0,
+   "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01's, T02's and T03's"
+  },
+  {
+   "id": "tp_ws_debris_fan",
+   "at": [
+    -3.6,
+    0.0,
+    0.2
+   ],
+   "yaw": -8,
+   "why": "fanning AWAY from the blown panel, which is the wall it came out of"
+  },
+  {
+   "id": "tp_ws_debris_fan",
+   "at": [
+    2.6,
+    0.0,
+    1.9
+   ],
+   "yaw": 148
+  }
+ ],
+ "shots": [
+  {
+   "name": "E2_T04_super_metroid_fixed_light",
+   "eye": [
+    0.0,
+    1.7,
+    4.4
+   ],
+   "look": [
+    0.0,
+    1.6,
+    -5.0
+   ],
+   "check_opening": true,
+   "caption": "T04 -- same shell, camera and light as the house baseline"
+  }
+ ]
+}

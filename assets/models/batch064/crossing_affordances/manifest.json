@@ -1,0 +1,378 @@
+{
+  "ca_breakable_brace": {
+    "anchor": "as-built",
+    "batch": "064",
+    "colliders": [],
+    "collision": "none in the GLB: the cover's own SIZE box",
+    "fits": "Production's DestructibleCover (destructible_cover.gd): inside SIZE 1.5 x 1.4 x 0.9 m, origin at the box centre like its own mesh and collider; HP 40",
+    "hinges": [
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slat_f_mid"
+        ],
+        "drive": "rotate the `slat_hinge_f_mid` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slat_hinge_f_mid",
+        "pivot_runtime": [
+          0.0,
+          -0.16,
+          0.36
+        ],
+        "positions_degrees": {
+          "breaching": 32.0,
+          "dented": 0.0,
+          "intact": 0.0
+        }
+      },
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slat_f_top"
+        ],
+        "drive": "rotate the `slat_hinge_f_top` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slat_hinge_f_top",
+        "pivot_runtime": [
+          0.0,
+          0.22,
+          0.36
+        ],
+        "positions_degrees": {
+          "breaching": 75.0,
+          "dented": 18.0,
+          "intact": 0.0
+        }
+      },
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slat_b_mid"
+        ],
+        "drive": "rotate the `slat_hinge_b_mid` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slat_hinge_b_mid",
+        "pivot_runtime": [
+          0.0,
+          -0.16,
+          -0.36
+        ],
+        "positions_degrees": {
+          "breaching": -32.0,
+          "dented": -0.0,
+          "intact": 0.0
+        }
+      },
+      {
+        "as_built": "intact",
+        "axis": "x",
+        "carries": [
+          "slat_b_top"
+        ],
+        "drive": "rotate the `slat_hinge_b_top` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "slat_hinge_b_top",
+        "pivot_runtime": [
+          0.0,
+          0.22,
+          -0.36
+        ],
+        "positions_degrees": {
+          "breaching": -75.0,
+          "dented": -18.0,
+          "intact": 0.0
+        }
+      }
+    ],
+    "kind": "crossing_affordances",
+    "meanings": {
+      "destructible": "#f48a36",
+      "kit_local": "the Batch 063 hexes; no library colour changed",
+      "movement": "#3266ee",
+      "movement_idle": "#2a4ea8",
+      "power": {
+        "idle": "#347b46",
+        "live": "#55e078"
+      }
+    },
+    "mount": "child of the DestructibleCover at identity; hide its BoxMesh `_mesh` (and D's BreakBand strip). Its BoxShape3D collider is unchanged",
+    "parts": [
+      "slat_hinge_f_mid",
+      "slat_f_mid",
+      "slat_hinge_f_top",
+      "slat_f_top",
+      "clamp_f_low_l",
+      "clamp_f_top_l",
+      "clamp_f_low_r",
+      "clamp_f_top_r",
+      "slat_hinge_b_mid",
+      "slat_b_mid",
+      "slat_hinge_b_top",
+      "slat_b_top",
+      "clamp_b_low_l",
+      "clamp_b_top_l",
+      "clamp_b_low_r",
+      "clamp_b_top_r"
+    ],
+    "path": "batch064/crossing_affordances/ca_breakable_brace.glb",
+    "reuses": [
+      "Batch 063 materials, hinges and power state",
+      "concrete_facility ramps from materials.py",
+      "brushkit wedges and 8-sided cylinders"
+    ],
+    "size": [
+      1.5,
+      0.9,
+      1.4
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "states": {
+      "breaching": {
+        "clamp_*": "hidden",
+        "slat_hinge_b_mid": -32.0,
+        "slat_hinge_b_top": -75.0,
+        "slat_hinge_f_mid": 32.0,
+        "slat_hinge_f_top": 75.0
+      },
+      "dented": {
+        "clamp_*_top_*": "hidden",
+        "slat_hinge_b_top": -18.0,
+        "slat_hinge_f_top": 18.0
+      },
+      "drive": "from DestructibleCover.hp after each take_damage: hp > 26.7 intact; hp > 13.3 dented; hp > 0 breaching; 0 or below: Production frees the cover as now, and places ca_breakable_brace_wreck at the same transform",
+      "intact": {
+        "clamp_*": "visible",
+        "slat_hinge_*": 0.0
+      },
+      "reads_without_colour": "an open frame of panels with gaps onto a dark core; damage leans panels out and drops them, so a hit changes the silhouette"
+    },
+    "status": "CANDIDATE -- one movement device and one breakable for review; not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 372
+  },
+  "ca_breakable_brace_wreck": {
+    "anchor": "as-built",
+    "batch": "064",
+    "colliders": [],
+    "kind": "crossing_affordances",
+    "meanings": {
+      "destructible": "#f48a36",
+      "kit_local": "the Batch 063 hexes; no library colour changed",
+      "movement": "#3266ee",
+      "movement_idle": "#2a4ea8",
+      "power": {
+        "idle": "#347b46",
+        "live": "#55e078"
+      }
+    },
+    "mount": "at the broken cover's transform, origin at the old box centre; no collision, nothing to shoot",
+    "parts": [],
+    "path": "batch064/crossing_affordances/ca_breakable_brace_wreck.glb",
+    "reuses": [
+      "Batch 063 materials, hinges and power state",
+      "concrete_facility ramps from materials.py",
+      "brushkit wedges and 8-sided cylinders"
+    ],
+    "size": [
+      1.5,
+      1.24,
+      0.49
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "CANDIDATE -- one movement device and one breakable for review; not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 168
+  },
+  "ca_launch_cradle": {
+    "anchor": "as-built",
+    "batch": "064",
+    "colliders": [
+      "frame_side_l-convcolonly",
+      "frame_side_r-convcolonly",
+      "frame_front-convcolonly",
+      "housing-convcolonly"
+    ],
+    "collision": "convex twins on the frame and the rear housing only. The Area3D trigger is Production's and unchanged. The tray, fins and boom move and carry none",
+    "fits": "Production's LaunchPad (affordance_nodes.gd): the whole device inside PAD_SIZE's 2.4 x 2.4 m plan; walkable parts no taller than 0.13 m, the deck and tray 0.08 m; housing and drums at the rear only, under MAX_VERTICAL_STEP",
+    "hinges": [
+      {
+        "as_built": "rest",
+        "axis": "x",
+        "carries": [
+          "tray"
+        ],
+        "drive": "rotate the `tray_hinge` node about its own local X axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "tray_hinge",
+        "pivot_runtime": [
+          0.0,
+          0.055,
+          0.74
+        ],
+        "positions_degrees": {
+          "fired": 24.0,
+          "rest": 0.0
+        }
+      },
+      {
+        "as_built": "raised",
+        "axis": "z",
+        "carries": [
+          "fin_l",
+          "move_fin_l_blade",
+          "move_fin_l"
+        ],
+        "drive": "rotate the `fin_hinge_l` node about its own local Z axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "fin_hinge_l",
+        "pivot_runtime": [
+          -0.86,
+          0.04,
+          -0.4
+        ],
+        "positions_degrees": {
+          "folded": -90.0,
+          "raised": 0.0
+        }
+      },
+      {
+        "as_built": "raised",
+        "axis": "z",
+        "carries": [
+          "fin_r",
+          "move_fin_r_blade",
+          "move_fin_r"
+        ],
+        "drive": "rotate the `fin_hinge_r` node about its own local Z axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "fin_hinge_r",
+        "pivot_runtime": [
+          0.86,
+          0.04,
+          -0.4
+        ],
+        "positions_degrees": {
+          "folded": 90.0,
+          "raised": 0.0
+        }
+      },
+      {
+        "as_built": "clear",
+        "axis": "z",
+        "carries": [
+          "boom",
+          "boom_tip"
+        ],
+        "drive": "rotate the `boom_hinge` node about its own local Z axis to a declared angle; it is an empty at the pin and carries its parts at identity. Positive follows the right-hand rule about the runtime axis.",
+        "node": "boom_hinge",
+        "pivot_runtime": [
+          -0.86,
+          0.4,
+          0.62
+        ],
+        "positions_degrees": {
+          "blocked": -90.0,
+          "clear": 0.0
+        }
+      }
+    ],
+    "kind": "crossing_affordances",
+    "meanings": {
+      "destructible": "#f48a36",
+      "kit_local": "the Batch 063 hexes; no library colour changed",
+      "movement": "#3266ee",
+      "movement_idle": "#2a4ea8",
+      "power": {
+        "idle": "#347b46",
+        "live": "#55e078"
+      }
+    },
+    "mount": "child of the LaunchPad at local identity, then yaw the PAD (or this node) so Godot -Z faces the target in plan: look_at(Vector3(target.x, pad.y, target.z)). Hide the pad's own BoxMesh slab; keep its arc pips, which are the solved trajectory and tell the truth",
+    "parts": [
+      "tray_hinge",
+      "tray",
+      "fin_hinge_l",
+      "fin_l",
+      "move_fin_l_blade",
+      "move_fin_l",
+      "fin_hinge_r",
+      "fin_r",
+      "move_fin_r_blade",
+      "move_fin_r",
+      "move_rail_l",
+      "move_rail_r",
+      "boom_hinge",
+      "boom",
+      "boom_tip",
+      "power_lens",
+      "power_core"
+    ],
+    "path": "batch064/crossing_affordances/ca_launch_cradle.glb",
+    "power_exit": {
+      "at_runtime": [
+        0.0,
+        0.065,
+        1.2
+      ],
+      "note": "the gland's rear face, at the green raceway's pipe height; a ck raceway run butts straight into it"
+    },
+    "reuses": [
+      "Batch 063 materials, hinges and power state",
+      "concrete_facility ramps from materials.py",
+      "brushkit wedges and 8-sided cylinders"
+    ],
+    "size": [
+      2.4,
+      2.4,
+      1.47
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "state_nodes": {
+      "move_rail_*": {
+        "idle": "#2a4ea8",
+        "live": "#3266ee"
+      },
+      "power_*": {
+        "how": "as built the state nodes carry the idle colour. Live: set their albedo to `live` and emit it. Unpowered stays dark green, so an off line still reads as a power line.",
+        "idle": "#347b46",
+        "live": "#55e078",
+        "node_prefix": "power_"
+      }
+    },
+    "states": {
+      "blocked": {
+        "boom_hinge": -90.0,
+        "fin_hinge_l": 0.0,
+        "fin_hinge_r": 0.0,
+        "move_rail_*": "idle",
+        "power_*": "live",
+        "tray_hinge": 0.0
+      },
+      "fired": {
+        "hold_seconds": 0.15,
+        "then": "back to ready over 0.4 s",
+        "tray_hinge": 24.0,
+        "when": "LaunchPad.fired -- only when a launch happened"
+      },
+      "reads_without_colour": "fins up and boom up = go; fins flat = no feed; boom across the tray = held. The fins and the tray rise toward the launch heading.",
+      "ready": {
+        "boom_hinge": 0.0,
+        "fin_hinge_l": 0.0,
+        "fin_hinge_r": 0.0,
+        "move_rail_*": "live",
+        "power_*": "live",
+        "tray_hinge": 0.0
+      },
+      "unpowered": {
+        "boom_hinge": 0.0,
+        "fin_hinge_l": -90.0,
+        "fin_hinge_r": 90.0,
+        "move_rail_*": "idle",
+        "power_*": "idle",
+        "tray_hinge": 0.0
+      }
+    },
+    "status": "CANDIDATE -- one movement device and one breakable for review; not in the content pack; not integrated",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 384
+  }
+}

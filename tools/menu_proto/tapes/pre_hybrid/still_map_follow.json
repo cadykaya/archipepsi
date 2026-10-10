@@ -1,0 +1,41 @@
+{
+ "about": "SHOW ON THE MAP: the passage framed, BACK TO YOUR VIEW on the glass. Scripted input, a still.",
+ "steps": [
+  {
+   "at": 0.2,
+   "key": "Q"
+  },
+  {
+   "after": 0.7,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.5,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.5,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.5,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.5,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.6,
+   "key": "Q"
+  },
+  {
+   "after": 0.9,
+   "key": "Enter"
+  },
+  {
+   "after": 1.3,
+   "quit": true
+  }
+ ]
+}

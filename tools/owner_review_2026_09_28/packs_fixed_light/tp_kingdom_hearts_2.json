@@ -1,0 +1,166 @@
+{
+ "pack": "tp_kingdom_hearts_2",
+ "models": "batch059/twilight",
+ "prefix": "TW",
+ "caption_note": "Material treatment MISSING: painted in temple_ruin -- the SAME family as T01, deliberately, to test whether reuse costs identity.",
+ "surround": "tp_tw_awning_gate",
+ "light": {
+  "ambient": [
+   0.62,
+   0.64,
+   0.68
+  ],
+  "ambient_energy": 0.32,
+  "fog": 0.018,
+  "fog_color": [
+   0.22,
+   0.24,
+   0.26
+  ],
+  "lamps": [
+   {
+    "at": [
+     3.6,
+     2.4,
+     -1.0
+    ],
+    "range": 8.0,
+    "energy": 2.6,
+    "color": [
+     1.0,
+     0.93,
+     0.84
+    ],
+    "why": "fixed review key, the same for every pack"
+   },
+   {
+    "at": [
+     -3.6,
+     2.4,
+     -3.0
+    ],
+    "range": 8.0,
+    "energy": 2.0,
+    "color": [
+     0.88,
+     0.93,
+     1.0
+    ],
+    "why": "fixed review fill"
+   },
+   {
+    "at": [
+     0.0,
+     2.8,
+     2.5
+    ],
+    "range": 9.0,
+    "energy": 0.9,
+    "color": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "why": "fixed front fill"
+   }
+  ]
+ },
+ "place": [
+  {
+   "id": "tp_tw_awning_gate",
+   "at": [
+    0.0,
+    0.0,
+    -4.8
+   ],
+   "yaw": 0,
+   "why": "on the opening; the canopy is ROLLED, because a deployed one is headroom and headroom is Production's"
+  },
+  {
+   "id": "tp_tw_alley_buttress",
+   "at": [
+    -2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 0,
+   "why": "clear of the approach; the cable bracket reaches into the room"
+  },
+  {
+   "id": "tp_tw_alley_buttress",
+   "at": [
+    2.7,
+    0.0,
+    -3.4
+   ],
+   "yaw": 0,
+   "why": "and the opposite pier faces the same way, because a catenary runs BETWEEN two brackets and two brackets pointing apart carry nothing"
+  },
+  {
+   "id": "tp_tw_hoarding",
+   "at": [
+    -4.8,
+    0.0,
+    -1.2
+   ],
+   "yaw": 90,
+   "why": "the boarded window faces the alley; the wall stands proud so the four thicknesses read"
+  },
+  {
+   "id": "tp_tw_street_lantern",
+   "at": [
+    4.78,
+    2.05,
+    -1.0
+   ],
+   "yaw": -90,
+   "why": "bracket height on the opposite wall, with the broken face toward the street"
+  },
+  {
+   "id": "tp_tw_tram_call",
+   "at": [
+    1.82,
+    1.15,
+    -4.74
+   ],
+   "yaw": 0,
+   "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01's, T02's, T03's and T04's"
+  },
+  {
+   "id": "tp_tw_tram_track",
+   "at": [
+    -2.4,
+    0.0,
+    1.4
+   ],
+   "yaw": -12
+  },
+  {
+   "id": "tp_tw_tram_track",
+   "at": [
+    2.2,
+    0.0,
+    2.6
+   ],
+   "yaw": 166,
+   "why": "two displaced lengths, not one continuous run: a continuous rail reads as walkable infrastructure and floor is Production's"
+  }
+ ],
+ "shots": [
+  {
+   "name": "E2_T05_kingdom_hearts_2_fixed_light",
+   "eye": [
+    0.0,
+    1.7,
+    4.4
+   ],
+   "look": [
+    0.0,
+    1.6,
+    -5.0
+   ],
+   "check_opening": true,
+   "caption": "T05 -- same shell, camera and light as the house baseline"
+  }
+ ]
+}

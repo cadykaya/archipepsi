@@ -1,0 +1,8 @@
+# Partner slot for the multiworld demo seed: a second Archipepsi world whose
+# 30 locations absorb the 10 Epsilon Coins the demo YAML forces non-local.
+name: Partner
+game: Archipepsi
+
+Archipepsi:
+  accessibility: full
+  progression_balancing: 0

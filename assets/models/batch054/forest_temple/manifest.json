@@ -1,0 +1,226 @@
+{
+  "tp_ft_alcove_torch": {
+    "anchor": "floor",
+    "batch": "054",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "timber hood over a stone bowl, not a metal sconce",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_ocarina_of_time",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "ft_alcove_side_l",
+      "ft_alcove_side_r",
+      "ft_alcove_hood",
+      "ft_alcove_flame_seat",
+      "ft_alcove_bowl"
+    ],
+    "path": "batch054/forest_temple/tp_ft_alcove_torch.glb",
+    "size": [
+      0.62,
+      0.46,
+      1.1
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "the Forest Temple reading of the packet's Grove Relay Temple -- overgrown cut stone, timber, and roots that have won",
+    "subtheme_is_a_choice": "Ocarina of Time has many environments. This pack is the Forest Temple and not an average of them, per the owner's scope addition.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "tp_ft_column": {
+    "anchor": "floor",
+    "batch": "054",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a root has climbed it; the house column is clean",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_ocarina_of_time",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "ft_col_base",
+      "ft_col_cap",
+      "ft_col_relief",
+      "ft_col_root_0",
+      "ft_col_root_1",
+      "ft_col_root_2"
+    ],
+    "path": "batch054/forest_temple/tp_ft_column.glb",
+    "size": [
+      0.76,
+      0.78,
+      3.6
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "the Forest Temple reading of the packet's Grove Relay Temple -- overgrown cut stone, timber, and roots that have won",
+    "subtheme_is_a_choice": "Ocarina of Time has many environments. This pack is the Forest Temple and not an average of them, per the owner's scope addition.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "tp_ft_door_surround": {
+    "anchor": "floor",
+    "batch": "054",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "bossed jambs; dressing around a fixed opening",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_ocarina_of_time",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "ft_door_jamb_l",
+      "ft_door_boss_l",
+      "ft_door_jamb_r",
+      "ft_door_boss_r"
+    ],
+    "path": "batch054/forest_temple/tp_ft_door_surround.glb",
+    "size": [
+      3.08,
+      0.46,
+      3.54
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "the Forest Temple reading of the packet's Grove Relay Temple -- overgrown cut stone, timber, and roots that have won",
+    "subtheme_is_a_choice": "Ocarina of Time has many environments. This pack is the Forest Temple and not an average of them, per the owner's scope addition.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "tp_ft_root_mass": {
+    "anchor": "floor",
+    "batch": "054",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "floor dressing the house family has none of: it swells, kinks and forks, and nothing in it meets anything square",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_ocarina_of_time",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "ft_root_swell_0",
+      "ft_root_swell_1",
+      "ft_root_knuckle",
+      "ft_root_swell_2",
+      "ft_root_tip",
+      "ft_root_fork",
+      "ft_root_fork_tip"
+    ],
+    "path": "batch054/forest_temple/tp_ft_root_mass.glb",
+    "size": [
+      1.645,
+      0.601,
+      0.22
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "the Forest Temple reading of the packet's Grove Relay Temple -- overgrown cut stone, timber, and roots that have won",
+    "subtheme_is_a_choice": "Ocarina of Time has many environments. This pack is the Forest Temple and not an average of them, per the owner's scope addition.",
+    "texel_density": 31.9,
+    "texels_per_metre": 32,
+    "triangles": 96
+  },
+  "tp_ft_switch_housing": {
+    "anchor": "floor",
+    "batch": "054",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "batch043's wall-switch contract in timber",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_ocarina_of_time",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "ft_switch_frame",
+      "ft_switch_sill",
+      "ft_switch_lever",
+      "ft_switch_state_band"
+    ],
+    "path": "batch054/forest_temple/tp_ft_switch_housing.glb",
+    "size": [
+      0.5,
+      0.36,
+      0.58
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "the Forest Temple reading of the packet's Grove Relay Temple -- overgrown cut stone, timber, and roots that have won",
+    "subtheme_is_a_choice": "Ocarina of Time has many environments. This pack is the Forest Temple and not an average of them, per the owner's scope addition.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "tp_ft_wall_relief": {
+    "anchor": "floor",
+    "batch": "054",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "the panel is SPLIT, and the split is the subject",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_ocarina_of_time",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "ft_relief_sill",
+      "ft_relief_lintel",
+      "ft_relief_root_0",
+      "ft_relief_root_1",
+      "ft_relief_root_2",
+      "ft_relief_root_3"
+    ],
+    "path": "batch054/forest_temple/tp_ft_wall_relief.glb",
+    "size": [
+      2.16,
+      0.37,
+      3.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "the Forest Temple reading of the packet's Grove Relay Temple -- overgrown cut stone, timber, and roots that have won",
+    "subtheme_is_a_choice": "Ocarina of Time has many environments. This pack is the Forest Temple and not an average of them, per the owner's scope addition.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  }
+}

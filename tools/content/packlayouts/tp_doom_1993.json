@@ -1,0 +1,51 @@
+{
+  "pack": "tp_doom_1993",
+  "models": "batch060/foundry",
+  "prefix": "DM",
+  "caption_note": "Material treatment MISSING: painted in concrete_facility -- the last unused-but-one house family. Two packs of runway left.",
+  "surround": "tp_dm_blast_frame",
+  "light": {
+    "ambient": [0.62, 0.70, 0.64],
+    "ambient_energy": 0.30,
+    "fog": 0.018,
+    "fog_color": [0.12, 0.17, 0.15],
+    "lamps": [
+      {"at": [4.30, 2.25, -1.0], "range": 7.5, "energy": 2.8,
+       "color": [0.84, 1.00, 0.82],
+       "why": "the recessed panel. A recess throws a HARD pool with a hard edge -- that edge is the whole reason DOOM's lighting is recognisable, and a soft wash would hide the one thing this pack has that no other does."},
+      {"at": [0.0, 1.9, -7.2], "range": 14.0, "energy": 2.0,
+       "color": [1.00, 0.62, 0.40],
+       "why": "whatever is being contained, through the blast frame -- warm against everything else, which is how you know it is the wrong kind of warm"},
+      {"at": [-3.2, 3.0, 1.4], "range": 10.0, "energy": 1.0,
+       "color": [0.72, 0.82, 0.86],
+       "why": "fill off the screen wall, so the monitors are legible as monitors"}
+    ]
+  },
+  "place": [
+    {"id": "tp_dm_blast_frame", "at": [0.0, 0.0, -4.78], "yaw": 0,
+     "why": "on the opening; chevrons project toward the player, nothing across or below the head"},
+    {"id": "tp_dm_bank_column", "at": [-2.7, 0.0, -3.4], "yaw": 0,
+     "why": "clear of the approach; the racks face the room because a column you read has to be readable"},
+    {"id": "tp_dm_bank_column", "at": [2.7, 0.0, -3.4], "yaw": 9},
+    {"id": "tp_dm_screen_wall", "at": [-4.80, 0.0, -1.2], "yaw": 90,
+     "why": "the desk and its hand-run cable face the room"},
+    {"id": "tp_dm_light_recess", "at": [4.80, 1.90, -1.0], "yaw": -90,
+     "why": "SUNK into the wall, not hung on it -- the steps go back and the panel sits at the bottom of them"},
+    {"id": "tp_dm_keycard_reader", "at": [1.82, 1.15, -4.74], "yaw": 0,
+     "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01-T05's"},
+    {"id": "tp_dm_spill_trough", "at": [-3.0, 0.0, 1.0], "yaw": 8},
+    {"id": "tp_dm_spill_trough", "at": [2.6, 0.0, 2.4], "yaw": -104,
+     "why": "off the walked line; the stain fans away from the open end"}
+  ],
+  "shots": [
+    {"name": "DM_approach", "eye": [0.0, 1.7, 4.4], "look": [0.0, 1.6, -5.0],
+     "check_opening": true,
+     "caption": "Approach -- grey is Production's; the pack is what sits on it"},
+    {"name": "DM_screens", "eye": [1.6, 1.7, 1.4], "look": [-4.7, 1.6, -1.6],
+     "caption": "The interface wall and its hand-run loops, seen in passing"},
+    {"name": "DM_threshold", "eye": [0.0, 1.7, -9.6], "look": [0.0, 1.6, -2.0],
+     "caption": "Through the 2.4 x 3.2 opening -- chevrons clear of both jambs"},
+    {"name": "DM_chamber", "eye": [3.9, 3.1, 4.4], "look": [-0.7, 0.7, -2.2],
+     "caption": "The containment level -- six pieces, one place, routes unchanged"}
+  ]
+}

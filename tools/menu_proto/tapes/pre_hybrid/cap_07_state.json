@@ -1,0 +1,73 @@
+{
+ "about": "A passage changes state under the thread. Scripted input for a capture, not hands-on.",
+ "steps": [
+  {
+   "at": 0.0,
+   "say": "THE JOURNAL, SAVE: WALKED -- ARENA 2 TO ARENA 3 IS STILL SHUT"
+  },
+  {
+   "at": 0.4,
+   "key": "Q"
+  },
+  {
+   "at": 1.2,
+   "key": "Q"
+  },
+  {
+   "at": 2.4,
+   "key": "Down"
+  },
+  {
+   "at": 3.8,
+   "mark": "walked"
+  },
+  {
+   "at": 4.0,
+   "say": "REVIEW CONTROL -- SAVE: PROGRESSED. THE FOCUS FOLLOWS THE SAME PASSAGE, AND SAYS WHAT CHANGED"
+  },
+  {
+   "at": 4.6,
+   "set": {
+    "save": "progressed"
+   }
+  },
+  {
+   "at": 6.4,
+   "mark": "progressed"
+  },
+  {
+   "at": 6.6,
+   "say": "E -- THE MAP: THE PASSAGE IS OPEN NOW, AND THE THREAD'S BEAD SAYS SO"
+  },
+  {
+   "at": 7.0,
+   "key": "E"
+  },
+  {
+   "at": 8.8,
+   "mark": "map_open"
+  },
+  {
+   "at": 9.0,
+   "say": "REVIEW CONTROL -- SAVE: LATCHED. FOUR MORE PLACES, A THIRD FLOOR; C -- THE OVERVIEW"
+  },
+  {
+   "at": 9.4,
+   "set": {
+    "save": "latched"
+   }
+  },
+  {
+   "at": 10.6,
+   "key": "C"
+  },
+  {
+   "at": 12.2,
+   "mark": "latched"
+  },
+  {
+   "at": 12.6,
+   "quit": true
+  }
+ ]
+}

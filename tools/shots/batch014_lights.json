@@ -1,0 +1,139 @@
+{
+  "_comment": [
+    "Batch 014 -- a light fixture family per theme.",
+    "",
+    "L_light_family_silhouette.png is the sheet this batch lives or dies by.",
+    "The brief was explicit that identity must come from form, mounting,",
+    "materials and construction rather than bulb hue, so the test is whether",
+    "twelve fixtures are still twelve objects with the colour taken away."
+  ],
+  "defaults": {
+    "size": [
+      1400,
+      900
+    ],
+    "lens": 50,
+    "ambient": 0.22
+  },
+  "shots": [
+    {
+      "name": "L_light_family",
+      "scene": "model:batch001/architecture/arch_light_fixture.glb@-5.85,2.75,-1.60 + batch014/lights/light_rusted_cage.glb@-3.90,2.75,-1.60 + batch014/lights/light_neon_channel.glb@-1.95,2.75,-1.60 + batch014/lights/light_gothic_corona.glb@0.00,2.75,-1.60 + batch014/lights/light_temple_bowl.glb@1.95,2.75,-1.60 + batch014/lights/light_void_absent.glb@3.90,2.75,-1.60 + batch014/lights/light_void_debug.glb@5.85,2.75,-1.60 + batch002/architecture/arch_utility_lamp.glb@-3.90,1.30,1.80 + batch014/lights/light_rusted_clamp.glb@-1.95,1.30,1.80 + batch014/lights/light_neon_edge.glb@0.00,1.30,1.80 + batch014/lights/light_gothic_lantern.glb@1.95,1.30,1.80 + batch014/lights/light_temple_niche.glb@3.90,1.30,1.80",
+      "size": [
+        1920,
+        1000
+      ],
+      "lens": 28,
+      "backdrop": "floor",
+      "frame": 0.92,
+      "azimuth": 4,
+      "elevation": 4,
+      "caption": "TWELVE FIXTURES, SIX THEMES - HUNG ABOVE, WALL-MOUNTED BELOW",
+      "note": "CONCRETE'S TWO ARE BATCH 001/002 AND ARE THE CONTROL",
+      "variants": [
+        "grey",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "L_pair_concrete",
+      "scene": "model:batch001/architecture/arch_light_fixture.glb@0.00,2.40,0 + batch002/architecture/arch_utility_lamp.glb@0.00,1.10,0",
+      "size": [
+        1100,
+        1000
+      ],
+      "lens": 50,
+      "backdrop": "floor",
+      "frame": 0.7,
+      "azimuth": 24,
+      "elevation": 6,
+      "caption": "CONCRETE FACILITY - THE APPROVED CONTROL, NOT REBUILT",
+      "note": "ITS FAMILY ALREADY EXISTED. A THIRD WOULD BE PADDING",
+      "variants": []
+    },
+    {
+      "name": "L_pair_rusted",
+      "scene": "model:batch014/lights/light_rusted_cage.glb@0.00,2.40,0 + batch014/lights/light_rusted_clamp.glb@0.00,1.10,0",
+      "size": [
+        1100,
+        1000
+      ],
+      "lens": 50,
+      "backdrop": "floor",
+      "frame": 0.7,
+      "azimuth": 24,
+      "elevation": 6,
+      "caption": "RUSTED INDUSTRIAL - CAGED BULKHEAD, CLAMP-ON WORK LIGHT",
+      "note": "SERVICEABLE, BOLTED ON, CARRIED IN",
+      "variants": []
+    },
+    {
+      "name": "L_pair_neon",
+      "scene": "model:batch014/lights/light_neon_channel.glb@0.00,2.40,0 + batch014/lights/light_neon_edge.glb@0.00,1.10,0",
+      "size": [
+        1100,
+        1000
+      ],
+      "lens": 50,
+      "backdrop": "floor",
+      "frame": 0.7,
+      "azimuth": 24,
+      "elevation": 6,
+      "caption": "NEON TRANSIT - RECESSED CHANNEL, PLATFORM-EDGE STRIP",
+      "note": "INFRASTRUCTURE, NOT SIGNAGE. THE EDGE STRIP LIGHTS THE FLOOR",
+      "variants": []
+    },
+    {
+      "name": "L_pair_gothic",
+      "scene": "model:batch014/lights/light_gothic_corona.glb@0.00,2.40,0 + batch014/lights/light_gothic_lantern.glb@0.00,1.10,0",
+      "size": [
+        1100,
+        1000
+      ],
+      "lens": 50,
+      "backdrop": "floor",
+      "frame": 0.7,
+      "azimuth": 24,
+      "elevation": 6,
+      "caption": "GOTHIC STONE - IRON CORONA, GLAZED LANTERN",
+      "note": "NATIVE IRON. THE LANTERN HAS A ROOF BECAUSE A FLAME NEEDS ONE",
+      "variants": [
+        "silhouette"
+      ]
+    },
+    {
+      "name": "L_pair_temple",
+      "scene": "model:batch014/lights/light_temple_bowl.glb@0.00,2.40,0 + batch014/lights/light_temple_niche.glb@0.00,1.10,0",
+      "size": [
+        1100,
+        1000
+      ],
+      "lens": 50,
+      "backdrop": "floor",
+      "frame": 0.7,
+      "azimuth": 24,
+      "elevation": 6,
+      "caption": "TEMPLE RUIN - SUSPENDED BRASS BOWL, CARVED NICHE",
+      "note": "THE BOSS IS THE BUILDING; THE BOWL IS WHAT WAS HUNG FROM IT",
+      "variants": []
+    },
+    {
+      "name": "L_pair_void",
+      "scene": "model:batch014/lights/light_void_absent.glb@-0.90,2.40,0 + batch014/lights/light_void_debug.glb@0.90,2.40,0",
+      "size": [
+        1100,
+        1000
+      ],
+      "lens": 50,
+      "backdrop": "floor",
+      "frame": 0.7,
+      "azimuth": 24,
+      "elevation": 6,
+      "caption": "VOID GLITCH - THE MOUNT WITH NO FIXTURE, AND A PLACEHOLDER",
+      "note": "STILL A LIGHT SOURCE. THAT WAS THE ONE HARD REQUIREMENT",
+      "variants": [
+        "silhouette"
+      ]
+    }
+  ]
+}

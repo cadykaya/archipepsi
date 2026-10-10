@@ -1,0 +1,79 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://content/shells/shell_hall_transit.glb" id="1_m54ll"]
+
+[node name="shell_hall_transit" type="Node3D"]
+
+[node name="Mesh" type="Node3D" parent="." instance=ExtResource("1_m54ll")]
+
+[node name="vestibule_to_basin_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8.5)
+
+[node name="vestibule_to_basin_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 9.5)
+
+[node name="basin_to_gallery_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0, 12)
+
+[node name="basin_to_gallery_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 11, 35)
+
+[node name="gallery_to_landing_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5, 11, 51)
+
+[node name="gallery_to_landing_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21, 52)
+
+[node name="landing_to_bridge_n_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 21, 49)
+
+[node name="landing_to_bridge_n_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 21, 47)
+
+[node name="bridge_n_to_ring_n_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 21, 44)
+
+[node name="bridge_n_to_ring_n_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 21, 42)
+
+[node name="ring_n_to_ring_e_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21, 41.5)
+
+[node name="ring_n_to_ring_e_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 21, 34)
+
+[node name="ring_e_to_bridge_e_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 21, 32)
+
+[node name="ring_e_to_bridge_e_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 21, 32)
+
+[node name="bridge_e_to_gantry_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 21, 32)
+
+[node name="bridge_e_to_gantry_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 21, 32)
+
+[node name="gantry_to_exit_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 21, 34)
+
+[node name="gantry_to_exit_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 28, 56)
+
+[node name="ring_n_to_ring_w_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 21, 41)
+
+[node name="ring_n_to_ring_w_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 21, 39)
+
+[node name="ring_w_to_ring_s_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 21, 29)
+
+[node name="ring_w_to_ring_s_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 21, 27)
+
+[node name="ring_s_to_ring_e_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 21, 27)
+
+[node name="ring_s_to_ring_e_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 21, 29)

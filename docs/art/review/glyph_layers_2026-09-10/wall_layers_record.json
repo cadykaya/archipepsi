@@ -1,0 +1,157 @@
+{
+  "glyph_root": "/home/user/ecms-glyph",
+  "glyph_sha": "62b0bfd5f9ac3eb49f6167dc82098fe4dab0688b",
+  "owner": "act_owner_skyiah",
+  "artist": "act_agent_arty",
+  "density": 32,
+  "field": {
+    "size": [
+      128,
+      128
+    ],
+    "metres": [
+      4,
+      4
+    ],
+    "course_pitch": 32,
+    "joint_pitch": 64,
+    "bolt_pitch": 16,
+    "seams": [
+      0,
+      32,
+      64,
+      96
+    ],
+    "tiles": "both axes",
+    "divides": {
+      "vertical": true,
+      "horizontal": true
+    },
+    "entries": 9
+  },
+  "skirt": {
+    "size": [
+      128,
+      32
+    ],
+    "metres": [
+      4,
+      1
+    ],
+    "tiles": "horizontally only; placed once at the floor junction",
+    "entries": 8
+  },
+  "views": [
+    {
+      "image": "wall_field.png",
+      "scale": 1,
+      "native_size": [
+        128,
+        128
+      ],
+      "sha256": "a2cc394a9d3cc05faaa40b1cab42e72770e4caa698736ef3c6fbe71fd4394e44",
+      "check": {
+        "render_created": true,
+        "problems": [],
+        "pixels_read": null,
+        "visual_assessment": "absent"
+      }
+    },
+    {
+      "image": "wall_field_4x.png",
+      "scale": 4,
+      "native_size": [
+        128,
+        128
+      ],
+      "sha256": "ddfe5c4e1912e87af8923f6f4cc399d93c6d855dcb7e737e683ab128b00d6545",
+      "check": {
+        "render_created": true,
+        "problems": [],
+        "pixels_read": null,
+        "visual_assessment": "absent"
+      }
+    },
+    {
+      "image": "wall_field_8x.png",
+      "scale": 8,
+      "native_size": [
+        128,
+        128
+      ],
+      "sha256": "8997757a2f3e886cdf684b8dae808690008c57fa22f84a666e06ecb3173424a2",
+      "check": {
+        "render_created": true,
+        "problems": [],
+        "pixels_read": null,
+        "visual_assessment": "absent"
+      }
+    },
+    {
+      "image": "wall_skirt.png",
+      "scale": 1,
+      "native_size": [
+        128,
+        32
+      ],
+      "sha256": "0a9582a1ce51a4dcb85ee63ec3403a48cc9a1387da97619240edd946e6f09ef3",
+      "check": {
+        "render_created": true,
+        "problems": [],
+        "pixels_read": null,
+        "visual_assessment": "absent"
+      }
+    },
+    {
+      "image": "wall_skirt_8x.png",
+      "scale": 8,
+      "native_size": [
+        128,
+        32
+      ],
+      "sha256": "e9ab0c2cd9e2f48368a73d04291974df8582c5bf02c3d7114bd726b3b00b2169",
+      "check": {
+        "render_created": true,
+        "problems": [],
+        "pixels_read": null,
+        "visual_assessment": "absent"
+      }
+    }
+  ],
+  "studies": [
+    {
+      "image": "wall_field_3x3.png",
+      "size": [
+        384,
+        384
+      ],
+      "tile": 3,
+      "is_a_render": false,
+      "derived_from": "a2cc394a9d3cc05faaa40b1cab42e72770e4caa698736ef3c6fbe71fd4394e44",
+      "sha256": "f5e3c46825e88dd9b304f1f32419adc02354ccb16da2ad1fa4920d5ef2fb4341"
+    },
+    {
+      "image": "wall_field_3x3_4x.png",
+      "size": [
+        1536,
+        1536
+      ],
+      "tile": 3,
+      "is_a_render": false,
+      "derived_from": "ddfe5c4e1912e87af8923f6f4cc399d93c6d855dcb7e737e683ab128b00d6545",
+      "sha256": "ce9fc3d7bd175b7c8f249f0741a641189b3b65823b31b226709509de9cd198ce"
+    },
+    {
+      "image": "wall_skirt_3x.png",
+      "size": [
+        384,
+        96
+      ],
+      "tile": 3,
+      "is_a_render": false,
+      "derived_from": "0a9582a1ce51a4dcb85ee63ec3403a48cc9a1387da97619240edd946e6f09ef3",
+      "sha256": "d04f9fdc2236270f13b7770bda75d88a9c75a43ad080720993e0cfdb2c842491"
+    }
+  ],
+  "elapsed_ms": 801
+}

@@ -1,0 +1,885 @@
+{
+  "cf_alcove_frame": {
+    "anchor": "floor",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "alcove_jamb_-1",
+      "alcove_reveal_-1",
+      "alcove_jamb_1",
+      "alcove_reveal_1",
+      "alcove_lintel"
+    ],
+    "path": "batch048/roomkits/cf_alcove_frame.glb",
+    "room": "counterfire_arcade",
+    "size": [
+      3.1,
+      0.5,
+      2.76
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "cf_gunner_mount": {
+    "anchor": "floor",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "gunner_parapet",
+      "gunner_coping",
+      "muzzle_mount",
+      "telegraph_face",
+      "gunner_ammo"
+    ],
+    "path": "batch048/roomkits/cf_gunner_mount.glb",
+    "room": "counterfire_arcade",
+    "size": [
+      1.74,
+      1.73,
+      1.06
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "cf_lane_mark": {
+    "anchor": "as-built",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [
+      "shot"
+    ],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "origin_means": "local x = 0 is the lane edge at LANE_HALF; everything grows outward, away from the lane",
+    "parts": [
+      "lane_rib_0",
+      "lane_rib_1",
+      "lane_rib_2",
+      "lane_rib_3",
+      "lane_kerb"
+    ],
+    "path": "batch048/roomkits/cf_lane_mark.glb",
+    "room": "counterfire_arcade",
+    "size": [
+      0.6,
+      2.0,
+      0.04
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "cf_release_bolt": {
+    "anchor": "floor",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "bolt_shot",
+      "bolt_seat",
+      "bolt_lever",
+      "bolt_plate"
+    ],
+    "path": "batch048/roomkits/cf_release_bolt.glb",
+    "room": "counterfire_arcade",
+    "size": [
+      0.56,
+      1.13,
+      0.68
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "cf_shutter_track": {
+    "anchor": "centre",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "track_rail_-1",
+      "track_rail_1",
+      "interval_pip_0",
+      "interval_pip_1",
+      "interval_pip_2",
+      "interval_pip_3",
+      "interval_pip_4",
+      "interval_pip_5",
+      "interval_pip_6",
+      "interval_pip_7"
+    ],
+    "path": "batch048/roomkits/cf_shutter_track.glb",
+    "room": "counterfire_arcade",
+    "size": [
+      0.7,
+      2.8,
+      2.86
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 132
+  },
+  "pp_call_post": {
+    "anchor": "floor",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "call_post",
+      "call_head",
+      "call_lamp",
+      "travel_up",
+      "travel_down",
+      "stop_face"
+    ],
+    "path": "batch048/roomkits/pp_call_post.glb",
+    "room": "passing_platforms",
+    "size": [
+      0.34,
+      0.35,
+      1.44
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "pp_lift_guide": {
+    "anchor": "floor",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [
+      "footholds"
+    ],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "lift_mast_b",
+      "lift_tie_0",
+      "lift_tie_1",
+      "lift_tie_2",
+      "lift_tie_3",
+      "lift_rope",
+      "lift_channel",
+      "lift_weight"
+    ],
+    "path": "batch048/roomkits/pp_lift_guide.glb",
+    "room": "passing_platforms",
+    "size": [
+      1.16,
+      0.48,
+      2.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 108
+  },
+  "pp_recovery_mark": {
+    "anchor": "floor",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "recovery_edge_x-1",
+      "recovery_edge_y-1",
+      "recovery_edge_x1",
+      "recovery_edge_y1",
+      "recovery_arrow"
+    ],
+    "path": "batch048/roomkits/pp_recovery_mark.glb",
+    "room": "passing_platforms",
+    "size": [
+      3.4,
+      3.4,
+      0.035
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "pp_shuttle_guide": {
+    "anchor": "centre",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [
+      "footholds"
+    ],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "shuttle_screw",
+      "shuttle_collar_0",
+      "shuttle_collar_1",
+      "shuttle_collar_2",
+      "shuttle_collar_3",
+      "shuttle_shoe"
+    ],
+    "path": "batch048/roomkits/pp_shuttle_guide.glb",
+    "room": "passing_platforms",
+    "size": [
+      0.34,
+      2.0,
+      0.42
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 100
+  },
+  "pp_transfer_edge": {
+    "anchor": "as-built",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [
+      "gap"
+    ],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "origin_means": "local y = 0 is the deck's EDGE LINE; everything grows back onto the deck",
+    "parts": [
+      "edge_band",
+      "edge_post_-1",
+      "edge_cap_-1",
+      "edge_post_1",
+      "edge_cap_1"
+    ],
+    "path": "batch048/roomkits/pp_transfer_edge.glb",
+    "room": "passing_platforms",
+    "size": [
+      4.04,
+      0.55,
+      1.1
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "uw_applicator": {
+    "anchor": "floor",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "applicator_cowl",
+      "applicator_emitter",
+      "applicator_feed",
+      "applicator_foot"
+    ],
+    "path": "batch048/roomkits/uw_applicator.glb",
+    "room": "unweighted_switch",
+    "size": [
+      0.72,
+      0.78,
+      1.3
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "uw_drive_housing": {
+    "anchor": "as-built",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [
+      "corridor"
+    ],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "origin_means": "local y = 0 is the crate's PARK position and +y runs toward the recess; x = 0 is the corridor's centre line",
+    "parts": [
+      "drive_cap",
+      "drive_lever",
+      "drive_grip",
+      "drive_rail",
+      "drive_stanchion_0",
+      "drive_stanchion_1",
+      "drive_stanchion_2",
+      "drive_stanchion_3"
+    ],
+    "path": "batch048/roomkits/uw_drive_housing.glb",
+    "room": "unweighted_switch",
+    "size": [
+      0.87,
+      5.44,
+      1.33
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 108
+  },
+  "uw_plate_frame": {
+    "anchor": "floor",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "recess_wall_x-1",
+      "recess_wall_y-1",
+      "recess_wall_x1",
+      "recess_wall_y1",
+      "glyph_carrier",
+      "class_mark_0",
+      "class_mark_1",
+      "class_mark_2"
+    ],
+    "path": "batch048/roomkits/uw_plate_frame.glb",
+    "room": "unweighted_switch",
+    "size": [
+      2.9,
+      2.92,
+      0.9
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 108
+  },
+  "uw_return_rail": {
+    "anchor": "floor",
+    "batch": "048",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "checks": [
+      "footholds"
+    ],
+    "fitted_to": {
+      "cf_gunner_envelope": [
+        0.7,
+        1.4,
+        0.7
+      ],
+      "cf_open_seconds": 8.0,
+      "cf_receiver_y": 0.85,
+      "pp_gap": 0.2,
+      "pp_rail_height": 1.1,
+      "pp_transfer_y": 4.0,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "uw_crate": [
+        2.0,
+        1.0,
+        2.0
+      ],
+      "uw_plate": [
+        2.4,
+        0.12,
+        2.4
+      ],
+      "uw_travel": [
+        1.0,
+        5.6
+      ]
+    },
+    "kind": "room_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "parts": [
+      "return_post_-1",
+      "return_post_1",
+      "release_bar",
+      "return_head",
+      "release_catch"
+    ],
+    "path": "batch048/roomkits/uw_return_rail.glb",
+    "room": "unweighted_switch",
+    "size": [
+      3.0,
+      0.3,
+      1.66
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  }
+}

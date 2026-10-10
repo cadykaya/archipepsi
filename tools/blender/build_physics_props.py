@@ -1,0 +1,1297 @@
+"""Batch 043 -- the physics-prop family, four of Design 2's twelve. PROPOSAL.
+
+    .tools/blender/blender -b --python tools/blender/build_physics_props.py
+
+Design 2 §10.1, pinned by Design 6 §4.7, gives twelve object classes with a
+typical mass, a carriable flag and a manipulable flag. SIX are built here to
+textured, exported candidates: `KEY_COMPONENT`, `POWER_CELL`,
+`MECHANICAL_PART`, `GIRDER`, `WEIGHTED` and `BALLAST`. The other six are
+mapped against the existing catalogue in
+docs/art/review/props_2026-09-11/CLASS_MAP.md and not built.
+
+The six were chosen to make the family's MASS LADDER complete and legible in
+one line-up -- 8, 40, 55, 95, 140, 320 kg -- because the question a player
+asks of one of these objects is "can I lift that", and the answer is only
+learnable by comparison.
+
+## THE FAMILY RULE, AND WHY IT IS CONSTRUCTION AND NOT COLOUR
+
+Design 2 §33.7 requires, always: "Manipulable objects have a consistent
+material treatment; `FIXED` objects visibly do not share it." A coloured
+sticker would satisfy the letter of that and fail §50's no-hue-alone rule the
+moment the player is colour-blind or the room is dark.
+
+So the treatment is UNPAINTED DARK STEEL -- flat, smooth, and far below any
+painted body in value -- and it appears in exactly one place: ON THE SURFACES
+THE PLAYER'S DEVICE TOUCHES. A body is painted, corroded, cast or crated; a
+grip, a lifting eye, a socket lug and an attach pad is bare.
+
+The first attempt used a LIGHT bare metal and it failed in the room: the
+painted bodies in `concrete_facility` sit at L* 60-70 and a light steel pad
+landed on top of them, so a 16 cm attach pad on the ballast read as a stain.
+Dark is not a style choice here, it is the only side of the value axis that
+was free. Measured against a painted body it is roughly 45 L* down, which
+survives grayscale, distance and a dark room.
+
+Nothing decorative in the existing catalogue carries it -- `prop_crate`,
+`prop_oil_drum` and `prop_debris` are painted end to end -- so "has a bare
+dark fitting on it" and "you can do something to it" are the same statement.
+
+The second half of the rule is the read between carriable and merely
+manipulable, which Design 2 §10.3 draws at 60 kg:
+
+    KEY_COMPONENT     8 kg   carriable      ONE hand-scale grip, on top
+    POWER_CELL       40 kg   carriable      ONE hand-scale grip, on top
+    MECHANICAL_PART  55 kg   carriable      ONE hand-scale grip, on top
+    GIRDER           95 kg   manipulate     attach PADS at both ends, no grip
+    WEIGHTED        140 kg   manipulate     attach PADS on two faces, no grip
+    BALLAST         320 kg   manipulate     attach PADS on four faces, no grip
+
+A hand grip means a hand can lift it. Its absence, on an object that plainly
+has attachment features, means a device has to.
+
+## WHAT IS PROPOSED AND WHAT IS SETTLED
+
+SETTLED, because Design 2 §10.1 states it: the four masses, the carriable and
+manipulable flags, and the `mass_class` each derives to under §10.2.
+
+PROPOSED, because nothing states it: every dimension, every attach-point
+position and normal, and the bare-metal rule itself. No runtime contract for
+object dimensions or attachment interfaces exists yet. These are ART
+DIMENSIONS. When a contract arrives, these move to fit it.
+
+NOT TOUCHED: player physics, mass rules, carry limits, package schemas, and
+every approved asset. Collision is not derived here at all -- these are
+visual candidates, and a collider shipped with them would read as certified
+traversal evidence that nobody has produced.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import brushkit  # noqa: E402
+import common  # noqa: E402
+import propkit  # noqa: E402
+import palette as pal  # noqa: E402
+from mathutils import Vector  # noqa: E402
+from mathutils.bvhtree import BVHTree  # noqa: E402
+
+THEME = common.THEME
+OUT = "batch043/physics"
+#: The one colour the whole family shares. L* 11.4, low-chroma so it never
+#: reads as a signalling family.
+#:
+#: TWO NUMBERS THAT WERE WRONG BEFORE. It was #252a31 at roughness 0.30, and
+#: the comment claimed "L* 18.6 against painted bodies at L* 60-70". Neither
+#: half survived measurement once the quiet skin landed:
+#:
+#:   * a painted body is not L* 60-70 IN THE ROOM. Under the shipped light
+#:     model the ballast measured L* 36.3 on bright concrete and 24.6 on
+#:     derelict -- the palette value is the albedo, not what reaches the eye.
+#:   * at roughness 0.30 the fitting caught the room's own specular and
+#:     arrived BRIGHTER than the body it sits on: measured gaps of -1.8 on
+#:     the ballast and -3.4 on the anchor block. The rule was inverted on
+#:     two of the three objects the owner named, and the palette could not
+#:     have shown it.
+#:
+#: So the albedo is darker, the roughness is up at 0.62 so it stops
+#: reflecting, and `tools/content/props_preview.gd` MEASURES the gap in the
+#: render on both grounds rather than trusting either number.
+HANDLING = "#191d23"
+DENSITY = propkit.PROP_DENSITY
+
+#: The lightened panels' OWN material, at rest (repair, 2026-09-28). This
+#: is Batch 043's `LENS_DIM`, the value its machinery gives a state node
+#: that is not lit, because that is exactly what a lightened panel is. It
+#: is not `HANDLING`: in this family bare dark metal means "the player's
+#: device touches here", and a status panel is not somewhere to touch.
+LIGHTENED_REST = "#4a5058"
+
+
+# ----------------------------------------------------------------------
+# COORDINATE SPACES, STATED ONCE AND CONVERTED ONCE
+# ----------------------------------------------------------------------
+#
+# Blender authors Z-up. glTF is Y-UP BY DEFINITION and the exporter converts
+# on the way out, so what a runtime loads is NOT the frame these builders
+# work in. An earlier manifest said "+Z is up" beside dimensions that had
+# already been exported Y-up, which is a contract that cannot be followed.
+#
+# There are two transformations between an authored point and a runtime one
+# and BOTH have to happen, each exactly once:
+#
+#   1. the origin shift `set_origin_group` applies when it re-bases the
+#      asset on its anchor, and
+#   2. the Y-up conversion the exporter applies.
+#
+# A point authored before the shift and converted without it is wrong by the
+# shift; a point shifted twice is wrong by the shift the other way. So the
+# shift is returned by `set_origin_group`, subtracted here, and the result
+# is converted by `_to_runtime`. Both spaces are written into the manifest
+# under their own names so neither can be mistaken for the other, and
+# `tools/content/verify_exported_geometry.py` then reads the EXPORTED .glb
+# checks each runtime point actually lands on the part it names.
+
+def _to_runtime(v):
+    """Blender Z-up -> glTF / Godot Y-up. (x, y, z) -> (x, z, -y)."""
+    return [round(v[0], 5), round(v[2], 5), round(-v[1], 5)]
+
+
+def _shifted(v, shift):
+    """An authored point moved by the origin shift, exactly once."""
+    return (v[0] - shift[0], v[1] - shift[1], v[2] - shift[2])
+
+
+def _grip(name, size, at, rotation_z=0.0):
+    """A bare-metal feature. Its own object, so it is its own node, its own
+    material slot and its own thing a runtime can light when the player is
+    close enough to use it (§33.7, "attach point available")."""
+    obj = brushkit.block(name, size, at, rotation_z=rotation_z)
+    obj.name = name
+    return obj
+
+
+# ----------------------------------------------------------------------
+
+def power_cell():
+    """`POWER_CELL`, 40 kg, carriable, goes into power sockets.
+
+    Read from across a room: a canister in a cage with a handle. The cage is
+    what says "this is meant to be moved and it is meant to survive being
+    dropped"; the base lugs are what say "and it goes into something".
+    """
+    w, d, h = 0.34, 0.34, 0.52
+    body = [
+        brushkit.prism("pc_core", 0.125, h * 0.72, 8, (0.0, 0.0, h * 0.40),
+                       asset_name="phys_power_cell"),
+        brushkit.block("pc_base", (w, d, 0.06), (0.0, 0.0, 0.03)),
+        brushkit.block("pc_cap", (w * 0.82, d * 0.82, 0.05),
+                       (0.0, 0.0, h - 0.055)),
+    ]
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            body.append(brushkit.block(
+                "pc_rib_%d_%d" % (int(sx), int(sy)), (0.045, 0.045, h * 0.88),
+                (sx * (w / 2.0 - 0.03), sy * (d / 2.0 - 0.03), h * 0.46)))
+    shell = common.join(body, "phys_power_cell")
+    parts = [
+        _grip("grip_bar", (0.22, 0.055, 0.05), (0.0, 0.0, h + 0.055)),
+        _grip("grip_post_l", (0.05, 0.055, 0.09), (-0.085, 0.0, h + 0.005)),
+        _grip("grip_post_r", (0.05, 0.055, 0.09), (0.085, 0.0, h + 0.005)),
+        _grip("attach_socket", (0.19, 0.19, 0.055), (0.0, 0.0, 0.028)),
+    ]
+    attach = [{"id": "attach_socket", "part": "attach_socket",
+               "at": (0.0, 0.0, 0.004), "normal": (0.0, 0.0, -1.0),
+               "proposes": "the face that meets a power socket"}]
+    return shell, parts, attach
+
+
+def mechanical_part():
+    """`MECHANICAL_PART`, 55 kg, carriable, goes into machinery repair
+    sockets. Five kilos under the carry limit, and it should LOOK it: this is
+    the heaviest thing in the game a player picks up by hand, so it is dense
+    and compact rather than big."""
+    w, d, h = 0.44, 0.30, 0.42
+    body = [
+        brushkit.block("mp_case", (w, d, h * 0.66), (0.0, 0.0, h * 0.33)),
+        brushkit.spin(brushkit.prism("mp_hub", 0.11, d + 0.04, 8,
+                                     (0.0, 0.0, h * 0.33),
+                                     asset_name="phys_mechanical_part"),
+                      "x", 90.0),
+        brushkit.block("mp_flange", (w * 1.08, 0.05, h * 0.52),
+                       (0.0, -d / 2.0 - 0.02, h * 0.33)),
+        brushkit.block("mp_shoulder", (w * 0.62, d * 0.74, 0.07),
+                       (0.0, 0.0, h * 0.70)),
+    ]
+    for sx in (-1.0, 1.0):
+        body.append(brushkit.block("mp_foot_%d" % int(sx),
+                                   (0.07, d * 1.02, 0.045),
+                                   (sx * (w / 2.0 - 0.05), 0.0, 0.022)))
+    shell = common.join(body, "phys_mechanical_part")
+    parts = [
+        _grip("grip_bar", (0.19, 0.055, 0.05), (0.0, 0.0, h * 0.70 + 0.11)),
+        _grip("grip_post_l", (0.05, 0.055, 0.085),
+              (-0.07, 0.0, h * 0.70 + 0.06)),
+        _grip("grip_post_r", (0.05, 0.055, 0.085),
+              (0.07, 0.0, h * 0.70 + 0.06)),
+        _grip("attach_key", (0.13, 0.055, 0.13),
+              (0.0, -d / 2.0 - 0.055, h * 0.33)),
+    ]
+    attach = [{"id": "attach_key", "part": "attach_key",
+               "at": (0.0, -d / 2.0 - 0.055, h * 0.33),
+               "normal": (0.0, -1.0, 0.0),
+               "proposes": "the keyed face that enters a repair socket"}]
+    return shell, parts, attach
+
+
+def key_component():
+    """`KEY_COMPONENT`, 8 kg, carriable, "local key loops".
+
+    The lightest thing in the twelve, and the read is entirely scale. At
+    0.22 x 0.17 x 0.30 it is the only one that sits inside a silhouette a
+    player could close a hand around, and the keyed bit on its nose is the
+    whole of what it says: this goes in ONE thing, and you know which.
+    """
+    w, d, h = 0.22, 0.17, 0.30
+    body = [
+        brushkit.block("kc_case", (w, d, h * 0.74), (0.0, 0.0, h * 0.40)),
+        brushkit.block("kc_collar", (w * 1.12, d * 1.12, 0.045),
+                       (0.0, 0.0, h * 0.66)),
+        brushkit.block("kc_heel", (w * 0.86, d * 0.86, 0.035),
+                       (0.0, 0.0, 0.018)),
+        brushkit.block("kc_window", (w * 0.46, 0.02, h * 0.28),
+                       (0.0, -d / 2.0 - 0.005, h * 0.40)),
+    ]
+    shell = common.join(body, "phys_key_component")
+    # MEASURED, not nominal. The first version placed these against `h` --
+    # the class's nominal height -- while the case actually topped out at
+    # 0.231, so the handle exported 43 mm in the air. A fitting sits on the
+    # body's real top or it sits on nothing.
+    top = common.top_of(shell)
+    parts = [
+        _grip("grip_bar", (0.11, 0.035, 0.032), (0.0, 0.0, top + 0.058)),
+        _grip("grip_post_l", (0.028, 0.035, 0.070), (-0.041, 0.0, top + 0.027)),
+        _grip("grip_post_r", (0.028, 0.035, 0.070), (0.041, 0.0, top + 0.027)),
+        # The key. Asymmetric on purpose: a symmetric bit would go in either
+        # way round, and then it is a plug rather than a key.
+        _grip("attach_bit", (0.055, 0.075, 0.075), (-0.028, 0.0, 0.038)),
+        _grip("attach_bit_ward", (0.030, 0.075, 0.038), (0.030, 0.0, 0.030)),
+    ]
+    attach = [{"id": "attach_bit", "part": "attach_bit",
+               "at": (-0.028, 0.0, 0.008), "normal": (0.0, 0.0, -1.0),
+               "proposes": "a keyed underside; the ward is offset so the "
+                           "component enters a receiver one way round only"}]
+    return shell, parts, attach
+
+
+def weighted():
+    """`WEIGHTED`, 140 kg, NOT carriable, "pressure plates, counterweights".
+
+    Design 2 changed this class from carriable specifically so it would feel
+    different -- §10.1: "Design 1's cube puzzles are walked; Design 2's are
+    pushed, pulled, and dropped." So it must not read as a crate that got
+    bigger. It is battered, it tapers to a broad base, and it carries push
+    pads on two opposite faces and no hand grip at all.
+    """
+    w, d, h = 0.82, 0.82, 0.74
+    body = [
+        brushkit.block("wt_base", (w, d, h * 0.24), (0.0, 0.0, h * 0.12)),
+        brushkit.block("wt_body", (w * 0.88, d * 0.88, h * 0.60),
+                       (0.0, 0.0, h * 0.54)),
+        brushkit.block("wt_cap", (w * 0.96, d * 0.96, h * 0.10),
+                       (0.0, 0.0, h * 0.89)),
+    ]
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            body.append(brushkit.block(
+                "wt_post_%d_%d" % (int(sx), int(sy)), (0.075, 0.075, h * 0.72),
+                (sx * (w / 2.0 - 0.05), sy * (d / 2.0 - 0.05), h * 0.48)))
+    shell = common.join(body, "phys_weighted")
+    parts, attach = [], []
+    for i, sy in enumerate((-1.0, 1.0)):
+        # Against the POSTS, which are what stands proud at pad height --
+        # not against the base's outer face, which is 4 cm further out and
+        # 30 cm lower. The first version used the latter and the pads
+        # floated 10 mm off the body.
+        py = sy * (w / 2.0 - 0.05 + 0.0375 + 0.010)
+        parts.append(_grip("attach_push_%d" % i, (0.30, 0.045, 0.18),
+                           (0.0, py, h * 0.52)))
+        attach.append({"id": "attach_push_%d" % i,
+                       "part": "attach_push_%d" % i,
+                       "at": (0.0, py + sy * 0.022, h * 0.52),
+                       "normal": (0.0, sy, 0.0),
+                       "proposes": "a push face; two of them, opposite, "
+                                   "because this class is pushed along an "
+                                   "axis rather than carried"})
+    return shell, parts, attach
+
+
+def girder():
+    """`GIRDER`, 95 kg, NOT carriable, "spans gaps; attaches at both ends".
+
+    The whole design is the two ends. A plain beam is a plank; a beam with a
+    machined plate, a pin boss and a chamfered nose at each end is a thing
+    that obviously goes between two other things. 3.20 m spans Design 2
+    §fx_bridge_assembly's 6 m gap in two, which is what the fixture does.
+    """
+    length, w, h = 3.20, 0.20, 0.26
+    web, flange = 0.05, 0.045
+    body = [
+        brushkit.block("gd_web", (length, web, h - flange * 2.0),
+                       (0.0, 0.0, 0.0)),
+        brushkit.block("gd_flange_top", (length, w, flange),
+                       (0.0, 0.0, (h - flange) / 2.0)),
+        brushkit.block("gd_flange_bottom", (length, w, flange),
+                       (0.0, 0.0, -(h - flange) / 2.0)),
+    ]
+    for sx in (-1.0, 1.0):
+        body.append(brushkit.block("gd_nose_%d" % int(sx),
+                                   (0.10, w * 0.72, h * 0.62),
+                                   (sx * (length / 2.0 - 0.05), 0.0, 0.0)))
+    shell = common.join(body, "phys_girder")
+    parts, attach = [], []
+    for sx in (-1.0, 1.0):
+        tag = "a" if sx < 0 else "b"
+        x = sx * (length / 2.0 - 0.012)
+        parts.append(_grip("attach_end_%s" % tag, (0.045, w, h),
+                           (sx * (length / 2.0 - 0.022), 0.0, 0.0)))
+        attach.append({"id": "attach_end_%s" % tag,
+                       "part": "attach_end_%s" % tag,
+                       "at": (sx * (length / 2.0 - 0.001), 0.0, 0.0),
+                       "normal": (sx, 0.0, 0.0),
+                       "proposes": "an end plate that meets a wall or "
+                                   "another girder's end plate"})
+    return shell, parts, attach
+
+
+def ballast():
+    """`BALLAST`, 320 kg, NOT carriable, counterweight mass, "rarely moved
+    far". It has to look like it does not want to be moved: low, wide, cast
+    in one piece, on skids rather than feet, and banded so the eye reads
+    weight before it reads size."""
+    # 1.04 wide and 0.54 tall: a 2:1 footprint-to-height block. The first
+    # version was 0.86 x 0.66 x 0.66 -- near enough a cube that it read as
+    # `prop_crate` in a bigger size, which is the one thing a 320 kg
+    # counterweight must not do. Weight is proportion before it is texture.
+    w, d, h = 1.04, 0.74, 0.54
+    body = [
+        brushkit.block("bl_mass", (w, d, h * 0.62), (0.0, 0.0, h * 0.45)),
+        brushkit.block("bl_crown", (w * 0.84, d * 0.84, h * 0.16),
+                       (0.0, 0.0, h * 0.84)),
+        brushkit.block("bl_skid_l", (w * 1.02, 0.14, 0.14),
+                       (0.0, -d / 2.0 + 0.08, 0.07)),
+        brushkit.block("bl_skid_r", (w * 1.02, 0.14, 0.14),
+                       (0.0, d / 2.0 - 0.08, 0.07)),
+    ]
+    for i, z in enumerate((h * 0.30, h * 0.58)):
+        body.append(brushkit.block("bl_band_%d" % i, (w * 1.02, d * 1.02, 0.05),
+                                   (0.0, 0.0, z)))
+    shell = common.join(body, "phys_ballast")
+    parts, attach = [], []
+    for i, (dx, dy) in enumerate(((0.0, -1.0), (0.0, 1.0),
+                                  (-1.0, 0.0), (1.0, 0.0))):
+        px = dx * (w / 2.0 + 0.020)
+        py = dy * (d / 2.0 + 0.020)
+        parts.append(_grip("attach_pad_%d" % i,
+                           (0.22 if dy else 0.045, 0.045 if dy else 0.22,
+                            0.20), (px, py, h * 0.55)))
+        attach.append({"id": "attach_pad_%d" % i,
+                       "part": "attach_pad_%d" % i,
+                       "at": (px, py, h * 0.55), "normal": (dx, dy, 0.0),
+                       "proposes": "a device attach pad; four of them so the "
+                                   "player is never on the wrong side"})
+    return shell, parts, attach
+
+
+def generic():
+    """`GENERIC`, 15 kg, carriable, "general props".
+
+    The catalogue already has `prop_crate`, and `prop_crate` stays exactly
+    what it is: DECORATION, painted end to end, with no handling language on
+    it. This is the manipulable sibling -- same family of object, carrying
+    the fittings that say a player can pick it up. Two candidates rather
+    than one contradictory promise.
+
+    Smaller than `prop_crate` on purpose. At 0.62 m it reads as the 15 kg
+    §10.1 gives the class; a 1.0 m box reads as furniture.
+    """
+    size = 0.62
+    body = [brushkit.block("gn_body", (size, size, size),
+                           (0.0, 0.0, size / 2.0))]
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            body.append(brushkit.block(
+                "gn_iron_%d_%d" % (int(sx), int(sy)), (0.06, 0.06, size),
+                (sx * (size / 2.0 - 0.03), sy * (size / 2.0 - 0.03),
+                 size / 2.0)))
+    body.append(brushkit.block("gn_lid", (size * 1.04, size * 1.04, 0.05),
+                               (0.0, 0.0, size - 0.02)))
+    shell = common.join(body, "phys_generic")
+    parts, attach = [], []
+    # RECESSED hand grips on two opposite faces -- a crate you lift from the
+    # sides, not a crate with a suitcase handle glued to the lid.
+    for i, sy in enumerate((-1.0, 1.0)):
+        py = sy * (size / 2.0 - 0.012)
+        parts.append(_grip("grip_hand_%d" % i, (0.20, 0.05, 0.07),
+                           (0.0, py, size * 0.66)))
+        attach.append({"id": "grip_hand_%d" % i, "part": "grip_hand_%d" % i,
+                       "at": (0.0, py, size * 0.66), "normal": (0.0, sy, 0.0),
+                       "proposes": "a recessed hand grip; two of them, "
+                                   "opposite, so the object is lifted "
+                                   "square"})
+    return shell, parts, attach
+
+
+def movable_cover():
+    """`MOVABLE_COVER`, 220 kg, NOT carriable, "sightlines, shields".
+
+    It exists to be got behind, so it is TALLER THAN THE PLAYER'S EYE and
+    wide enough to hide a body. Stiffened panel on a low sled: the sled says
+    it slides rather than tips, and the stiffeners say it stops something.
+    """
+    w, d, h = 1.30, 0.26, 1.72
+    body = [
+        brushkit.block("mc_panel", (w, 0.09, h * 0.92), (0.0, 0.0, h * 0.50)),
+        brushkit.block("mc_sled", (w * 1.02, d, 0.14), (0.0, 0.0, 0.07)),
+        brushkit.block("mc_cap", (w * 0.98, 0.14, 0.08), (0.0, 0.0, h - 0.04)),
+    ]
+    for sx in (-1.0, 1.0):
+        body.append(brushkit.block("mc_stile_%d" % int(sx),
+                                   (0.10, 0.16, h * 0.94),
+                                   (sx * (w / 2.0 - 0.05), 0.0, h * 0.50)))
+    for i, z in enumerate((h * 0.30, h * 0.62)):
+        body.append(brushkit.block("mc_rib_%d" % i, (w * 0.86, 0.14, 0.07),
+                                   (0.0, 0.0, z)))
+    shell = common.join(body, "phys_movable_cover")
+    parts, attach = [], []
+    for i, sy in enumerate((-1.0, 1.0)):
+        py = sy * 0.088
+        parts.append(_grip("attach_push_%d" % i, (0.34, 0.045, 0.20),
+                           (0.0, py, h * 0.46)))
+        attach.append({"id": "attach_push_%d" % i,
+                       "part": "attach_push_%d" % i,
+                       "at": (0.0, py + sy * 0.022, h * 0.46),
+                       "normal": (0.0, sy, 0.0),
+                       "proposes": "a push face on each side, so cover can "
+                                   "be moved from behind it as well as "
+                                   "from in front"})
+    return shell, parts, attach
+
+
+def cart():
+    """`CART`, 180 kg, NOT carriable, "constrained to floor path or rail".
+
+    The constraint is the whole design and it has to be visible standing
+    still: four wheels in fixed forks -- no castors, so it runs on ONE axis
+    -- and a rail shoe under the deck. A player should be able to see which
+    way it will go before touching it.
+    """
+    w, d, h = 1.36, 0.68, 0.78
+    deck = 0.46
+    body = [
+        brushkit.block("ct_deck", (w, d, 0.09), (0.0, 0.0, deck)),
+        brushkit.block("ct_chassis", (w * 0.88, d * 0.60, 0.10),
+                       (0.0, 0.0, deck - 0.09)),
+        brushkit.block("ct_shoe", (w * 0.40, 0.16, 0.08), (0.0, 0.0, 0.16)),
+        brushkit.block("ct_bar_post_l", (0.07, 0.07, h - deck),
+                       (-w / 2.0 + 0.10, -d * 0.30, deck + (h - deck) / 2.0)),
+        brushkit.block("ct_bar_post_r", (0.07, 0.07, h - deck),
+                       (-w / 2.0 + 0.10, d * 0.30, deck + (h - deck) / 2.0)),
+    ]
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            body.append(brushkit.prism(
+                "ct_wheel_%d_%d" % (int(sx), int(sy)), 0.16, 0.10, 8,
+                (sx * (w / 2.0 - 0.22), sy * (d / 2.0 - 0.06), 0.16),
+                asset_name="phys_cart"))
+            body.append(brushkit.block(
+                "ct_fork_%d_%d" % (int(sx), int(sy)), (0.06, 0.14, 0.30),
+                (sx * (w / 2.0 - 0.22), sy * (d / 2.0 - 0.06), 0.30)))
+    shell = common.join(body, "phys_cart")
+    # `push_bar`, NOT `grip_bar`. It was the latter, and that broke this
+    # family's own rule on the one prop where it mattered most: "a hand
+    # grip means a hand can lift it", on a 180 kg cart. The intent was
+    # right and lived only in the `proposes` string below, where no node
+    # name carried it -- so a runtime reading node names saw a hand grip
+    # and §10.3's line at 60 kg say the opposite. `assert_grip_is_hand_
+    # scale` now refuses a `grip_*` part on anything not carriable.
+    parts = [
+        _grip("push_bar", (0.07, d * 0.72, 0.07),
+              (-w / 2.0 + 0.10, 0.0, h - 0.035)),
+    ]
+    attach = [{"id": "push_bar", "part": "push_bar",
+               "at": (-w / 2.0 + 0.10, 0.0, h - 0.035),
+               "normal": (-1.0, 0.0, 0.0),
+               "proposes": "a push bar at one end only -- a cart has a "
+                           "front, and the bar is where it is. NOT a "
+                           "grip: a hand does not lift 180 kg"}]
+    return shell, parts, attach
+
+
+def plate():
+    """`PLATE`, 60 kg, NOT carriable, "flat; bridges, ramps, blast shields".
+
+    Exactly on §10.3's 60 kg line and §10.1 puts it on the manipulate side,
+    so it gets NO hand grip -- which is the single most informative thing
+    about it. Lifting slots instead, and a chamfered leading edge so it
+    reads as something that goes down across a gap rather than stands up.
+    """
+    w, d, t = 1.60, 0.92, 0.10
+    body = [
+        brushkit.block("pl_slab", (w, d, t), (0.0, 0.0, t / 2.0)),
+        brushkit.wedge("pl_nose", (0.20, d, t),
+                       (w / 2.0 + 0.10, 0.0, t / 2.0)),
+    ]
+    for sy in (-1.0, 1.0):
+        body.append(brushkit.block("pl_rail_%d" % int(sy), (w, 0.07, 0.05),
+                                   (0.0, sy * (d / 2.0 - 0.035), t + 0.02)))
+    shell = common.join(body, "phys_plate")
+    parts, attach = [], []
+    for i, sx in enumerate((-1.0, 1.0)):
+        px = sx * (w / 2.0 - 0.16)
+        parts.append(_grip("attach_slot_%d" % i, (0.16, 0.24, 0.045),
+                           (px, 0.0, t + 0.005)))
+        attach.append({"id": "attach_slot_%d" % i,
+                       "part": "attach_slot_%d" % i,
+                       "at": (px, 0.0, t + 0.028), "normal": (0.0, 0.0, 1.0),
+                       "proposes": "a lifting slot a device hooks into; two "
+                                   "of them, so a flat object can be lifted "
+                                   "level"})
+    return shell, parts, attach
+
+
+def drum():
+    """`DRUM`, 70 kg, NOT carriable, "rolls; conveyors, ramps, momentum".
+
+    `prop_oil_drum` stays decoration. This is its manipulable sibling: the
+    same object class, given the fittings, and proportioned so the rolling
+    axis is obvious -- wider than it is tall, with raised rolling bands at
+    both ends so it tracks straight instead of wandering.
+    """
+    radius, length = 0.34, 0.96
+    body = [
+        brushkit.spin(brushkit.prism("dr_body", radius, length, 8,
+                                     (0.0, 0.0, 0.0),
+                                     asset_name="phys_drum"), "y", 90.0),
+    ]
+    for sx in (-1.0, 1.0):
+        body.append(brushkit.spin(
+            brushkit.prism("dr_band_%d" % int(sx), radius + 0.03, 0.09, 8,
+                           (sx * (length / 2.0 - 0.10), 0.0, 0.0),
+                           asset_name="phys_drum"), "y", 90.0))
+    shell = common.join(body, "phys_drum")
+    # Sit it on the ground: the prism was spun about its own centre.
+    for vertex in shell.data.vertices:
+        vertex.co.z += radius + 0.03
+    parts, attach = [], []
+    for i, sx in enumerate((-1.0, 1.0)):
+        px = sx * (length / 2.0 + 0.012)
+        parts.append(_grip("attach_hub_%d" % i, (0.045, 0.18, 0.18),
+                           (px, 0.0, radius + 0.03)))
+        attach.append({"id": "attach_hub_%d" % i,
+                       "part": "attach_hub_%d" % i,
+                       "at": (px + sx * 0.022, 0.0, radius + 0.03),
+                       "normal": (sx, 0.0, 0.0),
+                       "proposes": "an end hub on the rolling axis, so a "
+                                   "device grabs the drum where turning it "
+                                   "is free rather than where it fights"})
+    return shell, parts, attach
+
+
+def anchor_block():
+    """`ANCHOR_BLOCK`, 500 kg, NOT carriable and NOT manipulable -- `FIXED`.
+
+    §10.1: "a `FIXED` world attachment point that can be revealed or
+    destroyed but never moved."
+
+    IT MUST READ AS FIXED, and Design 2 §33.7 says `FIXED` objects visibly
+    do NOT share the manipulable treatment. So it has none of the movable
+    family's fittings: no hand grip, no push pad, no attach pad, nothing a
+    device could take hold of to shift it. It is cast into a skirt that
+    spreads onto the floor, it is wider at the bottom than the top, and it
+    has no separable parts at all except one.
+    
+    That one is the point of the object: a bare TETHER EYE. The bare-metal
+    rule is "unpainted steel where the player's device touches" -- and a
+    device does touch an anchor block, just never to move it. So the eye is
+    bare and everything else is cast, which is precisely the sentence the
+    class needs: you attach TO this, you do not attach it to anything.
+    """
+    w, d, h = 0.76, 0.76, 0.62
+    body = [
+        brushkit.block("ab_skirt", (w * 1.30, d * 1.30, 0.09),
+                       (0.0, 0.0, 0.045)),
+        brushkit.block("ab_mass", (w, d, h * 0.62), (0.0, 0.0, h * 0.40)),
+        brushkit.block("ab_crown", (w * 0.74, d * 0.74, h * 0.22),
+                       (0.0, 0.0, h * 0.80)),
+    ]
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            body.append(brushkit.wedge(
+                "ab_fillet_%d_%d" % (int(sx), int(sy)), (0.16, 0.16, 0.16),
+                (sx * (w / 2.0 - 0.02), sy * (d / 2.0 - 0.02), 0.13)))
+    shell = common.join(body, "phys_anchor_block")
+    parts = [
+        _grip("attach_eye", (0.14, 0.14, 0.20), (0.0, 0.0, h * 0.95)),
+    ]
+    attach = [{"id": "attach_eye", "part": "attach_eye",
+               "at": (0.0, 0.0, h * 1.05), "normal": (0.0, 0.0, 1.0),
+               "proposes": "the tether eye. The ONLY fitting on the class, "
+                           "and it is for attaching something TO the "
+                           "anchor, never for moving the anchor"}]
+    return shell, parts, attach
+
+
+# ----------------------------------------------------------------------
+
+#: The seam pitch each class wears, in metres, and the tone of its paint.
+#:
+#: TONE IS ALSO A READABILITY DECISION, NOT A MOOD ONE. The heavy classes
+#: first wore the `dark` tone because heavy things look heavy dark -- and
+#: that closed the gap against their own fittings to nothing. A body has to
+#: stay well above the handling steel or the family rule stops working on
+#: exactly the objects that carry the most fittings. Weight is carried by
+#: proportion, banding and skirts instead, which is where it belongs.
+#:
+#: A fixed grid is the wrong answer for a family spanning 0.25 m to 3.2 m:
+#: at 0.5 m a key component gets no seam at all and a girder gets six. So
+#: each class names a pitch that divides its own longest axis into two to
+#: four panels, and the small carried objects get no bolts, because a bolt
+#: at 64 texels/m is 3 px and three of them on a 0.25 m face is a rash.
+SKIN = {
+    # 0.30 m on a 0.25 m object: at most one seam crosses any face, which
+    # is the right answer for a hand-held component rather than a tuning
+    # dodge. A 0.14 m pitch panelled it like a housing and the dark seam
+    # lines dragged its measured body value to within 11 L* of its own
+    # fittings -- the smallest object in the family, with the finest
+    # fittings, needing the cleanest field.
+    "phys_key_component": {"seam": 0.30, "wear": 0.05, "tone": "light",
+                           "bolts": False},
+    "phys_generic": {"seam": 0.31, "wear": 0.09, "tone": "light",
+                     "bolts": False},
+    "phys_power_cell": {"seam": 0.20, "wear": 0.07, "tone": "light",
+                        "bolts": False},
+    "phys_mechanical_part": {"seam": 0.24, "wear": 0.08, "tone": "light",
+                             "bolts": True},
+    "phys_plate": {"seam": 0.45, "wear": 0.10, "tone": "light", "bolts": True},
+    "phys_drum": {"seam": 0.34, "wear": 0.10, "tone": "light", "bolts": False},
+    "phys_girder": {"seam": 0.80, "wear": 0.09, "tone": "light",
+                    "bolts": True},
+    "phys_weighted": {"seam": 0.41, "wear": 0.12, "tone": "light",
+                      "bolts": True},
+    "phys_cart": {"seam": 0.45, "wear": 0.12, "tone": "light", "bolts": True},
+    "phys_movable_cover": {"seam": 0.57, "wear": 0.12, "tone": "light",
+                           "bolts": True},
+    "phys_ballast": {"seam": 0.52, "wear": 0.13, "tone": "light",
+                     "bolts": True},
+    "phys_anchor_block": {"seam": 0.38, "wear": 0.08, "tone": "light",
+                          "bolts": True},
+}
+
+CLASSES = [
+    ("phys_key_component", "KEY_COMPONENT", 8.0, True, True, key_component,
+     "floor"),
+    ("phys_generic", "GENERIC", 15.0, True, True, generic, "floor"),
+    ("phys_power_cell", "POWER_CELL", 40.0, True, True, power_cell, "floor"),
+    ("phys_mechanical_part", "MECHANICAL_PART", 55.0, True, True,
+     mechanical_part, "floor"),
+    ("phys_girder", "GIRDER", 95.0, False, True, girder, "floor"),
+    ("phys_plate", "PLATE", 60.0, False, True, plate, "floor"),
+    ("phys_drum", "DRUM", 70.0, False, True, drum, "floor"),
+    ("phys_weighted", "WEIGHTED", 140.0, False, True, weighted, "floor"),
+    ("phys_cart", "CART", 180.0, False, True, cart, "floor"),
+    ("phys_movable_cover", "MOVABLE_COVER", 220.0, False, True,
+     movable_cover, "floor"),
+    ("phys_anchor_block", "ANCHOR_BLOCK", 500.0, False, False, anchor_block,
+     "floor"),
+    ("phys_ballast", "BALLAST", 320.0, False, True, ballast, "floor"),
+]
+
+
+# ----------------------------------------------------------------------
+# THE ENVELOPE, TRANSCRIBED -- AND GATED
+# ----------------------------------------------------------------------
+#
+# `Constants.ENVELOPE_FORCE_N`, `ENVELOPE_MASS_KG` and
+# `ManipulableBody.FRICTION_HEADROOM`, copied here because the ART is
+# shaped by them: which fitting a prop wears, and what the manifest
+# declares the field can do with it, both depend on these three numbers.
+#
+# A transcription that nothing checks is a transcription that drifts, so
+# `tools/content/run_manipulation_readiness.sh` recomputes every verdict
+# below from Production's own source and FAILS on any disagreement. It
+# also refuses to run at all if their friction derivation has changed.
+ENVELOPE_FORCE_N = 700.0
+ENVELOPE_MASS_KG = 120.0
+FRICTION_HEADROOM = 2.0 / 3.0
+GRAVITY = 9.8
+#: What `ManipulableBody.envelope_friction()` derives. mu < F / (m g),
+#: taking two thirds of the bound so a body at the limit accelerates.
+ENVELOPE_MU = FRICTION_HEADROOM * ENVELOPE_FORCE_N \
+    / (ENVELOPE_MASS_KG * GRAVITY)
+#: Half a newton beside 700. A tangency is not a refusal: `phys_cart` at
+#: 180 kg needs 700.0 N exactly, and rounding that into "no" would report
+#: floating point as a design fact.
+GRAZE_N = 0.5
+
+
+def envelope_verdict(kg):
+    """What the FIELD can do with this mass. Not what a hand can do.
+
+    The two are different MECHANISMS, not two answers to one question.
+    §10.3 (inherited by Amalgam) governs ORDINARY PICKUP: `carriable`
+    and 60 kg, which is a hand. `ENVELOPE_MASS_KG` 120 belongs to the
+    QUALIFIED MANIPULATION PROVIDER, beside `ENVELOPE_FORCE_N` and
+    `ENVELOPE_RANGE_M`, which is a device at range. Both limits are
+    correct and a prop can sit outside one and inside the other.
+
+    So this reports what the FIELD can do, and the family's `grip_*`
+    against `attach_*` reports hand against device. Neither is a defect
+    in the other.
+    """
+    need = ENVELOPE_MU * kg * GRAVITY
+    if need > ENVELOPE_FORCE_N + GRAZE_N:
+        push = "no"
+    elif need > ENVELOPE_FORCE_N - GRAZE_N:
+        push = "at the limit"
+    else:
+        push = "yes"
+    return {
+        "hold": kg <= ENVELOPE_MASS_KG,
+        "push": push,
+        "push_force_n": round(need, 3),
+        "of": "Constants.ENVELOPE_*, transcribed; gated by "
+              "tools/content/run_manipulation_readiness.sh",
+    }
+
+
+def mass_class(kg, manipulable):
+    """Design 2 §10.2. Derived, never declared."""
+    if not manipulable or kg >= 400.0:
+        return "FIXED"
+    if kg < 30.0:
+        return "LIGHT"
+    if kg < 120.0:
+        return "MEDIUM"
+    return "HEAVY"
+
+
+def assert_grip_is_hand_scale(name, carriable, parts):
+    """`grip_*` means A HAND CAN LIFT THIS, and nothing else.
+
+    That is this family's own rule, stated in the module docstring, and
+    §10.3 draws the line it depends on at 60 kg. Until Batch 053 nothing
+    checked it, and it was broken on the one prop where breaking it did
+    the most damage: `phys_cart`, 180 kg, carrying a part named
+    `grip_bar`. Its `proposes` string said "a push bar", which is right
+    and which no runtime reading node names ever sees.
+
+    A prefix that means two things means neither.
+    """
+    if carriable:
+        return
+    stray = [o.name for o in parts if o.name.startswith("grip")]
+    if stray:
+        raise AssertionError(
+            "%s is not carriable and carries %s. In this family `grip_*` "
+            "means a HAND can lift it -- §10.3 draws that at 60 kg -- so "
+            "a grip here teaches the player something untrue. Name it "
+            "for what it is (`push_bar`, `attach_*`) or make the object "
+            "carriable." % (name, ", ".join(stray)))
+
+
+def _lightened_panels(shell, name, fittings):
+    """Somewhere for the ONE status the runtime implements on an object.
+
+    `ECHO_STATUS_SUPPORTED_TARGETS` gives `lightened` and only
+    `lightened` an `object` target, and `ManipulableBody.apply_status`
+    is the real path for it -- so every manipulable prop in this family
+    can carry it and, until now, eleven of the twelve had nowhere to
+    show it. Batch 045's `sp_ballast_crate` already solved this for one
+    crate with `lightened_panel_*`; this is the same answer for the rest.
+
+    FLUSH, NEVER PROUD. The panel's outer face sits exactly on the body's
+    measured face, so the exported size does not move by a millimetre --
+    Production derives a `BoxShape3D` from a size this family declares,
+    and a fitting that grew the box would quietly change a collider
+    nobody asked to change.
+
+    ART DECLARES THE NODE; a runtime decides what lights it and when.
+
+    CLEAR OF THE FITTINGS AND SEATED ON THE BODY (repair, 2026-09-28).
+    - The owner review found nine of the twenty-two panels on or under a
+      fitting.
+    - The first repair pass found ten more badly seated: six hanging off
+      the body (the cart's partly over nothing), four exactly flush with
+      the face under them, where they z-fight.
+    Every panel now passes the same two tests where the rule first puts
+    it: `_near` (clear of every fitting) and `_defects` (seated). A panel
+    that passes both does not move by a millimetre. One that fails moves
+    the SHORTEST distance to a place that passes both, and the manifest
+    records every move and the defect it fixed.
+    """
+    lo, hi = common.world_box(shell)
+    w = hi[0] - lo[0]
+    h = hi[2] - lo[2]
+    mid_x = (lo[0] + hi[0]) / 2.0
+    thick = PANEL_THICK
+    panel = (min(0.34, w * 0.40), thick, min(0.16, max(0.04, h * 0.30)))
+    at_z = lo[2] + h * 0.55
+    fits = [(f.name, common.world_box(f), None) for f in fittings]
+    tree = BVHTree.FromPolygons(
+        [shell.matrix_world @ v.co for v in shell.data.vertices],
+        [tuple(p.vertices) for p in shell.data.polygons])
+    out, moves = [], {}
+    for i, sy in enumerate((-1.0, 1.0)):
+        face = hi[1] if sy > 0.0 else lo[1]
+        at = (mid_x, face - sy * thick / 2.0, at_z)
+        box = _panel_box(at, panel)
+        blocked = [n for n, fb, skip in fits
+                   if skip != "y%+d" % sy and _near(box, fb, 1, sy)]
+        defects = _defects(_measure(tree, lo, hi, at, panel, 1, sy), thick)
+        size = panel
+        if blocked or defects:
+            was = at
+            at, size, where = _nearest_seat(tree, lo, hi, fits, panel, i, sy,
+                                            at_z, mid_x, name)
+            moves["lightened_panel_%d" % i] = {
+                "was": was, "cleared": sorted(blocked), "seating": defects,
+                "face": where,
+                "narrowed": _shrink(size, panel, where)}
+        # A placed panel is an obstacle for the next one, so the two can
+        # never end up on the same spot -- EXCEPT from the directly opposite
+        # face. Two panels on either side of the girder's 5 cm web overlap
+        # only inside the web, where nothing can see them, and counting that
+        # pushed the second one 0.37 m along the beam for no visible reason.
+        tag = moves["lightened_panel_%d" % i]["face"] if (
+            "lightened_panel_%d" % i) in moves else "y%+d" % sy
+        fits.append(("lightened_panel_%d" % i, _panel_box(at, size),
+                     _OPPOSITE[tag]))
+        out.append(_grip("lightened_panel_%d" % i, size, at))
+    return out, moves
+
+
+#: The panel geometry the repair keeps, and the numbers it adds.
+PANEL_THICK = 0.03
+PANEL_CLEAR = 0.02   # the gap a panel keeps from any fitting and any edge
+PANEL_PROUD = 0.004  # off a surface, when the box face would leave it hanging
+PANEL_MIN_PROUD = 0.002  # the least a panel may stand off its surface: flush
+                         # faces z-fight, and four panels were exactly flush
+PANEL_FLAT = 0.01    # the most the seat under one panel may vary in depth
+PANEL_PITCH = 0.01   # the coarsest spacing of the rays that measure a seat
+#: Which authoring axes carry a panel's WIDTH and HEIGHT, by the axis it
+#: faces along.
+_WIDTH = {"y": 0, "x": 1, "z": 0}
+_HEIGHT = {"y": 2, "x": 2, "z": 1}
+
+
+def _shrink(size, panel, where):
+    """(width, height) as fractions of the rule's panel, or None if full."""
+    w = round(size[_WIDTH[where[0]]] / panel[0], 2)
+    h = round(size[_HEIGHT[where[0]]] / panel[2], 2)
+    return None if (w, h) == (1.0, 1.0) else {"width": w, "height": h}
+
+
+#: A placed panel is an obstacle everywhere except on the face OPPOSITE the
+#: one it is on.
+_OPPOSITE = {"y-1": "y+1", "y+1": "y-1", "x+1": "x-1", "x-1": "x+1",
+             "z+1": "z-1"}
+
+#: A face tag from `_nearest_seat`, authoring axis and sign, as the runtime
+#: names it: authoring (x, y, z) is runtime (x, -z, y).
+_RUNTIME_FACE = {"y-1": "+Z", "y+1": "-Z", "x+1": "+X", "x-1": "-X",
+                 "z+1": "+Y (top)"}
+
+
+def _move_record(move, shift):
+    """What the manifest says about a panel the repair placed."""
+    out = {"moved_from_runtime": _to_runtime(_shifted(move["was"], shift)),
+           "face_runtime": _RUNTIME_FACE[move["face"]]}
+    if move["cleared"]:
+        out["cleared"] = move["cleared"]
+    if move["seating"]:
+        out["was_seated_badly"] = move["seating"]
+    if move["narrowed"] is not None:
+        out["shrunk_to"] = move["narrowed"]
+    return out
+
+
+def _panel_box(at, size):
+    return ([at[k] - size[k] / 2.0 for k in range(3)],
+            [at[k] + size[k] / 2.0 for k in range(3)])
+
+
+def _near(box, fitting, axis, sign):
+    """Does a fitting sit on, under or in front of this panel?
+
+    The panel's box grown by PANEL_CLEAR across the face and by 10 cm
+    OUTWARD, so a pad standing proud in front of a panel counts -- that is
+    the case the review found on the weighted block.
+    """
+    lo = [box[0][k] - PANEL_CLEAR for k in range(3)]
+    hi = [box[1][k] + PANEL_CLEAR for k in range(3)]
+    lo[axis], hi[axis] = box[0][axis], box[1][axis]
+    if sign > 0:
+        hi[axis] += 0.10
+    else:
+        lo[axis] -= 0.10
+    return all(fitting[0][k] < hi[k] and fitting[1][k] > lo[k]
+               for k in range(3))
+
+
+def _measure(tree, lo, hi, centre, size, axis, sign, strict=False):
+    """How far behind the box face the body is, across a panel's footprint.
+
+    Rays cast at the body from outside on a grid no coarser than
+    PANEL_PITCH (a first version cast nine, and the movable cover's 7 cm rib
+    slipped between two rows, straight through the panel). Returns the
+    depths, with None where a ray finds no body; or None when the panel
+    would not even fit on the face, PANEL_CLEAR inside its edges.
+
+    `strict` is for the search: it stops at the first ray that already
+    rules the place out (no body, a surface too near the box face to stand
+    proud of, or a spread wider than PANEL_FLAT) and returns None.
+    """
+    for k in range(3):
+        if k != axis and (centre[k] - size[k] / 2.0 < lo[k] + PANEL_CLEAR
+                          or centre[k] + size[k] / 2.0 > hi[k] - PANEL_CLEAR):
+            return None
+    face = hi[axis] if sign > 0 else lo[axis]
+    others = [k for k in range(3) if k != axis]
+    counts = [max(3, int(math.ceil(size[k] / PANEL_PITCH)) + 1)
+              for k in others]
+    # Corners and centre first: they rule most places out in five rays.
+    grid = [(ia, ib) for ia in range(counts[0]) for ib in range(counts[1])]
+    ends = [(0, 0), (0, counts[1] - 1), (counts[0] - 1, 0),
+            (counts[0] - 1, counts[1] - 1), (counts[0] // 2, counts[1] // 2)]
+    grid = ends + [g for g in grid if g not in ends]
+    direction = [0.0, 0.0, 0.0]
+    direction[axis] = -sign
+    direction = Vector(direction)
+    depths, low, high = [], None, None
+    for ia, ib in grid:
+        origin = list(centre)
+        origin[others[0]] += (-0.48 + 0.96 * ia / (counts[0] - 1)) \
+            * size[others[0]]
+        origin[others[1]] += (-0.48 + 0.96 * ib / (counts[1] - 1)) \
+            * size[others[1]]
+        origin[axis] = face + sign * 0.5
+        hit = tree.ray_cast(Vector(origin), direction, 2.0)
+        depth = None if hit[0] is None else (face - hit[0][axis]) * sign
+        if depth is not None:
+            low = depth if low is None else min(low, depth)
+            high = depth if high is None else max(high, depth)
+        if strict and (depth is None or depth < PANEL_MIN_PROUD
+                       or high - low > PANEL_FLAT):
+            return None
+        depths.append(depth)
+    return depths
+
+
+def _defects(depths, thick):
+    """What is wrong with a panel whose outer face sits ON the box face.
+
+    That is where the unrepaired rule put every panel, so this names the
+    defect at the original placement, in words the manifest keeps.
+    """
+    if depths is None:
+        return ["does not fit on the face"]
+    if any(d is None for d in depths):
+        return ["partly over no body"]
+    out = []
+    if max(depths) - min(depths) > PANEL_FLAT:
+        out.append("across uneven body (%.3f m)"
+                   % (max(depths) - min(depths)))
+    if max(depths) > thick:
+        out.append("hangs up to %.3f m off the body" % (max(depths) - thick))
+    if min(depths) < PANEL_MIN_PROUD:
+        out.append("flush with the face under it")
+    return out
+
+
+def _seat(tree, lo, hi, centre, size, axis, sign):
+    """The panel centre that seats it at `centre` across the face, or None.
+
+    SEATED means four things, all measured by `_measure`:
+      * every ray finds the body, so the panel is over the body and not
+        over air or a gap in a frame;
+      * the surface under the panel is flat to within PANEL_FLAT, so a
+        panel may cross a cast band but not straddle a rib;
+      * the panel's back touches that surface everywhere;
+      * its face stands at least PANEL_MIN_PROUD off that surface, so the
+        two never share a plane.
+    Its outer face goes on the box face, as the unrepaired rule put it,
+    whenever that meets all four; otherwise PANEL_PROUD off the surface.
+    Either way it is never proud of the box: collision is sized from it.
+    A surface ON the box face leaves no room to stand proud, so there is
+    no seat there.
+    """
+    depths = _measure(tree, lo, hi, centre, size, axis, sign, strict=True)
+    if depths is None or any(d is None for d in depths):
+        return None
+    if max(depths) - min(depths) > PANEL_FLAT:
+        return None
+    if min(depths) >= PANEL_MIN_PROUD and max(depths) <= size[axis]:
+        outer = 0.0
+    elif min(depths) - PANEL_PROUD >= 0.0:
+        outer = min(depths) - PANEL_PROUD
+    else:
+        return None
+    face = hi[axis] if sign > 0 else lo[axis]
+    seated = list(centre)
+    seated[axis] = face - sign * (outer + size[axis] / 2.0)
+    return tuple(seated)
+
+
+def _offsets(lo, hi, start, size, a, b, step=0.005):
+    """Every in-face offset of a panel on a half-centimetre grid, nearest
+    first. Ties go down before up, straight before diagonal, then +b before
+    -b, so the order is fixed and a rebuild lands the same place."""
+    spans = []
+    for k in (a, b):
+        low = lo[k] + PANEL_CLEAR + size[k] / 2.0 - start[k]
+        high = hi[k] - PANEL_CLEAR - size[k] / 2.0 - start[k]
+        spans.append(range(int(math.ceil(low / step - 1e-9)),
+                           int(math.floor(high / step + 1e-9)) + 1))
+    grid = [(i, j) for i in spans[0] for j in spans[1]]
+    grid.sort(key=lambda ij: (ij[0] * ij[0] + ij[1] * ij[1], ij[0] > 0,
+                              abs(ij[1]), -ij[1]))
+    return [(i * step, j * step) for i, j in grid]
+
+
+def _nearest_seat(tree, lo, hi, fits, panel, index, sy, at_z, mid_x, name):
+    """The shortest move that clears every fitting and seats on the body.
+
+    The order it tries:
+    - its own face, re-seated where it is first, then sliding down, up
+      and along it a half-centimetre at a time;
+    - then the side face it is nearer to turning onto (panel 0 goes to +X
+      and panel 1 to -X, so the pair stays on opposite faces);
+    - then the top, for a slab whose sides are its box;
+    - and only if every face refuses the full panel, the same again
+      SMALLER, a tenth at a time and the least area lost first, so a panel
+      on a faceted body can sit on one flat facet, and one on a banded
+      body between two bands, instead of bridging them.
+    Returns the centre, the size, and the face as a tag.
+    """
+    mid_y = (lo[1] + hi[1]) / 2.0
+    steps = (1.0, 0.9, 0.8, 0.7, 0.6, 0.5)
+    sizes = sorted(((fw, fh) for fw in steps for fh in steps),
+                   key=lambda f: (-f[0] * f[1], -f[1]))
+    for fw, fh in sizes:
+        wide, tall = panel[0] * fw, panel[2] * fh
+        faces = [
+            ("y%+d" % sy, 1, sy, (wide, panel[1], tall),
+             (mid_x, 0.0, at_z), (2, 0)),
+            ("x%+d" % -sy, 0, -sy, (panel[1], wide, tall),
+             (0.0, mid_y, at_z), (2, 1)),
+            ("z+1", 2, 1.0, (wide, tall, panel[1]),
+             (mid_x, mid_y + sy * (hi[1] - lo[1]) / 4.0, 0.0), (1, 0)),
+        ]
+        for tag, axis, sign, size, start, (a, b) in faces:
+            # EVERY offset on the face, nearest first -- including the
+            # diagonal ones. A search that slides along one axis at a time
+            # cannot reach a place that needs two moves at once: the
+            # ballast's panel has to go sideways off its pad AND down
+            # between two cast bands.
+            # Full size keeps the half-centimetre grid the first repair
+            # placed its panels on, so none of those moves. A SMALLER
+            # panel is a new placement and searches a centimetre grid,
+            # which is what keeps an exhaustive search affordable.
+            step = 0.005 if (fw, fh) == (1.0, 1.0) else 0.01
+            for da, db in _offsets(lo, hi, start, size, a, b, step):
+                centre = list(start)
+                centre[a] += da
+                centre[b] += db
+                seated = _seat(tree, lo, hi, centre, size, axis, sign)
+                if seated is None:
+                    continue
+                box = _panel_box(seated, size)
+                if not any(_near(box, fb, axis, sign)
+                           for _n, fb, skip in fits if skip != tag):
+                    return seated, size, tag
+    raise SystemExit("%s: lightened_panel_%d has no seat clear of the "
+                     "fittings on any face, even at half width"
+                     % (name, index))
+
+
+def assert_flush_with_body(shell, panels, name, tolerance=0.0005):
+    """A state fitting may not grow the object it is on.
+
+    Production derives a `BoxShape3D` from the size this family
+    declares -- `ManipulableBody.create` takes it as an argument -- so a
+    panel standing one centimetre proud silently changes a collider that
+    nobody asked to change, on twelve objects at once, and the only
+    evidence would be a manifest number moving. Collision is Prod's.
+
+    Checked against the body's MEASURED box, not its nominal dimensions:
+    that distinction is the one `assert_parts_touch` was written for and
+    it is the same one here.
+    """
+    lo, hi = common.world_box(shell)
+    for panel in panels:
+        plo, phi = common.world_box(panel)
+        for axis in range(3):
+            over = max(lo[axis] - plo[axis], phi[axis] - hi[axis])
+            if over > tolerance:
+                raise AssertionError(
+                    "%s: %s stands %.4f m proud of the body on %s. A "
+                    "state fitting is flush or inside -- Production sizes "
+                    "a collider from what this family exports."
+                    % (name, panel.name, over, "XYZ"[axis]))
+
+
+def main():
+    made = []
+    for name, klass, kg, carriable, manipulable, build, anchor in CLASSES:
+        common.reset_scene()
+        shell, parts, attach = build()
+        assert_grip_is_hand_scale(name, carriable, parts)
+        panels, moves = [], {}
+        if manipulable:
+            panels, moves = _lightened_panels(shell, name, parts)
+            assert_flush_with_body(shell, panels, name)
+            parts = parts + panels
+        shift = common.set_origin_group([shell] + parts, anchor)
+        common.uv_project_world(shell, DENSITY, propkit.PROP_SIZE)
+        skin = SKIN[name]
+        canvas = propkit.quiet_painted(THEME, name, seam_metres=skin["seam"],
+                                       wear=skin["wear"], tone=skin["tone"],
+                                       bolts=skin["bolts"])
+        common.assign(shell, common.make_textured_material(
+            name, canvas.to_blender("%s_t" % name),
+            roughness=pal.roughness(THEME)))
+        # Flat, not textured. A handling fitting is machined, and a
+        # machined surface has no grain at 64 texels/m -- painting one on
+        # would only add noise to the one region whose job is to be the
+        # quiet dark shape in a speckled field.
+        # Fully matte. Every bit of sheen a fitting picks up is value it
+        # gains against the body it is supposed to sit under, and at 0.62 it
+        # was still catching enough to close the gap on the objects whose
+        # bodies are mostly recessed geometry in shadow.
+        bare_mat = common.make_material("%s_grip" % name, HANDLING,
+                                        roughness=0.95)
+        # The panels' own slot (repair, 2026-09-28). Until then they wore
+        # `bare_mat`, the family's "touch here" material, and read as more
+        # handles. Created only where there are panels, so the one object
+        # without any -- the anchor block -- exports exactly as it did.
+        lit_mat = None
+        if panels:
+            lit_mat = common.make_material("%s_lightened" % name,
+                                           LIGHTENED_REST, roughness=0.95)
+        for part in parts:
+            common.uv_project_world(part, DENSITY, propkit.PROP_SIZE)
+            common.assign(part, lit_mat if part in panels else bare_mat)
+        common.assert_parts_touch(shell, parts, name)
+        entry = common.export_glb(shell, "%s/%s.glb" % (OUT, name), "prop",
+                                  tier="prop", texture_size=propkit.PROP_SIZE,
+                                  anchor=anchor, parts=parts)
+        common.save_texture(canvas.to_blender("%s_save" % name),
+                            "batch043/%s.png" % name)
+        runtime_attach = []
+        for point in attach:
+            moved = _shifted(point["at"], shift)
+            runtime_attach.append({
+                "id": point["id"],
+                "part": point["part"],
+                "position": _to_runtime(moved),
+                "normal": _to_runtime(point["normal"]),
+                "proposes": point["proposes"],
+                "authored_blender_z_up": [round(v, 5) for v in point["at"]],
+            })
+        # AUTHORING axes out of the exporter; converted once, here.
+        rx, ry, rz = common.runtime_size(entry["size"])
+        entry.update({
+            "class": klass, "mass_kg": kg,
+            "mass_class": mass_class(kg, manipulable),
+            "envelope": envelope_verdict(kg),
+            "carriable": carriable, "manipulable": manipulable,
+            "coordinate_space": {
+                "authoring": "Blender, Z-up, metres",
+                "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees",
+                "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
+                "origin_shift_applied": "once, by set_origin_group, before "
+                                        "the conversion",
+                "note": "`size` is the EXPORTER's field and is in AUTHORING "
+                        "axes, unchanged from every other batch. "
+                        "`size_runtime_y_up` is the same object in the frame "
+                        "a loader sees, converted once by "
+                        "common.runtime_size(). They are not the same "
+                        "triple and must not be read as one.",
+            },
+            "size_runtime_y_up": {"x": rx, "y_up": ry, "z": rz},
+            "size_authoring_blender_z_up": {
+                "x": entry["size"][0], "y": entry["size"][1],
+                "z_up": entry["size"][2],
+            },
+            "orientation_runtime": "+X is the object's length, +Y is up, "
+                                   "+Z is depth; the origin is %s"
+                                   % ("floor-centred, on the ground plane"
+                                      if anchor == "floor" else anchor),
+            "material_roles": dict(
+                {"body": name, "handling": "%s_grip" % name},
+                **({"lightened": "%s_lightened" % name} if panels else {})),
+            "attach_points": runtime_attach,
+            "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract "
+                              "for object size or attachment interfaces "
+                              "exists; these are not one",
+            "collision": "NONE. Not derived, not shipped, not evidence.",
+        })
+        if panels:
+            # Where each panel is, and -- for the ones the 2026-09-28
+            # repair moved -- where it was and which fitting it cleared.
+            entry["lightened_panels"] = {
+                "material": "%s_lightened" % name,
+                "at_rest": LIGHTENED_REST,
+                "drive": "each `lightened_panel_*` NODE owns the one "
+                         "material slot `%s_lightened`; a runtime that "
+                         "shows `lightened` overrides it there. Art "
+                         "declares the node, not what lights it."
+                         % name,
+                "panels": {
+                    p.name: dict(
+                        {"centre_runtime": _to_runtime(
+                            [(a + b) / 2.0 for a, b in
+                             zip(*common.world_box(p))])},
+                        **(_move_record(moves[p.name], shift)
+                           if p.name in moves else {}))
+                    for p in panels},
+            }
+        made.append(entry)
+
+    path = os.path.join(common.MODEL_DIR, OUT, "manifest.json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        # Keyed by asset id, like every other batch manifest --
+        # `check_docs_metrics.py` reads a manifest's keys AS asset ids.
+        shared = {
+            "batch": "043", "kind": "physics_props",
+            "status": "PROPOSAL -- all twelve of Design 2 §10.1's classes",
+            "design": "Design 2 §10.1 classes and masses, §10.2 derived mass "
+                      "class, §10.3 the 60 kg carry limit, §33.7 the "
+                      "manipulable treatment; pinned by Design 6 §4.7",
+            "family_rule": "bare machined metal appears only on surfaces the "
+                           "player's device touches; a hand grip means a hand "
+                           "can lift it, and its absence on an object with "
+                           "attach pads means a device has to",
+            "family_rule_is_about_hands": "§10.3 draws `carriable` at 60 kg "
+                                          "and every grip in this family "
+                                          "follows that line, correctly: a "
+                                          "grip is a HAND affordance and "
+                                          "§10.3 is the hand rule. The "
+                                          "ENVELOPE's 120 kg is a DIFFERENT "
+                                          "MECHANISM -- the qualified "
+                                          "manipulation provider, beside "
+                                          "force and range -- so a prop can "
+                                          "be outside ordinary pickup and "
+                                          "inside the envelope with neither "
+                                          "number wrong. The `envelope` "
+                                          "block says what the field can "
+                                          "do; `grip_*` against `attach_*` "
+                                          "says hand against device.",
+            "texels_per_metre": DENSITY,
+            "not_changed": ["player physics", "object mass rules",
+                            "carry limits", "package schemas",
+                            "any approved asset"],
+        }
+        keyed = {}
+        for entry in made:
+            asset_id = os.path.basename(entry["path"])[:-4]
+            keyed[asset_id] = dict(shared, **entry)
+        json.dump(keyed, handle, indent=2, sort_keys=True)
+    common.log("manifest %s" % path)
+    for entry in made:
+        common.log("%-24s %-16s %6.1f kg  %s  %s"
+                   % (entry["class"], entry["mass_class"], entry["mass_kg"],
+                      "carriable" if entry["carriable"]
+                      else ("manipulate" if entry["manipulable"] else "FIXED"),
+                      "x".join("%.2f" % v for v in entry["size"])))
+
+
+main()

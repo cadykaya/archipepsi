@@ -1,0 +1,52 @@
+{
+  "pack": "tp_bomb_rush_cyberfunk",
+  "models": "batch057/brink",
+  "prefix": "BR",
+  "caption_note": "Material treatment MISSING: painted in neon_transit, which is not the pack's own -- though it IS the family the hint names.",
+  "surround": "tp_br_shutter_head",
+  "light": {
+    "ambient": [0.56, 0.60, 0.68],
+    "ambient_energy": 0.24,
+    "fog": 0.022,
+    "fog_color": [0.13, 0.15, 0.19],
+    "lamps": [
+      {"at": [4.35, 2.55, -1.0], "range": 8.0, "energy": 2.4,
+       "color": [0.86, 0.92, 1.00],
+       "why": "the tube that still works. The batten carries two and only one of them is painted pale -- a light that is out has to be out in BOTH the material and the room."},
+      {"at": [0.0, 2.6, -7.0], "range": 15.0, "energy": 1.8,
+       "color": [0.66, 0.74, 0.88],
+       "why": "cold spill down the shaft the shutter gate leads to"},
+      {"at": [-3.5, 3.0, 2.2], "range": 10.0, "energy": 0.9,
+       "color": [1.00, 0.82, 0.58],
+       "why": "sodium off the street, dim and warm and from the wrong side -- which is most of what 'after hours' looks like indoors"}
+    ]
+  },
+  "place": [
+    {"id": "tp_br_shutter_head", "at": [0.0, 0.0, -4.78], "yaw": 0,
+     "why": "on the opening, chamber side; the shutter is UP in its head box"},
+    {"id": "tp_br_concourse_pillar", "at": [-2.7, 0.0, -3.4], "yaw": 0,
+     "why": "clear of the approach -- the pack dresses the room, it does not narrow the route"},
+    {"id": "tp_br_concourse_pillar", "at": [2.7, 0.0, -3.4], "yaw": 34,
+     "why": "turned, so the tagged face is the one you see on the way in"},
+    {"id": "tp_br_board_panel", "at": [-4.90, 0.0, -1.2], "yaw": 90,
+     "why": "the board faces the concourse; the backing sits inside the wall"},
+    {"id": "tp_br_strip_light", "at": [4.82, 2.55, -1.0], "yaw": -90,
+     "why": "high on the opposite wall, where a municipal batten goes"},
+    {"id": "tp_br_validator_plate", "at": [1.82, 1.15, -4.74], "yaw": 0,
+     "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01's and T02's"},
+    {"id": "tp_br_torn_rail", "at": [-3.3, 0.0, 0.8], "yaw": 15},
+    {"id": "tp_br_torn_rail", "at": [3.5, 0.0, 2.0], "yaw": -62,
+     "why": "off the walked line, where something torn off and left would be"}
+  ],
+  "shots": [
+    {"name": "BR_approach", "eye": [0.0, 1.7, 4.4], "look": [0.0, 1.6, -5.0],
+     "check_opening": true,
+     "caption": "Approach -- grey is Production's; the pack is what sits on it"},
+    {"name": "BR_board", "eye": [1.6, 1.7, 1.4], "look": [-4.7, 1.9, -1.6],
+     "caption": "The dark board with one slat still turning, seen in passing"},
+    {"name": "BR_threshold", "eye": [0.0, 1.7, -9.6], "look": [0.0, 1.6, -2.0],
+     "caption": "Through the 2.4 x 3.2 opening -- the shutter is up, the guides are clear"},
+    {"name": "BR_chamber", "eye": [3.9, 3.1, 4.4], "look": [-0.7, 0.7, -2.2],
+     "caption": "The concourse -- six pieces, one place, routes unchanged"}
+  ]
+}

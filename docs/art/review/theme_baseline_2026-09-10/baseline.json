@@ -1,0 +1,64 @@
+{
+  "art_revision": "7ecd3fe",
+  "camera": "the game's own camera rig (ComposedRoom probe)",
+  "capture": "1280x720",
+  "godot": "4.5.1.stable",
+  "renderer": "Compatibility (opengl3)",
+  "scene": "tools/artpreview/ComposedRoom.gd via tools/composed_room.sh",
+  "themes": {
+    "concrete_facility": {
+      "accent_color": "#4f6f8f",
+      "base_color": "#b9bcb6",
+      "light_color": "#eaf2ff",
+      "light_energy": 3.0,
+      "noise": "speckle",
+      "roughness": 0.85,
+      "trim_color": "#2e3338"
+    },
+    "gothic_stone": {
+      "accent_color": "#3a3f4a",
+      "base_color": "#6b6560",
+      "light_color": "#ffb45e",
+      "light_energy": 2.0,
+      "noise": "brick",
+      "roughness": 0.9,
+      "trim_color": "#241f1c"
+    },
+    "neon_transit": {
+      "accent_color": "#18b7c4",
+      "base_color": "#d8d4c8",
+      "light_color": "#7cf2ff",
+      "light_energy": 4.0,
+      "noise": "tile",
+      "roughness": 0.35,
+      "trim_color": "#1b1d26"
+    },
+    "rusted_industrial": {
+      "accent_color": "#c8722c",
+      "base_color": "#8a5a3b",
+      "light_color": "#ffd9a0",
+      "light_energy": 2.2,
+      "noise": "rust",
+      "roughness": 0.95,
+      "trim_color": "#3d2a1e"
+    },
+    "temple_ruin": {
+      "accent_color": "#5f7a4a",
+      "base_color": "#c2a878",
+      "light_color": "#ffe9b8",
+      "light_energy": 2.6,
+      "noise": "sandstone",
+      "roughness": 0.8,
+      "trim_color": "#7a6034"
+    },
+    "void_glitch": {
+      "accent_color": "#ff00e6",
+      "base_color": "#2b2b3a",
+      "light_color": "#ffffff",
+      "light_energy": 3.5,
+      "noise": "checker",
+      "roughness": 0.5,
+      "trim_color": "#00ffbf"
+    }
+  }
+}

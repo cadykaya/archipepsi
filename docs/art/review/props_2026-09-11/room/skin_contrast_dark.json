@@ -1,0 +1,88 @@
+{
+  "floor_L": 12.0,
+  "phys_anchor_block": {
+    "body_L": 38.882412508801,
+    "body_px": 18870,
+    "fitting_L": 22.4362147056159,
+    "fitting_px": 668,
+    "gap_L": 16.4461978031851
+  },
+  "phys_ballast": {
+    "body_L": 39.8195895976057,
+    "body_px": 17465,
+    "fitting_L": 20.1478403441729,
+    "fitting_px": 1958,
+    "gap_L": 19.6717492534328
+  },
+  "phys_cart": {
+    "body_L": 42.3380662374296,
+    "body_px": 14905,
+    "fitting_L": 23.1950603529292,
+    "fitting_px": 399,
+    "gap_L": 19.1430058845003
+  },
+  "phys_drum": {
+    "body_L": 38.6794417009902,
+    "body_px": 21666,
+    "fitting_L": 19.7898138597874,
+    "fitting_px": 527,
+    "gap_L": 18.8896278412028
+  },
+  "phys_generic": {
+    "body_L": 36.8038047032765,
+    "body_px": 24147,
+    "fitting_L": 21.1356416730558,
+    "fitting_px": 707,
+    "gap_L": 15.6681630302208
+  },
+  "phys_girder": {
+    "body_L": 39.6963053458164,
+    "body_px": 19076,
+    "fitting_L": 21.4338014017851,
+    "fitting_px": 643,
+    "gap_L": 18.2625039440314
+  },
+  "phys_key_component": {
+    "body_L": 34.646154330229,
+    "body_px": 6528,
+    "fitting_L": 21.2369716728689,
+    "fitting_px": 791,
+    "gap_L": 13.40918265736
+  },
+  "phys_mechanical_part": {
+    "body_L": 36.4941658939547,
+    "body_px": 9948,
+    "fitting_L": 21.0624104034428,
+    "fitting_px": 2339,
+    "gap_L": 15.4317554905119
+  },
+  "phys_movable_cover": {
+    "body_L": 42.2505705431318,
+    "body_px": 56979,
+    "fitting_L": 22.4342030977175,
+    "fitting_px": 1792,
+    "gap_L": 19.8163674454142
+  },
+  "phys_plate": {
+    "body_L": 44.5289731608438,
+    "body_px": 16574,
+    "fitting_L": 27.2986779085567,
+    "fitting_px": 849,
+    "gap_L": 17.2302952522871
+  },
+  "phys_power_cell": {
+    "body_L": 36.6419927058946,
+    "body_px": 15817,
+    "fitting_L": 21.7352840373706,
+    "fitting_px": 1770,
+    "gap_L": 14.906708668524
+  },
+  "phys_weighted": {
+    "body_L": 37.6277286797153,
+    "body_px": 25534,
+    "fitting_L": 20.9230545280922,
+    "fitting_px": 2190,
+    "gap_L": 16.7046741516231
+  },
+  "worst_gap_L": 13.40918265736
+}

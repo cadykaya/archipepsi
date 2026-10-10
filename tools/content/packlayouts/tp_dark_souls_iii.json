@@ -1,0 +1,52 @@
+{
+  "pack": "tp_dark_souls_iii",
+  "models": "batch061/lothric",
+  "prefix": "DS",
+  "caption_note": "Material treatment MISSING: painted in gothic_stone -- the LAST house family with nobody in it. Every pack after this shares pixels or waits.",
+  "surround": "tp_ds_iron_door_arch",
+  "light": {
+    "ambient": [0.58, 0.62, 0.72],
+    "ambient_energy": 0.26,
+    "fog": 0.022,
+    "fog_color": [0.15, 0.17, 0.22],
+    "lamps": [
+      {"at": [3.10, 1.65, 1.10], "range": 8.0, "energy": 3.0,
+       "color": [1.00, 0.66, 0.34],
+       "why": "the brazier, and it is IN THE ROOM rather than on a wall -- the only light in seven packs the player could walk around, so it throws from a place you can stand beside"},
+      {"at": [0.0, 2.4, -7.2], "range": 15.0, "energy": 1.8,
+       "color": [0.66, 0.72, 0.88],
+       "why": "cold daylight through the arch, so the brazier has something to be warm against"},
+      {"at": [-3.6, 3.2, -1.2], "range": 9.0, "energy": 0.9,
+       "color": [0.70, 0.76, 0.86],
+       "why": "a high cold wash down the aqueduct wall, so the corbels cast and the break reads"}
+    ]
+  },
+  "place": [
+    {"id": "tp_ds_iron_door_arch", "at": [0.0, 0.0, -4.80], "yaw": 0,
+     "why": "on the opening; the pointed springers sit ABOVE the square head, which is how a real wall carries one under the other"},
+    {"id": "tp_ds_buttress_pier", "at": [-2.7, 0.0, -3.4], "yaw": 0,
+     "why": "clear of the approach; the half-arch springs into the room"},
+    {"id": "tp_ds_buttress_pier", "at": [2.7, 0.0, -3.4], "yaw": 0,
+     "why": "and the opposite pier springs the same way, because two buttresses leaning at each other carry nothing"},
+    {"id": "tp_ds_aqueduct_wall", "at": [-4.80, 0.0, -1.2], "yaw": 90,
+     "why": "the channel runs along the wall and stops; the corbels carry on past where it ended"},
+    {"id": "tp_ds_lever_stone", "at": [1.82, 1.15, -4.74], "yaw": 0,
+     "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01-T06's"},
+    {"id": "tp_ds_brazier", "at": [3.10, 0.0, 1.10], "yaw": 24,
+     "why": "standing in the room, walkable-around. No other pack's light can be."},
+    {"id": "tp_ds_fallen_voussoir", "at": [-3.1, 0.0, 0.6], "yaw": -14,
+     "why": "under the break in the channel, which is where an arch that fell would land"},
+    {"id": "tp_ds_fallen_voussoir", "at": [1.2, 0.0, 2.8], "yaw": 132}
+  ],
+  "shots": [
+    {"name": "DS_approach", "eye": [0.0, 1.7, 4.4], "look": [0.0, 1.6, -5.0],
+     "check_opening": true,
+     "caption": "Approach -- grey is Production's; the pack is what sits on it"},
+    {"name": "DS_channel", "eye": [1.6, 1.7, 1.4], "look": [-4.7, 1.7, -1.6],
+     "caption": "The channel, the break, and the corbels that carry on past it"},
+    {"name": "DS_threshold", "eye": [0.0, 1.7, -9.6], "look": [0.0, 1.6, -2.0],
+     "caption": "Through the 2.4 x 3.2 opening -- the arch is ABOVE the head, not across it"},
+    {"name": "DS_chamber", "eye": [3.9, 3.1, 4.4], "look": [-0.7, 0.7, -2.2],
+     "caption": "The aqueduct run -- six pieces, one place, routes unchanged"}
+  ]
+}

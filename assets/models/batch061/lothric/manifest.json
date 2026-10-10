@@ -1,0 +1,244 @@
+{
+  "tp_ds_aqueduct_wall": {
+    "anchor": "floor",
+    "batch": "061",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a wall that CARRIED WATER -- and the corbels continue PAST the break, which says the channel used to go further",
+    "family_runway": "EXHAUSTED. This is the last pack with a house family of its own. T06 counted two remaining and was wrong: void_glitch is not an option. It is Archipepsi's own missing-texture theme -- an editor checkerboard with the word 'null' across it -- and THEME_BY_GAME_HINT maps it to Archipepsi itself. Painting a game pack in it would mean 'this texture failed to load'. So every pack from T08 on must share pixels with an earlier pack or wait for the namespace, and 74 packs are behind this one. See docs/art/theme-packs/COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_dark_souls_iii",
+    "painted_with": "gothic_stone",
+    "parts": [
+      "ds_aw_string",
+      "ds_aw_channel",
+      "ds_aw_lip",
+      "ds_aw_break",
+      "ds_aw_corbel_0",
+      "ds_aw_corbel_1",
+      "ds_aw_corbel_2"
+    ],
+    "path": "batch061/lothric/tp_ds_aqueduct_wall.glb",
+    "size": [
+      2.16,
+      0.47,
+      3.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE HIGH WALL OF LOTHRIC, THE AQUEDUCT RUN -- stepped ashlar piers with half-arches springing off them, a channel that no longer carries water, fallen voussoirs still keyed to each other, and braziers",
+    "subtheme_is_a_choice": "Dark Souls III has a dozen regions and Irithyll, Anor Londo and Archdragon Peak are three more architectures. Blending them is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Yes -- the third agreement in seven packs. Running tally: T01 agree, T02 DISAGREE, T03 agree, T04/T05/T06 no hint at all, T07 agree. Six of 81 games are hinted.",
+    "theme_hint_says": "gothic_stone",
+    "triangles": 80
+  },
+  "tp_ds_brazier": {
+    "anchor": "floor",
+    "batch": "061",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "the only light in seven packs that stands ON THE FLOOR and can be walked around",
+    "family_runway": "EXHAUSTED. This is the last pack with a house family of its own. T06 counted two remaining and was wrong: void_glitch is not an option. It is Archipepsi's own missing-texture theme -- an editor checkerboard with the word 'null' across it -- and THEME_BY_GAME_HINT maps it to Archipepsi itself. Painting a game pack in it would mean 'this texture failed to load'. So every pack from T08 on must share pixels with an earlier pack or wait for the namespace, and 74 packs are behind this one. See docs/art/theme-packs/COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_dark_souls_iii",
+    "painted_with": "gothic_stone",
+    "parts": [
+      "ds_br_leg_0",
+      "ds_br_leg_1",
+      "ds_br_leg_2",
+      "ds_br_bowl",
+      "ds_br_embers"
+    ],
+    "path": "batch061/lothric/tp_ds_brazier.glb",
+    "size": [
+      0.468,
+      0.65,
+      1.51
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE HIGH WALL OF LOTHRIC, THE AQUEDUCT RUN -- stepped ashlar piers with half-arches springing off them, a channel that no longer carries water, fallen voussoirs still keyed to each other, and braziers",
+    "subtheme_is_a_choice": "Dark Souls III has a dozen regions and Irithyll, Anor Londo and Archdragon Peak are three more architectures. Blending them is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Yes -- the third agreement in seven packs. Running tally: T01 agree, T02 DISAGREE, T03 agree, T04/T05/T06 no hint at all, T07 agree. Six of 81 games are hinted.",
+    "theme_hint_says": "gothic_stone",
+    "triangles": 88
+  },
+  "tp_ds_buttress_pier": {
+    "anchor": "floor",
+    "batch": "061",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a pier that reaches SIDEWAYS: it carries thrust, and every other column in the set carries load straight down",
+    "family_runway": "EXHAUSTED. This is the last pack with a house family of its own. T06 counted two remaining and was wrong: void_glitch is not an option. It is Archipepsi's own missing-texture theme -- an editor checkerboard with the word 'null' across it -- and THEME_BY_GAME_HINT maps it to Archipepsi itself. Painting a game pack in it would mean 'this texture failed to load'. So every pack from T08 on must share pixels with an earlier pack or wait for the namespace, and 74 packs are behind this one. See docs/art/theme-packs/COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_dark_souls_iii",
+    "painted_with": "gothic_stone",
+    "parts": [
+      "ds_bp_plinth",
+      "ds_bp_offset",
+      "ds_bp_cap",
+      "ds_bp_spring",
+      "ds_bp_haunch"
+    ],
+    "path": "batch061/lothric/tp_ds_buttress_pier.glb",
+    "size": [
+      0.78,
+      1.87,
+      3.6
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE HIGH WALL OF LOTHRIC, THE AQUEDUCT RUN -- stepped ashlar piers with half-arches springing off them, a channel that no longer carries water, fallen voussoirs still keyed to each other, and braziers",
+    "subtheme_is_a_choice": "Dark Souls III has a dozen regions and Irithyll, Anor Londo and Archdragon Peak are three more architectures. Blending them is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Yes -- the third agreement in seven packs. Running tally: T01 agree, T02 DISAGREE, T03 agree, T04/T05/T06 no hint at all, T07 agree. Six of 81 games are hinted.",
+    "theme_hint_says": "gothic_stone",
+    "triangles": 68
+  },
+  "tp_ds_fallen_voussoir": {
+    "anchor": "floor",
+    "batch": "061",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "floor dressing that COLLAPSED with two stones STILL KEYED to each other: loose wedges are rubble, a keyed pair is an arch that fell",
+    "family_runway": "EXHAUSTED. This is the last pack with a house family of its own. T06 counted two remaining and was wrong: void_glitch is not an option. It is Archipepsi's own missing-texture theme -- an editor checkerboard with the word 'null' across it -- and THEME_BY_GAME_HINT maps it to Archipepsi itself. Painting a game pack in it would mean 'this texture failed to load'. So every pack from T08 on must share pixels with an earlier pack or wait for the namespace, and 74 packs are behind this one. See docs/art/theme-packs/COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_dark_souls_iii",
+    "painted_with": "gothic_stone",
+    "parts": [
+      "ds_fv_keyed_b",
+      "ds_fv_loose_a",
+      "ds_fv_loose_b",
+      "ds_fv_chip",
+      "ds_fv_dust"
+    ],
+    "path": "batch061/lothric/tp_ds_fallen_voussoir.glb",
+    "size": [
+      1.431,
+      0.551,
+      0.22
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE HIGH WALL OF LOTHRIC, THE AQUEDUCT RUN -- stepped ashlar piers with half-arches springing off them, a channel that no longer carries water, fallen voussoirs still keyed to each other, and braziers",
+    "subtheme_is_a_choice": "Dark Souls III has a dozen regions and Irithyll, Anor Londo and Archdragon Peak are three more architectures. Blending them is the average the owner ruled out.",
+    "texel_density": 31.6,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Yes -- the third agreement in seven packs. Running tally: T01 agree, T02 DISAGREE, T03 agree, T04/T05/T06 no hint at all, T07 agree. Six of 81 games are hinted.",
+    "theme_hint_says": "gothic_stone",
+    "triangles": 56
+  },
+  "tp_ds_iron_door_arch": {
+    "anchor": "floor",
+    "batch": "061",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a pointed arch ABOVE a square head, which is how a real wall carries a rectangular opening under a pointed one -- plus iron straps",
+    "family_runway": "EXHAUSTED. This is the last pack with a house family of its own. T06 counted two remaining and was wrong: void_glitch is not an option. It is Archipepsi's own missing-texture theme -- an editor checkerboard with the word 'null' across it -- and THEME_BY_GAME_HINT maps it to Archipepsi itself. Painting a game pack in it would mean 'this texture failed to load'. So every pack from T08 on must share pixels with an earlier pack or wait for the namespace, and 74 packs are behind this one. See docs/art/theme-packs/COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_dark_souls_iii",
+    "painted_with": "gothic_stone",
+    "parts": [
+      "ds_id_jamb_l",
+      "ds_id_strap_l",
+      "ds_id_springer_l",
+      "ds_id_jamb_r",
+      "ds_id_strap_r",
+      "ds_id_springer_r"
+    ],
+    "path": "batch061/lothric/tp_ds_iron_door_arch.glb",
+    "size": [
+      3.08,
+      0.48,
+      3.57
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE HIGH WALL OF LOTHRIC, THE AQUEDUCT RUN -- stepped ashlar piers with half-arches springing off them, a channel that no longer carries water, fallen voussoirs still keyed to each other, and braziers",
+    "subtheme_is_a_choice": "Dark Souls III has a dozen regions and Irithyll, Anor Londo and Archdragon Peak are three more architectures. Blending them is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Yes -- the third agreement in seven packs. Running tally: T01 agree, T02 DISAGREE, T03 agree, T04/T05/T06 no hint at all, T07 agree. Six of 81 games are hinted.",
+    "theme_hint_says": "gothic_stone",
+    "triangles": 76
+  },
+  "tp_ds_lever_stone": {
+    "anchor": "floor",
+    "batch": "061",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "batch043's wall-switch contract CARVED IN: the recess is the housing, because a gothic wall does not get a bolted-on box",
+    "family_runway": "EXHAUSTED. This is the last pack with a house family of its own. T06 counted two remaining and was wrong: void_glitch is not an option. It is Archipepsi's own missing-texture theme -- an editor checkerboard with the word 'null' across it -- and THEME_BY_GAME_HINT maps it to Archipepsi itself. Painting a game pack in it would mean 'this texture failed to load'. So every pack from T08 on must share pixels with an earlier pack or wait for the namespace, and 74 packs are behind this one. See docs/art/theme-packs/COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_dark_souls_iii",
+    "painted_with": "gothic_stone",
+    "parts": [
+      "ds_ls_recess",
+      "ds_ls_sill",
+      "ds_ls_iron",
+      "ds_ls_grip"
+    ],
+    "path": "batch061/lothric/tp_ds_lever_stone.glb",
+    "size": [
+      0.46,
+      0.205,
+      0.54
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE HIGH WALL OF LOTHRIC, THE AQUEDUCT RUN -- stepped ashlar piers with half-arches springing off them, a channel that no longer carries water, fallen voussoirs still keyed to each other, and braziers",
+    "subtheme_is_a_choice": "Dark Souls III has a dozen regions and Irithyll, Anor Londo and Archdragon Peak are three more architectures. Blending them is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Yes -- the third agreement in seven packs. Running tally: T01 agree, T02 DISAGREE, T03 agree, T04/T05/T06 no hint at all, T07 agree. Six of 81 games are hinted.",
+    "theme_hint_says": "gothic_stone",
+    "triangles": 56
+  }
+}
