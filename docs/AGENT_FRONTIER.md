@@ -818,8 +818,8 @@ owner's D-06/D-07 rulings and the seam table are in
     - **WEAPON FEEL (owner, 2026-10-09): DELIVERED, STOP.** A separate,
       isolated firing range for comparing how the Static Pulse feels to
       fire. "The Echo hand-cannon" names no existing weapon, so it is the
-      Pulse. "SigmaAudio" is on no branch, so the sounds come from the
-      `Tones` bank's own recipe.
+      Pulse. No SigmAudio cue was in the repository (it is Condi's
+      external tool), so the sounds come from the `Tones` bank's recipe.
       - **What it is.** The baseline (the shipped feedback, untouched)
         and three treatments: A heavy report, B crisp snap, C Echo
         resonance. They vary recoil and recovery, the camera jolt (never
@@ -837,6 +837,35 @@ owner's D-06/D-07 rulings and the seam table are in
       - **Next:** the owner judges the feel by hand. Porting a winner to
         the Echo hitscans would change `EchoRuntime`, a campaign change,
         so it is its own task.
+    - **HAND-CANNON CANDIDATE (owner, 2026-10-10): BUILT, WAITING ON
+      SIGMAUDIO.** The owner played the four and picked Heavy Report "by
+      far". It is developed as mode H of the same range, on its own
+      product (`Archipepsi-Hand-Cannon`).
+      - **What H adds:** stronger spring recoil; a refined flash, light
+        and smoke; a bullet streak instead of the white tracer; a cadence
+        to try (0.35/0.55/0.80 s, key C); impacts by material (metal,
+        stone, wood, flesh on a gel block).
+      - **Kept:** the Static Pulse unchanged; modes 1–4 kept as
+        references.
+      - **Where it is.** Branch `review/hand-cannon`, from the weapon-feel
+        head `6fe82e6c`. The report is
+        `docs/reports/2026-10-10-hand-cannon-candidate.md`. Run the check
+        with `make godot-hand-cannon`.
+      - **Sound.** The cue slots are SigmAudio's. The handoff to Condi is
+        `docs/HAND_CANNON_SIGMAUDIO_CUES.md`; until her cues land, the
+        report and hit play Heavy Report's own sounds as labelled
+        placeholders.
+      - **Next:** when the cues arrive, import them, run the probe in all
+        three environments, package and deliver the playable comparison.
+        Not before (owner).
+    - **STANDING CONTEXT, not a task (owner, 2026-10-10): responsive
+      music.** Condi owns the composition and the SigmAudio experiment
+      (DMC5/Portal-style adaptive music). In weapon and enemy feedback
+      work, keep clear gameplay events that music could later answer:
+      combat starting, an encounter escalating, machinery activating, an
+      encounter ending. Reuse existing signals (e.g. `fired_pulse`,
+      `hit_confirmed`, a plate's `fired`, a lever's `pulled`). No scoring
+      system or new audio framework.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.

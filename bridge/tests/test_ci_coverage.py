@@ -75,9 +75,10 @@ NOT_A_SUITE = {"godot-import", "godot-integration",
                # technical fixture on its own review branch, probed the
                # same way and run by hand; not a Zone. The Impact Relay
                # (G1, D-18's room) likewise, and the weapon-feel range
-               # (the Static Pulse's firing-feedback experiment).
+               # (the Static Pulse's firing-feedback experiment) and its
+               # hand-cannon candidate.
                "godot-impact-lab", "godot-impact-relay",
-               "godot-weapon-feel"}
+               "godot-weapon-feel", "godot-hand-cannon"}
 
 
 #: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the

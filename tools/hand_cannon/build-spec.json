@@ -1,0 +1,76 @@
+{
+  "schema": "archipepsi-build-spec/1",
+  "title": "Hand-Cannon Candidate",
+  "executable": "Archipepsi-Hand-Cannon",
+  "description": "Heavy Report developed into a hand-cannon candidate (mode H): stronger physical recoil, a refined muzzle flash and light, a bullet streak instead of the white tracer, a slower cadence to try, and impacts by material. The four weapon-feel treatments stay as references. One fixed target and material test pieces; no enemies. Keys 1-5 switch; C changes H's cadence. Offline: nothing of yours is saved or changed.",
+  "limitations": [
+    "The hand-cannon model is a primitive placeholder; its art is Arty's.",
+    "Damage and balance are experimental: 6 a hit, the Static Pulse's, at H's slower cadence.",
+    "The Static Pulse itself is unchanged; H is a separate candidate in this range only."
+  ],
+  "modes": [
+    {
+      "id": "h",
+      "label": "Hand-Cannon candidate",
+      "args": [],
+      "description": "Starts in H, the hand-cannon candidate.",
+      "launchers": {
+        "windows": "1 - START HERE - Hand-Cannon candidate (Windows).bat",
+        "linux": "play-hand-cannon.sh"
+      }
+    },
+    {
+      "id": "baseline",
+      "label": "Reference: baseline Static Pulse",
+      "args": [
+        "--",
+        "--feel=baseline"
+      ],
+      "description": "Starts in the baseline: the Static Pulse exactly as it ships.",
+      "launchers": {
+        "windows": "2 - Reference, Baseline Static Pulse (Windows).bat",
+        "linux": "play-reference-baseline.sh"
+      }
+    },
+    {
+      "id": "a",
+      "label": "Reference: A Heavy report",
+      "args": [
+        "--",
+        "--feel=a"
+      ],
+      "description": "Starts in mode 2, Heavy Report, as delivered.",
+      "launchers": {
+        "windows": "3 - Reference, A Heavy report (Windows).bat",
+        "linux": "play-reference-a.sh"
+      }
+    },
+    {
+      "id": "b",
+      "label": "Reference: B Crisp snap",
+      "args": [
+        "--",
+        "--feel=b"
+      ],
+      "description": "Starts in mode 3, Crisp Snap, kept as a reference for other weapon types.",
+      "launchers": {
+        "windows": "4 - Reference, B Crisp snap (Windows).bat",
+        "linux": "play-reference-b.sh"
+      }
+    },
+    {
+      "id": "c",
+      "label": "Reference: C Echo resonance",
+      "args": [
+        "--",
+        "--feel=c"
+      ],
+      "description": "Starts in mode 4, Echo Resonance, kept as a reference for other weapon types.",
+      "launchers": {
+        "windows": "5 - Reference, C Echo resonance (Windows).bat",
+        "linux": "play-reference-c.sh"
+      }
+    }
+  ],
+  "recommended_mode": "h"
+}

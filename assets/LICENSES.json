@@ -36,7 +36,8 @@
       "godot/content/ui/",
       "godot/content/ways_out/",
       "tools/artpreview/",
-      "godot/candidate/crossing_kit/"
+      "godot/candidate/crossing_kit/",
+      "godot/tests/fixtures/sigmaudio_loader/"
     ]
   },
   "approved_licenses": {

@@ -91,6 +91,7 @@ func _run() -> void:
 			+ "different from one another")
 	_sound_table()
 	await _same_weapon()
+	await _hand_cannon(timelines["a"])
 	await _switching()
 	print("[feel] %s -- %d failure(s)" % ["PASS" if failures == 0 else "FAILED",
 			failures])
@@ -119,14 +120,15 @@ func _isolation_and_build() -> void:
 			"the range is an isolated review build")
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "no enemies")
 	var targets := get_tree().get_nodes_in_group(Damageable.GROUP)
-	_check(targets.size() == 1 and targets[0] == host.dummy, "one target, damageable: the Lab's dummy "
-			+ "at %s (%d damageable in the scene)" % [_v(host.dummy.global_position),
-			targets.size()])
+	_check(targets.size() == 2 and host.dummy in targets and host.gel in targets,
+			"two targets, damageable: the Lab's dummy at %s and H's gel block "
+			% _v(host.dummy.global_position) + "(%d damageable in the scene)"
+			% targets.size())
 	_check(host.bound and feel.default_feedback.is_valid(),
 			"the player's own shot feedback (Player._ready's handler) was found "
 			+ "and handed to the treatments")
 	_check(feel.current == WeaponFeel.requested_treatment()
-			or (WeaponFeel.requested_treatment() not in TF.IDS
+			or (WeaponFeel.requested_treatment() not in TF.ALL_IDS
 				and feel.current == "baseline"),
 			"the range starts in the treatment asked for (%s)" % feel.current)
 	_check(is_equal_approx(Constants.STATIC_PULSE_DAMAGE, 6.0)
@@ -525,11 +527,253 @@ static func _gaps(frames: Array) -> Array:
 	return gaps
 
 
+# ================================================= 5. the hand-cannon (H)
+
+const HC := preload("res://scripts/content/hand_cannon.gd")
+## H's spring channels at rest: metres for offsets, degrees otherwise.
+const HC_REST := {"back": 0.002, "lift": 0.002, "pitch": 0.2, "roll": 0.2,
+		"cam_lift": 0.001, "cam_roll": 0.05, "fov": 0.05}
+
+
+## The candidate developed from A: stronger, physical recoil that settles
+## before its next shot; the Pulse's white tracer replaced; the muzzle;
+## impacts by material; the slower cadences; the sound slots; and the
+## Pulse put back exactly when H is left.
+func _hand_cannon(a: Dictionary) -> void:
+	_phase("H · the hand-cannon candidate")
+	var hand: HandCannon = feel.hand
+	var t := await _hand_shot(hand)
+	var vm := _shape(t["vm_pos"], 0.002)
+	var rot := _shape(t["vm_rot"], 0.2)
+	var a_pos: float = _shape(a["vm_pos"], 0.001)["peak"]
+	var a_rot: float = _shape(a["vm_rot"], 0.05)["peak"]
+	_check(vm["peak"] > a_pos * 1.15 and rot["peak"] > a_rot * 1.15,
+			"recoil is stronger than Heavy Report's: %.3f m and %.1f degrees "
+			% [vm["peak"], rot["peak"]] + "(A: %.3f m, %.1f degrees)"
+			% [a_pos, a_rot])
+	_check(t["overshoot"] < -0.005,
+			"and physical: the spring carries the gun past rest (%.3f m "
+			% t["overshoot"] + "forward of it) before it settles")
+	var settled: int = t["settled"]
+	var next_shot := ceili(hand.cadence * FPS)
+	_check(settled > 0 and settled <= next_shot,
+			"every spring is at rest after %s, before the next shot at the "
+			% _ms(settled) + "default cadence (%.2f s)" % hand.cadence)
+	_check(_shape(t["aim"], 1e-4)["peak"] < 1e-4,
+			"the aim never moves (largest change %.6f degrees)"
+			% _shape(t["aim"], 0.0)["peak"])
+	_check(t["tracers_hidden"] == 1 and t["visible_tracers"] == 0
+			and t["streak"] > 0,
+			"the Pulse's white tracer is hidden (1) and the bullet streak "
+			+ "and smoke trail replace it")
+	var flame := _shape(t["flame"], 0.5)
+	var flash := _shape(t["flash"], 0.01)
+	_check(flame["at"] == 0 and flame["rest"] > 0 and flame["rest"] <= 3
+			and absf(flash["peak"] - HC.FLASH_ENERGY) < 1e-3
+			and flash["rest"] > 0
+			and flash["rest"] <= ceili(HC.FLASH_DECAY * FPS) + 2
+			and t["shadows"],
+			"muzzle: the flame for %s, the light at %.1f casting shadows, "
+			% [_ms(flame["rest"]), flash["peak"]] + "dark after %s"
+			% _ms(flash["rest"]))
+	_check(t["material"] == "metal" and t["marks"] == 1
+			and t["hit_after"] == 0 and is_equal_approx(t["damage"], 6.0),
+			"on the dummy: metal sparks and a hot-rimmed mark, the hit "
+			+ "confirmed on the shot's frame, 6 damage")
+	_note("cues: %s" % str(t["cues"]))
+	_check(t["cues"].size() >= 2 and t["cues"][0][0] == "fire"
+			and t["cues"][0][1] == 0 and t["cues"][0][2],
+			"the report starts on the shot's frame (%s)" % t["cues"][0][3])
+	# Materials.
+	var aims := {"metal": host.STEEL_AT + Vector3(0, 1.3, 0),
+			"wood": host.CRATE_AT + Vector3(0, 0.5, 0),
+			"flesh": host.GEL_AT + Vector3(0, 0.5, 0),
+			"stone": Vector3(-3.0, 2.5, -22.0)}
+	for kind in ["metal", "wood", "flesh", "stone"]:
+		var m := await _hand_material(hand, aims[kind])
+		var ok: bool = m["material"] == kind and m["impact"].ends_with(kind) \
+				and m["marked"]
+		if kind == "flesh":
+			ok = ok and m["gel_damage"] == 6.0 and m["jiggled"]
+		_check(ok, "%s: the ray meets %s; the impact reads %s, a mark stays"
+				% [kind, m["hit"], m["material"]] + (", the gel takes 6 and "
+				+ "jiggles" if kind == "flesh" else ""))
+	# Cadences: the same 6 a hit, at each.
+	var cadences_ok := true
+	var report := []
+	for cadence in HC.CADENCES:
+		hand.cadence = cadence
+		var run := await _hold_fire("h")
+		var gaps := _gaps(run["frames"])
+		var even := true
+		for gap in gaps:
+			even = even and gap == gaps[0] \
+					and absf(gap - cadence * FPS) <= 1.5
+		var six := true
+		for step in run["steps"]:
+			six = six and is_equal_approx(step, 6.0)
+		cadences_ok = cadences_ok and even and six and gaps.size() >= 1 \
+				and run["hits"] == run["frames"].size()
+		report.append("%.2f s: %d shots, gaps %s" % [cadence,
+				run["frames"].size(), str(gaps)])
+	hand.cadence = HC.DEFAULT_CADENCE
+	_check(cadences_ok, "cadence: one shot per %s, 6 a hit at each (%s)"
+			% [", ".join(HC.CADENCES.map(_secs)), "; ".join(report)])
+	# The sound slots: no new synthesis; placeholders are Heavy Report's.
+	var placeholders_are_a: bool = hand.source.get("fire") != "placeholder" \
+			or hand.streams["fire"][0] == feel.sounds["a_report"].stream
+	_note("cue sources: %s" % str(hand.source))
+	_check(placeholders_are_a and hand.streams.has("fire")
+			and hand.streams.has("hit_confirm"),
+			"every cue slot is SigmAudio's or, until it arrives, Heavy "
+			+ "Report's own sound; nothing new is synthesised")
+	hand.reload_cues("res://tests/fixtures/sigmaudio_loader")
+	var loaded: bool = hand.source["fire"] == "sigmaudio" \
+			and hand.streams["fire"].size() == 2 \
+			and hand.source["impact_metal"] == "sigmaudio" \
+			and hand.source["fire_tail"] == "missing" \
+			and hand.source["hit_confirm"] == "placeholder"
+	hand.reload_cues()
+	_check(loaded, "a SigmAudio folder drops in: fire_01/fire_02 fill the "
+			+ "report as two variants, impact_metal its slot, an unrelated "
+			+ "file is ignored, and the rest keep their placeholder")
+	# Leaving H puts the Pulse back exactly.
+	feel.select("baseline")
+	await _settle(2)
+	var vmn := body.viewmodel
+	var light: OmniLight3D = vmn.get_node("MuzzleFlash")
+	var device: Node3D = vmn.get_node("Device")
+	var cannon: Node3D = vmn.get_node("HandCannonModel")
+	var base := await _hold_fire("baseline")
+	var pulse_ok := true
+	for gap in _gaps(base["frames"]):
+		pulse_ok = pulse_ok and gap == 22
+	for step in base["steps"]:
+		pulse_ok = pulse_ok and is_equal_approx(step, 6.0)
+	_check(device.visible and not cannon.visible
+			and light.position.is_equal_approx(HC.PULSE_LIGHT_AT)
+			and not light.shadow_enabled
+			and is_equal_approx(light.omni_range, HC.PULSE_LIGHT_RANGE)
+			and body.fired_pulse.is_connected(feel.default_feedback)
+			and pulse_ok and hand.marks.is_empty(),
+			"leaving H restores the Static Pulse: its own transmitter, light "
+			+ "and feedback, and its own cadence (%s frames), 6 a hit"
+			% str(_gaps(base["frames"])))
+
+
+static func _secs(value: float) -> String:
+	return "%.2f s" % value
+
+
+func _hand_shot(hand: HandCannon) -> Dictionary:
+	feel.select("h")
+	host.recover()
+	await _settle(40)
+	_aim(AIM_TARGET)
+	await _settle(4)
+	var aim := -body.camera.global_basis.z
+	var log_from := hand.played.size()
+	var hidden := hand.tracers_hidden
+	var marks := hand.marks.size()
+	var absorbed := host.dummy.absorbed
+	_shot_frame = -1
+	_hit_frame = -1
+	body.fired_pulse.connect(_mark_shot)
+	body.hit_confirmed.connect(_mark_hit)
+	var t := {"vm_pos": [], "vm_rot": [], "flame": [], "flash": [], "aim": [],
+			"overshoot": 0.0, "visible_tracers": 0, "streak": 0}
+	var springs: Array = []
+	Input.action_press("fire_pulse")
+	for i in SAMPLE_FRAMES + 4:
+		await get_tree().process_frame
+		if i == 1:
+			Input.action_release("fire_pulse")
+		if _shot_frame < 0:
+			continue
+		var vm := body.viewmodel
+		t["vm_pos"].append((vm.position - HC.REST_POS).length())
+		t["vm_rot"].append((vm.rotation_degrees - HC.REST_ROT).length())
+		t["overshoot"] = minf(t["overshoot"], hand.spring("back").x)
+		t["flame"].append(1.0 if hand._flame.visible else 0.0)
+		t["flash"].append(hand._flash.light_energy)
+		t["aim"].append(rad_to_deg(aim.angle_to(-body.camera.global_basis.z)))
+		var at_rest := true
+		for channel in HC_REST:
+			at_rest = at_rest and absf(hand.spring(channel).x) < HC_REST[channel]
+		springs.append(0.0 if at_rest else 1.0)
+		if t["vm_pos"].size() <= 2:
+			for node in get_tree().current_scene.find_children("*", "Tracer",
+					true, false):
+				if (node as Node3D).visible:
+					t["visible_tracers"] += 1
+			if is_instance_valid(hand.last_streak):
+				t["streak"] += 1
+		if t["vm_pos"].size() >= SAMPLE_FRAMES:
+			break
+	body.fired_pulse.disconnect(_mark_shot)
+	body.hit_confirmed.disconnect(_mark_hit)
+	t["settled"] = _shape(springs, 0.5)["rest"]
+	t["tracers_hidden"] = hand.tracers_hidden - hidden
+	t["shadows"] = hand._flash.shadow_enabled
+	t["material"] = hand.last_material
+	t["marks"] = hand.marks.size() - marks
+	t["hit_after"] = _hit_frame - _shot_frame if _hit_frame >= 0 else -1
+	t["damage"] = host.dummy.absorbed - absorbed
+	t["cues"] = []
+	for entry in hand.played.slice(log_from):
+		t["cues"].append([entry[0], int(entry[1]) - _shot_frame, entry[2],
+				entry[3]])
+	return t
+
+
+func _hand_material(hand: HandCannon, at: Vector3) -> Dictionary:
+	feel.select("h")
+	host.recover()
+	await _settle(40)
+	_aim(at)
+	await _settle(4)
+	var ray := body.camera_ray(Constants.STATIC_PULSE_RANGE)
+	var collider: Node = ray.get("collider")
+	var marks := hand.marks.size()
+	var gel_before: float = host.gel.absorbed
+	Input.action_press("fire_pulse")
+	await _settle(2)
+	Input.action_release("fire_pulse")
+	await get_tree().process_frame
+	var impact := ""
+	if is_instance_valid(hand.last_impact):
+		impact = String(hand.last_impact.name)
+	var jiggled: bool = not host.gel.visual().scale.is_equal_approx(Vector3.ONE)
+	return {"material": hand.last_material, "impact": impact,
+			"marked": hand.marks.size() == marks + 1
+				or hand.marks.size() == HC.MAX_MARKS,
+			"hit": _block_of(collider), "jiggled": jiggled,
+			"gel_damage": host.gel.absorbed - gel_before}
+
+
+static func _block_of(node: Node) -> String:
+	while node != null and not (node is MeshInstance3D or node.has_meta(
+			"impact_material")):
+		node = node.get_parent()
+	return String(node.name) if node != null else "nothing"
+
+
 # ======================================================== 4. switching
 
 func _switching() -> void:
 	_phase("switching, pause and restart")
-	for entry in [[KEY_2, "a"], [KEY_3, "b"], [KEY_4, "c"], [KEY_1, "baseline"]]:
+	for entry in [[KEY_2, "a"], [KEY_3, "b"], [KEY_4, "c"], [KEY_5, "h"],
+			[KEY_1, "baseline"]]:
+		if entry[1] == "baseline":
+			# Still in H: C steps its cadence, and only there.
+			var before: float = feel.hand.cadence
+			await _key(KEY_C)
+			var stepped: float = feel.hand.cadence
+			await _key(KEY_C)
+			await _key(KEY_C)
+			_check(stepped != before and feel.hand.cadence == before,
+					"in H, C steps the cadence (%.2f -> %.2f s) and comes round "
+					% [before, stepped] + "again after three presses")
 		await _key(entry[0])
 		_check(feel.current == entry[1]
 				and host._which.text == TF.NAMES[entry[1]]
