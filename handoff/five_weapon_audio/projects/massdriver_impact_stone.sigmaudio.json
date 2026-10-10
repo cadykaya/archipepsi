@@ -1,0 +1,889 @@
+{
+  "schemaVersion": 33,
+  "appVersion": "0.1.0-alpha.1",
+  "id": "prj_000000001tehz6rv2eahkc",
+  "name": "Mass Driver impact stone",
+  "seed": "condi-five-weapon-massdriver_impact_stone",
+  "gameContext": {
+    "gameName": "",
+    "genre": "",
+    "sceneName": "Clockwork impact",
+    "targetEngine": "unsure",
+    "notes": "A metallic attack, a low body and a ringing tail."
+  },
+  "cues": [
+    {
+      "id": "cue_000000001qzhh9mdtb32h3",
+      "name": "Mass Driver impact stone",
+      "sceneId": "sfx:clockwork-impact",
+      "seed": "condi-five-weapon-massdriver_impact_stone",
+      "transport": {
+        "bpm": 600,
+        "meter": {
+          "beatsPerBar": 4,
+          "beatUnit": 4,
+          "subdivisionTree": [
+            2,
+            2,
+            2,
+            2
+          ]
+        },
+        "key": {
+          "tonic": 0,
+          "mode": "ionian"
+        },
+        "lengthBars": 4,
+        "phraseLengthBars": 4
+      },
+      "playback": {
+        "version": 1,
+        "mode": "one-shot",
+        "bodySeconds": 1.6,
+        "tailSeconds": 0.9
+      },
+      "plan": {
+        "affect": {
+          "valence": 0.24491866240370913,
+          "energy": 0.3234236872231392,
+          "tension": 0.08,
+          "groove": 0.40421952353632257,
+          "attentionBudget": 0.6
+        },
+        "attentionBudget": "normalGameplay",
+        "loopExposure": "shortEvent",
+        "tempoRange": [
+          92,
+          112
+        ],
+        "modePalette": [],
+        "timbrePalette": [
+          "electronic"
+        ],
+        "articulation": "normal",
+        "harmonyStrategy": "stableModalLoop",
+        "chordExtension": "seventh",
+        "intensityCurve": "steady",
+        "requestedLayers": [
+          "base",
+          "harmony"
+        ],
+        "requestedEvents": [],
+        "explanation": "This cue tends to feel relaxed, somewhere between bright and dark, and stays settled.",
+        "confidence": {
+          "energy": "high",
+          "tension": "high",
+          "valence": "low",
+          "palette": "high"
+        },
+        "answers": {
+          "playerAction": "menu",
+          "pressure": "none",
+          "world": [
+            "electronic"
+          ],
+          "busyness": "verySparse"
+        }
+      },
+      "tracks": [
+        {
+          "id": "trk_0000000001dd03rgpnyhhx",
+          "name": "Chip crack (concert snare)",
+          "role": "drums",
+          "instrumentId": "orchKit",
+          "layerId": null,
+          "mix": {
+            "gainDb": 4,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "effects": [
+            {
+              "id": "chip-crack-concert-snare--fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "highpass",
+              "frequencyHz": 300,
+              "q": 1,
+              "wet": 1,
+              "outputGainDb": 0
+            },
+            {
+              "id": "chip-crack-concert-snare--fx1",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "lowpass",
+              "frequencyHz": 4500,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            },
+            {
+              "id": "chip-crack-concert-snare--fx2",
+              "bypass": false,
+              "kind": "saturation",
+              "character": "soft",
+              "driveDb": 8,
+              "wet": 0.5,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_0000000005m62w8qdcha4b",
+          "name": "Chip knock (claves)",
+          "role": "drums",
+          "instrumentId": "clockworkKit",
+          "layerId": null,
+          "mix": {
+            "gainDb": 2,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "effects": [
+            {
+              "id": "chip-knock-claves--fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "lowpass",
+              "frequencyHz": 3000,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_00000000097mmzg6w5mym8",
+          "name": "Chip click",
+          "role": "drums",
+          "instrumentId": "stingKit",
+          "layerId": null,
+          "mix": {
+            "gainDb": -2,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "effects": [
+            {
+              "id": "chip-click-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "lowpass",
+              "frequencyHz": 5000,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_000000000d2m7g9xa1zbk4",
+          "name": "Dull thud",
+          "role": "bass",
+          "instrumentId": "driveBass",
+          "layerId": null,
+          "mix": {
+            "gainDb": -1,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 1,
+            "attack": 0.001,
+            "decay": 0.05,
+            "sustain": 0,
+            "release": 0.04,
+            "brightnessOctaves": -0.3,
+            "resonance": 1
+          },
+          "effects": [
+            {
+              "id": "dull-thud-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "highpass",
+              "frequencyHz": 60,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            },
+            {
+              "id": "dull-thud-fx1",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "lowpass",
+              "frequencyHz": 700,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_000000000s70a8q8gqesh3",
+          "name": "Debris patter",
+          "role": "bass",
+          "instrumentId": "windNoise",
+          "layerId": null,
+          "mix": {
+            "gainDb": -2,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 1,
+            "attack": 0,
+            "decay": 0.008,
+            "sustain": 0,
+            "release": 0.008,
+            "brightnessOctaves": 1,
+            "resonance": 0.5
+          },
+          "effects": [
+            {
+              "id": "debris-patter-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "bandpass",
+              "frequencyHz": 1500,
+              "q": 0.7,
+              "wet": 1,
+              "outputGainDb": 0
+            },
+            {
+              "id": "debris-patter-fx1",
+              "bypass": false,
+              "kind": "saturation",
+              "character": "hard",
+              "driveDb": 6,
+              "wet": 0.5,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_000000000xb5xh3v890dv3",
+          "name": "Dust puff",
+          "role": "bass",
+          "instrumentId": "waterNoise",
+          "layerId": null,
+          "mix": {
+            "gainDb": 14,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 1,
+            "attack": 0.01,
+            "decay": 0.35,
+            "sustain": 0,
+            "release": 0.15,
+            "brightnessOctaves": -0.5,
+            "resonance": 0.7
+          },
+          "effects": [
+            {
+              "id": "dust-puff-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "lowpass",
+              "frequencyHz": 1800,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            },
+            {
+              "id": "dust-puff-fx1",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "highpass",
+              "frequencyHz": 150,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_00000000115g50qc5ex0z7",
+          "name": "Driver: slug slam",
+          "role": "bass",
+          "instrumentId": "subBass",
+          "layerId": null,
+          "mix": {
+            "gainDb": 5,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 1,
+            "attack": 0.001,
+            "decay": 0.14,
+            "sustain": 0,
+            "release": 0.08,
+            "brightnessOctaves": 0,
+            "resonance": 1
+          },
+          "effects": [
+            {
+              "id": "driver-slug-slam-fx0",
+              "bypass": false,
+              "kind": "saturation",
+              "character": "soft",
+              "driveDb": 10,
+              "wet": 0.5,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_0000000015hn4j8wa4a90j",
+          "name": "Driver: rubble rumble (residual)",
+          "role": "bass",
+          "instrumentId": "waterNoise",
+          "layerId": null,
+          "mix": {
+            "gainDb": 10,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 1,
+            "attack": 0.02,
+            "decay": 0.6,
+            "sustain": 0,
+            "release": 0.25,
+            "brightnessOctaves": -1.5,
+            "resonance": 0.7
+          },
+          "effects": [
+            {
+              "id": "driver-rubble-rumble-residual--fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "lowpass",
+              "frequencyHz": 500,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            },
+            {
+              "id": "driver-rubble-rumble-residual--fx1",
+              "bypass": false,
+              "kind": "saturation",
+              "character": "soft",
+              "driveDb": 6,
+              "wet": 0.4,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_000000001m1q4q2zbwckgj",
+          "name": "Driver: falling chips",
+          "role": "bass",
+          "instrumentId": "windNoise",
+          "layerId": null,
+          "mix": {
+            "gainDb": -6,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 1,
+            "attack": 0,
+            "decay": 0.01,
+            "sustain": 0,
+            "release": 0.01,
+            "brightnessOctaves": 1,
+            "resonance": 0.5
+          },
+          "effects": [
+            {
+              "id": "driver-falling-chips-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "bandpass",
+              "frequencyHz": 1300,
+              "q": 0.7,
+              "wet": 1,
+              "outputGainDb": 0
+            }
+          ]
+        }
+      ],
+      "patterns": [
+        {
+          "id": "pat_0000000002mg1n71py8emg",
+          "lengthSteps": 64,
+          "notes": [
+            {
+              "id": "nte_0000000000frdfksjefrqc",
+              "startStep": 41,
+              "lengthSteps": 1,
+              "pitch": 38,
+              "velocity": 120,
+              "microOffsetTicks": 95
+            }
+          ]
+        },
+        {
+          "id": "pat_00000000061avqkdqw931w",
+          "lengthSteps": 64,
+          "notes": [
+            {
+              "id": "nte_0000000004jznftbj23gy0",
+              "startStep": 41,
+              "lengthSteps": 1,
+              "pitch": 42,
+              "velocity": 90,
+              "microOffsetTicks": 112
+            }
+          ]
+        },
+        {
+          "id": "pat_000000000aqx392wqy4tx9",
+          "lengthSteps": 64,
+          "notes": [
+            {
+              "id": "nte_0000000008ppzrd9szybb0",
+              "startStep": 41,
+              "lengthSteps": 1,
+              "pitch": 42,
+              "velocity": 120,
+              "microOffsetTicks": 115
+            }
+          ]
+        },
+        {
+          "id": "pat_000000000esahgw0rsdqxw",
+          "lengthSteps": 64,
+          "notes": [
+            {
+              "id": "nte_000000000cgacm9tp7txrz",
+              "startStep": 42,
+              "lengthSteps": 2,
+              "pitch": 40,
+              "velocity": 120,
+              "microOffsetTicks": 0
+            }
+          ]
+        },
+        {
+          "id": "pat_000000000tvy6qgnqms20s",
+          "lengthSteps": 64,
+          "notes": [
+            {
+              "id": "nte_000000000gdwtxd0b6zcd5",
+              "startStep": 43,
+              "lengthSteps": 1,
+              "pitch": 47,
+              "velocity": 112,
+              "microOffsetTicks": 24
+            },
+            {
+              "id": "nte_000000000hkytd6s78nbsz",
+              "startStep": 43,
+              "lengthSteps": 1,
+              "pitch": 62,
+              "velocity": 106,
+              "microOffsetTicks": 24
+            },
+            {
+              "id": "nte_000000000jkrycc7y0cnxv",
+              "startStep": 43,
+              "lengthSteps": 1,
+              "pitch": 62,
+              "velocity": 99,
+              "microOffsetTicks": 78
+            },
+            {
+              "id": "nte_000000000kt113pj8zt2w1",
+              "startStep": 45,
+              "lengthSteps": 1,
+              "pitch": 46,
+              "velocity": 93,
+              "microOffsetTicks": 110
+            },
+            {
+              "id": "nte_000000000m2kcvkcw3k422",
+              "startStep": 46,
+              "lengthSteps": 1,
+              "pitch": 53,
+              "velocity": 86,
+              "microOffsetTicks": 105
+            },
+            {
+              "id": "nte_000000000ng9063y0vwbct",
+              "startStep": 49,
+              "lengthSteps": 1,
+              "pitch": 65,
+              "velocity": 80,
+              "microOffsetTicks": 93
+            },
+            {
+              "id": "nte_000000000pjpzscc24nycx",
+              "startStep": 52,
+              "lengthSteps": 1,
+              "pitch": 53,
+              "velocity": 73,
+              "microOffsetTicks": 19
+            },
+            {
+              "id": "nte_000000000qw5vbjpqhv85y",
+              "startStep": 53,
+              "lengthSteps": 1,
+              "pitch": 65,
+              "velocity": 67,
+              "microOffsetTicks": 68
+            },
+            {
+              "id": "nte_000000000rashxck86nkjn",
+              "startStep": 57,
+              "lengthSteps": 1,
+              "pitch": 61,
+              "velocity": 60,
+              "microOffsetTicks": 16
+            }
+          ]
+        },
+        {
+          "id": "pat_000000000yyj01f7ka8py9",
+          "lengthSteps": 64,
+          "notes": [
+            {
+              "id": "nte_000000000ws0xbhwm60hv2",
+              "startStep": 42,
+              "lengthSteps": 12,
+              "pitch": 72,
+              "velocity": 90,
+              "microOffsetTicks": 24
+            }
+          ]
+        },
+        {
+          "id": "pat_0000000012mrq3g5qk9shx",
+          "lengthSteps": 64,
+          "notes": [
+            {
+              "id": "nte_0000000010vv8mwb37ptc4",
+              "startStep": 42,
+              "lengthSteps": 7,
+              "pitch": 31,
+              "velocity": 127,
+              "microOffsetTicks": 0
+            }
+          ]
+        },
+        {
+          "id": "pat_0000000016q205r4dr57t0",
+          "lengthSteps": 64,
+          "notes": [
+            {
+              "id": "nte_0000000014v17wxfzjxza9",
+              "startStep": 42,
+              "lengthSteps": 20,
+              "pitch": 48,
+              "velocity": 110,
+              "microOffsetTicks": 96
+            }
+          ]
+        },
+        {
+          "id": "pat_000000001nt0w408sv1efe",
+          "lengthSteps": 64,
+          "notes": [
+            {
+              "id": "nte_00000000180rphjw4pwy3e",
+              "startStep": 46,
+              "lengthSteps": 1,
+              "pitch": 54,
+              "velocity": 100,
+              "microOffsetTicks": 96
+            },
+            {
+              "id": "nte_0000000019fdzs43pqbsyb",
+              "startStep": 48,
+              "lengthSteps": 1,
+              "pitch": 61,
+              "velocity": 95,
+              "microOffsetTicks": 28
+            },
+            {
+              "id": "nte_000000001aw23namfsj8vx",
+              "startStep": 48,
+              "lengthSteps": 1,
+              "pitch": 50,
+              "velocity": 91,
+              "microOffsetTicks": 95
+            },
+            {
+              "id": "nte_000000001bqc2s2dpe7tyt",
+              "startStep": 50,
+              "lengthSteps": 1,
+              "pitch": 63,
+              "velocity": 86,
+              "microOffsetTicks": 109
+            },
+            {
+              "id": "nte_000000001ce9gr619aynz0",
+              "startStep": 51,
+              "lengthSteps": 1,
+              "pitch": 63,
+              "velocity": 82,
+              "microOffsetTicks": 96
+            },
+            {
+              "id": "nte_000000001dqbxhrzp9m8v4",
+              "startStep": 53,
+              "lengthSteps": 1,
+              "pitch": 61,
+              "velocity": 77,
+              "microOffsetTicks": 65
+            },
+            {
+              "id": "nte_000000001e154wr0h2ed8a",
+              "startStep": 54,
+              "lengthSteps": 1,
+              "pitch": 48,
+              "velocity": 73,
+              "microOffsetTicks": 76
+            },
+            {
+              "id": "nte_000000001f52yf3jvxf6p0",
+              "startStep": 55,
+              "lengthSteps": 1,
+              "pitch": 47,
+              "velocity": 68,
+              "microOffsetTicks": 108
+            },
+            {
+              "id": "nte_000000001g30xz6nxs03sv",
+              "startStep": 58,
+              "lengthSteps": 1,
+              "pitch": 49,
+              "velocity": 64,
+              "microOffsetTicks": 21
+            },
+            {
+              "id": "nte_000000001hhe8e96e4nx5d",
+              "startStep": 59,
+              "lengthSteps": 1,
+              "pitch": 49,
+              "velocity": 59,
+              "microOffsetTicks": 104
+            },
+            {
+              "id": "nte_000000001jyxrtn2yc7t36",
+              "startStep": 62,
+              "lengthSteps": 1,
+              "pitch": 58,
+              "velocity": 55,
+              "microOffsetTicks": 44
+            },
+            {
+              "id": "nte_000000001k1760jh50kkty",
+              "startStep": 63,
+              "lengthSteps": 1,
+              "pitch": 52,
+              "velocity": 50,
+              "microOffsetTicks": 89
+            }
+          ]
+        }
+      ],
+      "clips": [
+        {
+          "id": "clp_00000000036n2my2szk9v1",
+          "trackId": "trk_0000000001dd03rgpnyhhx",
+          "patternId": "pat_0000000002mg1n71py8emg",
+          "startStep": 0,
+          "lengthSteps": 64,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_00000000070evvfzcfcpzj",
+          "trackId": "trk_0000000005m62w8qdcha4b",
+          "patternId": "pat_00000000061avqkdqw931w",
+          "startStep": 0,
+          "lengthSteps": 64,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000bvjk322n20vt5",
+          "trackId": "trk_00000000097mmzg6w5mym8",
+          "patternId": "pat_000000000aqx392wqy4tx9",
+          "startStep": 0,
+          "lengthSteps": 64,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000fjvv5z2dcj6s0",
+          "trackId": "trk_000000000d2m7g9xa1zbk4",
+          "patternId": "pat_000000000esahgw0rsdqxw",
+          "startStep": 0,
+          "lengthSteps": 64,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000vjj169a5tffxs",
+          "trackId": "trk_000000000s70a8q8gqesh3",
+          "patternId": "pat_000000000tvy6qgnqms20s",
+          "startStep": 0,
+          "lengthSteps": 64,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000zkpbredcvzmgg",
+          "trackId": "trk_000000000xb5xh3v890dv3",
+          "patternId": "pat_000000000yyj01f7ka8py9",
+          "startStep": 0,
+          "lengthSteps": 64,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_00000000135apk4qzasgsz",
+          "trackId": "trk_00000000115g50qc5ex0z7",
+          "patternId": "pat_0000000012mrq3g5qk9shx",
+          "startStep": 0,
+          "lengthSteps": 64,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_0000000017gmn0fretvsm7",
+          "trackId": "trk_0000000015hn4j8wa4a90j",
+          "patternId": "pat_0000000016q205r4dr57t0",
+          "startStep": 0,
+          "lengthSteps": 64,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000001pff9dcj2ky44w",
+          "trackId": "trk_000000001m1q4q2zbwckgj",
+          "patternId": "pat_000000001nt0w408sv1efe",
+          "startStep": 0,
+          "lengthSteps": 64,
+          "transposeSteps": 0,
+          "mute": false
+        }
+      ],
+      "phrases": [
+        {
+          "id": "phr_000000001r8zgbd9bga0ax",
+          "startBar": 0,
+          "lengthBars": 4,
+          "role": "statement"
+        }
+      ],
+      "arrangement": [
+        {
+          "id": "sec_000000001sdr1h58jh17y6",
+          "name": "Event",
+          "kind": "loop",
+          "startBar": 0,
+          "lengthBars": 4,
+          "repeat": 0
+        }
+      ],
+      "adaptive": {
+        "baseStateId": "sta_000000000actezzxa5rs93",
+        "layers": [],
+        "states": [
+          {
+            "id": "sta_000000000actezzxa5rs93",
+            "name": "Event",
+            "activeLayerIds": [],
+            "mixSnapshotId": null
+          }
+        ],
+        "parameters": [],
+        "events": [],
+        "transitions": [],
+        "stingers": [],
+        "mixSnapshots": []
+      },
+      "review": {
+        "status": "draft",
+        "feedback": [],
+        "proposals": [],
+        "revisions": [],
+        "approvedAt": null
+      },
+      "updatedAt": "2026-10-10T00:00:00.000Z",
+      "mixer": {
+        "buses": [],
+        "master": {
+          "gainDb": -7,
+          "pan": 0,
+          "mute": false,
+          "effects": [
+            {
+              "id": "master-fx0",
+              "bypass": false,
+              "kind": "compressor",
+              "thresholdDb": -12,
+              "kneeDb": 6,
+              "ratio": 4,
+              "attackSeconds": 0.001,
+              "releaseSeconds": 0.14,
+              "outputGainDb": 2
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "defaults": {
+    "bpm": 120,
+    "meter": {
+      "beatsPerBar": 4,
+      "beatUnit": 4,
+      "subdivisionTree": [
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    "key": {
+      "tonic": 0,
+      "mode": "ionian"
+    }
+  }
+}

@@ -1,0 +1,778 @@
+{
+  "schemaVersion": 33,
+  "appVersion": "0.1.0-alpha.1",
+  "id": "prj_00000000205ytsbprthgp1",
+  "name": "Mass Driver charge held",
+  "seed": "condi-five-weapon-massdriver_charge_hold",
+  "gameContext": {
+    "gameName": "",
+    "genre": "",
+    "sceneName": "Clockwork impact",
+    "targetEngine": "unsure",
+    "notes": "A metallic attack, a low body and a ringing tail."
+  },
+  "cues": [
+    {
+      "id": "cue_000000001x5za9p02f9ypw",
+      "name": "Mass Driver charge held",
+      "sceneId": "sfx:clockwork-impact",
+      "seed": "condi-five-weapon-massdriver_charge_hold",
+      "transport": {
+        "bpm": 600,
+        "meter": {
+          "beatsPerBar": 4,
+          "beatUnit": 4,
+          "subdivisionTree": [
+            2,
+            2,
+            2,
+            2
+          ]
+        },
+        "key": {
+          "tonic": 0,
+          "mode": "ionian"
+        },
+        "lengthBars": 12,
+        "phraseLengthBars": 12
+      },
+      "playback": {
+        "version": 1,
+        "mode": "one-shot",
+        "bodySeconds": 4.6,
+        "tailSeconds": 0.1
+      },
+      "plan": {
+        "affect": {
+          "valence": 0.24491866240370913,
+          "energy": 0.3234236872231392,
+          "tension": 0.08,
+          "groove": 0.40421952353632257,
+          "attentionBudget": 0.6
+        },
+        "attentionBudget": "normalGameplay",
+        "loopExposure": "shortEvent",
+        "tempoRange": [
+          92,
+          112
+        ],
+        "modePalette": [],
+        "timbrePalette": [
+          "electronic"
+        ],
+        "articulation": "normal",
+        "harmonyStrategy": "stableModalLoop",
+        "chordExtension": "seventh",
+        "intensityCurve": "steady",
+        "requestedLayers": [
+          "base",
+          "harmony"
+        ],
+        "requestedEvents": [],
+        "explanation": "This cue tends to feel relaxed, somewhere between bright and dark, and stays settled.",
+        "confidence": {
+          "energy": "high",
+          "tension": "high",
+          "valence": "low",
+          "palette": "high"
+        },
+        "answers": {
+          "playerAction": "menu",
+          "pressure": "none",
+          "world": [
+            "electronic"
+          ],
+          "busyness": "verySparse"
+        }
+      },
+      "tracks": [
+        {
+          "id": "trk_0000000001w7phesp4rxaw",
+          "name": "Hum",
+          "role": "bass",
+          "instrumentId": "darkDrone",
+          "layerId": null,
+          "mix": {
+            "gainDb": 8,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 2,
+            "attack": 0.05,
+            "decay": 0.1,
+            "sustain": 1,
+            "release": 0.08,
+            "brightnessOctaves": 0.5,
+            "resonance": 3,
+            "modulation": {
+              "waveform": "triangle",
+              "rateHz": 15,
+              "pitchCents": 0,
+              "tremolo": 0.45,
+              "filterOctaves": 0.6
+            }
+          },
+          "effects": [
+            {
+              "id": "hum-fx0",
+              "bypass": false,
+              "kind": "saturation",
+              "character": "soft",
+              "driveDb": 8,
+              "wet": 0.5,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_0000000005k4s3qs90jswm",
+          "name": "Held whine",
+          "role": "bass",
+          "instrumentId": "supersaw",
+          "layerId": null,
+          "mix": {
+            "gainDb": -6,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 2,
+            "attack": 0.05,
+            "decay": 0.1,
+            "sustain": 0.8,
+            "release": 0.05,
+            "brightnessOctaves": 0.4,
+            "resonance": 2,
+            "modulation": {
+              "waveform": "sine",
+              "rateHz": 10,
+              "pitchCents": 30,
+              "tremolo": 0.15,
+              "filterOctaves": 0
+            }
+          },
+          "effects": [
+            {
+              "id": "held-whine-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "highpass",
+              "frequencyHz": 600,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            },
+            {
+              "id": "held-whine-fx1",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "lowpass",
+              "frequencyHz": 7000,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_000000001t955fef3nrv86",
+          "name": "Electric crackle",
+          "role": "bass",
+          "instrumentId": "windNoise",
+          "layerId": null,
+          "mix": {
+            "gainDb": -10,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 1,
+            "attack": 0,
+            "decay": 0.006,
+            "sustain": 0,
+            "release": 0.006,
+            "brightnessOctaves": 3,
+            "resonance": 0.5
+          },
+          "effects": [
+            {
+              "id": "electric-crackle-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "highpass",
+              "frequencyHz": 3500,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            },
+            {
+              "id": "electric-crackle-fx1",
+              "bypass": false,
+              "kind": "saturation",
+              "character": "hard",
+              "driveDb": 14,
+              "wet": 0.7,
+              "outputGainDb": 0
+            }
+          ]
+        }
+      ],
+      "patterns": [
+        {
+          "id": "pat_00000000024sb5hez40ye7",
+          "lengthSteps": 192,
+          "notes": [
+            {
+              "id": "nte_0000000000hs18ajxnbga8",
+              "startStep": 42,
+              "lengthSteps": 144,
+              "pitch": 33,
+              "velocity": 110,
+              "microOffsetTicks": 0
+            }
+          ]
+        },
+        {
+          "id": "pat_00000000062zsac1arkeq2",
+          "lengthSteps": 192,
+          "notes": [
+            {
+              "id": "nte_0000000004p4r6m99q18t4",
+              "startStep": 42,
+              "lengthSteps": 144,
+              "pitch": 81,
+              "velocity": 110,
+              "microOffsetTicks": 0
+            }
+          ]
+        },
+        {
+          "id": "pat_000000001vt2s08nwc5zjq",
+          "lengthSteps": 192,
+          "notes": [
+            {
+              "id": "nte_0000000008qn4c6k804prh",
+              "startStep": 42,
+              "lengthSteps": 1,
+              "pitch": 99,
+              "velocity": 104,
+              "microOffsetTicks": 96
+            },
+            {
+              "id": "nte_000000000914gxn9z1437z",
+              "startStep": 45,
+              "lengthSteps": 1,
+              "pitch": 97,
+              "velocity": 104,
+              "microOffsetTicks": 27
+            },
+            {
+              "id": "nte_000000000axawsvdsgpr1m",
+              "startStep": 49,
+              "lengthSteps": 1,
+              "pitch": 106,
+              "velocity": 105,
+              "microOffsetTicks": 10
+            },
+            {
+              "id": "nte_000000000b6b79vbzjdt4v",
+              "startStep": 50,
+              "lengthSteps": 1,
+              "pitch": 105,
+              "velocity": 105,
+              "microOffsetTicks": 20
+            },
+            {
+              "id": "nte_000000000cpzz9ndgqjwq4",
+              "startStep": 53,
+              "lengthSteps": 1,
+              "pitch": 99,
+              "velocity": 105,
+              "microOffsetTicks": 7
+            },
+            {
+              "id": "nte_000000000dr18z8eqfbpa9",
+              "startStep": 57,
+              "lengthSteps": 1,
+              "pitch": 99,
+              "velocity": 106,
+              "microOffsetTicks": 97
+            },
+            {
+              "id": "nte_000000000e64qtnnrj8mr0",
+              "startStep": 59,
+              "lengthSteps": 1,
+              "pitch": 100,
+              "velocity": 106,
+              "microOffsetTicks": 54
+            },
+            {
+              "id": "nte_000000000fz329z9edq1r5",
+              "startStep": 62,
+              "lengthSteps": 1,
+              "pitch": 104,
+              "velocity": 107,
+              "microOffsetTicks": 88
+            },
+            {
+              "id": "nte_000000000gpm57bxrd31w0",
+              "startStep": 65,
+              "lengthSteps": 1,
+              "pitch": 102,
+              "velocity": 107,
+              "microOffsetTicks": 27
+            },
+            {
+              "id": "nte_000000000h5f0hjr5ks8cm",
+              "startStep": 68,
+              "lengthSteps": 1,
+              "pitch": 101,
+              "velocity": 107,
+              "microOffsetTicks": 100
+            },
+            {
+              "id": "nte_000000000j7scws9xdgf3a",
+              "startStep": 70,
+              "lengthSteps": 1,
+              "pitch": 105,
+              "velocity": 108,
+              "microOffsetTicks": 20
+            },
+            {
+              "id": "nte_000000000kbf61vfg4jvpj",
+              "startStep": 74,
+              "lengthSteps": 1,
+              "pitch": 96,
+              "velocity": 108,
+              "microOffsetTicks": 97
+            },
+            {
+              "id": "nte_000000000mtrm1q8zc96qv",
+              "startStep": 76,
+              "lengthSteps": 1,
+              "pitch": 98,
+              "velocity": 108,
+              "microOffsetTicks": 41
+            },
+            {
+              "id": "nte_000000000nb4n4h52s547e",
+              "startStep": 79,
+              "lengthSteps": 1,
+              "pitch": 97,
+              "velocity": 109,
+              "microOffsetTicks": 113
+            },
+            {
+              "id": "nte_000000000p6n3kq90bgbq6",
+              "startStep": 82,
+              "lengthSteps": 1,
+              "pitch": 107,
+              "velocity": 109,
+              "microOffsetTicks": 22
+            },
+            {
+              "id": "nte_000000000qgw7fh5tyqy86",
+              "startStep": 86,
+              "lengthSteps": 1,
+              "pitch": 105,
+              "velocity": 110,
+              "microOffsetTicks": 32
+            },
+            {
+              "id": "nte_000000000r98wq5ms56s61",
+              "startStep": 89,
+              "lengthSteps": 1,
+              "pitch": 97,
+              "velocity": 110,
+              "microOffsetTicks": 66
+            },
+            {
+              "id": "nte_000000000sm0ew4vn3rwke",
+              "startStep": 90,
+              "lengthSteps": 1,
+              "pitch": 105,
+              "velocity": 110,
+              "microOffsetTicks": 85
+            },
+            {
+              "id": "nte_000000000t74pc6w66x7v2",
+              "startStep": 92,
+              "lengthSteps": 1,
+              "pitch": 99,
+              "velocity": 111,
+              "microOffsetTicks": 76
+            },
+            {
+              "id": "nte_000000000vh1d0y8f8wwtb",
+              "startStep": 97,
+              "lengthSteps": 1,
+              "pitch": 98,
+              "velocity": 111,
+              "microOffsetTicks": 93
+            },
+            {
+              "id": "nte_000000000w7dx85hk7zg6e",
+              "startStep": 99,
+              "lengthSteps": 1,
+              "pitch": 106,
+              "velocity": 111,
+              "microOffsetTicks": 1
+            },
+            {
+              "id": "nte_000000000x6nmbgx7h57kw",
+              "startStep": 103,
+              "lengthSteps": 1,
+              "pitch": 107,
+              "velocity": 112,
+              "microOffsetTicks": 19
+            },
+            {
+              "id": "nte_000000000ybc173cmdy8nb",
+              "startStep": 105,
+              "lengthSteps": 1,
+              "pitch": 98,
+              "velocity": 112,
+              "microOffsetTicks": 111
+            },
+            {
+              "id": "nte_000000000zxrs1acw335f4",
+              "startStep": 108,
+              "lengthSteps": 1,
+              "pitch": 103,
+              "velocity": 112,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_0000000010pcfgnkeb18rk",
+              "startStep": 111,
+              "lengthSteps": 1,
+              "pitch": 101,
+              "velocity": 113,
+              "microOffsetTicks": 21
+            },
+            {
+              "id": "nte_00000000110jffeajpz8a3",
+              "startStep": 113,
+              "lengthSteps": 1,
+              "pitch": 103,
+              "velocity": 113,
+              "microOffsetTicks": 16
+            },
+            {
+              "id": "nte_0000000012p8yaar8gf2nn",
+              "startStep": 116,
+              "lengthSteps": 1,
+              "pitch": 97,
+              "velocity": 114,
+              "microOffsetTicks": 64
+            },
+            {
+              "id": "nte_00000000133demz5q94d62",
+              "startStep": 120,
+              "lengthSteps": 1,
+              "pitch": 98,
+              "velocity": 114,
+              "microOffsetTicks": 27
+            },
+            {
+              "id": "nte_0000000014r11s1fpedq12",
+              "startStep": 121,
+              "lengthSteps": 1,
+              "pitch": 104,
+              "velocity": 114,
+              "microOffsetTicks": 6
+            },
+            {
+              "id": "nte_00000000157rdcprytafdx",
+              "startStep": 124,
+              "lengthSteps": 1,
+              "pitch": 103,
+              "velocity": 115,
+              "microOffsetTicks": 109
+            },
+            {
+              "id": "nte_00000000163pz9dg20m44h",
+              "startStep": 127,
+              "lengthSteps": 1,
+              "pitch": 108,
+              "velocity": 115,
+              "microOffsetTicks": 49
+            },
+            {
+              "id": "nte_0000000017n4gb3e2kywkq",
+              "startStep": 129,
+              "lengthSteps": 1,
+              "pitch": 98,
+              "velocity": 115,
+              "microOffsetTicks": 105
+            },
+            {
+              "id": "nte_0000000018b067n8ba9724",
+              "startStep": 132,
+              "lengthSteps": 1,
+              "pitch": 102,
+              "velocity": 116,
+              "microOffsetTicks": 51
+            },
+            {
+              "id": "nte_00000000193c76371g2535",
+              "startStep": 135,
+              "lengthSteps": 1,
+              "pitch": 100,
+              "velocity": 116,
+              "microOffsetTicks": 112
+            },
+            {
+              "id": "nte_000000001ay7ekaxsa330v",
+              "startStep": 140,
+              "lengthSteps": 1,
+              "pitch": 102,
+              "velocity": 116,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_000000001b8r6jec0vqh5g",
+              "startStep": 141,
+              "lengthSteps": 1,
+              "pitch": 103,
+              "velocity": 117,
+              "microOffsetTicks": 48
+            },
+            {
+              "id": "nte_000000001cvj41ye4yr5gj",
+              "startStep": 144,
+              "lengthSteps": 1,
+              "pitch": 103,
+              "velocity": 117,
+              "microOffsetTicks": 26
+            },
+            {
+              "id": "nte_000000001dr93906v4ewwt",
+              "startStep": 147,
+              "lengthSteps": 1,
+              "pitch": 98,
+              "velocity": 118,
+              "microOffsetTicks": 71
+            },
+            {
+              "id": "nte_000000001ey5k19c0psyyq",
+              "startStep": 149,
+              "lengthSteps": 1,
+              "pitch": 104,
+              "velocity": 118,
+              "microOffsetTicks": 66
+            },
+            {
+              "id": "nte_000000001fqwn8qq8nha0m",
+              "startStep": 154,
+              "lengthSteps": 1,
+              "pitch": 96,
+              "velocity": 118,
+              "microOffsetTicks": 112
+            },
+            {
+              "id": "nte_000000001gjx1m47w8746z",
+              "startStep": 155,
+              "lengthSteps": 1,
+              "pitch": 100,
+              "velocity": 119,
+              "microOffsetTicks": 91
+            },
+            {
+              "id": "nte_000000001hvk948xhespkv",
+              "startStep": 160,
+              "lengthSteps": 1,
+              "pitch": 100,
+              "velocity": 119,
+              "microOffsetTicks": 12
+            },
+            {
+              "id": "nte_000000001jky4xnqaamjv3",
+              "startStep": 161,
+              "lengthSteps": 1,
+              "pitch": 108,
+              "velocity": 119,
+              "microOffsetTicks": 73
+            },
+            {
+              "id": "nte_000000001kt2wwv4gj3pbn",
+              "startStep": 165,
+              "lengthSteps": 1,
+              "pitch": 104,
+              "velocity": 120,
+              "microOffsetTicks": 12
+            },
+            {
+              "id": "nte_000000001m379pqgbqh2jr",
+              "startStep": 168,
+              "lengthSteps": 1,
+              "pitch": 96,
+              "velocity": 120,
+              "microOffsetTicks": 90
+            },
+            {
+              "id": "nte_000000001n6q1mqxpff4rv",
+              "startStep": 171,
+              "lengthSteps": 1,
+              "pitch": 101,
+              "velocity": 121,
+              "microOffsetTicks": 5
+            },
+            {
+              "id": "nte_000000001p3gtwvvheqe4m",
+              "startStep": 172,
+              "lengthSteps": 1,
+              "pitch": 101,
+              "velocity": 121,
+              "microOffsetTicks": 65
+            },
+            {
+              "id": "nte_000000001qkt80tk8655gt",
+              "startStep": 177,
+              "lengthSteps": 1,
+              "pitch": 102,
+              "velocity": 121,
+              "microOffsetTicks": 50
+            },
+            {
+              "id": "nte_000000001r37jnsxmjp83s",
+              "startStep": 180,
+              "lengthSteps": 1,
+              "pitch": 103,
+              "velocity": 122,
+              "microOffsetTicks": 52
+            },
+            {
+              "id": "nte_000000001s2zt145646zcn",
+              "startStep": 183,
+              "lengthSteps": 1,
+              "pitch": 99,
+              "velocity": 122,
+              "microOffsetTicks": 18
+            }
+          ]
+        }
+      ],
+      "clips": [
+        {
+          "id": "clp_0000000003vnjsr922m1z1",
+          "trackId": "trk_0000000001w7phesp4rxaw",
+          "patternId": "pat_00000000024sb5hez40ye7",
+          "startStep": 0,
+          "lengthSteps": 192,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_0000000007y54fkvz4n0s3",
+          "trackId": "trk_0000000005k4s3qs90jswm",
+          "patternId": "pat_00000000062zsac1arkeq2",
+          "startStep": 0,
+          "lengthSteps": 192,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000001w8d3naz6cygn9",
+          "trackId": "trk_000000001t955fef3nrv86",
+          "patternId": "pat_000000001vt2s08nwc5zjq",
+          "startStep": 0,
+          "lengthSteps": 192,
+          "transposeSteps": 0,
+          "mute": false
+        }
+      ],
+      "phrases": [
+        {
+          "id": "phr_000000001ye5x8sa1q78nz",
+          "startBar": 0,
+          "lengthBars": 12,
+          "role": "statement"
+        }
+      ],
+      "arrangement": [
+        {
+          "id": "sec_000000001z5qa92t3cz2bc",
+          "name": "Event",
+          "kind": "loop",
+          "startBar": 0,
+          "lengthBars": 12,
+          "repeat": 0
+        }
+      ],
+      "adaptive": {
+        "baseStateId": "sta_000000000actezzxa5rs93",
+        "layers": [],
+        "states": [
+          {
+            "id": "sta_000000000actezzxa5rs93",
+            "name": "Event",
+            "activeLayerIds": [],
+            "mixSnapshotId": null
+          }
+        ],
+        "parameters": [],
+        "events": [],
+        "transitions": [],
+        "stingers": [],
+        "mixSnapshots": []
+      },
+      "review": {
+        "status": "draft",
+        "feedback": [],
+        "proposals": [],
+        "revisions": [],
+        "approvedAt": null
+      },
+      "updatedAt": "2026-10-10T00:00:00.000Z",
+      "mixer": {
+        "buses": [],
+        "master": {
+          "gainDb": -12.5,
+          "pan": 0,
+          "mute": false,
+          "effects": [
+            {
+              "id": "master-fx0",
+              "bypass": false,
+              "kind": "compressor",
+              "thresholdDb": -14,
+              "kneeDb": 6,
+              "ratio": 4,
+              "attackSeconds": 0.003,
+              "releaseSeconds": 0.12,
+              "outputGainDb": 2
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "defaults": {
+    "bpm": 120,
+    "meter": {
+      "beatsPerBar": 4,
+      "beatUnit": 4,
+      "subdivisionTree": [
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    "key": {
+      "tonic": 0,
+      "mode": "ionian"
+    }
+  }
+}
