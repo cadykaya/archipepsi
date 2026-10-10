@@ -59,7 +59,7 @@ Evidence:
 ## Checks
 
 - **Author script:** passes its own checks (value order, three silhouettes, cell margins). Two runs gave byte-identical files, and the Glyph revision is recorded in `fx.json`.
-- **`check_art_current.sh`:** now rebuilds and compares the kit whenever Glyph is present, with the same gate as the interface family. Result: see the line below.
+- **`check_art_current.sh`:** now rebuilds and compares the kit whenever Glyph is present, with the same gate as the interface family. **PASS**, "every generated asset matches its source", with both Glyph rebuilds run (interface and effects) and none skipped; 10 m 28 s.
 
 Not checked:
 - the effects **in motion**: these are frozen frames, and playing them is Prod's integration;
