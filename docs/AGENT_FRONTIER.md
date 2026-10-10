@@ -194,6 +194,24 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-10: Heavy Report effects, a small Glyph-authored candidate
+  kit (Batch 067). STOP.** Same branch.
+  * Report: `docs/art/reports/2026-10-10-heavy-report-fx.md`. Handoff:
+    `docs/art-requests/2026-10-10-heavy-report-fx-handoff.md`.
+  * Eight ECMS Glyph sheets (87db9e2) in `assets/fx/heavy_report/`:
+    * muzzle bloom and a neutral tracer;
+    * metal sparks with a streak particle;
+    * a stone dust puff and chip mark;
+    * an organic wound with ichor, and a sap mark.
+  * They replace the SphereMesh, BoxMesh and grain geometry of Prod's
+    treatment "a" (`review/weapon-feel` 6fe82e6c) on the same
+    `fired_pulse` / `_impact` / `hit_confirmed` events, inside his times.
+    Photographed in his range from the player's eye.
+  * The author script refuses the kit if the value order (metal > stone
+    > organic) or the silhouettes collapse. It is deterministic and in
+    `check_art_current.sh`.
+  * Noted, not acted on: Dess's D-20 (one-Shunter encounter brief) landed
+    on 2026-10-09 after the Shunter pose study, which used D-19.
 * **2026-10-09: Shunter pose study (disposable), with recommendations
   for Prod's later combat prototype. STOP.** Same branch.
   * Report: `docs/art/reports/2026-10-09-shunter-pose-study.md`.

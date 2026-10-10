@@ -28,6 +28,8 @@ extends SceneTree
 ##   "profiles": [{"name", "points": [[x, y], ...], "z": [z0, z1],
 ##       "like": "NameFragment", "png": "/abs.png"}]  visual-only
 ##       extruded polygons (CSG, no collision), for a skirt or stringer.
+##   "sprites": [...]  one flipbook frame per item, frozen (see below).
+##   "room_var": "_range", "show_player": true  for other hosts.
 ##   "calls": [["method", [args]]]  on the room, before shooting.
 ##   "shots": [{"name": n, "eye": [x, y, z], "look": [x, y, z],
 ##       "fov": 90, "gray": false}]
@@ -58,13 +60,16 @@ func _run() -> void:
 	root.add_child(_host)
 	for _i in int(_spec.get("settle_frames", 90)):
 		await physics_frame
-	var room: Node3D = _host.get("room")
+	# The host's geometry: Crossing D and the labs call it `room`; another
+	# host can name its own (`"room_var": "_range"` for WeaponFeel).
+	var room: Node3D = _host.get(str(_spec.get("room_var", "room")))
 	# The player stays where the host put it, switched off: these are
 	# framed shots, not a walk.
 	var player: Node3D = _host.get("player")
 	if player != null:
 		player.process_mode = Node.PROCESS_MODE_DISABLED
-		player.visible = false
+		# `show_player` keeps the viewmodel for a first-person frame.
+		player.visible = bool(_spec.get("show_player", false))
 	for layer in _all(root, "CanvasLayer"):
 		(layer as CanvasLayer).visible = false
 	_swap_textures(_spec.get("texture_swap", {}))
@@ -193,6 +198,62 @@ func _run() -> void:
 		shape.material = paint
 		room.add_child(shape)
 		print("[dcap] profile %s like %s" % [shape.name, item.get("like", "")])
+	# Study sprites: ONE flipbook frame each, frozen to be photographed.
+	# [{"png", "hframes", "frame", "size_m", "at": [x, y, z] or "at_eye":
+	#   [x, y, z] (in the player camera's frame), "normal": [x, y, z] (flat
+	#   on a surface; omitted = billboard), "blend": "add" | "mix",
+	#   "modulate": "#rrggbbaa", "beam_to": [x, y, z] + "face": [x, y, z]
+	#   (a quad stretched from `at` to `beam_to`, turned toward `face`)}].
+	# Unshaded, nearest-filtered, no collision.
+	var eye_xform := Transform3D.IDENTITY
+	if player != null and player.get("camera") != null:
+		eye_xform = (player.get("camera") as Node3D).global_transform
+	for item: Dictionary in _spec.get("sprites", []):
+		var image := Image.load_from_file(str(item["png"]))
+		var hframes := int(item.get("hframes", 1))
+		var frame := int(item.get("frame", 0))
+		var paint := StandardMaterial3D.new()
+		paint.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		paint.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		if str(item.get("blend", "add")) == "add":
+			paint.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		paint.albedo_texture = ImageTexture.create_from_image(image)
+		paint.albedo_color = Color(str(item.get("modulate", "#ffffffff")))
+		paint.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		paint.cull_mode = BaseMaterial3D.CULL_DISABLED
+		paint.uv1_scale = Vector3(1.0 / hframes, 1.0, 1.0)
+		paint.uv1_offset = Vector3(float(frame) / hframes, 0.0, 0.0)
+		var quad := QuadMesh.new()
+		var shape := MeshInstance3D.new()
+		shape.name = "StudySprite"
+		shape.mesh = quad
+		shape.material_override = paint
+		shape.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		room.add_child(shape)
+		var at: Vector3 = (eye_xform * _vec(item["at_eye"])) \
+				if item.has("at_eye") else _vec(item["at"])
+		if item.has("beam_to"):
+			var to := _vec(item["beam_to"])
+			quad.size = Vector2(at.distance_to(to), float(item.get("size_m", 0.08)))
+			var along := (to - at).normalized()
+			var toward := _vec(item.get("face", [0, 10, 0])) - (at + to) * 0.5
+			var facing := (toward - along * toward.dot(along)).normalized()
+			shape.global_transform = Transform3D(Basis(along,
+					facing.cross(along).normalized(), facing), (at + to) * 0.5)
+		else:
+			var size := float(item.get("size_m", 0.5))
+			quad.size = Vector2(size, size * image.get_height()
+					/ (image.get_width() / float(hframes)))
+			shape.global_position = at
+			if item.has("normal"):
+				var n := _vec(item["normal"]).normalized()
+				var side := Vector3.UP.cross(n)
+				if side.length() < 0.01:
+					side = Vector3.RIGHT
+				side = side.normalized()
+				shape.global_basis = Basis(side, n.cross(side).normalized(), n)
+			else:
+				paint.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	for _i in 10:
 		await physics_frame
 	if bool(_spec.get("freeze_enemies", true)) and room.get("enemies") != null:
@@ -227,6 +288,9 @@ func _run() -> void:
 		camera.far = 400.0
 		camera.position = eye
 		camera.look_at(look, Vector3.UP)
+		if bool(shot.get("player_eye", false)):
+			# The player's own eye: where a first-person frame is taken.
+			camera.global_transform = eye_xform
 		for _i in 4:
 			await process_frame
 		await RenderingServer.frame_post_draw

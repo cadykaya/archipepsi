@@ -602,6 +602,24 @@ else
   fi
 fi
 
+# The Heavy Report effects kit (Batch 067) is Glyph-authored like the
+# interface family, so it takes the same gate and says so when it skips.
+if [ ! -f "$GLYPH_ROOT/packages/cli/dist/main.js" ]; then
+  say "SKIPPED effects kit rebuild -- no built Glyph CLI at $GLYPH_ROOT."
+elif [ -n "$(git status --porcelain -- assets/fx)" ]; then
+  say "SKIPPED effects kit rebuild -- assets/fx is already modified."
+else
+  say "rebuilding the Heavy Report effects kit..."
+  GLYPH_ROOT="$GLYPH_ROOT" python3 tools/glyphui/author_heavy_report_fx.py \
+    >/dev/null 2>&1 || \
+    fail "author_heavy_report_fx.py did not complete. Run it directly:
+    GLYPH_ROOT=$GLYPH_ROOT python3 tools/glyphui/author_heavy_report_fx.py"
+  if [ -n "$(git status --porcelain -- assets/fx)" ]; then
+    fail "the committed effects kit is out of date with its source:"
+    git status --porcelain -- assets/fx | sed 's/^/    /'
+  fi
+fi
+
 # --- 6. everything rebuilds byte-identical ------------------------------
 if [ ! -x "$BLENDER" ]; then
   say "SKIPPED rebuild -- no blender at $BLENDER (set BLENDER=...)"

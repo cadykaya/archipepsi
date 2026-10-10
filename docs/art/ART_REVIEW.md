@@ -5169,6 +5169,16 @@ Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
 **Later on 2026-10-08:** the owner sent Batch 065 to Prod for G1, with no new design round before the room is played. The tote and weight were added at G1's tested sizes (`review/impact-relay-g1`, `a3b59c46`); neither ships a collider, so the physics is unchanged. Prod's handoff: `docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`.
 
 
+## Batch 067 — Heavy Report effects, Glyph-authored (2026-10-10)
+
+*Arty — 2026-10-10*
+
+**CANDIDATE.** Eight sprite sheets in `assets/fx/heavy_report/`, drawn in ECMS Glyph by `tools/glyphui/author_heavy_report_fx.py`, with `fx.json` recording frames, durations, events and runtime settings.
+- **The sheets:** `fx_heavy_muzzle`, `fx_heavy_tracer`, `fx_impact_metal`, `fx_spark_streak`, `fx_impact_stone`, `fx_decal_chip`, `fx_impact_organic` and `fx_decal_sap`.
+- **What they replace:** the debug geometry of Prod's Heavy Report treatment, on the same events.
+- **Told apart without hue:** the three materials step down in mean ink luminance, metal 240, stone 187 and organic 84, with distinct silhouettes.
+- **Handoff:** `docs/art-requests/2026-10-10-heavy-report-fx-handoff.md`.
+
 ## Batch 066 — the station's quiet ceiling, a local texture (2026-10-08)
 
 *Arty — 2026-10-08*

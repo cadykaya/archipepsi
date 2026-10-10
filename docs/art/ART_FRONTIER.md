@@ -3549,6 +3549,20 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-10 — Heavy Report effects (Batch 067, candidate). STOPPED.
+
+* Glyph-authored effects for Prod's Heavy Report (treatment "a"):
+  * muzzle bloom and neutral tracer;
+  * metal sparks, a stone dust puff, an organic wound with ichor;
+  * chip and sap marks.
+* Source: `tools/glyphui/author_heavy_report_fx.py`, deterministic and
+  in the art check. Handoff:
+  `docs/art-requests/2026-10-10-heavy-report-fx-handoff.md`.
+* D-20 (Dess's Shunter encounter brief) now exists; the 2026-10-09 pose
+  study predates it.
+
+**Next: STOP.** Support only Prod's specific integration issues.
+
 ### Deferred tooling ideas (recorded, NOT assignments)
 
 * **Procedural stair meshes along paths or splines** (owner, 2026-10-08):
