@@ -563,6 +563,7 @@ godot-hand-cannon: godot-import  # the hand-cannon candidate range, isolated
 
 # The five-weapon range: five firing profiles, one mode per starting weapon.
 godot-five-weapons: godot-import  # the five-weapon range, isolated
+	$(PY) tools/five_weapons/import_sigmaudio.py --check
 	$(PY) tools/crossing_review_probe.py --five $(GODOT)
 
 # The S9 affordance suite: features off the mandatory path (I4), a

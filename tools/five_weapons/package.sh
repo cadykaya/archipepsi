@@ -36,14 +36,15 @@ B1="1 - START HERE - Five Weapons, Foundry (Windows).bat"
 B2="2 - Five Weapons, Sightline (Windows).bat"
 B3="3 - Five Weapons, Switchback (Windows).bat"
 B4="4 - Five Weapons, Bulkhead (Windows).bat"
+B4B="4b - Five Weapons, Bulkhead Sweeper (Windows).bat"
 B5="5 - Five Weapons, Mass Driver (Windows).bat"
 SIZE=$(stat -c %s "$WIN/Archipepsi-Five-Weapons.exe")
-for bat in "$B1" "$B2" "$B3" "$B4" "$B5"; do
+for bat in "$B1" "$B2" "$B3" "$B4" "$B4B" "$B5"; do
 	sed "s/@SIZE@/$SIZE/g" "$HERE/$bat" > "$WIN/$bat"
 done
 cp "$HERE/play-five-weapons.sh" "$HERE/play-sightline.sh" \
 	"$HERE/play-switchback.sh" "$HERE/play-bulkhead.sh" \
-	"$HERE/play-mass-driver.sh" "$LIN/"
+	"$HERE/play-bulkhead-sweeper.sh" "$HERE/play-mass-driver.sh" "$LIN/"
 for dir in "$WIN" "$LIN"; do
 	sed "s/@REVISION@/$SHA/" "$HERE/README.txt" > "$dir/README.txt"
 	(cd "$dir" && sha256sum -- * > SHA256SUMS.txt)
@@ -63,7 +64,7 @@ rm "$EXE"
 	"../$NAME-windows-part2of2.zip" \
 	&& zip -q -9 "../$NAME-windows-part1of2.zip" \
 		"$NAME/Archipepsi-Five-Weapons.exe.part1" "$NAME/$B1" "$NAME/$B2" \
-		"$NAME/$B3" "$NAME/$B4" "$NAME/$B5" \
+		"$NAME/$B3" "$NAME/$B4" "$NAME/$B4B" "$NAME/$B5" \
 		"$NAME/Archipepsi-Five-Weapons.console.exe" \
 		"$NAME/README.txt" "$NAME/SHA256SUMS.txt" \
 	&& zip -q -9 "../$NAME-windows-part2of2.zip" \

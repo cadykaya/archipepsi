@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 33,
+  "appVersion": "0.1.0-alpha.1",
+  "id": "prj_000000000gkv25692t8qa2",
+  "name": "Clockwork impact",
+  "seed": "x",
+  "gameContext": {
+    "gameName": "",
+    "genre": "",
+    "sceneName": "Clockwork impact",
+    "targetEngine": "unsure",
+    "notes": "A metallic attack, a low body and a ringing tail."
+  },
+  "cues": [
+    {
+      "id": "cue_000000000brsexch9etma2",
+      "name": "Clockwork impact",
+      "sceneId": "sfx:clockwork-impact",
+      "seed": "x",
+      "transport": {
+        "bpm": 120,
+        "meter": {
+          "beatsPerBar": 4,
+          "beatUnit": 4,
+          "subdivisionTree": [
+            2,
+            2,
+            2,
+            2
+          ]
+        },
+        "key": {
+          "tonic": 0,
+          "mode": "ionian"
+        },
+        "lengthBars": 1,
+        "phraseLengthBars": 1
+      },
+      "playback": {
+        "version": 1,
+        "mode": "one-shot",
+        "bodySeconds": 0.5,
+        "tailSeconds": 0.75
+      },
+      "plan": {
+        "affect": {
+          "valence": 0.24491866240370913,
+          "energy": 0.3234236872231392,
+          "tension": 0.08,
+          "groove": 0.40421952353632257,
+          "attentionBudget": 0.6
+        },
+        "attentionBudget": "normalGameplay",
+        "loopExposure": "shortEvent",
+        "tempoRange": [
+          92,
+          112
+        ],
+        "modePalette": [],
+        "timbrePalette": [
+          "electronic"
+        ],
+        "articulation": "normal",
+        "harmonyStrategy": "stableModalLoop",
+        "chordExtension": "seventh",
+        "intensityCurve": "steady",
+        "requestedLayers": [
+          "base",
+          "harmony"
+        ],
+        "requestedEvents": [],
+        "explanation": "This cue tends to feel relaxed, somewhere between bright and dark, and stays settled.",
+        "confidence": {
+          "energy": "high",
+          "tension": "high",
+          "valence": "low",
+          "palette": "high"
+        },
+        "answers": {
+          "playerAction": "menu",
+          "pressure": "none",
+          "world": [
+            "electronic"
+          ],
+          "busyness": "verySparse"
+        }
+      },
+      "tracks": [
+        {
+          "id": "trk_000000000005c2qkqtm8tj",
+          "name": "Metal attack",
+          "role": "motif",
+          "instrumentId": "funkClav",
+          "synthPatch": {
+            "version": 1,
+            "attack": 0.006,
+            "decay": 0.06,
+            "sustain": 0,
+            "release": 0.06,
+            "brightnessOctaves": 2,
+            "resonance": 0.7
+          },
+          "layerId": null,
+          "mix": {
+            "gainDb": -9,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          }
+        },
+        {
+          "id": "trk_0000000001tw8v17kfskgf",
+          "name": "Low body",
+          "role": "bass",
+          "instrumentId": "driveBass",
+          "synthPatch": {
+            "version": 1,
+            "attack": 0.006,
+            "decay": 0.18,
+            "sustain": 0,
+            "release": 0.3,
+            "brightnessOctaves": -1,
+            "resonance": 0.7
+          },
+          "layerId": null,
+          "mix": {
+            "gainDb": -12,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          }
+        },
+        {
+          "id": "trk_0000000002jwsev134t5ap",
+          "name": "Ring tail",
+          "role": "texture",
+          "instrumentId": "glassBell",
+          "synthPatch": {
+            "version": 1,
+            "attack": 0.006,
+            "decay": 0.45,
+            "sustain": 0,
+            "release": 0.7,
+            "brightnessOctaves": -1,
+            "resonance": 0.7
+          },
+          "layerId": null,
+          "mix": {
+            "gainDb": -18,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          }
+        }
+      ],
+      "patterns": [
+        {
+          "id": "pat_0000000003amtwjnnf6jnn",
+          "lengthSteps": 16,
+          "notes": [
+            {
+              "id": "nte_0000000004f9jsgvr1g1m3",
+              "startStep": 0,
+              "lengthSteps": 1,
+              "pitch": 48,
+              "velocity": 110,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_00000000057a58jn1ffdyh",
+              "startStep": 0,
+              "lengthSteps": 1,
+              "pitch": 61,
+              "velocity": 85,
+              "microOffsetTicks": 0
+            }
+          ]
+        },
+        {
+          "id": "pat_00000000062jzgy5365n1e",
+          "lengthSteps": 16,
+          "notes": [
+            {
+              "id": "nte_0000000007qtc9jnd9brnd",
+              "startStep": 0,
+              "lengthSteps": 2,
+              "pitch": 36,
+              "velocity": 100,
+              "microOffsetTicks": 0
+            }
+          ]
+        },
+        {
+          "id": "pat_0000000008510xnk21n0tm",
+          "lengthSteps": 16,
+          "notes": [
+            {
+              "id": "nte_0000000009wqvv8nmkbgn1",
+              "startStep": 1,
+              "lengthSteps": 3,
+              "pitch": 66,
+              "velocity": 80,
+              "microOffsetTicks": 0
+            }
+          ]
+        }
+      ],
+      "clips": [
+        {
+          "id": "clp_000000000c1ydtyxv0j1ns",
+          "trackId": "trk_000000000005c2qkqtm8tj",
+          "patternId": "pat_0000000003amtwjnnf6jnn",
+          "startStep": 0,
+          "lengthSteps": 16,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000d8yt8sn2gfmz9",
+          "trackId": "trk_0000000001tw8v17kfskgf",
+          "patternId": "pat_00000000062jzgy5365n1e",
+          "startStep": 0,
+          "lengthSteps": 16,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000e6j7qkstr1hwr",
+          "trackId": "trk_0000000002jwsev134t5ap",
+          "patternId": "pat_0000000008510xnk21n0tm",
+          "startStep": 0,
+          "lengthSteps": 16,
+          "transposeSteps": 0,
+          "mute": false
+        }
+      ],
+      "phrases": [],
+      "arrangement": [
+        {
+          "id": "sec_000000000fe4za96nk9bpf",
+          "name": "Event body",
+          "kind": "loop",
+          "startBar": 0,
+          "lengthBars": 1,
+          "repeat": 0
+        }
+      ],
+      "adaptive": {
+        "baseStateId": "sta_000000000actezzxa5rs93",
+        "layers": [],
+        "states": [
+          {
+            "id": "sta_000000000actezzxa5rs93",
+            "name": "Event",
+            "activeLayerIds": [],
+            "mixSnapshotId": null
+          }
+        ],
+        "parameters": [],
+        "events": [],
+        "transitions": [],
+        "stingers": [],
+        "mixSnapshots": []
+      },
+      "review": {
+        "status": "draft",
+        "feedback": [],
+        "proposals": [],
+        "revisions": [],
+        "approvedAt": null
+      },
+      "updatedAt": "1970-01-01T00:00:00.000Z",
+      "generationTrace": [
+        {
+          "rule": "sigmaudio-sfx-recipe-2",
+          "because": "Recipe clockwork-impact; seed x. Fixed editable starting material, no random variation.",
+          "resultedIn": "Separate attack/body/tail tracks; finite body ends at the last authored note end, with 0.75s explicit capture tail. Main Play auditions one cold fixed-state pass; no complete-decay or listening approval."
+        }
+      ]
+    }
+  ],
+  "defaults": {
+    "bpm": 120,
+    "meter": {
+      "beatsPerBar": 4,
+      "beatUnit": 4,
+      "subdivisionTree": [
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    "key": {
+      "tonic": 0,
+      "mode": "ionian"
+    }
+  }
+}

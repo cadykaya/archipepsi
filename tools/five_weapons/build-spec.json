@@ -2,11 +2,12 @@
   "schema": "archipepsi-build-spec/1",
   "title": "Five Weapons",
   "executable": "Archipepsi-Five-Weapons",
-  "description": "Five experimental weapon types in one isolated range: Foundry (heavy hand cannon), Sightline (scout rifle), Switchback (automatic carbine), Bulkhead (scattergun) and Mass Driver (charged kinetic). Keys 1-5 switch; 6 is Heavy Report as you played it, 0 the Static Pulse as it ships. Metal, concrete, organic and wood targets, a 40 HP target, a moving dummy and loose bodies to shove. No enemies. Offline: nothing of yours is saved or changed.",
+  "description": "Five experimental weapon types in one isolated range, second pass after the owner's playtest: Foundry (heavy hand cannon), Sightline (scout rifle), Switchback (automatic carbine), Bulkhead (scattergun, two variants: Breacher and Sweeper) and Mass Driver (charged kinetic). Condi's SigmAudio sounds. Keys 1-5 switch, 3 and 4 again swap variants, hold RMB (or V) to aim Sightline, Switchback and Mass Driver; 6 is Heavy Report as you played it, 0 the Static Pulse. A 55 m lane behind the mark. No enemies. Offline: nothing of yours is saved or changed.",
   "limitations": [
     "Prototype numbers, not balance.",
-    "Guns are placeholder shapes; Arty's silhouettes and layered Glyph effects are pending.",
-    "Sounds are labelled placeholders until Condi's SigmAudio renders land (N mutes them)."
+    "Guns are placeholder shapes; Arty's models and layered Glyph effects are not wired yet.",
+    "Sounds are Condi's SigmAudio candidates (not approved). N turns all weapon sound off.",
+    "Aiming down the sights is on RMB only while no Echo holds RMB; V or a mouse side button always aims."
   ],
   "modes": [
     {
@@ -39,7 +40,7 @@
         "--",
         "--weapon=switchback"
       ],
-      "description": "Starts with Switchback, the automatic carbine.",
+      "description": "Starts with Switchback, the automatic carbine (press 3 again for hard hip-fire).",
       "launchers": {
         "windows": "3 - Five Weapons, Switchback (Windows).bat",
         "linux": "play-switchback.sh"
@@ -47,15 +48,29 @@
     },
     {
       "id": "bulkhead",
-      "label": "Five Weapons, Bulkhead",
+      "label": "Five Weapons, Bulkhead Breacher",
       "args": [
         "--",
         "--weapon=bulkhead"
       ],
-      "description": "Starts with Bulkhead, the scattergun.",
+      "description": "Starts with Bulkhead Breacher, the slow, devastating scattergun (press 4 again for the Sweeper).",
       "launchers": {
         "windows": "4 - Five Weapons, Bulkhead (Windows).bat",
         "linux": "play-bulkhead.sh"
+      }
+    },
+    {
+      "id": "sweeper",
+      "label": "Five Weapons, Bulkhead Sweeper",
+      "args": [
+        "--",
+        "--weapon=bulkhead",
+        "--variant=sweeper"
+      ],
+      "description": "Starts with Bulkhead Sweeper, the fast, lighter scattergun (press 4 again for the Breacher).",
+      "launchers": {
+        "windows": "4b - Five Weapons, Bulkhead Sweeper (Windows).bat",
+        "linux": "play-bulkhead-sweeper.sh"
       }
     },
     {

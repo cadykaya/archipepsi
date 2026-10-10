@@ -48,6 +48,14 @@ const MOVER_AT := Vector3(0, 0.8, -20.0)
 const LOOSE_CRATE_AT := Vector3(3.8, 0.4, -11.5)
 const LOOSE_WEIGHT_AT := Vector3(4.7, 0.3, -16.5)
 const PILLAR_AT := Vector3(-1.4, 0, -15.5)
+## THE LONG LANE, behind the firing mark (five-weapon mode only): turn
+## round and look through the window in the south wall. Nothing in the
+## hall stands in its line. Distances are from the mark.
+const LANE := Rect2(-3.0, 4.5, 6.0, 58.0)
+const LANE_WINDOW := Rect2(-1.6, 0.9, 3.2, 2.3)
+const FAR_PLATE_AT := Vector3(-1.1, 0, 35.0)
+const FAR_MANNEQUIN_AT := Vector3(1.1, 0, 35.0)
+const FARTHEST_PLATE_AT := Vector3(0.0, 0, 55.0)
 const FIVE_KEYS := {KEY_1: "foundry", KEY_2: "sightline", KEY_3: "switchback",
 		KEY_4: "bulkhead", KEY_5: "driver", KEY_6: "heavy", KEY_0: "pulse"}
 
@@ -66,6 +74,7 @@ var gel: HandCannon.GelBlock
 var five := false
 var weapons: RangeWeapons
 var mannequin: RangeTargets.Mannequin
+var far_mannequin: RangeTargets.Mannequin
 var mover: RangeTargets.Mover
 var loose_crate: ManipulableBody
 var loose_weight: ManipulableBody
@@ -93,6 +102,14 @@ static func requested_weapon() -> String:
 		if arg.begins_with("--weapon="):
 			return arg.substr(9).to_lower()
 	return "foundry"
+
+
+## A weapon's starting variant (`--variant=<name>`, e.g. sweeper).
+static func requested_variant() -> String:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--variant="):
+			return arg.substr(10).to_lower()
+	return ""
 
 
 func _ready() -> void:
@@ -174,15 +191,19 @@ func _ready_five() -> void:
 	_which = _label(Vector2(24, 50), 26)
 	_hint = _label(Vector2(24, 86), 17)
 	_readout = _label(Vector2(24, 112), 15)
-	var keys := _label(Vector2(24, 540), 15)
+	var keys := _label(Vector2(24, 520), 15)
 	keys.text = ("1 Foundry · 2 Sightline · 3 Switchback · 4 Bulkhead · "
 			+ "5 Mass Driver   |   6 Heavy Report (as played) · 0 Static Pulse\n"
-			+ "LMB fire (hold: Switchback fires, Mass Driver charges) · "
-			+ "M reduced camera motion · N placeholder sounds on/off\n"
+			+ "Press 3 or 4 again: its other variant · LMB fire · hold RMB "
+			+ "(or V) to aim: Sightline, Switchback, Mass Driver\n"
+			+ "Turn round for the long lane (20 / 35 / 55 m) · M reduced "
+			+ "camera motion · N sound on/off · B aim binding\n"
 			+ "WASD move · R back to the mark · Esc menu (RESTART resets "
 			+ "targets and marks)")
 	var first := _remembered_five if _remembered_five != "" \
 			else requested_weapon()
+	if _remembered_five == "" and RangeWeapons.VARIANTS.has(first):
+		weapons.set_variant(first, requested_variant())
 	if not bound:
 		_which.text = "(the player's shot feedback was not found)"
 		return
@@ -208,8 +229,9 @@ func select_five(mode: String) -> void:
 			_hint.text = "Reference: the game's own Pulse, 6 a hit, one per 0.35 s."
 		_:
 			weapons.select(mode)
-			_which.text = String(RangeWeapons.PROFILES[mode]["name"])
-			_hint.text = String(RangeWeapons.PROFILES[mode]["hint"])
+			var p := weapons.profile()
+			_which.text = String(p["name"])
+			_hint.text = String(p["hint"])
 
 
 func _five_range() -> void:
@@ -236,6 +258,73 @@ func _five_range() -> void:
 			PILLAR_AT + Vector3(0, 1.3, 0), concrete)
 	pillar.name = "ConcretePillar"
 	pillar.set_meta("impact_material", "stone")
+	_long_lane(concrete)
+
+
+## The south wall in four pieces around the long lane's window.
+func _south_wall_with_window(x0: float, x1: float, z1: float,
+		wall: Material) -> void:
+	var w := LANE_WINDOW
+	_block("SouthWallWest", Vector3(x0 - WALL, 0, z1),
+			Vector3(w.position.x, HEIGHT, z1 + WALL), wall)
+	_block("SouthWallEast", Vector3(w.end.x, 0, z1),
+			Vector3(x1 + WALL, HEIGHT, z1 + WALL), wall)
+	_block("SouthWallSill", Vector3(w.position.x, 0, z1),
+			Vector3(w.end.x, w.position.y, z1 + WALL), wall)
+	_block("SouthWallLintel", Vector3(w.position.x, w.end.y, z1),
+			Vector3(w.end.x, HEIGHT, z1 + WALL), wall)
+
+
+## The long lane: a concrete tunnel behind the window, with a steel plate
+## and a second 40 HP target at 35 m and a big steel plate at 55 m, the
+## distances painted on the floor. Sightline's reach is 60 m.
+func _long_lane(concrete: Material) -> void:
+	var x0 := LANE.position.x
+	var x1 := LANE.end.x
+	var z0 := LANE.position.y
+	var z1 := LANE.end.y
+	var top := HEIGHT - 0.5
+	_block("LaneFloor", Vector3(x0 - WALL, -0.5, z0), Vector3(x1 + WALL, 0.0, z1),
+			ThemeMaterials.floor_mat(THEME))
+	_block("LaneRoof", Vector3(x0 - WALL, top, z0),
+			Vector3(x1 + WALL, top + 0.5, z1), ThemeMaterials.trim_mat(THEME))
+	_block("LaneWest", Vector3(x0 - WALL, 0, z0), Vector3(x0, top, z1), concrete)
+	_block("LaneEast", Vector3(x1, 0, z0), Vector3(x1 + WALL, top, z1), concrete)
+	_block("LaneEnd", Vector3(x0 - WALL, 0, z1), Vector3(x1 + WALL, top, z1 + WALL),
+			concrete)
+	for z in [12.0, 26.0, 40.0, 54.0]:
+		var light := OmniLight3D.new()
+		light.position = Vector3(0, top - 0.4, z)
+		light.light_energy = 0.8
+		light.omni_range = 11.0
+		light.light_color = Color(0.86, 0.9, 0.95)
+		_range.add_child(light)
+	for mark in [20, 35, 55]:
+		var label := Label3D.new()
+		label.text = "%d m" % mark
+		label.font_size = 96
+		label.pixel_size = 0.01
+		label.modulate = Color(0.95, 0.8, 0.3)
+		label.rotation_degrees = Vector3(-90, 180, 0)
+		label.position = Vector3(-2.2, 0.02, float(mark))
+		_range.add_child(label)
+	var steel := _metal_piece()
+	for spec in [["FarPlate", FAR_PLATE_AT, 1.0], ["FarthestPlate",
+			FARTHEST_PLATE_AT, 1.4]]:
+		var size := float(spec[2])
+		var plate := ChamberBuilders._box(_range, Vector3(size, size, 0.06),
+				(spec[1] as Vector3) + Vector3(0, 1.0 + size * 0.5, 0), steel)
+		plate.name = String(spec[0])
+		plate.set_meta("impact_material", "metal")
+		var post := ChamberBuilders._box(_range, Vector3(0.1, 1.0, 0.1),
+				(spec[1] as Vector3) + Vector3(0, 0.5, 0), steel)
+		post.name = String(spec[0]) + "Post"
+		post.set_meta("impact_material", "metal")
+	far_mannequin = RangeTargets.Mannequin.new()
+	far_mannequin.name = "FarMannequin"
+	far_mannequin.position = FAR_MANNEQUIN_AT
+	far_mannequin.rotation_degrees.y = 180.0
+	_range.add_child(far_mannequin)
 
 
 func spawn() -> Transform3D:
@@ -257,8 +346,11 @@ func _build_range() -> void:
 	_block("EastWall", Vector3(x1, 0, z0), Vector3(x1 + WALL, HEIGHT, z1), wall)
 	_block("BackWall", Vector3(x0 - WALL, 0, z0 - WALL),
 			Vector3(x1 + WALL, HEIGHT, z0), wall)
-	_block("SouthWall", Vector3(x0 - WALL, 0, z1),
-			Vector3(x1 + WALL, HEIGHT, z1 + WALL), wall)
+	if five:
+		_south_wall_with_window(x0, x1, z1, wall)
+	else:
+		_block("SouthWall", Vector3(x0 - WALL, 0, z1),
+				Vector3(x1 + WALL, HEIGHT, z1 + WALL), wall)
 	# The firing mark: a painted strip on the floor.
 	ChamberBuilders._box(_range, Vector3(2.0, 0.02, 0.12),
 			Vector3(0, 0.01, SPAWN.z - 0.6), ThemeMaterials.hazard_mat(THEME),
@@ -365,31 +457,44 @@ func _process(_delta: float) -> void:
 func _readout_five() -> void:
 	var text := ""
 	if weapons.current != "":
-		var p: Dictionary = RangeWeapons.PROFILES[weapons.current]
+		var p: Dictionary = weapons.profile()
 		var prim: Dictionary = p["action"]["primitive"]
 		var cooldown := float(p["action"]["cooldown"])
+		if p.has("variant_name"):
+			text = "Variant: %s\n" % p["variant_name"]
 		if weapons.current == "driver":
-			text = ("%.0f–%.0f damage by charge (%.1f s to full) · then %.1f s "
+			text += ("%.0f–%.0f damage by charge (%.1f s to full) · ready "
 					% [prim["min_damage"], prim["max_damage"],
-					prim["charge_time"], cooldown] + "to recover")
+					prim["charge_time"]] + "%.1f s after the press" % cooldown)
 			if weapons.charging:
 				var ratio := weapons.runtime.charge_ratio()
 				text += "\nCHARGE  " + "█".repeat(roundi(ratio * 20)) \
 						+ "·".repeat(20 - roundi(ratio * 20))
 		else:
 			var pellets := int(prim.get("pellets", 1))
-			text = ("%s damage%s · one shot per %.2f s · reach %.0f m"
+			text += ("%s damage%s · one shot per %.2f s · reach %.0f m"
 					% [("%d × %.1f" % [pellets, prim["damage"]]) if pellets > 1
 					else "%.1f" % prim["damage"], " a pellet" if pellets > 1
 					else " a hit", cooldown, prim["range"]])
-		var sound := weapons.audio.filled()
-		text += ("\nArt: placeholder shapes (Arty's pending) · Sound: %s"
-				% ("SigmAudio %d of %d" % [sound.x, sound.y] if sound.x > 0
-				else "PLACEHOLDER — not SigmAudio" + (" (muted)"
-				if not weapons.audio.placeholders_on else "")))
-	text += ("\nDummy %d · 40 HP target %s · gel %d · marks %d%s"
+		if p.has("ads"):
+			var owner := weapons.rmb_owner()
+			if RangeWeapons.ads_binding == "alt":
+				text += "\nAim: hold V or a mouse side button (B: also RMB)"
+			elif owner != "":
+				text += ("\nAim: V or a side button (RMB belongs to %s here)"
+						% owner)
+			else:
+				text += "\nAim: hold RMB, V or a side button (B: V only)"
+			if weapons.aiming:
+				text += "  · AIMING"
+		var sound := weapons.audio.loaded()
+		text += ("\nArt: placeholder shapes · Sound: Condi's SigmAudio, %d of "
+				% sound.x + "%d events%s" % [sound.y, " (muted, N)"
+				if weapons.audio.muted else ""])
+	text += ("\nDummy %d · 40 HP target %s · far target %s · gel %d · marks %d%s"
 			% [int(round(dummy.absorbed)), "%d" % int(ceil(mannequin.hp))
-			if not mannequin.down else "down", int(round(gel.absorbed)),
+			if not mannequin.down else "down", "%d" % int(ceil(far_mannequin.hp))
+			if not far_mannequin.down else "down", int(round(gel.absorbed)),
 			weapons.impacts.live_marks(), " · REDUCED MOTION"
 			if weapons.reduced_motion else ""])
 	_readout.text = text
@@ -428,11 +533,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif five:
 		if FIVE_KEYS.has(key) and bound:
-			select_five(FIVE_KEYS[key])
+			if FIVE_KEYS[key] == weapons.current \
+					and RangeWeapons.VARIANTS.has(weapons.current):
+				weapons.next_variant()
+				select_five(weapons.current)
+			else:
+				select_five(FIVE_KEYS[key])
 		elif key == KEY_M:
 			weapons.set_reduced_motion(not weapons.reduced_motion)
 		elif key == KEY_N:
-			weapons.audio.placeholders_on = not weapons.audio.placeholders_on
+			weapons.audio.muted = not weapons.audio.muted
+			if weapons.audio.muted:
+				weapons.audio.stop_all()
+		elif key == KEY_B:
+			RangeWeapons.ads_binding = "alt" \
+					if RangeWeapons.ads_binding == "rmb" else "rmb"
 		else:
 			return
 		get_viewport().set_input_as_handled()

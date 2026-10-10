@@ -37,8 +37,11 @@
       "godot/content/ways_out/",
       "tools/artpreview/",
       "godot/candidate/crossing_kit/",
-      "godot/tests/fixtures/sigmaudio_loader/"
-    ]
+      "godot/tests/fixtures/sigmaudio_loader/",
+      "godot/audio/sigmaudio/five_weapons/",
+      "handoff/five_weapon_audio/"
+    ],
+    "_comment_sigmaudio": "Condi's five-weapon SigmAudio set (handoff/five_weapon_audio/, copied unchanged into godot/audio/sigmaudio/five_weapons/ by tools/five_weapons/import_sigmaudio.py) is authored in SigmAudio from its own synthesis and its bundled public-domain and CC0 recordings: Salamander drum kit (public domain, Alexander Holm), TR-808 (CC0, Michael Fischer), VSCO 2 Community Edition percussion (CC0, Versilian Studios), Kenney interface sounds (CC0). No recorded firearms; no attribution is required. Candidate audio, not approved; see the handoff README."
   },
   "approved_licenses": {
     "_comment": "Safe by default per D2. Anything not here needs an explicit owner decision.",

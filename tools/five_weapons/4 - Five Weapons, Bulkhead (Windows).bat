@@ -1,5 +1,5 @@
 @echo off
-rem Five Weapons, an isolated range (no enemies), starting with Bulkhead, the scattergun.
+rem Five Weapons, an isolated range (no enemies), starting with Bulkhead Breacher, the slow scattergun (4 again: Sweeper).
 rem Keys 1-5 switch weapons in play; 6 Heavy Report, 0 Static Pulse. Double-click this to play.
 rem On the first run it also joins the game's two parts (if it came in two)
 rem and checks the result.

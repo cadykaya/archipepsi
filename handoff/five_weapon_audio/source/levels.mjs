@@ -1,0 +1,22 @@
+// Master gain per sound, from level.py. Do not edit by hand.
+export default {
+  bulkhead_fire: -5.0,
+  bulkhead_pump: -6.6,
+  foundry_fire: -5.4,
+  impact_metal: -9.3,
+  impact_organic: -3.7,
+  impact_stone: -9.7,
+  massdriver_charge: -9.0,
+  massdriver_charge_hold: -12.5,
+  massdriver_impact_metal: -8.4,
+  massdriver_impact_organic: -2.6,
+  massdriver_impact_stone: -7.0,
+  massdriver_powerdown: -3.4,
+  massdriver_release_early: -5.1,
+  massdriver_release_full: -5.9,
+  sightline_fire: -0.1,
+  switchback_fire_a: -3.4,
+  switchback_fire_b: -3.4,
+  switchback_release_tail: 4.4,
+  switchback_series_demo: -3.4,
+}
