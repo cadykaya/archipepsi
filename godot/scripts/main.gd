@@ -199,6 +199,8 @@ func _ready() -> void:
 		add_child(WeaponFeel.new())
 		if WeaponFeelCheck.requested():
 			add_child(WeaponFeelCheck.new())
+		if FiveWeaponCheck.requested():
+			add_child(FiveWeaponCheck.new())
 		return
 	# THE IMPACT RELAY (G1, Dess's D-18): one enemy-free room on the G0
 	# mechanism, isolated the same way.

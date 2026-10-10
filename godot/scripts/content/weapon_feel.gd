@@ -39,6 +39,17 @@ const GEL_AT := Vector3(-2.2, 0, -6.5)
 
 ## The treatment a RESTART comes back to.
 static var _remembered := ""
+## Five-weapon mode: the weapon (or "heavy" / "pulse") a RESTART keeps.
+static var _remembered_five := ""
+## The five-weapon range's extra pieces (`RangeTargets`).
+const MANNEQUIN_AT := Vector3(2.2, 0, -8)
+const MOVER_AT := Vector3(0, 0.8, -20.0)
+## The loose bodies sit in their own lanes along the east wall.
+const LOOSE_CRATE_AT := Vector3(3.8, 0.4, -11.5)
+const LOOSE_WEIGHT_AT := Vector3(4.7, 0.3, -16.5)
+const PILLAR_AT := Vector3(-1.4, 0, -15.5)
+const FIVE_KEYS := {KEY_1: "foundry", KEY_2: "sightline", KEY_3: "switchback",
+		KEY_4: "bulkhead", KEY_5: "driver", KEY_6: "heavy", KEY_0: "pulse"}
 
 var player: Player
 var hud: Hud
@@ -52,6 +63,13 @@ var _readout: Label
 var _menu: Control = null
 var _range: Node3D
 var gel: HandCannon.GelBlock
+var five := false
+var weapons: RangeWeapons
+var mannequin: RangeTargets.Mannequin
+var mover: RangeTargets.Mover
+var loose_crate: ManipulableBody
+var loose_weight: ManipulableBody
+var _hint: Label
 
 
 static func requested() -> bool:
@@ -69,9 +87,18 @@ static func requested_treatment() -> String:
 	return "h" if OS.has_feature(CANNON_FEATURE) else "baseline"
 
 
+## The mode the five-weapon range starts in (`--weapon=<id>`).
+static func requested_weapon() -> String:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--weapon="):
+			return arg.substr(9).to_lower()
+	return "foundry"
+
+
 func _ready() -> void:
 	name = "WeaponFeel"
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	five = ReviewIsolation.five()
 	var holder := WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
@@ -105,6 +132,9 @@ func _ready() -> void:
 	feel.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(feel)
 	bound = feel.bind(player, tones, dummy)
+	if five:
+		_ready_five()
+		return
 	_overlay = CanvasLayer.new()
 	_overlay.layer = 5
 	add_child(_overlay)
@@ -127,6 +157,85 @@ func _ready() -> void:
 		_which.text = "(the player's shot feedback was not found: baseline only)"
 	printerr("weapon-feel: range, no enemies, treatment %s; isolated "
 			% feel.current + "(no bridge, no save)")
+
+
+## The five-weapon range: the same hall, more targets, five weapons.
+func _ready_five() -> void:
+	_five_range()
+	weapons = RangeWeapons.new()
+	weapons.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(weapons)
+	weapons.bind(self)
+	_overlay = CanvasLayer.new()
+	_overlay.layer = 5
+	add_child(_overlay)
+	var title := _label(Vector2(24, 18), 20)
+	title.text = "FIVE WEAPONS — isolated range (no enemies, nothing saved)"
+	_which = _label(Vector2(24, 50), 26)
+	_hint = _label(Vector2(24, 86), 17)
+	_readout = _label(Vector2(24, 112), 15)
+	var keys := _label(Vector2(24, 540), 15)
+	keys.text = ("1 Foundry · 2 Sightline · 3 Switchback · 4 Bulkhead · "
+			+ "5 Mass Driver   |   6 Heavy Report (as played) · 0 Static Pulse\n"
+			+ "LMB fire (hold: Switchback fires, Mass Driver charges) · "
+			+ "M reduced camera motion · N placeholder sounds on/off\n"
+			+ "WASD move · R back to the mark · Esc menu (RESTART resets "
+			+ "targets and marks)")
+	var first := _remembered_five if _remembered_five != "" \
+			else requested_weapon()
+	if not bound:
+		_which.text = "(the player's shot feedback was not found)"
+		return
+	select_five(first if first in FIVE_KEYS.values() else "foundry")
+	printerr("five-weapons: range, no enemies, weapon %s; isolated "
+			% _remembered_five + "(no bridge, no save)")
+
+
+## One of the five weapons, "heavy" (Heavy Report on the Pulse, as the
+## owner played it) or "pulse" (the Static Pulse as it ships).
+func select_five(mode: String) -> void:
+	_remembered_five = mode
+	match mode:
+		"heavy":
+			weapons.select("")
+			feel.select("a")
+			_which.text = "6 · HEAVY REPORT — as you played it (Static Pulse)"
+			_hint.text = "Reference: mode 2 of the weapon-feel range, unchanged."
+		"pulse":
+			weapons.select("")
+			feel.select("baseline")
+			_which.text = "0 · STATIC PULSE — as it ships"
+			_hint.text = "Reference: the game's own Pulse, 6 a hit, one per 0.35 s."
+		_:
+			weapons.select(mode)
+			_which.text = String(RangeWeapons.PROFILES[mode]["name"])
+			_hint.text = String(RangeWeapons.PROFILES[mode]["hint"])
+
+
+func _five_range() -> void:
+	mannequin = RangeTargets.Mannequin.new()
+	mannequin.name = "Mannequin"
+	mannequin.position = MANNEQUIN_AT
+	_range.add_child(mannequin)
+	mover = RangeTargets.Mover.new()
+	mover.name = "Mover"
+	mover.position = MOVER_AT
+	_range.add_child(mover)
+	loose_crate = RangeTargets.loose("range_crate", 12.0,
+			Vector3(0.8, 0.8, 0.8), "wood", Color(0.55, 0.38, 0.2))
+	loose_crate.position = LOOSE_CRATE_AT
+	_range.add_child(loose_crate)
+	loose_weight = RangeTargets.loose("range_weight", 36.0,
+			Vector3(0.5, 0.6, 0.5), "metal", Color(0.35, 0.36, 0.38))
+	loose_weight.position = LOOSE_WEIGHT_AT
+	_range.add_child(loose_weight)
+	var concrete := StandardMaterial3D.new()
+	concrete.albedo_color = Color(0.58, 0.57, 0.55)
+	concrete.roughness = 0.95
+	var pillar := ChamberBuilders._box(_range, Vector3(0.9, 2.6, 0.6),
+			PILLAR_AT + Vector3(0, 1.3, 0), concrete)
+	pillar.name = "ConcretePillar"
+	pillar.set_meta("impact_material", "stone")
 
 
 func spawn() -> Transform3D:
@@ -213,6 +322,8 @@ static func _metal_piece() -> StandardMaterial3D:
 func _block(label: String, lo: Vector3, hi: Vector3, material: Material) -> void:
 	var made := ChamberBuilders._box(_range, hi - lo, (lo + hi) * 0.5, material)
 	made.name = label
+	# The hall is concrete: tagged, so no impact has to guess.
+	made.set_meta("impact_material", "stone")
 
 
 ## THE SAME CONNECTIONS `Main._to_zone` MAKES, except the shot's and the
@@ -233,6 +344,9 @@ func _on_changed(id: String) -> void:
 func _process(_delta: float) -> void:
 	if _readout == null or dummy == null:
 		return
+	if five:
+		_readout_five()
+		return
 	_readout.text = "Target: %d damage taken · %d shots · %d hits" % [
 			int(round(dummy.absorbed)), feel.shots, feel.hits]
 	if bound and feel.current == WeaponFeelTreatments.HAND:
@@ -246,6 +360,39 @@ func _process(_delta: float) -> void:
 				hand.sigmaudio_cues(), HandCannon.CUES.size()]
 				if hand.sigmaudio_cues() > 0 else
 				"PLACEHOLDER (Heavy Report's) until SigmAudio's cues arrive"))
+
+
+func _readout_five() -> void:
+	var text := ""
+	if weapons.current != "":
+		var p: Dictionary = RangeWeapons.PROFILES[weapons.current]
+		var prim: Dictionary = p["action"]["primitive"]
+		var cooldown := float(p["action"]["cooldown"])
+		if weapons.current == "driver":
+			text = ("%.0f–%.0f damage by charge (%.1f s to full) · then %.1f s "
+					% [prim["min_damage"], prim["max_damage"],
+					prim["charge_time"], cooldown] + "to recover")
+			if weapons.charging:
+				var ratio := weapons.runtime.charge_ratio()
+				text += "\nCHARGE  " + "█".repeat(roundi(ratio * 20)) \
+						+ "·".repeat(20 - roundi(ratio * 20))
+		else:
+			var pellets := int(prim.get("pellets", 1))
+			text = ("%s damage%s · one shot per %.2f s · reach %.0f m"
+					% [("%d × %.1f" % [pellets, prim["damage"]]) if pellets > 1
+					else "%.1f" % prim["damage"], " a pellet" if pellets > 1
+					else " a hit", cooldown, prim["range"]])
+		var sound := weapons.audio.filled()
+		text += ("\nArt: placeholder shapes (Arty's pending) · Sound: %s"
+				% ("SigmAudio %d of %d" % [sound.x, sound.y] if sound.x > 0
+				else "PLACEHOLDER — not SigmAudio" + (" (muted)"
+				if not weapons.audio.placeholders_on else "")))
+	text += ("\nDummy %d · 40 HP target %s · gel %d · marks %d%s"
+			% [int(round(dummy.absorbed)), "%d" % int(ceil(mannequin.hp))
+			if not mannequin.down else "down", int(round(gel.absorbed)),
+			weapons.impacts.live_marks(), " · REDUCED MOTION"
+			if weapons.reduced_motion else ""])
+	_readout.text = text
 
 
 func _label(at: Vector2, size: int) -> Label:
@@ -278,6 +425,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key := (event as InputEventKey).keycode
 	if key == KEY_R:
 		recover()
+		get_viewport().set_input_as_handled()
+	elif five:
+		if FIVE_KEYS.has(key) and bound:
+			select_five(FIVE_KEYS[key])
+		elif key == KEY_M:
+			weapons.set_reduced_motion(not weapons.reduced_motion)
+		elif key == KEY_N:
+			weapons.audio.placeholders_on = not weapons.audio.placeholders_on
+		else:
+			return
 		get_viewport().set_input_as_handled()
 	elif KEYS.has(key) and bound:
 		feel.select(KEYS[key])

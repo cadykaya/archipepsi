@@ -858,6 +858,28 @@ owner's D-06/D-07 rulings and the seam table are in
       - **Next:** when the cues arrive, import them, run the probe in all
         three environments, package and deliver the playable comparison.
         Not before (owner).
+    - **FIVE WEAPONS (owner, 2026-10-10): DELIVERED, STOP.** Five
+      playable firing prototypes in one isolated range (`--five-weapons`,
+      product `Archipepsi-Five-Weapons`):
+      - Foundry (hand cannon), Sightline (scout), Switchback (carbine),
+        Bulkhead (scattergun), Mass Driver (charged kinetic), on keys
+        1–5;
+      - 6 Heavy Report as played, 0 the Static Pulse.
+      - **How it works.** Each fires through `EchoRuntime`'s own
+        primitives. The range draws the springs, the layered 3D muzzle,
+        tracers from the muzzle to the engine's resolved hit, impacts by
+        material, and persistent capped marks that ride their target.
+      - **The Mass Driver's push** is a range-side seam onto
+        `ManipulableBody.receive_impulse`.
+      - **Placeholders.** Art and sound are labelled placeholders; Arty's
+        Glyph layers and Condi's SigmAudio renders are pending. The
+        contract is `docs/FIVE_WEAPON_RUNTIME_CONTRACT.md`.
+      - **Where it is.** Branch `review/five-weapons`, from
+        `review/hand-cannon`; build `3fc8cf0c`. The report is
+        `docs/reports/2026-10-10-five-weapons.md`. Run the check with
+        `make godot-five-weapons`.
+      - **Next:** the owner plays it. Wire the Glyph flipbooks and the
+        SigmAudio cues when they land. Not before.
     - **STANDING CONTEXT, not a task (owner, 2026-10-10): responsive
       music.** Condi owns the composition and the SigmAudio experiment
       (DMC5/Portal-style adaptive music). In weapon and enemy feedback
