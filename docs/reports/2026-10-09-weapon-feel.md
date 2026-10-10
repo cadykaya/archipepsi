@@ -28,7 +28,11 @@ without touching shared code. An Echo's kick and flash are written inside
 would be a G1 and campaign modification. If the hand-cannon means the
 Arc Bolt, the winning treatment can be ported to it as a separate change.
 
-**"SigmaAudio".** Nothing by that name is on any branch. The sounds come
+**"SigmaAudio".** No SigmAudio code or cue is in this repository. (Correction,
+2026-10-10: SigmAudio is Condi's sound-authoring tool, which the
+toolchain ledgers name as a reference; it is not missing, it is
+external. Its hand-cannon cues are being made:
+`docs/HAND_CANNON_SIGMAUDIO_CUES.md`.) The sounds come
 from the game's own procedural bank, `Tones`: each treatment's report and
 hit sound is a recipe rendered by `Tones._synth` (22,050 Hz, 16-bit) and
 played through a player that `Tones._make_player` makes. No audio engine
