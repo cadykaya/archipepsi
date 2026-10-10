@@ -194,6 +194,23 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-10: Weapon design pass 2, hybrid direction (no models). STOP
+  for the owner's mechanism approval.** Same branch as the exploration.
+  * The owner chose the hybrid: station engineering, Epsilon technology,
+    Echo cores. Keep mechanism-first. The bar is "functional sci-fi detail
+    > intentional simplicity > meaningless decorative sci-fi detail"; the
+    blockout look must not reach production.
+  * Presentation: `docs/art/reports/2026-10-10-weapon-design-pass2.md`,
+    sheets WC0-WC7 in `docs/art/review/weapon_design_pass2_2026-10-10/`.
+  * The hybrid is a power train: Echo core (source, swappable), then
+    Epsilon (converter), then station (mechanism). Every part names its
+    job, or it goes. Detail is tiered by viewing distance.
+  * Five detailed 2D designs with numbered parts lists, cutaways and
+    exploded views. Sources: `tools/concept_art/detail_kit.py`,
+    `weapon_details.py`, `weapon_detail_sheets.py`.
+  * Open for the owner and Prod: a `viewmodel` triangle category and the
+    deferred 256 texels/m tier, before any final model.
+  * No final models until each mechanism is approved.
 * **2026-10-10: What should the five weapons be? A design exploration.
   STOP for the owner's reaction.** Branch
   `claude/archipepsi-art-weapon-concepts-2026-10-10` (from Batch 068's).
