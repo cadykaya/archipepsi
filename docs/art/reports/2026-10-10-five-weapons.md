@@ -129,7 +129,7 @@ The round is a hot slug with a smoke trail behind it.
   - two profiles converge.
 
   Every mesh is asserted flat and in budget ("hero", 1200).
-- **`check_art_current.sh`** now lists the new builder and rebuilds both Glyph kits behind the same gate as the interface family. Result: ART_CHECK_RESULT.
+- **`check_art_current.sh`** now lists the new builder and rebuilds both Glyph kits behind the same gate as the interface family. Result at `9027d475`: **PASS**, "every generated asset matches its source", with both Glyph kits rebuilt and nothing skipped (11 m 24 s).
 
 Not checked:
 - **Motion as played:** these are computed frozen frames.
