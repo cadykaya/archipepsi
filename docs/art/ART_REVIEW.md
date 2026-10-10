@@ -5149,6 +5149,48 @@ colours are the owner's 2026-10-02 meanings, kit-local
 
 Handoff: `docs/art/reports/2026-10-02-crossing-readability-kit.md`.
 
+## Batch 065 — Impact Relay G1: object launcher and impact seal (2026-10-08)
+
+*Arty — 2026-10-08*
+
+**CANDIDATE.** For D-18 Concept A on Prod's G0 mechanism
+(`review/impact-lab-g0`); not in the content pack; not integrated
+(`tools/blender/build_impact_relay.py`).
+
+| asset | metrics | what it is |
+|---|---|---|
+| `ir_object_launcher` | 476 tris · 2.46 × 2.46 × 0.90 m · 32.0 texels/m | the look for `ObjectPlate`: Prod's 2.0 × 0.25 × 2.0 m plate kept exactly, inside side lips with blue emitters, a rising front lip with blue fins, three deck chevrons that fill as it arms, a deck that kicks when it throws, a green-fed accumulator housing |
+| `ir_impact_seal` | 744 tris · 3.00 × 0.36 × 3.00 m · 32.0 texels/m | the look for `ImpactShutter`: six armour slabs, each its own node, with orange seam collars on what gives; three glance scuffs |
+| `ir_seal_jamb` | 108 tris · 3.50 × 0.10 × 3.25 m · 32.0 texels/m | the doorway's frame on the hall face; stays when the seal breaks |
+| `ir_teaching_tote` | 282 tris · 0.50 × 0.50 × 0.36 m · 32.0 texels/m | added later on 2026-10-08: the look for G1's 4 kg `relay_crate`, filling its box exactly. **v2** (owner: v1 read as "a gray developer placeholder"): a moulded tote with thin drafted walls, rounded corners, round-ended vents, a thick rolled rim and satin ivory plastic; dark moulded hand recesses are its only grips. v1 was an open grey frame of boxes (228 tris), now replaced in the builder |
+| `ir_relay_weight` | 108 tris · 0.45 × 0.45 × 0.60 m · 32.0 texels/m | added later on 2026-10-08: the look for G1's 36 kg `relay_weight`, filling its box exactly. A squat cast-steel block on a foot, with a strap, a worn-bright cap, a bare bail handle and two `lightened` panels |
+
+Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
+**Later on 2026-10-08:** the owner sent Batch 065 to Prod for G1, with no new design round before the room is played. The tote and weight were added at G1's tested sizes (`review/impact-relay-g1`, `a3b59c46`); neither ships a collider, so the physics is unchanged. Prod's handoff: `docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`.
+
+
+## Batch 067 — Heavy Report effects, Glyph-authored (2026-10-10)
+
+*Arty — 2026-10-10*
+
+**CANDIDATE.** Eight sprite sheets in `assets/fx/heavy_report/`, drawn in ECMS Glyph by `tools/glyphui/author_heavy_report_fx.py`, with `fx.json` recording frames, durations, events and runtime settings.
+- **The sheets:** `fx_heavy_muzzle`, `fx_heavy_tracer`, `fx_impact_metal`, `fx_spark_streak`, `fx_impact_stone`, `fx_decal_chip`, `fx_impact_organic` and `fx_decal_sap`.
+- **What they replace:** the debug geometry of Prod's Heavy Report treatment, on the same events.
+- **Told apart without hue:** the three materials step down in mean ink luminance, metal 240, stone 187 and organic 84, with distinct silhouettes.
+- **Handoff:** `docs/art-requests/2026-10-10-heavy-report-fx-handoff.md`.
+
+## Batch 066 — the station's quiet ceiling, a local texture (2026-10-08)
+
+*Arty — 2026-10-08*
+
+**APPROVED (owner, 2026-10-08)** for Crossing D's five ceilings only. It's built by `tools/blender/build_station_quiet_ceiling.py`.
+- **The texture:** `assets/textures/station_local/concrete_facility_ceiling_quiet.png`, 128 px covering 4.0 m.
+- **How it differs from the shipped ceiling:** it's painted by the study's ceiling painter with QUIET's five ceiling numbers changed and nothing else. That means double the rib pitch, no rib highlight line, and less patching, speckle and edge wear.
+- **Provenance:** the builder first checks that the same painter, QUIET off, still reproduces the shipped ceiling.
+- **Restriction:** `STATION_LOCAL.json` records the five nodes it's for. It is not a theme-pack row, and the shipped `concrete_facility` ceiling is unchanged.
+
+Measured on the T2 hall-stair view: the ceiling's edge strength goes from 46.7 to 21.8. Handoff: `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md`.
+
 ## Batch 064 — blue movement and orange breakable, to the green kit's bar (2026-10-08)
 
 *Arty — 2026-10-08*

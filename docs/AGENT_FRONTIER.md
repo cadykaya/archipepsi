@@ -194,6 +194,102 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-10: Heavy Report effects, a small Glyph-authored candidate
+  kit (Batch 067). STOP.** Same branch.
+  * Report: `docs/art/reports/2026-10-10-heavy-report-fx.md`. Handoff:
+    `docs/art-requests/2026-10-10-heavy-report-fx-handoff.md`.
+  * Eight ECMS Glyph sheets (87db9e2) in `assets/fx/heavy_report/`:
+    * muzzle bloom and a neutral tracer;
+    * metal sparks with a streak particle;
+    * a stone dust puff and chip mark;
+    * an organic wound with ichor, and a sap mark.
+  * They replace the SphereMesh, BoxMesh and grain geometry of Prod's
+    treatment "a" (`review/weapon-feel` 6fe82e6c) on the same
+    `fired_pulse` / `_impact` / `hit_confirmed` events, inside his times.
+    Photographed in his range from the player's eye.
+  * The author script refuses the kit if the value order (metal > stone
+    > organic) or the silhouettes collapse. It is deterministic and in
+    `check_art_current.sh`.
+  * Noted, not acted on: Dess's D-20 (one-Shunter encounter brief) landed
+    on 2026-10-09 after the Shunter pose study, which used D-19.
+* **2026-10-09: Shunter pose study (disposable), with recommendations
+  for Prod's later combat prototype. STOP.** Same branch.
+  * Report: `docs/art/reports/2026-10-09-shunter-pose-study.md`.
+  * Six states (work, notice, brace, charge, miss, recover), D-19 as
+    written (A) against the recommended cues (B). Photographed in the
+    engine at the game's 90 degree field of view: front at 20 and 14 m, side at 8 m,
+    rear quarter at 6 m, raised, and over cover.
+  * Findings:
+    * D-19's under-lip lamps are hidden by the plough, so A's notice
+      changes zero pixels from every view.
+    * B's plough travel and brow lamp bar read.
+    * Only B's upward vent and plume read over cover and from above.
+  * Dess's encounter brief does not exist yet. Her decisions are marked
+    DESS. No production model, no animation library. G1 and the station
+    are unchanged.
+* **2026-10-08 (fifth pass): final instructions handed to Prod. STOP.**
+  Same branch.
+  * Owner: tote v2 is approved for G1, and C2 as a candidate for
+    integration. The quiet ceiling is approved as a pipeline asset,
+    restricted to its ceilings.
+  * Batch 066: `build_station_quiet_ceiling.py` writes
+    `assets/textures/station_local/concrete_facility_ceiling_quiet.png`
+    (Crossing D's five ceilings only; not a pack row). It's in the art check.
+  * Final note: `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md`.
+    The stair and landing take the shipped floor role, plus the C2
+    stringer. Measured final: stair 13.5, lift ÷ stair 2.23.
+  * Deferred tooling idea, recorded in ART_FRONTIER: procedural stair meshes
+    along paths or splines.
+  * Next: no more art studies or redesigns until the owner has played
+    G1. Only Prod's fit, collision and state issues.
+* **2026-10-08 (fourth pass): Batch 065 APPROVED for G1 integration;
+  tote v2; stair stringer comparison. STOP.** Same branch.
+  * Report: `docs/art/reports/2026-10-08-g1-approval-tote-v2-stair-skirt.md`.
+  * G1: all five pieces are approved as candidate art. The mechanics are
+    unchanged, so the placeholder and art versions can be compared. The
+    handoff is updated, and the launcher's optional colliders stay off.
+  * Tote v2 (282 tris, same box and nodes): a moulded satin-ivory
+    container with round vents and a rolled rim. The weight is unchanged.
+  * Stair: C2, T2 plus one visual-only stringer. Stair 13.4 against
+    T2's 22.1; lift ÷ stair 2.26. The code sketch is in the noise handoff.
+  * The quiet ceiling is preferred; promoting it to a builder is still
+    to do.
+  * Bloom: the direction is approved and kept, with no implementation.
+    Shunter: the plough and vent are gameplay-test candidates, with no
+    model.
+  * Next: only Prod's specific fit, collision and state issues.
+* **2026-10-08 (third pass): Batch 065 HANDED TO PROD for G1; tote and
+  weight added; noise split into R and T2. STOP.** Same branch.
+  * Owner: there is no new launcher or barrier design round before the
+    room is played. Arty supports specific fit and state issues only.
+  * Prod handoff: `docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`.
+    It is read against G1 `a3b59c46`; the one fit issue is the raceway's end
+    (waypoint change given).
+  * `ir_teaching_tote` (4 kg) and `ir_relay_weight` (36 kg) fill G1's
+    tested boxes exactly and ship no collider, so the physics is unchanged.
+  * Noise: `docs/art-requests/2026-10-08-station-noise-handoff.md`.
+    * R, roles only with shipped textures: lift ÷ ceiling 1.01.
+    * Exact T2, R plus two local quiet variants: 1.39.
+    * No global texture replacement.
+  * Bloom stages, and the Shunter's larger plough and upward vent, stay
+    review proposals. No enemy model, and no broad studies.
+  * Next: wait for Prod's fit or state issues, or the owner's choice
+    between R and T2.
+* **2026-10-08 (second pass): the Bloom transition study, selective noise
+  correction and the Impact Relay G1 kit (Batch 065) are DELIVERED;
+  STOP.** It's on `claude/archipepsi-art-bloom-g1-2026-10-08`, from
+  `463ef2f9`.
+  * Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
+  * Bloom: five stages from one camera; the foreign world is a
+    labelled placeholder.
+  * Noise: only the ceilings and the dead-end stair are quieted, so the
+    lift stays the busiest thing in the hall.
+  * G1: `ir_object_launcher` fits `ObjectPlate`; `ir_impact_seal` and
+    `ir_seal_jamb` fit `ImpactShutter`, read on `review/impact-lab-g0`.
+  * Shunter (D-19, `21cc00a4`): disposable concept only -- a sketch
+    sheet and a throwaway maquette read in D's yard. No model until
+    its behaviour is tested at G3.
+  * Next: owner review. The runtime is Prod's and the room is Dess's.
 * **2026-10-08: Crossing identity studies and the blue/orange candidate
   kit (Batch 064) are DELIVERED; STOP.** It's on
   `claude/archipepsi-art-crossing-identity-2026-10-08`, from `9ae04155`.

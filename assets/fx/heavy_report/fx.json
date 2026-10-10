@@ -1,0 +1,214 @@
+{
+  "_kit": {
+    "events": {
+      "fired_pulse": [
+        "fx_heavy_muzzle",
+        "fx_heavy_tracer"
+      ],
+      "hit_confirmed": "unchanged: Prod's marker and sound",
+      "impact": "Prod's _impact(at, normal, collider), on fired_pulse's own ray: pick the sheet by the collider's surface (fx_impact_metal | stone | organic)"
+    },
+    "filter": "nearest, no mipmaps, as the interface kit",
+    "fits": "every once-clip ends inside Prod's own time: muzzle 150 ms (flash decays at 140, bloom gone at 67), impacts 217-267 ms (impact_time 300)",
+    "glyph": "ECMS Glyph CLI, revision 87db9e2",
+    "palette": {
+      "amber": "#ffb35c/255",
+      "chip": "#3f3c38/255",
+      "chip_l": "#dad2c2/255",
+      "dust_d": "#8e8574/220",
+      "dust_l": "#c9c0ae/200",
+      "grey_hi": "#ffffff/170",
+      "grey_lo": "#ffffff/90",
+      "hot": "#fffbea/255",
+      "ichor_l": "#c6a484/255",
+      "ichor_m": "#8c624a/255",
+      "sap_d": "#3b2620/255",
+      "sap_l": "#a8775b/255",
+      "sap_m": "#6e4434/255",
+      "smoke_d": "#5e5b57/130",
+      "smoke_l": "#9a968f/150",
+      "white": "#ffffff/255",
+      "yellow": "#ffe39a/255"
+    },
+    "status": "CANDIDATE (Arty, 2026-10-10) for Heavy Report (review/weapon-feel, treatment 'a'); not integrated"
+  },
+  "fx_decal_chip": {
+    "answers": "the mark a shot leaves on stone",
+    "cell": [
+      16,
+      16
+    ],
+    "durations_ms": [
+      3000
+    ],
+    "file": "fx_decal_chip.png",
+    "frames": 1,
+    "layout": "one row, frame 0 at the left",
+    "loop": "hold_last",
+    "runtime": {
+      "life": "fades over the last 1 s of 3 s; cap the count (oldest first)",
+      "node": "Decal, onto the hit surface",
+      "world_size_m": 0.28
+    },
+    "total_ms": null
+  },
+  "fx_decal_sap": {
+    "answers": "the mark a shot leaves on organic surfaces",
+    "cell": [
+      16,
+      16
+    ],
+    "durations_ms": [
+      3000
+    ],
+    "file": "fx_decal_sap.png",
+    "frames": 1,
+    "layout": "one row, frame 0 at the left",
+    "loop": "hold_last",
+    "runtime": {
+      "life": "as fx_decal_chip",
+      "node": "Decal",
+      "world_size_m": 0.24
+    },
+    "total_ms": null
+  },
+  "fx_heavy_muzzle": {
+    "answers": "fired_pulse: the muzzle bloom, replacing the SphereMesh fireball",
+    "cell": [
+      48,
+      48
+    ],
+    "durations_ms": [
+      17,
+      33,
+      100
+    ],
+    "file": "fx_heavy_muzzle.png",
+    "frames": 3,
+    "layout": "one row, frame 0 at the left",
+    "loop": "once",
+    "runtime": {
+      "at": "the viewmodel muzzle (the tracer's origin, camera basis * (0.15, -0.12, -0.3))",
+      "frame0_on": "the shot frame",
+      "light": "keep Prod's flash light (5.0, warm, 0.14 s)",
+      "node": "Sprite3D, billboard, additive, unshaded",
+      "world_size_m": 0.34
+    },
+    "total_ms": 150
+  },
+  "fx_heavy_tracer": {
+    "answers": "fired_pulse: Tracer.spawn's beam, replacing the glowing BoxMesh",
+    "cell": [
+      64,
+      8
+    ],
+    "durations_ms": [
+      17,
+      33
+    ],
+    "file": "fx_heavy_tracer.png",
+    "frames": 2,
+    "layout": "one row, frame 0 at the left",
+    "loop": "once",
+    "runtime": {
+      "head": "+X is the far (hit) end",
+      "node": "a quad from muzzle to hit, axis-billboarded along the beam, additive",
+      "tint": "the runtime's own colour (pale blue toward magenta with Static): the sheet is neutral",
+      "width_m": 0.08
+    },
+    "total_ms": 50
+  },
+  "fx_impact_metal": {
+    "answers": "the impact on a METAL surface",
+    "cell": [
+      32,
+      32
+    ],
+    "durations_ms": [
+      17,
+      33,
+      67,
+      100
+    ],
+    "file": "fx_impact_metal.png",
+    "frames": 4,
+    "layout": "one row, frame 0 at the left",
+    "loop": "once",
+    "runtime": {
+      "light": "Prod's warm splash, 2.5, half of 0.30 s",
+      "node": "Sprite3D at hit + normal * 0.02, billboard, additive",
+      "particles": "10-14 fx_spark_streak, velocity-aligned, 2.5-6 m/s, 40 deg off the normal, gravity, 0.3 s",
+      "world_size_m": 0.6
+    },
+    "total_ms": 217
+  },
+  "fx_impact_organic": {
+    "answers": "the impact on an ORGANIC surface",
+    "cell": [
+      32,
+      32
+    ],
+    "durations_ms": [
+      17,
+      50,
+      83,
+      117
+    ],
+    "file": "fx_impact_organic.png",
+    "frames": 4,
+    "layout": "one row, frame 0 at the left",
+    "loop": "once",
+    "runtime": {
+      "decal": "fx_decal_sap",
+      "light": "none",
+      "node": "Sprite3D, billboard, ALPHA blend",
+      "particles": "4-6 droplets (`ichor_m`), gravity, 1-2.5 m/s, no glow",
+      "world_size_m": 0.55
+    },
+    "total_ms": 267
+  },
+  "fx_impact_stone": {
+    "answers": "the impact on STONE / concrete",
+    "cell": [
+      32,
+      32
+    ],
+    "durations_ms": [
+      17,
+      50,
+      83,
+      117
+    ],
+    "file": "fx_impact_stone.png",
+    "frames": 4,
+    "layout": "one row, frame 0 at the left",
+    "loop": "once",
+    "runtime": {
+      "decal": "fx_decal_chip",
+      "light": "none, or under 0.6 for the first 17 ms",
+      "node": "Sprite3D, billboard, ALPHA blend (dust is not light)",
+      "particles": "6-8 fragments (a 2 px quad, mostly `chip_l`), gravity, 1.5-3 m/s",
+      "world_size_m": 0.7
+    },
+    "total_ms": 267
+  },
+  "fx_spark_streak": {
+    "answers": "one spark, for the metal impact's particles",
+    "cell": [
+      8,
+      3
+    ],
+    "durations_ms": [
+      300
+    ],
+    "file": "fx_spark_streak.png",
+    "frames": 1,
+    "layout": "one row, frame 0 at the left",
+    "loop": "hold_last",
+    "runtime": {
+      "node": "CPUParticles3D mesh quad, velocity-aligned (particle flag align_y), additive",
+      "world_size_m": 0.08
+    },
+    "total_ms": null
+  }
+}

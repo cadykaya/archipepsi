@@ -3477,6 +3477,102 @@ Handoff: `docs/art/reports/2026-10-08-crossing-identity-and-affordances.md`.
 
 **Next: STOP** until the owner picks a direction and the room exists.
 
+### Delivered, 2026-10-08 (second pass) — Bloom transition, selective noise, Impact Relay G1 (Batch 065). STOPPED.
+
+It's on `claude/archipepsi-art-bloom-g1-2026-10-08`.
+Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
+* **Bloom:** station, intrusion, contamination, the visited world (a
+  TEMP-WORLD placeholder) and the way back.
+* **Noise:** the T2 targeted variant, measured; walls and the lift are
+  untouched.
+* **G1:** the launcher, seal and jamb, with their states mapped to
+  both Prod's and Dess's names.
+
+**Next: STOP** for the owner's review.
+
+### Delivered, 2026-10-08 (third pass) — Batch 065 to Prod; tote and weight; noise R vs T2. STOPPED.
+
+* **G1:** Batch 065 handed to Prod
+  (`docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`).
+  * The owner ruled out a new design round before the room is played.
+  * The one fit issue: the G1 raceway ends under the launcher's west lip.
+    The handoff gives the waypoint change.
+* **The tote and the weight:** `ir_teaching_tote` and `ir_relay_weight`,
+  at G1's exact boxes, with Batch 043's family rule and no collider.
+  They read apart at 2.5 m, at 6–7 m and from the gallery, in grey too.
+* **Noise:** R (roles only) and exact T2 (plus two local quiet variants)
+  are separate handoffs (`docs/art-requests/2026-10-08-station-noise-handoff.md`).
+* **Bloom and the Shunter:** they stay review proposals.
+
+**Next: STOP.** Support only Prod's specific fit and state issues.
+
+### Delivered, 2026-10-08 (fourth pass) — G1 approved; tote v2; stair stringer. STOPPED.
+
+* **G1:** Batch 065 is approved as candidate art for Prod's playable,
+  with the mechanics unchanged and the two versions comparable. The
+  handoff is updated.
+* **Tote v2:** rounded vents, moulded corners, a rolled rim and satin
+  ivory plastic, at the same box, mass and collider (G6, G8).
+* **Stair:** C2 (stringer plus T2) against A and T2 from the same cameras
+  (N4). Visual only, with no collider.
+* **Bloom:** the approved direction is preserved in
+  `study_bloom_transition.py`'s header; nothing else is built.
+* **Shunter:** the larger plough and the upward vent are candidates for
+  gameplay testing.
+
+**Next: STOP.** Support only Prod's specific fit, collision and state
+issues.
+
+### Delivered, 2026-10-08 (fifth pass) — final G1, ceiling and C2 instructions. STOPPED.
+
+* **Approved:** tote v2 for G1, and C2 as a candidate for integration.
+* **Batch 066:** the quiet ceiling is now a reproducible local asset
+  (`build_station_quiet_ceiling.py`, in the art check), for Crossing D's
+  five ceilings only.
+* **For Prod:** `docs/art-requests/2026-10-08-g1-crossing-d-final-integration.md`.
+  The stair takes the shipped floor role, and the final configuration
+  is measured (N5).
+
+**Next: STOP.** No more art studies or model redesigns until the owner has
+played G1. Support only Prod's specific fit, collision and state issues.
+
+### Delivered, 2026-10-09 — Shunter pose study (disposable). STOPPED.
+
+* Six states on the throwaway maquette (`study_shunter_poses.py`),
+  photographed in D's empty yard at gameplay distances
+  (`shunter_pose_study.py`): D-19 as written against the recommended
+  cues.
+* Recommendations for Prod's combat prototype are a table of plough,
+  body, lamp and vent values per state, with timings; it's a code
+  blockout, not a model. Dess's open decisions are marked DESS.
+* Report: `docs/art/reports/2026-10-09-shunter-pose-study.md`.
+
+**Next: STOP.** No production model until the combat is proven fun.
+
+### Delivered, 2026-10-10 — Heavy Report effects (Batch 067, candidate). STOPPED.
+
+* Glyph-authored effects for Prod's Heavy Report (treatment "a"):
+  * muzzle bloom and neutral tracer;
+  * metal sparks, a stone dust puff, an organic wound with ichor;
+  * chip and sap marks.
+* Source: `tools/glyphui/author_heavy_report_fx.py`, deterministic and
+  in the art check. Handoff:
+  `docs/art-requests/2026-10-10-heavy-report-fx-handoff.md`.
+* D-20 (Dess's Shunter encounter brief) now exists; the 2026-10-09 pose
+  study predates it.
+
+**Next: STOP.** Support only Prod's specific integration issues.
+
+### Deferred tooling ideas (recorded, NOT assignments)
+
+* **Procedural stair meshes along paths or splines** (owner, 2026-10-08):
+  generated stair geometry following a path or spline, with variable
+  heights, widths and curves, at a consistent UV density (the pipeline's
+  32 texels/m), for the future room-building tools. Not started. C2's
+  visual stringer is enough for Crossing D. When it's picked up, its first
+  test should be the same three Crossing D cameras (N4/N5), and it
+  must leave traversal and collision with the room's own rules.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.
