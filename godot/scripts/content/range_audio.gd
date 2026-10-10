@@ -107,6 +107,10 @@ func play_at(event: String, at: Vector3, world: Node, offset_db := 0.0,
 	var sound := AudioStreamPlayer3D.new()
 	sound.stream = stream
 	sound.volume_db = trim_db + offset_db
+	# Distance only ever takes away (her "3D attenuation on top"): close
+	# to the hit Godot's inverse-distance curve would otherwise lift an
+	# impact ABOVE its level, by 6 dB at 4 m.
+	sound.max_db = sound.volume_db
 	sound.unit_size = 8.0
 	sound.max_polyphony = 1
 	world.add_child(sound)
