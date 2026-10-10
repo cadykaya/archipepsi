@@ -293,10 +293,13 @@ func _one_shot(id: String) -> Dictionary:
 	var cue := "release" if id == "driver" else "fire"
 	var slot: Dictionary = weapons.audio.slots[id][cue]
 	var level := RA.rms_db_of(slot["streams"][0]) + float(slot["gains"][0])
-	_check(fire != "" and (slot["source"] != "placeholder"
-			or absf(level - RA.TARGET_RMS_DB) < 1.0),
-			"its %s sound plays: %s, level-matched to %.1f dB RMS"
-			% [cue, fire, level])
+	var peak := RA.peak_db_of(slot["streams"][0]) + float(slot["gains"][0])
+	_check(fire != "" and peak <= RA.PEAK_CEILING_DB + 0.01
+			and (absf(level - RA.TARGET_RMS_DB) < 1.0
+				or peak > RA.PEAK_CEILING_DB - 0.01),
+			"its %s sound plays: %s, at %.1f dB RMS, peak %.1f dBFS (matched to "
+			% [cue, fire, level, peak] + "%.0f RMS unless the %.0f dBFS ceiling "
+			% [RA.TARGET_RMS_DB, RA.PEAK_CEILING_DB] + "holds it lower)")
 	return {"back": back, "pitch": pitch, "settled": settled}
 
 

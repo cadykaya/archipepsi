@@ -17,8 +17,8 @@ extends Node
 ## **Level matching.** Every WAV, SigmAudio's or placeholder, is measured
 ## on load (RMS over its first 250 ms, where the attack and body are) and
 ## played at a gain that brings it to `TARGET_RMS_DB`, so no weapon wins
-## by being louder. RMS is a stand-in for perceived loudness, not LUFS;
-## the report says so.
+## by being louder, but never past `PEAK_CEILING_DB` at its peak. RMS is
+## a stand-in for perceived loudness, not LUFS; the report says so.
 
 const ROOT := "res://audio/sigmaudio"
 const WEAPON_CUES: Array[String] = ["fire", "fire_tail", "mech", "charge",
@@ -27,6 +27,10 @@ const IMPACT_CUES: Array[String] = ["impact_metal", "impact_stone",
 		"impact_organic", "impact_wood"]
 const TARGET_RMS_DB := -20.0
 const MAX_GAIN_DB := 12.0
+## No gain may lift a sound's peak above this: level-matching a short,
+## peaky sound by RMS alone would push it into clipping, and two cues
+## overlapping need headroom.
+const PEAK_CEILING_DB := -3.0
 
 ## weapon -> cue -> {"streams": Array, "gains": Array, "source": String,
 ## "pitch": float}
@@ -74,12 +78,24 @@ func _slot(dir: String, cue: String, fallback: Array) -> Dictionary:
 	return {"streams": [], "gains": [], "source": "missing", "pitch": 1.0}
 
 
-## The gain (dB) that brings a WAV's opening RMS to the target.
+## The gain (dB) that brings a WAV's opening RMS to the target, unless
+## that would lift its peak past the ceiling.
 static func gain_for(stream: AudioStream) -> float:
 	var rms_db := rms_db_of(stream)
 	if rms_db <= -90.0:
 		return 0.0
-	return clampf(TARGET_RMS_DB - rms_db, -24.0, MAX_GAIN_DB)
+	var gain := minf(TARGET_RMS_DB - rms_db, PEAK_CEILING_DB - peak_db_of(stream))
+	return clampf(gain, -24.0, MAX_GAIN_DB)
+
+
+static func peak_db_of(stream: AudioStream) -> float:
+	var wav := stream as AudioStreamWAV
+	if wav == null or wav.format != AudioStreamWAV.FORMAT_16_BITS:
+		return 0.0
+	var peak := 0
+	for i in int(wav.data.size() / 2.0):
+		peak = maxi(peak, absi(wav.data.decode_s16(i * 2)))
+	return linear_to_db(maxf(peak, 1) / 32768.0)
 
 
 static func rms_db_of(stream: AudioStream) -> float:
