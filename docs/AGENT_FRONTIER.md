@@ -880,6 +880,38 @@ owner's D-06/D-07 rulings and the seam table are in
         `make godot-five-weapons`.
       - **Next:** the owner plays it. Wire the Glyph flipbooks and the
         SigmAudio cues when they land. Not before.
+    - **FIVE WEAPONS, SECOND PASS (owner's playtest, 2026-10-10):
+      DELIVERED, STOP.** One updated isolated range answering the notes.
+      - **Timing.** Each shot runs three chained clocks
+        (`RangeRig.RECOIL` envelopes over the springs, a view climb as an
+        exact temporary delta, and the mechanism): the gun comes home,
+        then the aim, then the hammer, bolt or pump, then the weapon is
+        ready.
+      - **Weapons:**
+        - Foundry: heavier, same 0.72 s cadence.
+        - Sightline: 12 a hit every 0.48 s, 60 m.
+        - Switchback: unchanged, plus an opt-in hard hip-fire variant
+          (3 again).
+        - Bulkhead: Breacher and Sweeper (4 again; a launcher for each).
+        - Mass Driver: 14–60 damage, less kick.
+      - **Aiming.** ADS on range-only input actions. RMB is
+        `fire_echo` (the first Echo slot, where grapple and tether
+        live), so it aims only while that slot is empty; V and the side
+        buttons always aim.
+      - **The long lane:** 55 m, behind the mark.
+      - **Sound.** Condi's SigmAudio handoff is kept byte for byte in
+        `handoff/five_weapon_audio/` and imported by
+        `tools/five_weapons/import_sigmaudio.py`. `RangeAudio` plays her
+        `events.json` at one level.
+      - **Where it is.** Branch `review/five-weapons-v2`, on
+        `review/five-weapons`. The report is
+        `docs/reports/2026-10-10-five-weapons-second-pass.md`, and the
+        "Second pass" section of `docs/FIVE_WEAPON_RUNTIME_CONTRACT.md`
+        covers the Arty and Condi handoffs.
+      - **Open asks to Condi:** `impact.wood`, a lighter Sweeper shot,
+        and Foundry's ratchet timing.
+      - **Next:** the owner plays it and decides Breacher or Sweeper,
+        steady or hard, and the campaign's aim button. Not before.
     - **STANDING CONTEXT, not a task (owner, 2026-10-10): responsive
       music.** Condi owns the composition and the SigmAudio experiment
       (DMC5/Portal-style adaptive music). In weapon and enemy feedback

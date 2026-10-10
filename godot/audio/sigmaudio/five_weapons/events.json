@@ -1,0 +1,29 @@
+{
+  "about": "Condi's five-weapon SFX handoff for Prod's isolated range. Candidate audio, not approved. Every file is 48 kHz, 16-bit PCM, stereo WAV under wav/. Times are seconds.",
+  "level_contract": "Files are already level-matched: every weapon's main fire event reads -21 LUFS (loudest 400 ms). Play all of them through one SFX bus at the same volume_db and trim that bus, not individual players, so the comparison stays fair. Suggested starting point: volume_db 0 on each player, bus at 0 dB, then one global trim by ear.",
+  "player_hint": "Player's own gun: AudioStreamPlayer (non-positional). Impacts: AudioStreamPlayer3D at the hit point. The files start within 1-5 ms of the event; no pre-roll to compensate.",
+  "events": [
+    {"event": "foundry.fire", "file": "foundry_fire.wav", "length": 1.264, "trigger": "the shot frame (fired)", "voices": 2, "note": "Designed for 0.65-0.8 s cadence; previous tail is 50 dB down at 0.72 s."},
+    {"event": "sightline.fire", "file": "sightline_fire.wav", "length": 0.748, "trigger": "the shot frame", "voices": 3, "note": "Bolt reset clicks are baked in at +0.13 s and +0.18 s, inside the 0.30-0.40 s cadence."},
+    {"event": "switchback.fire", "file": ["switchback_fire_a.wav", "switchback_fire_b.wav"], "length": 0.366, "trigger": "every round; alternate A, B, A, B", "voices": 4, "note": "Matched as a series: a held 7.5 rounds/s burst reads -21 LUFS like the other guns, so a single round is quieter (-25.7) by design. Do not play a tail per round."},
+    {"event": "switchback.release", "file": "switchback_release_tail.wav", "length": 1.039, "trigger": "trigger released after 2 or more rounds", "voices": 1, "note": "The room decay and bolt settling that the per-round files leave out."},
+    {"event": "bulkhead.fire", "file": "bulkhead_fire.wav", "length": 1.648, "trigger": "the shot frame, once per trigger (not per pellet)", "voices": 2},
+    {"event": "bulkhead.pump", "file": "bulkhead_pump.wav", "length": 0.535, "trigger": "start of the pump/return animation (0.35 s after fire in the demo)", "voices": 1, "note": "Back stroke at 0, forward lock at +0.18 s. Line the forward lock up with the visible slam."},
+    {"event": "massdriver.charge", "file": "massdriver_charge.wav", "length": 1.365, "trigger": "fire pressed", "voices": 1, "note": "Rises for 1.2 s. If released early, stop it with a 20-30 ms fade (Tween volume_db) and play massdriver.release_early."},
+    {"event": "massdriver.charge_hold", "file": "massdriver_charge_hold_loop.wav", "length": 1.6, "trigger": "charge completes while still held", "voices": 1, "loop": {"mode": "forward", "begin_frame": 0, "end_frame": 76800}, "note": "Seamless loop. Start it as massdriver.charge reaches its top (1.2 s); a 50 ms crossfade hides the hand-off."},
+    {"event": "massdriver.release_full", "file": "massdriver_release_full.wav", "length": 2.118, "trigger": "release at full charge", "voices": 1, "note": "Stop charge/charge_hold with a 20-30 ms fade on the same frame."},
+    {"event": "massdriver.release_early", "file": "massdriver_release_early.wav", "length": 1.268, "trigger": "release before full charge", "voices": 1, "note": "2 dB quieter and shorter than the full release."},
+    {"event": "massdriver.powerdown", "file": "massdriver_powerdown.wav", "length": 1.039, "trigger": "start of recovery, about 0.45-0.55 s after release", "voices": 1},
+    {"event": "impact.metal", "file": "impact_metal.wav", "length": 0.872, "trigger": "a resolved hit on a metal-tagged surface", "voices": 6},
+    {"event": "impact.stone", "file": "impact_stone.wav", "length": 1.019, "trigger": "a resolved hit on stone/concrete", "voices": 6},
+    {"event": "impact.organic", "file": "impact_organic.wav", "length": 0.692, "trigger": "a resolved hit on an organic dummy", "voices": 6, "note": "No metal ring, no sparkle: a muffled body thud."},
+    {"event": "massdriver.impact.metal", "file": "massdriver_impact_metal.wav", "length": 1.272, "trigger": "Mass Driver projectile hits metal", "voices": 2, "note": "Replaces impact.metal for the Driver; residual plate buzz."},
+    {"event": "massdriver.impact.stone", "file": "massdriver_impact_stone.wav", "length": 1.444, "trigger": "Mass Driver projectile hits stone", "voices": 2, "note": "Residual rubble rumble and falling chips."},
+    {"event": "massdriver.impact.organic", "file": "massdriver_impact_organic.wav", "length": 0.842, "trigger": "Mass Driver projectile hits organic", "voices": 2, "note": "Deep thud and a short low thrum; mostly below 300 Hz, so it will be quiet on laptop speakers."}
+  ],
+  "impact_rules": {
+    "unknown_surface": "No sound file is a safe universal fallback. Suggest impact.stone, and log the untagged collider, as 02_EFFECTS asks.",
+    "per_weapon": "Foundry, Sightline, Switchback and Bulkhead share impact.* files. Switchback: play impacts 5-6 dB below the others (or every other round) so 7.5 hits/s don't wash out. Bulkhead: one impact for the central blast, plus at most two extra pellet impacts 10-14 dB down with 4-13 ms offsets, as in the demo.",
+    "level": "Impact files sit 4 dB under the fire files (-25 LUFS); Mass Driver impacts sit 2 dB under (-23 LUFS). 3D distance attenuation comes on top."
+  }
+}

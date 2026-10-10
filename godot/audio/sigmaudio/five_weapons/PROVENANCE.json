@@ -1,0 +1,26 @@
+{
+  "about": "Condi's five-weapon SigmAudio set, copied unchanged by tools/five_weapons/import_sigmaudio.py. Edit the handoff, not these copies.",
+  "source": "handoff/five_weapon_audio/",
+  "handoff_commit": "63c78a9d",
+  "sha256": {
+    "bulkhead_fire.wav": "0bbe6ec602bc2b8df030dd295228a5637d942b9881affc6cf9fb6c54fbd79cf0",
+    "bulkhead_pump.wav": "d25edb501e1aa23ed3d985cd5b489d1c63873319fe0c4fda378708153bad618f",
+    "foundry_fire.wav": "c024a88c5faa81b5964f5c391089a69bba7794877e8ff631e8d5142b80d83007",
+    "impact_metal.wav": "2e6dd8117894e8bf56c1a8c2437aaced9839726e07af0e70a04d145f1e9a858f",
+    "impact_organic.wav": "9279d4250ffb324ada59ec8decce2f1a1f51694010cb65bd0521a1d71b7167f4",
+    "impact_stone.wav": "e003b71287d1fd81058790af53a64d9fa81fbdaa3970dc90a19572406df500a8",
+    "massdriver_charge.wav": "3f49dbb3daf261d83d6dcad9afe07f94aea1286862cdd55a34d01add46b33e10",
+    "massdriver_charge_hold_loop.wav": "4f7bd907e39d8f88f94f2e353cfc2cfb9fd600935165a65894479df769c737b0",
+    "massdriver_impact_metal.wav": "991a127c35c3467641135269560ef60fbbe4fa87f759996ba8a0857fd1d21981",
+    "massdriver_impact_organic.wav": "0fb4a417851888b198f533a2be73cefe5aa20765d8ca93709f7069dffa812673",
+    "massdriver_impact_stone.wav": "78590ac60492edebbad79efe9861a09f8dc7baecc6951569c93f73d7e2c36774",
+    "massdriver_powerdown.wav": "d249900524f39ece5f9efd371f701f0963d43a9302977d3721670e7eac44ccdd",
+    "massdriver_release_early.wav": "99b9fc20a30a27bddaeb00eb9b2e1850843e413f82b3524c3749fe38b66f5233",
+    "massdriver_release_full.wav": "8d19ee4091b6e4517bc3dd758db8d5578ab27ba04c17d70e97cbf1cfebac338e",
+    "sightline_fire.wav": "936ad4716a2678252ed44e7516c6c49f2a53c319934e0cbb6b6134db1378812a",
+    "switchback_fire_a.wav": "bfe22a17c2d15eb0253c667cefccc8f5c7c754826ae04d12f06d1196cfd3f664",
+    "switchback_fire_b.wav": "da9c2aebad21fc963804ddfd217f2caecb9310dedd5ebe2edddcea1d002431a9",
+    "switchback_release_tail.wav": "120fae1b22cc8dc9ff44d078f12fffaa85100f5328bed538663370a26928ea0c",
+    "switchback_series_demo.wav": "8b84cae6096e07319c4d5138f80cd289e0971ad2072346451eac816de6e747df"
+  }
+}

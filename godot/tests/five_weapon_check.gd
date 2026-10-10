@@ -15,9 +15,11 @@ extends Node
 ## 2. **Each weapon, one shot:** selected by its key; fired through its
 ##    `EchoRuntime` primitive (the Pulse held); the damage the primitive
 ##    says; the engine's tracer hidden and the range's drawn from the
-##    visible muzzle to the engine's resolved hit; the aim never moves;
-##    the recoil and when it settles; the material event and its mark;
-##    the fire cue and its level.
+##    visible muzzle to the engine's resolved hit; THE THREE CLOCKS (the
+##    owner's playtest): the gun comes home, then the aim, then the
+##    weapon is ready, with no dead wait and no early snap, and the aim
+##    back exactly where it was; the material event and its mark;
+##    Condi's fire event at her one level.
 ## 3. **Cadence:** clicked or held, each weapon fires at its own rate;
 ##    the carbine's spread grows; the semi-automatics fire once a press.
 ## 4. **Materials:** metal sparks, stone chips, organic fibres (no sparks,
@@ -33,6 +35,16 @@ extends Node
 ##    switches leave nothing held; reduced motion stills the camera; the
 ##    menu fires nothing; RESTART resets targets and marks; Heavy Report
 ##    and the Static Pulse are the delivered ones.
+## 8. **Variants:** 4 again swaps Bulkhead Breacher and Sweeper; 3 again
+##    swaps Switchback's steady and hard hip-fire, its rhythm unchanged.
+## 9. **Aiming down the sights, and RMB:** RMB aims (zoom, a steadier
+##    gun, a tighter carbine) only while the first Echo slot is empty; a
+##    grapple there keeps RMB, and V still aims; B makes it V-only.
+## 10. **The long lane:** Sightline reaches 55 m, Foundry does not; the
+##    Mass Driver's slug flies there; Sightline drops the far target.
+## 11. **Sound, from Condi's events.json:** every event loads; the Mass
+##    Driver's charge, held loop, release and power-down in order; the
+##    carbine's release tail; her impact rules; one level for all.
 
 const FLAG := "--five-weapon-check"
 const FPS := 60.0
@@ -43,8 +55,9 @@ const RA := preload("res://scripts/content/range_audio.gd")
 const KEYS := {"foundry": KEY_1, "sightline": KEY_2, "switchback": KEY_3,
 		"bulkhead": KEY_4, "driver": KEY_5}
 ## What one shot at the dummy should deal (the Mass Driver's full charge).
-const DAMAGE := {"foundry": 15.0, "sightline": 8.0, "switchback": 3.5,
-		"bulkhead": 4.5, "driver": 45.0}
+const DAMAGE := {"foundry": 15.0, "sightline": 12.0, "switchback": 3.5,
+		"bulkhead": 6.0, "driver": 60.0}
+const RR := preload("res://scripts/content/range_rig.gd")
 
 var failures := 0
 var host: WeaponFeel
@@ -90,6 +103,9 @@ func _run() -> void:
 		get_tree().quit(1)
 		return
 	await _isolation_and_range()
+	# Every comparison starts on the variant the owner played first.
+	weapons.set_variant("switchback", "steady")
+	weapons.set_variant("bulkhead", "breacher")
 	var shots := {}
 	for id in RW.IDS:
 		shots[id] = await _one_shot(id)
@@ -101,6 +117,10 @@ func _run() -> void:
 	await _driver()
 	await _bulkhead_range()
 	await _switching()
+	await _variants()
+	await _ads(shots)
+	await _long_lane()
+	await _sound()
 	await _pause_restart()
 	print("[five] %s -- %d failure(s)" % ["PASS" if failures == 0 else "FAILED",
 			failures])
@@ -152,6 +172,11 @@ func _isolation_and_range() -> void:
 		"the back wall": [host.get_node("Range/BackWall"), "stone"],
 		"the floor": [host.get_node("Range/Floor"), "stone"],
 		"the steel plate": [host.get_node("Range/SteelPlate"), "metal"],
+		"the long lane's floor": [host.get_node("Range/LaneFloor"), "stone"],
+		"the 35 m plate": [host.get_node("Range/FarPlate"), "metal"],
+		"the 55 m plate": [host.get_node("Range/FarthestPlate"), "metal"],
+		"the far 40 HP target": [host.far_mannequin, "organic"],
+		"the south wall's sill": [host.get_node("Range/SouthWallSill"), "stone"],
 	}
 	var wrong := []
 	for what in tags:
@@ -173,6 +198,14 @@ func _isolation_and_range() -> void:
 			or (WeaponFeel.requested_weapon() not in RW.IDS
 				and weapons.current == "foundry"),
 			"the range starts in the weapon asked for (%s)" % weapons.current)
+	var asked := WeaponFeel.requested_variant()
+	if asked != "":
+		_check(weapons.variant() == asked,
+				"and on the variant asked for (%s)" % weapons.variant())
+	var loaded := weapons.audio.loaded()
+	_check(loaded.y == 17 and loaded.x == loaded.y,
+			"Condi's events.json: %d of %d events load their files" % [loaded.x,
+			loaded.y])
 
 
 # ===================================================== 2. one shot each
@@ -180,7 +213,7 @@ func _isolation_and_range() -> void:
 func _one_shot(id: String) -> Dictionary:
 	_phase(String(RW.PROFILES[id]["name"]))
 	await _key(KEYS[id])
-	var p: Dictionary = RW.PROFILES[id]
+	var p: Dictionary = weapons.profile()
 	var rig := weapons.rig
 	_check(weapons.current == id and host._which.text == p["name"]
 			and (rig.models[id] as Node3D).visible and rig.visible
@@ -205,22 +238,22 @@ func _one_shot(id: String) -> Dictionary:
 	var shots := weapons.shots
 	var audio_from := weapons.audio.played.size()
 	var marks_before := weapons.impacts.live_marks()
-	var t := {"back": [], "pitch": [], "light": [], "aim": [], "rest": []}
+	var t := {"back": [], "pitch": [], "light": [], "aim": []}
 	Input.action_press("fire_pulse")
 	if id == "driver":
 		await _settle(int(1.25 * FPS))
 		Input.action_release("fire_pulse")
-	# Sampled from the trigger on, so the shot's own frame is in it.
+	# Sampled from the trigger on, so the shot's own frame is in it, and
+	# long enough for the slowest weapon to be ready again.
 	var visible_tracers := 0
-	for i in 64:
+	for i in 84:
 		await get_tree().process_frame
 		if i == 2 and id != "driver":
 			Input.action_release("fire_pulse")
-		t["back"].append(rig.spring("back").x)
-		t["pitch"].append(rig.spring("pitch").x)
+		t["back"].append(rig.displacement("back"))
+		t["pitch"].append(rig.displacement("pitch"))
 		t["light"].append(rig.light.light_energy)
 		t["aim"].append(rad_to_deg(aim.angle_to(-body.camera.global_basis.z)))
-		t["rest"].append(0.0 if rig.at_rest() else 1.0)
 		if i < 3:
 			for node in get_tree().current_scene.find_children("*", "Tracer",
 					true, false):
@@ -231,13 +264,15 @@ func _one_shot(id: String) -> Dictionary:
 	var shot: Dictionary = weapons.last_shot
 	var ends: Array = shot.get("ends", [])
 	var want: float = DAMAGE[id]
+	var pellets := int(p["action"]["primitive"].get("pellets", 1))
 	if id == "bulkhead":
 		var on_dummy := 0
 		for end in ends:
 			if end["hit"].get("collider") == host.dummy:
 				on_dummy += 1
-		want = 4.5 * on_dummy
-		_note("bulkhead: %d of 8 pellets on the dummy at 4 m" % on_dummy)
+		want = DAMAGE[id] * on_dummy
+		_note("bulkhead: %d of %d pellets on the dummy at 4 m" % [on_dummy,
+				pellets])
 	_check(weapons.shots == shots + 1 and _pulses == pulses,
 			"one shot through its %s primitive, and the Static Pulse held "
 			% p["action"]["primitive"]["type"] + "(no Pulse fired)")
@@ -258,25 +293,49 @@ func _one_shot(id: String) -> Dictionary:
 			var eye := body.camera.global_position
 			lined = rad_to_deg(aim.angle_to((ends[0]["hit"]["position"]
 					as Vector3) - eye)) < 0.05
-		_check(visible_tracers == 0 and ends.size() == int(
-				p["action"]["primitive"].get("pellets", 1)) and origin_ok
+		_check(visible_tracers == 0 and ends.size() == pellets and origin_ok
 				and truth_ok and lined,
 				"%d tracer(s) from the visible muzzle to the engine's resolved "
 				% ends.size() + "hit; the engine's own beam never shows; a "
 				+ "zero-spread shot lands on the crosshair's line")
-	var aim_peak := 0.0
-	for v in t["aim"]:
-		aim_peak = maxf(aim_peak, float(v))
-	_check(aim_peak < 1e-4, "the aim never moves (%.6f degrees)" % aim_peak)
+	# THE THREE CLOCKS. The view climbs (where the weapon has a climb) and
+	# comes back EXACTLY; the gun is home, then the aim, then the weapon is
+	# ready: no early snap, no dead wait.
+	var climb := _peak(t["aim"])
+	var home := float(t["aim"][-1])
+	var spec: Dictionary = RR.RECOIL.get(String(p.get("recoil", "")), {})
+	var clocks: Dictionary = weapons.clocks
+	if spec.is_empty():
+		_check(climb < 1e-4, "no view climb: the aim never moves (%.6f degrees)"
+				% climb)
+	else:
+		_check(climb > 0.3 * float(spec["aim"]) and home < 1e-4,
+				"the view climbs %.2f degrees and comes back exactly (%.6f off)"
+				% [climb, home])
+	var gun := float(clocks.get("gun", -1.0))
+	var settled := float(clocks.get("aim", -1.0))
+	var ready := float(clocks.get("ready", -1.0))
+	var mech := float(clocks.get("mech", 0.0))
+	if id == "driver":
+		_check(gun > 0.0 and settled >= gun - 0.02,
+				"recoil after the release: home %s, aim home %s (light, as asked)"
+				% [_s(gun), _s(settled)])
+	elif id == "switchback":
+		_check(gun > 0.0 and ready > 0.0, "each round: gun home %s, ready %s"
+				% [_s(gun), _s(ready)])
+	else:
+		var tick := 1.5 / FPS
+		var last := maxf(settled, mech)
+		_check(gun > 0.0 and settled >= gun - tick and ready >= last - tick
+				and ready - last <= 0.15 and gun >= 0.6 * ready,
+				"the gun home %s, the aim %s, the mechanism's last beat %s, then "
+				% [_s(gun), _s(settled), _s(mech)] + "ready %s: no early snap "
+				% _s(ready) + "(home after 60% of the cycle), no dead wait "
+				+ "(ready within 0.15 s of the last of them)")
 	var back := _peak(t["back"])
 	var pitch := _peak(t["pitch"])
-	var settled := _rest_frame(t["rest"])
-	var budget := ceili(float(p["action"]["cooldown"]) * FPS)
-	_check(back > 0.0 and pitch > 0.0 and settled > 0
-			and (settled <= budget or id == "switchback"),
-			"recoil: %.3f m back, %.1f degrees up; settled after %s%s"
-			% [back, pitch, _ms(settled), "" if id == "switchback"
-				else " (the next shot: %s)" % _ms(budget)])
+	_check(back > 0.0 and pitch > 0.0, "recoil: %.3f m back, %.1f degrees up"
+			% [back, pitch])
 	_check(_peak(t["light"]) > 0.5, "the muzzle light flares (%.1f)"
 			% _peak(t["light"]))
 	var info: Dictionary = weapons.impacts.last
@@ -286,21 +345,25 @@ func _one_shot(id: String) -> Dictionary:
 	_check(sparks_ok and marks >= 1
 			and (marks <= 4 if id == "bulkhead" else marks <= 1),
 			"on the metal dummy: sparks and %d persistent mark(s)" % marks)
-	var fire := ""
+	var event := "massdriver.release_full" if id == "driver" \
+			else String(p["fire"])
+	var fire: Array = []
+	var impact: Array = []
 	for entry in weapons.audio.played.slice(audio_from):
-		if entry[0] == id and entry[1] in ["fire", "release"]:
-			fire = "%s (%s)" % [entry[1], entry[3]]
-	var cue := "release" if id == "driver" else "fire"
-	var slot: Dictionary = weapons.audio.slots[id][cue]
-	var level := RA.rms_db_of(slot["streams"][0]) + float(slot["gains"][0])
-	var peak := RA.peak_db_of(slot["streams"][0]) + float(slot["gains"][0])
-	_check(fire != "" and peak <= RA.PEAK_CEILING_DB + 0.01
-			and (absf(level - RA.TARGET_RMS_DB) < 1.0
-				or peak > RA.PEAK_CEILING_DB - 0.01),
-			"its %s sound plays: %s, at %.1f dB RMS, peak %.1f dBFS (matched to "
-			% [cue, fire, level, peak] + "%.0f RMS unless the %.0f dBFS ceiling "
-			% [RA.TARGET_RMS_DB, RA.PEAK_CEILING_DB] + "holds it lower)")
-	return {"back": back, "pitch": pitch, "settled": settled}
+		if entry[0] == event:
+			fire = entry
+		elif String(entry[0]).ends_with("impact.metal") and impact.is_empty():
+			impact = entry
+	var stream: AudioStream = weapons.audio.events[event]["streams"][0]
+	var peak := RA.peak_db_of(stream)
+	_check(not fire.is_empty() and is_equal_approx(float(fire[3]),
+			weapons.audio.trim_db) and peak <= -1.0 and not impact.is_empty(),
+			"Condi's %s plays (%s) at the one range level %.1f dB, file peak "
+			% [event, fire[2] if not fire.is_empty() else "none",
+			weapons.audio.trim_db] + "%.1f dBFS; her metal impact follows (%s)"
+			% [peak, impact[0] if not impact.is_empty() else "none"])
+	return {"back": back, "pitch": pitch, "gun": gun, "aim": settled,
+			"ready": ready, "climb": climb}
 
 
 func _distinct(shots: Dictionary) -> void:
@@ -331,7 +394,7 @@ func _cadence() -> void:
 		Input.action_release("fire_pulse")
 		var held := weapons.shots - shots
 		var frames: Array = []
-		for press in 20:
+		for press in 30:
 			Input.action_press("fire_pulse")
 			await _settle(2)
 			Input.action_release("fire_pulse")
@@ -339,7 +402,7 @@ func _cadence() -> void:
 			if weapons.shots - shots - held > frames.size():
 				frames.append(Engine.get_physics_frames())
 		var gaps := _gaps(frames)
-		var want := float(RW.PROFILES[id]["action"]["cooldown"]) * FPS
+		var want := float(RW.profile_of(id)["action"]["cooldown"]) * FPS
 		var even := not gaps.is_empty()
 		for gap in gaps:
 			even = even and absf(gap - want) <= 6.5
@@ -496,7 +559,9 @@ func _driver() -> void:
 	Input.action_release("fire_pulse")
 	await _settle(40)
 	var early := host.dummy.absorbed - absorbed
-	_check(early >= 10.0 and early < 20.0,
+	var prim: Dictionary = weapons.profile()["action"]["primitive"]
+	_check(early >= float(prim["min_damage"]) and early < 0.5 * float(
+			prim["max_damage"]),
 			"an early release (0.2 s) still fires, weaker: %.1f damage" % early)
 	await _settle(int(2.0 * FPS))
 	absorbed = host.dummy.absorbed
@@ -510,9 +575,10 @@ func _driver() -> void:
 		if host.dummy.absorbed > absorbed:
 			landed = Engine.get_physics_frames() - release
 			break
-	_check(absf(host.dummy.absorbed - absorbed - 45.0) < 0.01 and landed >= 3,
-			"a full charge deals 45 and takes %d frames to arrive (a slug, not a "
-			% landed + "hitscan)")
+	_check(absf(host.dummy.absorbed - absorbed - float(prim["max_damage"]))
+			< 0.01 and landed >= 3,
+			"a full charge deals %.0f and takes %d frames to arrive (a slug, not "
+			% [prim["max_damage"], landed] + "a hitscan)")
 	var moved := {}
 	for item in [["weight", host.loose_weight], ["crate", host.loose_crate]]:
 		var thing: ManipulableBody = item[1]
@@ -559,7 +625,7 @@ func _bulkhead_range() -> void:
 			near = total / 3.0
 		else:
 			far = total / 3.0
-	_check(near > far and near >= 27.0,
+	_check(near > far and near >= 45.0,
 			"close (3.5 m) blasts land more pellets than far (10 m) ones: "
 			+ "%.1f against %.1f a shot" % [near, far])
 
@@ -593,12 +659,15 @@ func _switching() -> void:
 		await get_tree().process_frame
 		if i == 1:
 			Input.action_release("fire_pulse")
-		kicked = maxf(kicked, absf(weapons.rig.spring("back").x))
+		kicked = maxf(kicked, absf(weapons.rig.displacement("back")))
 		still = still and is_zero_approx(body.camera.v_offset) \
+				and is_zero_approx(body.camera.h_offset) \
+				and weapons.rig.aim_offset() == Vector2.ZERO \
 				and is_zero_approx(body.camera.rotation.z) \
 				and is_equal_approx(body.camera.fov, weapons.rig._base_fov)
 	_check(weapons.reduced_motion and still and kicked > 0.05,
-			"M (reduced motion): the gun still kicks, the camera does not move")
+			"M (reduced motion): the gun still kicks; the camera does not move, "
+			+ "no view climb")
 	await _key(KEY_M)
 	await _key(KEY_6)
 	var pulses := _pulses
@@ -672,6 +741,403 @@ func _pause_restart() -> void:
 			"still no enemies and no bridge after the restart")
 
 
+# ============================================================ 8. variants
+
+func _variants() -> void:
+	_phase("variants")
+	# Bulkhead: 4 takes it out on Breacher, 4 again swaps.
+	await _key(KEY_1)
+	await _key(KEY_4)
+	var feed := weapons.rig.part("feed")
+	_check(weapons.variant() == "breacher" and not feed.visible
+			and is_equal_approx(weapons.runtime.equipped["cooldown"], 1.0)
+			and int(weapons.runtime.equipped["primitive"]["pellets"]) == 10,
+			"4: Bulkhead Breacher, ten pellets, one shot a second, the pump")
+	await _key(KEY_4)
+	var on_screen := host._readout.text
+	_check(weapons.current == "bulkhead" and weapons.variant() == "sweeper"
+			and feed.visible and weapons.rig.recoil_key == "bulkhead_sweeper"
+			and is_equal_approx(weapons.runtime.equipped["cooldown"], 0.5)
+			and int(weapons.runtime.equipped["primitive"]["pellets"]) == 7
+			and "SWEEPER" in on_screen,
+			"4 again: Bulkhead Sweeper, seven pellets twice a second, box-fed "
+			+ "(the feed box shows), and the screen says so")
+	body.set_spawn(Transform3D(Basis(), Vector3(0, 0.05, -6.0)))
+	body.velocity = Vector3.ZERO
+	await _settle(20)
+	_aim(AIM_DUMMY)
+	await _settle(int(1.2 * FPS))
+	var frames: Array = []
+	var shots := weapons.shots
+	var from := weapons.audio.played.size()
+	for press in 24:
+		Input.action_press("fire_pulse")
+		await _settle(2)
+		Input.action_release("fire_pulse")
+		await _settle(4)
+		if weapons.shots - shots > frames.size():
+			frames.append(Engine.get_physics_frames())
+	var even := frames.size() >= 3
+	for gap in _gaps(frames):
+		even = even and absf(gap - 30.0) <= 6.5
+	var pumped := false
+	for entry in weapons.audio.played.slice(from):
+		pumped = pumped or entry[0] == "bulkhead.pump"
+	await _settle(int(1.2 * FPS))
+	_check(even and not pumped and weapons.rig.aim_settled(),
+			"the Sweeper fires every 30 frames (%s), no pump, its view climb home"
+			% str(_gaps(frames)))
+	await _key(KEY_4)
+	_check(weapons.variant() == "breacher" and not feed.visible,
+			"4 a third time: back to the Breacher")
+	# Switchback: steady (as played) against hard hip-fire.
+	await _key(KEY_3)
+	var climbs := {}
+	var rates := {}
+	for v in ["steady", "hard"]:
+		_check(weapons.variant() == v and weapons.rig.recoil_key == String(
+				RW.profile_of("switchback").get("recoil", "")),
+				"3%s: Switchback, %s hip-fire" % [" again" if v == "hard" else "",
+				v])
+		host.recover()
+		await _settle(20)
+		_aim(AIM_DUMMY)
+		await _settle(40)
+		var aim := -body.camera.global_basis.z
+		shots = weapons.shots
+		var climb := 0.0
+		Input.action_press("fire_pulse")
+		for i in int(1.0 * FPS):
+			await get_tree().physics_frame
+			climb = maxf(climb, rad_to_deg(aim.angle_to(
+					-body.camera.global_basis.z)))
+		Input.action_release("fire_pulse")
+		rates[v] = weapons.shots - shots
+		await _settle(int(0.6 * FPS))
+		var back := rad_to_deg(aim.angle_to(-body.camera.global_basis.z))
+		climbs[v] = [climb, back]
+		if v == "steady":
+			await _key(KEY_3)
+	_check(float(climbs["steady"][0]) < 1e-4 and float(climbs["hard"][0]) > 0.5
+			and float(climbs["hard"][1]) < 1e-4 and rates["steady"] == rates["hard"],
+			"steady never moves the aim; hard climbs %.2f degrees while held and "
+			% climbs["hard"][0] + "comes back exactly; the rhythm is the same "
+			+ "(%d and %d rounds a second)" % [rates["steady"], rates["hard"]])
+	await _key(KEY_3)
+	_check(weapons.variant() == "steady", "3 a third time: back to steady")
+
+
+# ================================================ 9. aiming down the sights
+
+func _ads(hip: Dictionary) -> void:
+	_phase("aiming down the sights, and RMB")
+	await _key(KEY_2)
+	host.recover()
+	await _settle(30)
+	_aim(AIM_DUMMY)
+	await _settle(10)
+	var base := weapons.rig._base_fov
+	_mouse(MOUSE_BUTTON_RIGHT, true)
+	await _settle(int(0.25 * FPS))
+	var zoomed := body.camera.fov
+	_check(weapons.aiming and is_equal_approx(weapons.rig.ads, 1.0)
+			and zoomed < base - 20.0,
+			"Sightline, RMB held: the sights come up within 0.25 s, the view "
+			+ "zooms %.0f -> %.0f degrees" % [base, zoomed])
+	var aim := -body.camera.global_basis.z
+	var back := 0.0
+	Input.action_press("fire_pulse")
+	for i in 30:
+		await get_tree().physics_frame
+		if i == 2:
+			Input.action_release("fire_pulse")
+		back = maxf(back, weapons.rig.displacement("back"))
+	var ends: Array = weapons.last_shot.get("ends", [])
+	var lined: bool = not ends.is_empty() and not ends[0]["hit"].is_empty() \
+			and rad_to_deg(aim.angle_to((ends[0]["hit"]["position"] as Vector3)
+				- body.camera.global_position)) < 0.05
+	_check(bool(weapons.last_shot.get("aiming")) and lined
+			and back < float(hip["sightline"]["back"]) * 0.85,
+			"aimed, the shot still lands on the crosshair's line and the gun "
+			+ "kicks less (%.3f m against %.3f m from the hip)"
+			% [back, hip["sightline"]["back"]])
+	await _settle(int(0.6 * FPS))
+	_mouse(MOUSE_BUTTON_RIGHT, false)
+	await _settle(int(0.25 * FPS))
+	_check(not weapons.aiming and is_zero_approx(weapons.rig.ads)
+			and is_equal_approx(body.camera.fov, base),
+			"RMB up: the sights come down and the view is the player's again")
+	# Switchback: aimed bursts are tighter than hip bursts.
+	await _key(KEY_3)
+	var spreads := {}
+	for aimed in [false, true]:
+		host.recover()
+		await _settle(20)
+		_aim(AIM_DUMMY)
+		await _settle(40)
+		if aimed:
+			_mouse(MOUSE_BUTTON_RIGHT, true)
+			await _settle(15)
+		var shots := weapons.shots
+		var widest := 0.0
+		Input.action_press("fire_pulse")
+		for i in int(1.0 * FPS):
+			await get_tree().physics_frame
+			widest = maxf(widest, float(weapons.last_shot.get("spread", 0.0)))
+		Input.action_release("fire_pulse")
+		spreads[aimed] = [widest, weapons.shots - shots]
+		if aimed:
+			_mouse(MOUSE_BUTTON_RIGHT, false)
+		await _settle(30)
+	_check(float(spreads[true][0]) < 0.6 * float(spreads[false][0])
+			and spreads[true][1] == spreads[false][1],
+			"Switchback aimed: spread up to %.1f degrees against %.1f from the "
+			% [spreads[true][0], spreads[false][0]] + "hip, at the same rhythm")
+	# Foundry and Bulkhead have no sights here: RMB does nothing to them.
+	await _key(KEY_1)
+	_mouse(MOUSE_BUTTON_RIGHT, true)
+	await _settle(15)
+	_check(not weapons.aiming and is_zero_approx(weapons.rig.ads),
+			"Foundry: no aiming down the sights (hip only, as tested)")
+	_mouse(MOUSE_BUTTON_RIGHT, false)
+	await _settle(4)
+	# THE CONFLICT. A grapple in the first Echo slot keeps RMB: pressing it
+	# reaches the Echo and does not aim; V still aims.
+	await _key(KEY_2)
+	var first: EchoRuntime = body.runtimes["echo_a"]
+	first.set_equipped({"kind": "action", "component_id": "range_test_tether",
+			"display_name": "Test Tether", "slot": "echo_a", "modifiers": [],
+			"cooldown": 1.0, "primitive": {"type": "grapple_swing",
+			"range": 20.0, "tether_force": 30.0, "max_duration": 1.0}})
+	await _settle(4)
+	body.set_highlighted_slot("echo_b")
+	_mouse(MOUSE_BUTTON_RIGHT, true)
+	await _settle(15)
+	var reached := body.highlighted_slot == "echo_a"
+	var aimed := weapons.aiming or weapons.rig.ads > 0.0
+	var said := "RMB belongs to Test Tether" in host._readout.text
+	_mouse(MOUSE_BUTTON_RIGHT, false)
+	await _settle(4)
+	_hold_key(KEY_V, true)
+	await _settle(15)
+	var by_v := weapons.aiming and is_equal_approx(weapons.rig.ads, 1.0)
+	_hold_key(KEY_V, false)
+	await _settle(15)
+	_check(reached and not aimed and said and by_v,
+			"with a tether in the first Echo slot, RMB reaches the Echo and "
+			+ "never aims (the screen says so); V still aims")
+	first.set_equipped({})
+	body.cancel_transient_effects()
+	body.set_highlighted_slot("echo_b")
+	await _settle(4)
+	await _key(KEY_B)
+	_mouse(MOUSE_BUTTON_RIGHT, true)
+	await _settle(15)
+	var rmb_off := not weapons.aiming
+	_mouse(MOUSE_BUTTON_RIGHT, false)
+	_hold_key(KEY_V, true)
+	await _settle(15)
+	var v_on := weapons.aiming
+	_hold_key(KEY_V, false)
+	await _key(KEY_B)
+	_check(rmb_off and v_on and RW.ads_binding == "rmb",
+			"B: aiming on V and the side buttons only (RMB left alone), and back")
+	host.recover()
+	await _settle(20)
+
+
+# ================================================== 10. the long lane
+
+func _long_lane() -> void:
+	_phase("the long lane")
+	var far: Vector3 = host.FARTHEST_PLATE_AT + Vector3(0, 1.7, 0)
+	var results := {}
+	for id in ["sightline", "foundry"]:
+		await _key(KEYS[id])
+		host.recover()
+		await _settle(20)
+		_aim(far)
+		await _settle(int(1.0 * FPS))
+		await _click()
+		await _settle(10)
+		var ends: Array = weapons.last_shot.get("ends", [])
+		var hit: Dictionary = ends[0]["hit"] if not ends.is_empty() else {}
+		results[id] = hit.get("collider")
+	var farthest := host.get_node("Range/FarthestPlate")
+	_check(_part_of(results["sightline"], farthest)
+			and results["foundry"] == null,
+			"through the south window: Sightline (60 m) rings the 55 m plate; "
+			+ "Foundry's reach (40 m) falls short")
+	await _key(KEY_5)
+	host.recover()
+	await _settle(20)
+	_aim(far)
+	await _settle(int(2.0 * FPS))
+	Input.action_press("fire_pulse")
+	await _settle(int(1.3 * FPS))
+	var release := Engine.get_physics_frames()
+	Input.action_release("fire_pulse")
+	var arrived := -1
+	for i in 120:
+		await get_tree().physics_frame
+		if not weapons.last_slug.is_empty() and _part_of(
+				weapons.last_slug.get("hit", {}).get("collider"), farthest):
+			arrived = Engine.get_physics_frames() - release
+			break
+	_check(arrived > 30,
+			"the Mass Driver's slug flies the 55 m to the plate in %d frames "
+			% arrived + "(60 m/s, the primitive's top speed)")
+	await _key(KEY_2)
+	var target: RangeTargets.Mannequin = host.far_mannequin
+	var kills := _kills
+	var shots := 0
+	host.recover()
+	await _settle(20)
+	_aim(host.FAR_MANNEQUIN_AT + Vector3(0, 1.0, 0))
+	await _settle(30)
+	while not target.down and shots < 8:
+		await _click()
+		await _settle(int(0.5 * FPS))
+		shots += 1
+	_check(target.down and _kills == kills + 1 and shots == 4,
+			"Sightline drops the 40 HP target at 35 m in %d shots" % shots)
+	await _settle(int(3.0 * FPS))
+
+
+# ======================================================== 11. the sound
+
+func _sound() -> void:
+	_phase("sound: Condi's events")
+	var audio := weapons.audio
+	# The Mass Driver, full: charge, the held loop, release, power-down.
+	await _key(KEY_5)
+	host.recover()
+	await _settle(20)
+	_aim(AIM_DUMMY)
+	await _settle(int(2.0 * FPS))
+	var from := audio.played.size()
+	Input.action_press("fire_pulse")
+	await _settle(int(1.6 * FPS))
+	var looping := audio.playing("massdriver.charge_hold")
+	Input.action_release("fire_pulse")
+	await _settle(int(1.0 * FPS))
+	var order := _events(from)
+	var seq := ["massdriver.charge", "massdriver.charge_hold",
+			"massdriver.release_full", "massdriver.impact.metal",
+			"massdriver.powerdown"]
+	_check(_in_order(order, seq) and looping
+			and not audio.playing("massdriver.charge_hold"),
+			"Mass Driver, held to full: %s" % " -> ".join(seq)
+			+ " (the loop runs while held, and stops on release)")
+	await _settle(int(1.0 * FPS))
+	from = audio.played.size()
+	Input.action_press("fire_pulse")
+	await _settle(int(0.4 * FPS))
+	Input.action_release("fire_pulse")
+	await _settle(int(1.0 * FPS))
+	order = _events(from)
+	_check("massdriver.release_early" in order
+			and not "massdriver.charge_hold" in order
+			and not "massdriver.release_full" in order,
+			"released early: release_early, never the held loop")
+	# The carbine: rounds alternate A and B; one tail when it stops.
+	await _key(KEY_3)
+	host.recover()
+	await _settle(20)
+	_aim(AIM_DUMMY)
+	await _settle(30)
+	from = audio.played.size()
+	Input.action_press("fire_pulse")
+	await _settle(int(0.7 * FPS))
+	Input.action_release("fire_pulse")
+	await _settle(20)
+	var files: Array = []
+	var tails := 0
+	var impact_db := []
+	for entry in audio.played.slice(from):
+		if entry[0] == "switchback.fire":
+			files.append(entry[2])
+		elif entry[0] == "switchback.release":
+			tails += 1
+		elif String(entry[0]).begins_with("impact."):
+			impact_db.append(float(entry[3]))
+	var alternate := files.size() >= 4
+	for i in range(1, files.size()):
+		alternate = alternate and files[i] != files[i - 1]
+	var quiet := not impact_db.is_empty()
+	for db in impact_db:
+		quiet = quiet and is_equal_approx(db, audio.trim_db
+				+ float(RA.IMPACT_RULE_DB["switchback"]))
+	_check(alternate and tails == 1 and quiet,
+			"Switchback: %d rounds alternate A/B, one release tail, impacts "
+			% files.size() + "%.1f dB under the rest" % -float(
+			RA.IMPACT_RULE_DB["switchback"]))
+	# The Breacher: one blast impact, at most two quiet pellet impacts,
+	# then the pump.
+	await _key(KEY_4)
+	body.set_spawn(Transform3D(Basis(), Vector3(0, 0.05, -6.0)))
+	body.velocity = Vector3.ZERO
+	await _settle(20)
+	_aim(AIM_DUMMY)
+	await _settle(int(1.2 * FPS))
+	from = audio.played.size()
+	await _click()
+	await _settle(int(1.2 * FPS))
+	var loud := 0
+	var extra := 0
+	var pump := -1
+	var fired := -1
+	for entry in audio.played.slice(from):
+		if entry[0] == "bulkhead.fire":
+			fired = int(entry[1])
+		elif entry[0] == "bulkhead.pump":
+			pump = int(entry[1])
+		elif String(entry[0]).begins_with("impact."):
+			if is_equal_approx(float(entry[3]), audio.trim_db):
+				loud += 1
+			elif is_equal_approx(float(entry[3]), audio.trim_db
+					+ float(RA.IMPACT_RULE_DB["bulkhead_extra"])):
+				extra += 1
+	var gap := (pump - fired) / FPS if pump > 0 and fired > 0 else -1.0
+	_check(loud == 1 and extra <= 2 and absf(gap - 0.72) < 0.05,
+			"Breacher: one blast impact, %d quiet pellet impact(s), the pump "
+			% extra + "%.2f s after the shot (its slam on the visible stroke)"
+			% gap)
+	# One level for everything the guns say.
+	var levels := {}
+	for entry in audio.played:
+		if not String(entry[0]).begins_with("impact.") \
+				and entry[2] != "missing" and not String(entry[0]).ends_with(
+				"charge_hold"):
+			levels[snappedf(float(entry[3]), 0.01)] = true
+	_check(levels.size() == 1 and levels.has(snappedf(audio.trim_db, 0.01)),
+			"every gun event plays at one level, %.1f dB (her one-bus rule): %s"
+			% [audio.trim_db, str(levels.keys())])
+	host.recover()
+	await _settle(20)
+
+
+## Whether `collider` is `node` or inside it (a box's own StaticBody).
+static func _part_of(collider: Variant, node: Node) -> bool:
+	return collider is Node and is_instance_valid(collider) \
+			and (collider == node or node.is_ancestor_of(collider))
+
+
+func _events(from: int) -> Array:
+	var names := []
+	for entry in weapons.audio.played.slice(from):
+		names.append(entry[0])
+	return names
+
+
+static func _in_order(seen: Array, want: Array) -> bool:
+	var at := 0
+	for name_in in seen:
+		if at < want.size() and name_in == want[at]:
+			at += 1
+	return at == want.size()
+
+
 # ============================================================ helpers
 
 func _shoot_at(at: Vector3) -> void:
@@ -704,6 +1170,21 @@ func _key(code: Key) -> void:
 	Input.parse_input_event(up)
 	await get_tree().process_frame
 	await _settle(2)
+
+
+func _mouse(button: MouseButton, down: bool) -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = button
+	event.pressed = down
+	Input.parse_input_event(event)
+
+
+func _hold_key(code: Key, down: bool) -> void:
+	var event := InputEventKey.new()
+	event.keycode = code
+	event.physical_keycode = code
+	event.pressed = down
+	Input.parse_input_event(event)
 
 
 func _aim(at: Vector3) -> void:
@@ -739,6 +1220,10 @@ static func _gaps(frames: Array) -> Array:
 	for i in range(1, frames.size()):
 		gaps.append(int(frames[i]) - int(frames[i - 1]))
 	return gaps
+
+
+static func _s(seconds: float) -> String:
+	return "never" if seconds < 0.0 else "%d ms" % int(round(seconds * 1000.0))
 
 
 static func _ms(frames: int) -> String:

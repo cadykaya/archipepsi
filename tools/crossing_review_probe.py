@@ -69,13 +69,15 @@ SCENARIOS = {
                          ("A heavy report", ["--feel=a"]),
                          ("B crisp snap", ["--feel=b"]),
                          ("C echo resonance", ["--feel=c"]))},
-    # The five-weapon range: one mode per starting weapon.
+    # The five-weapon range: one mode per starting weapon (and variant).
     "five": {"flag": "--five-weapons", "banner": "five-weapons: range",
              "check": "--five-weapon-check", "prefix": "[five]",
              "modes": (("Foundry", []),
                        ("Sightline", ["--weapon=sightline"]),
                        ("Switchback", ["--weapon=switchback"]),
                        ("Bulkhead", ["--weapon=bulkhead"]),
+                       ("Bulkhead Sweeper", ["--weapon=bulkhead",
+                                             "--variant=sweeper"]),
                        ("Mass Driver", ["--weapon=driver"]))},
     # The hand-cannon candidate: the same range and check, H first.
     "cannon": {"flag": "--weapon-feel", "banner": "weapon-feel: range",

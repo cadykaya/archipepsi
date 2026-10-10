@@ -1,0 +1,347 @@
+{
+  "schemaVersion": 33,
+  "appVersion": "0.1.0-alpha.1",
+  "id": "prj_000000000fdmg8vvddjcnz",
+  "name": "Switchback release tail",
+  "seed": "condi-five-weapon-switchback_release_tail",
+  "gameContext": {
+    "gameName": "",
+    "genre": "",
+    "sceneName": "Clockwork impact",
+    "targetEngine": "unsure",
+    "notes": "A metallic attack, a low body and a ringing tail."
+  },
+  "cues": [
+    {
+      "id": "cue_000000000c7v88ye4wjjjt",
+      "name": "Switchback release tail",
+      "sceneId": "sfx:clockwork-impact",
+      "seed": "condi-five-weapon-switchback_release_tail",
+      "transport": {
+        "bpm": 600,
+        "meter": {
+          "beatsPerBar": 4,
+          "beatUnit": 4,
+          "subdivisionTree": [
+            2,
+            2,
+            2,
+            2
+          ]
+        },
+        "key": {
+          "tonic": 0,
+          "mode": "ionian"
+        },
+        "lengthBars": 3,
+        "phraseLengthBars": 3
+      },
+      "playback": {
+        "version": 1,
+        "mode": "one-shot",
+        "bodySeconds": 1.2,
+        "tailSeconds": 0.9
+      },
+      "plan": {
+        "affect": {
+          "valence": 0.24491866240370913,
+          "energy": 0.3234236872231392,
+          "tension": 0.08,
+          "groove": 0.40421952353632257,
+          "attentionBudget": 0.6
+        },
+        "attentionBudget": "normalGameplay",
+        "loopExposure": "shortEvent",
+        "tempoRange": [
+          92,
+          112
+        ],
+        "modePalette": [],
+        "timbrePalette": [
+          "electronic"
+        ],
+        "articulation": "normal",
+        "harmonyStrategy": "stableModalLoop",
+        "chordExtension": "seventh",
+        "intensityCurve": "steady",
+        "requestedLayers": [
+          "base",
+          "harmony"
+        ],
+        "requestedEvents": [],
+        "explanation": "This cue tends to feel relaxed, somewhere between bright and dark, and stays settled.",
+        "confidence": {
+          "energy": "high",
+          "tension": "high",
+          "valence": "low",
+          "palette": "high"
+        },
+        "answers": {
+          "playerAction": "menu",
+          "pressure": "none",
+          "world": [
+            "electronic"
+          ],
+          "busyness": "verySparse"
+        }
+      },
+      "tracks": [
+        {
+          "id": "trk_0000000001n295sxf22fb2",
+          "name": "Tail: hall decay",
+          "role": "bass",
+          "instrumentId": "windNoise",
+          "layerId": null,
+          "mix": {
+            "gainDb": 6,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "synthPatch": {
+            "version": 1,
+            "attack": 0.004,
+            "decay": 0.6,
+            "sustain": 0,
+            "release": 0.3,
+            "brightnessOctaves": -0.5,
+            "resonance": 0.7
+          },
+          "effects": [
+            {
+              "id": "tail-hall-decay-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "highpass",
+              "frequencyHz": 250,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            },
+            {
+              "id": "tail-hall-decay-fx1",
+              "bypass": false,
+              "kind": "reverb",
+              "decaySeconds": 1.3,
+              "preDelaySeconds": 0.02,
+              "dampingHz": 4500,
+              "width": 1,
+              "wet": 0.7,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_0000000005c4rfcyjc1ybv",
+          "name": "Tail: bolt settles",
+          "role": "drums",
+          "instrumentId": "clockworkKit",
+          "layerId": null,
+          "mix": {
+            "gainDb": -10,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "effects": [
+            {
+              "id": "tail-bolt-settles-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "highpass",
+              "frequencyHz": 1500,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            }
+          ]
+        },
+        {
+          "id": "trk_0000000009tp31agkttfc3",
+          "name": "Tail: ratchet",
+          "role": "drums",
+          "instrumentId": "clockworkKit",
+          "layerId": null,
+          "mix": {
+            "gainDb": -22,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 20000,
+            "spaceAmount": 0
+          },
+          "effects": [
+            {
+              "id": "tail-ratchet-fx0",
+              "bypass": false,
+              "kind": "filter",
+              "filterType": "highpass",
+              "frequencyHz": 2500,
+              "q": 0.707,
+              "wet": 1,
+              "outputGainDb": 0
+            }
+          ]
+        }
+      ],
+      "patterns": [
+        {
+          "id": "pat_0000000002zp6bjajv8gvt",
+          "lengthSteps": 48,
+          "notes": [
+            {
+              "id": "nte_0000000000snq995trder7",
+              "startStep": 42,
+              "lengthSteps": 12,
+              "pitch": 64,
+              "velocity": 100,
+              "microOffsetTicks": 0
+            }
+          ]
+        },
+        {
+          "id": "pat_0000000006tavpyh19nvs1",
+          "lengthSteps": 48,
+          "notes": [
+            {
+              "id": "nte_00000000047mbh480fk6v4",
+              "startStep": 44,
+              "lengthSteps": 1,
+              "pitch": 42,
+              "velocity": 80,
+              "microOffsetTicks": 36
+            }
+          ]
+        },
+        {
+          "id": "pat_000000000aa6t2ns31vjcn",
+          "lengthSteps": 48,
+          "notes": [
+            {
+              "id": "nte_0000000008x9425rwsba3z",
+              "startStep": 43,
+              "lengthSteps": 1,
+              "pitch": 38,
+              "velocity": 60,
+              "microOffsetTicks": 19
+            }
+          ]
+        }
+      ],
+      "clips": [
+        {
+          "id": "clp_0000000003a89svsg1smj6",
+          "trackId": "trk_0000000001n295sxf22fb2",
+          "patternId": "pat_0000000002zp6bjajv8gvt",
+          "startStep": 0,
+          "lengthSteps": 48,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_0000000007vn2ne19e6xdk",
+          "trackId": "trk_0000000005c4rfcyjc1ybv",
+          "patternId": "pat_0000000006tavpyh19nvs1",
+          "startStep": 0,
+          "lengthSteps": 48,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000b42mkhmnzj19f",
+          "trackId": "trk_0000000009tp31agkttfc3",
+          "patternId": "pat_000000000aa6t2ns31vjcn",
+          "startStep": 0,
+          "lengthSteps": 48,
+          "transposeSteps": 0,
+          "mute": false
+        }
+      ],
+      "phrases": [
+        {
+          "id": "phr_000000000dwbgr359hvhz0",
+          "startBar": 0,
+          "lengthBars": 3,
+          "role": "statement"
+        }
+      ],
+      "arrangement": [
+        {
+          "id": "sec_000000000e75g15ag5nnq6",
+          "name": "Event",
+          "kind": "loop",
+          "startBar": 0,
+          "lengthBars": 3,
+          "repeat": 0
+        }
+      ],
+      "adaptive": {
+        "baseStateId": "sta_000000000actezzxa5rs93",
+        "layers": [],
+        "states": [
+          {
+            "id": "sta_000000000actezzxa5rs93",
+            "name": "Event",
+            "activeLayerIds": [],
+            "mixSnapshotId": null
+          }
+        ],
+        "parameters": [],
+        "events": [],
+        "transitions": [],
+        "stingers": [],
+        "mixSnapshots": []
+      },
+      "review": {
+        "status": "draft",
+        "feedback": [],
+        "proposals": [],
+        "revisions": [],
+        "approvedAt": null
+      },
+      "updatedAt": "2026-10-10T00:00:00.000Z",
+      "mixer": {
+        "buses": [],
+        "master": {
+          "gainDb": 4.4,
+          "pan": 0,
+          "mute": false,
+          "effects": [
+            {
+              "id": "master-fx0",
+              "bypass": false,
+              "kind": "compressor",
+              "thresholdDb": -12,
+              "kneeDb": 6,
+              "ratio": 4,
+              "attackSeconds": 0.001,
+              "releaseSeconds": 0.1,
+              "outputGainDb": 2
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "defaults": {
+    "bpm": 120,
+    "meter": {
+      "beatsPerBar": 4,
+      "beatUnit": 4,
+      "subdivisionTree": [
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    "key": {
+      "tonic": 0,
+      "mode": "ionian"
+    }
+  }
+}
