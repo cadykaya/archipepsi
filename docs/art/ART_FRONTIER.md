@@ -3549,6 +3549,17 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-10 — Weapon design exploration (no models). STOPPED for the owner.
+
+* After the owner's note on Batch 068, a design presentation, not assets.
+  It covers four family directions, the "stored energy, made visible"
+  principle, three mechanisms per family with a recommendation each, and
+  first-person rules (self-acting, centre clear, motion over colour, no
+  pistol grip).
+* `docs/art/reports/2026-10-10-weapon-design-exploration.md`, sheets WD0-WD9.
+* Waiting on: the owner's choice of family direction and of each family's
+  mechanism; which family goes to a first real model (suggested: Foundry).
+
 ### Delivered, 2026-10-10 — Five weapons (Batch 068, candidate). STOPPED.
 
 * Layered Glyph effects for Foundry, Sightline, Switchback, Bulkhead and
