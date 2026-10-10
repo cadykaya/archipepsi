@@ -55,7 +55,7 @@
       ],
       "description": "Starts with Bulkhead Breacher, the slow, devastating scattergun (press 4 again for the Sweeper).",
       "launchers": {
-        "windows": "4 - Five Weapons, Bulkhead (Windows).bat",
+        "windows": "4 - Five Weapons, Bulkhead Breacher (Windows).bat",
         "linux": "play-bulkhead.sh"
       }
     },
@@ -69,7 +69,7 @@
       ],
       "description": "Starts with Bulkhead Sweeper, the fast, lighter scattergun (press 4 again for the Breacher).",
       "launchers": {
-        "windows": "4b - Five Weapons, Bulkhead Sweeper (Windows).bat",
+        "windows": "4 - Five Weapons, Bulkhead Sweeper (Windows).bat",
         "linux": "play-bulkhead-sweeper.sh"
       }
     },

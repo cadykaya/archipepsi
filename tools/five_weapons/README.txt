@@ -10,7 +10,7 @@ START (Windows)
      and part2of2), unzip BOTH into that same folder.
   2. Double-click  "1 - START HERE - Five Weapons, Foundry (Windows).bat"
      (On its first run it joins the two parts into the game and checks it.)
-     The other launchers start with the other weapons (4b: the Sweeper).
+     The other launchers start with the other weapons (two for Bulkhead).
   Or install the zip(s) in the Archipepsi Launcher and pick a mode.
   Windows may warn about an unsigned program: More info, then Run anyway.
 

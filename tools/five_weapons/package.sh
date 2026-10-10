@@ -35,8 +35,8 @@ mkdir -p "$WIN" "$LIN"
 B1="1 - START HERE - Five Weapons, Foundry (Windows).bat"
 B2="2 - Five Weapons, Sightline (Windows).bat"
 B3="3 - Five Weapons, Switchback (Windows).bat"
-B4="4 - Five Weapons, Bulkhead (Windows).bat"
-B4B="4b - Five Weapons, Bulkhead Sweeper (Windows).bat"
+B4="4 - Five Weapons, Bulkhead Breacher (Windows).bat"
+B4B="4 - Five Weapons, Bulkhead Sweeper (Windows).bat"
 B5="5 - Five Weapons, Mass Driver (Windows).bat"
 SIZE=$(stat -c %s "$WIN/Archipepsi-Five-Weapons.exe")
 for bat in "$B1" "$B2" "$B3" "$B4" "$B4B" "$B5"; do
