@@ -3549,6 +3549,31 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-10 — Weapon design pass 2, hybrid (no models). STOPPED for mechanism approval.
+
+* The owner's ruling on the exploration: the hybrid direction (station
+  engineering, Epsilon technology, Echo cores), mechanism-first kept, and
+  functional detail over simplicity over decoration. The pass-1 blockout
+  look is not to be carried into production.
+* `docs/art/reports/2026-10-10-weapon-design-pass2.md`, sheets WC0-WC7:
+  the power train, the detail test, a fidelity ladder, five detailed
+  designs with parts lists, and a three-distance readability check.
+* Waiting on: approval of each mechanism; the power-train split; a
+  `viewmodel` budget category and the 256 texels/m tier (owner and Prod);
+  Epsilon's seam colour against FU-4. Suggested next step after approval:
+  one Foundry 3D fidelity study.
+
+### Delivered, 2026-10-10 — Weapon design exploration (no models). STOPPED for the owner.
+
+* After the owner's note on Batch 068, a design presentation, not assets.
+  It covers four family directions, the "stored energy, made visible"
+  principle, three mechanisms per family with a recommendation each, and
+  first-person rules (self-acting, centre clear, motion over colour, no
+  pistol grip).
+* `docs/art/reports/2026-10-10-weapon-design-exploration.md`, sheets WD0-WD9.
+* Waiting on: the owner's choice of family direction and of each family's
+  mechanism; which family goes to a first real model (suggested: Foundry).
+
 ### Delivered, 2026-10-10 — Five weapons (Batch 068, candidate). STOPPED.
 
 * Layered Glyph effects for Foundry, Sightline, Switchback, Bulkhead and

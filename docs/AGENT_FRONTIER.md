@@ -194,6 +194,48 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-10: Weapon design pass 2, hybrid direction (no models). STOP
+  for the owner's mechanism approval.** Same branch as the exploration.
+  * The owner chose the hybrid: station engineering, Epsilon technology,
+    Echo cores. Keep mechanism-first. The bar is "functional sci-fi detail
+    > intentional simplicity > meaningless decorative sci-fi detail"; the
+    blockout look must not reach production.
+  * Presentation: `docs/art/reports/2026-10-10-weapon-design-pass2.md`,
+    sheets WC0-WC7 in `docs/art/review/weapon_design_pass2_2026-10-10/`.
+  * The hybrid is a power train: Echo core (source, swappable), then
+    Epsilon (converter), then station (mechanism). Every part names its
+    job, or it goes. Detail is tiered by viewing distance.
+  * Five detailed 2D designs with numbered parts lists, cutaways and
+    exploded views. Sources: `tools/concept_art/detail_kit.py`,
+    `weapon_details.py`, `weapon_detail_sheets.py`.
+  * Open for the owner and Prod: a `viewmodel` triangle category and the
+    deferred 256 texels/m tier, before any final model.
+  * No final models until each mechanism is approved.
+* **2026-10-10: What should the five weapons be? A design exploration.
+  STOP for the owner's reaction.** Branch
+  `claude/archipepsi-art-weapon-concepts-2026-10-10` (from Batch 068's).
+  * The owner's note on 068: "too much like familiar real-world firearms".
+    Answered with design, not models.
+  * Presentation: `docs/art/reports/2026-10-10-weapon-design-exploration.md`,
+    sheets WD0-WD9 in `docs/art/review/weapon_design_2026-10-10/`.
+  * Four family directions: station instruments, Epsilon's readings,
+    visitor hearts, around the device. Recommended: station apparatus
+    clamped round the player's device, one heart a visiting world can
+    change.
+  * One principle: stored energy, made visible. Five mechanisms with three
+    explored per family:
+    * Foundry, a crucible and drop hammer;
+    * Sightline, resonant tines;
+    * Switchback, a governor and shuttle;
+    * Bulkhead, a pressure hatch;
+    * Mass Driver, a flywheel and clutch.
+  * No pistol grips: there are no hands in first person.
+  * Sources: `tools/concept_art/` (2D) and
+    `tools/blender/study_weapon_concepts.py` with
+    `tools/crossing_capture/weapon_concept_photos.py` (throwaway
+    maquettes, written outside `assets/`).
+  * Batch 068, Prod's range, damage, timing and firing are untouched.
+    Gameplay ideas are labelled proposals for Dess, Prod and Skyiah.
 * **2026-10-10: Five weapons (Batch 068, candidate). STOP.** Branch
   `claude/archipepsi-art-five-weapons-2026-10-10`.
   * Report: `docs/art/reports/2026-10-10-five-weapons.md`. Handoff to
