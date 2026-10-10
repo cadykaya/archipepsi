@@ -10,6 +10,7 @@ godot-crossing-d`).
     python3 tools/crossing_review_probe.py --relay [--exported ... | --wine ...]
     python3 tools/crossing_review_probe.py --weapon [--exported ... | --wine ...]
     python3 tools/crossing_review_probe.py --cannon [--exported ... | --wine ...]
+    python3 tools/crossing_review_probe.py --five [--exported ... | --wine ...]
 
 `--lab` probes the Impact Lab (the post-D G0 fixture) instead: one mode,
 no enemies, its own banner and live check (`impact_lab_check.gd`).
@@ -68,6 +69,14 @@ SCENARIOS = {
                          ("A heavy report", ["--feel=a"]),
                          ("B crisp snap", ["--feel=b"]),
                          ("C echo resonance", ["--feel=c"]))},
+    # The five-weapon range: one mode per starting weapon.
+    "five": {"flag": "--five-weapons", "banner": "five-weapons: range",
+             "check": "--five-weapon-check", "prefix": "[five]",
+             "modes": (("Foundry", []),
+                       ("Sightline", ["--weapon=sightline"]),
+                       ("Switchback", ["--weapon=switchback"]),
+                       ("Bulkhead", ["--weapon=bulkhead"]),
+                       ("Mass Driver", ["--weapon=driver"]))},
     # The hand-cannon candidate: the same range and check, H first.
     "cannon": {"flag": "--weapon-feel", "banner": "weapon-feel: range",
                "check": "--weapon-feel-check", "prefix": "[feel]",
@@ -205,8 +214,11 @@ def main():
                         help="probe the weapon-feel range instead")
     parser.add_argument("--cannon", action="store_true",
                         help="probe the hand-cannon candidate instead")
+    parser.add_argument("--five", action="store_true",
+                        help="probe the five-weapon range instead")
     args = parser.parse_args()
-    scenario = SCENARIOS["cannon" if args.cannon else "weapon" if args.weapon
+    scenario = SCENARIOS["five" if args.five else "cannon" if args.cannon
+                         else "weapon" if args.weapon
                          else "relay" if args.relay
                          else "lab" if args.lab else "crossing"]
     args.godot = os.path.abspath(args.godot)

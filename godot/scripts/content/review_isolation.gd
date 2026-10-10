@@ -27,6 +27,9 @@ const RELAY_FEATURE := "impact_relay"
 ## The weapon-feel range (the Static Pulse's firing-feedback experiment).
 const WEAPON_FLAG := "--weapon-feel"
 const WEAPON_FEATURE := "weapon_feel"
+## The five-weapon range: the same range, five firing profiles.
+const FIVE_FLAG := "--five-weapons"
+const FIVE_FEATURE := "five_weapons"
 
 
 static func crossing() -> bool:
@@ -46,7 +49,12 @@ static func relay() -> bool:
 
 static func weapon() -> bool:
 	return WEAPON_FLAG in OS.get_cmdline_user_args() \
-			or OS.has_feature(WEAPON_FEATURE)
+			or OS.has_feature(WEAPON_FEATURE) or five()
+
+
+static func five() -> bool:
+	return FIVE_FLAG in OS.get_cmdline_user_args() \
+			or OS.has_feature(FIVE_FEATURE)
 
 
 static func active() -> bool:

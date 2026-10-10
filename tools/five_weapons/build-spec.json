@@ -1,0 +1,76 @@
+{
+  "schema": "archipepsi-build-spec/1",
+  "title": "Five Weapons",
+  "executable": "Archipepsi-Five-Weapons",
+  "description": "Five experimental weapon types in one isolated range: Foundry (heavy hand cannon), Sightline (scout rifle), Switchback (automatic carbine), Bulkhead (scattergun) and Mass Driver (charged kinetic). Keys 1-5 switch; 6 is Heavy Report as you played it, 0 the Static Pulse as it ships. Metal, concrete, organic and wood targets, a 40 HP target, a moving dummy and loose bodies to shove. No enemies. Offline: nothing of yours is saved or changed.",
+  "limitations": [
+    "Prototype numbers, not balance.",
+    "Guns are placeholder shapes; Arty's silhouettes and layered Glyph effects are pending.",
+    "Sounds are labelled placeholders until Condi's SigmAudio renders land (N mutes them)."
+  ],
+  "modes": [
+    {
+      "id": "foundry",
+      "label": "Five Weapons, Foundry",
+      "args": [],
+      "description": "Starts with Foundry, the heavy hand cannon.",
+      "launchers": {
+        "windows": "1 - START HERE - Five Weapons, Foundry (Windows).bat",
+        "linux": "play-five-weapons.sh"
+      }
+    },
+    {
+      "id": "sightline",
+      "label": "Five Weapons, Sightline",
+      "args": [
+        "--",
+        "--weapon=sightline"
+      ],
+      "description": "Starts with Sightline, the scout rifle.",
+      "launchers": {
+        "windows": "2 - Five Weapons, Sightline (Windows).bat",
+        "linux": "play-sightline.sh"
+      }
+    },
+    {
+      "id": "switchback",
+      "label": "Five Weapons, Switchback",
+      "args": [
+        "--",
+        "--weapon=switchback"
+      ],
+      "description": "Starts with Switchback, the automatic carbine.",
+      "launchers": {
+        "windows": "3 - Five Weapons, Switchback (Windows).bat",
+        "linux": "play-switchback.sh"
+      }
+    },
+    {
+      "id": "bulkhead",
+      "label": "Five Weapons, Bulkhead",
+      "args": [
+        "--",
+        "--weapon=bulkhead"
+      ],
+      "description": "Starts with Bulkhead, the scattergun.",
+      "launchers": {
+        "windows": "4 - Five Weapons, Bulkhead (Windows).bat",
+        "linux": "play-bulkhead.sh"
+      }
+    },
+    {
+      "id": "driver",
+      "label": "Five Weapons, Mass Driver",
+      "args": [
+        "--",
+        "--weapon=driver"
+      ],
+      "description": "Starts with the Mass Driver, the charged kinetic weapon.",
+      "launchers": {
+        "windows": "5 - Five Weapons, Mass Driver (Windows).bat",
+        "linux": "play-mass-driver.sh"
+      }
+    }
+  ],
+  "recommended_mode": "foundry"
+}
