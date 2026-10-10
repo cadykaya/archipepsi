@@ -114,6 +114,17 @@ times, once on each:
 
 **Python:** the CI-coverage and packaging tests pass (13).
 
+**An early export,** at `772f0a98`, to prove the packaging before the
+audio arrives:
+- `make godot-hand-cannon`'s probe passes against the exported Linux
+  build: five modes (H first), 79 checks each;
+- each mode starts in its own treatment;
+- 0 connections, and the player's files are byte-identical;
+- the SigmAudio drop-in works inside the exported pack.
+
+Windows under Wine, the fresh-folder test and the launcher install wait
+for the delivery build.
+
 **Rendered** (in the review evidence, not the repository):
 - H's shot frame by frame;
 - close-ups of each material, frames 1, 4 and 30;
