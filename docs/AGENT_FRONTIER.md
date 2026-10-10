@@ -852,12 +852,20 @@ owner's D-06/D-07 rulings and the seam table are in
         `docs/reports/2026-10-10-hand-cannon-candidate.md`. Run the check
         with `make godot-hand-cannon`.
       - **Sound.** The cue slots are SigmAudio's. The handoff to Condi is
-        `docs/HAND_CANNON_SIGMAUDIO_CUES.md`; until his cues land, the
+        `docs/HAND_CANNON_SIGMAUDIO_CUES.md`; until her cues land, the
         report and hit play Heavy Report's own sounds as labelled
         placeholders.
       - **Next:** when the cues arrive, import them, run the probe in all
         three environments, package and deliver the playable comparison.
         Not before (owner).
+    - **STANDING CONTEXT, not a task (owner, 2026-10-10): responsive
+      music.** Condi owns the composition and the SigmAudio experiment
+      (DMC5/Portal-style adaptive music). In weapon and enemy feedback
+      work, keep clear gameplay events that music could later answer:
+      combat starting, an encounter escalating, machinery activating, an
+      encounter ending. Reuse existing signals (e.g. `fired_pulse`,
+      `hit_confirmed`, a plate's `fired`, a lever's `pulled`). No scoring
+      system or new audio framework.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.

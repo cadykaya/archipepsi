@@ -66,6 +66,10 @@ The handoff also gives each cue's timing, length and level.
 - an unrelated file is ignored;
 - missing cues keep their placeholder.
 
+**No new events.** H answers only the shot's existing signals,
+`fired_pulse` and `hit_confirmed`, and emits nothing new. Responsive
+music (Condi's) could later key off those same signals.
+
 **A correction to the weapon-feel report.** It said "SigmaAudio" was on
 no branch. SigmAudio is Condi's external sound-authoring tool (the
 toolchain ledgers name it), so it was never going to be code in this
