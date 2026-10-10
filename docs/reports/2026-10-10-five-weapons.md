@@ -182,10 +182,23 @@ targets and loose bodies.
   to `review/hand-cannon`.
 
 **The probe** (`make godot-five-weapons`) runs five modes, one per
-starting weapon, with a stand-in bridge listening: the source tree passes all five modes (79 checks each, 0 connections,
-the player's files untouched). The exported Linux and Windows-under-Wine
-runs were still in progress when this was written; their results
-follow in the next commit.
+starting weapon, with a stand-in bridge listening: it passes in all three environments:
+
+| | Source tree | Exported Linux | Windows `.exe` under Wine |
+|---|---|---|---|
+| Each mode starts with its weapon | 5 of 5 | 5 of 5 | 5 of 5 |
+| Live check, each mode | **79 ok, PASS** | **79 ok, PASS** | **79 ok, PASS** |
+| Bridge connections | 0 | 0 | 0 |
+| The player's three files | byte-identical | byte-identical | byte-identical |
+
+**Packaging:**
+- Condi's `validate --strict` passes all three packages.
+- Her launcher library installs Five Weapons (five modes, Foundry first)
+  beside Impact Relay and Weapon Feel.
+- **Wine fresh-folder test:** the two parts join to the matching sha256
+  (`86f1cc5b…`). Each of the five launchers starts its own weapon and is
+  still running at 40–60 s. 0 connections.
+- **Python:** the bridge suite passes, 2,143 of 2,143.
 
 **Recorded:** `Five-Weapons-range.mp4`, 31 s with its sound. It shows:
 - each weapon firing at several surfaces from the standard distance;
