@@ -194,6 +194,21 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-10: Five weapons (Batch 068, candidate). STOP.** Branch
+  `claude/archipepsi-art-five-weapons-2026-10-10`.
+  * Report: `docs/art/reports/2026-10-10-five-weapons.md`. Handoff to
+    Prod: `docs/art-requests/2026-10-10-five-weapon-fx-handoff.md`.
+  * 37 Glyph sheets (`assets/fx/weapons/`): Foundry's five layers, the
+    other four's own sets, material impacts and game-scale marks.
+  * Five viewmodel GLBs (`assets/models/weapons_five/`): nodes, pivots,
+    rest poses and recoil in Prod's SPRINGS format (Foundry = mode H).
+  * Photographed frozen in Prod's `review/hand-cannon` range (da0a859e),
+    from a read-only checkout; `dcap.gd` gained eye-frame GLBs, beams,
+    lights, `aim` and `hide_viewmodel`.
+  * Batch 067 is recorded NOT APPROVED (owner, 2026-10-10), kept as
+    history.
+  * Prod owns the 3D sparks, lights, decal placement and cap, and the
+    wiring. Condi owns the audio.
 * **2026-10-10: Heavy Report effects, a small Glyph-authored candidate
   kit (Batch 067). STOP.** Same branch.
   * Report: `docs/art/reports/2026-10-10-heavy-report-fx.md`. Handoff:

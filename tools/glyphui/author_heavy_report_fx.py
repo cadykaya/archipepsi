@@ -426,8 +426,11 @@ def main():
         shutil.copyfile(os.path.join(work, files[name]),
                         os.path.join(out_dir, files[name]))
     record["_kit"] = {
-        "status": "CANDIDATE (Arty, 2026-10-10) for Heavy Report "
-                  "(review/weapon-feel, treatment 'a'); not integrated",
+        "status": "NOT APPROVED (owner, 2026-10-10: flat, single-layer); "
+                  "superseded by Batch 068 (assets/fx/weapons). Kept as "
+                  "history. Was: CANDIDATE (Arty, 2026-10-10) for Heavy "
+                  "Report (review/weapon-feel, treatment 'a'); not "
+                  "integrated",
         "events": {"fired_pulse": ["fx_heavy_muzzle", "fx_heavy_tracer"],
                    "impact": "Prod's _impact(at, normal, collider), on "
                              "fired_pulse's own ray: pick the sheet by the "

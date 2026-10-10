@@ -30,7 +30,7 @@
       "white": "#ffffff/255",
       "yellow": "#ffe39a/255"
     },
-    "status": "CANDIDATE (Arty, 2026-10-10) for Heavy Report (review/weapon-feel, treatment 'a'); not integrated"
+    "status": "NOT APPROVED (owner, 2026-10-10: flat, single-layer); superseded by Batch 068 (assets/fx/weapons). Kept as history. Was: CANDIDATE (Arty, 2026-10-10) for Heavy Report (review/weapon-feel, treatment 'a'); not integrated"
   },
   "fx_decal_chip": {
     "answers": "the mark a shot leaves on stone",

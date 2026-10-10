@@ -30,9 +30,16 @@ extends SceneTree
 ##       extruded polygons (CSG, no collision), for a skirt or stringer.
 ##   "sprites": [...]  one flipbook frame per item, frozen (see below).
 ##   "room_var": "_range", "show_player": true  for other hosts.
+##   "aim": [x, y, z]  turns the player's camera onto a point first.
+##   "hide_viewmodel": true  hides the player's own viewmodel children (a
+##       candidate gun placed with "eye" stands in for it).
+##   A "glbs" item may give "eye": [x, y, z] and "eye_rot_deg": [x, y, z]
+##       instead of "origin": placed in the player camera's frame, as a
+##       Viewmodel child would be (rotation in Godot's YXZ order).
 ##   "calls": [["method", [args]]]  on the room, before shooting.
 ##   "shots": [{"name": n, "eye": [x, y, z], "look": [x, y, z],
-##       "fov": 90, "gray": false}]
+##       "fov": 90, "gray": false}]; or "eye_local" / "look_local" in the
+##       player camera's frame; or "player_eye": true.
 ## Every shot is also written in grayscale when "gray" is true.
 
 var _spec: Dictionary = {}
@@ -132,8 +139,21 @@ func _run() -> void:
 					* float(item.get("shift_y", 0.0))
 	for call: Array in _spec.get("calls", []):
 		room.callv(str(call[0]), call[1] if call.size() > 1 else [])
+	var eye_xform := Transform3D.IDENTITY
+	if player != null and player.get("camera") != null:
+		# "aim": [x, y, z] turns the player's own camera onto a point
+		# first (the player is switched off, so it holds).
+		if _spec.has("aim"):
+			(player.get("camera") as Node3D).look_at(_vec(_spec["aim"]),
+					Vector3.UP)
+		eye_xform = (player.get("camera") as Node3D).global_transform
+	if bool(_spec.get("hide_viewmodel", false)) and player != null \
+			and player.get("viewmodel") != null:
+		for child in (player.get("viewmodel") as Node).get_children():
+			if child is Node3D:
+				(child as Node3D).visible = false
 	for item: Dictionary in _spec.get("glbs", []):
-		_place(room, item)
+		_place(room, item, eye_xform)
 	# A material made to emit, by its name in the placed GLBs:
 	# {"ca_orange": {"color": "#f48a36", "energy": 2.0}} -- for a state
 	# that lives on a shared material (a seal's seam collars).
@@ -153,11 +173,13 @@ func _run() -> void:
 				lit.emission = Color(str(want["color"]))
 				lit.emission_energy_multiplier = float(want["energy"])
 				part.set_surface_override_material(i, lit)
-	# Study lights: [{"at": [x, y, z], "color": "#rrggbb", "energy": e,
-	# "range": r}], omni, no shadows -- the overlay's own light.
+	# Study lights: [{"at": [x, y, z] or "at_eye": [x, y, z], "color":
+	# "#rrggbb", "energy": e, "range": r, "shadows": false}], omni.
 	for item: Dictionary in _spec.get("lights", []):
 		var lamp := OmniLight3D.new()
-		lamp.position = _vec(item["at"])
+		lamp.position = (eye_xform * _vec(item["at_eye"])) \
+				if item.has("at_eye") else _vec(item["at"])
+		lamp.shadow_enabled = bool(item.get("shadows", false))
 		lamp.light_color = Color(str(item.get("color", "#ffffff")))
 		lamp.light_energy = float(item.get("energy", 1.0))
 		lamp.omni_range = float(item.get("range", 10.0))
@@ -202,12 +224,10 @@ func _run() -> void:
 	# [{"png", "hframes", "frame", "size_m", "at": [x, y, z] or "at_eye":
 	#   [x, y, z] (in the player camera's frame), "normal": [x, y, z] (flat
 	#   on a surface; omitted = billboard), "blend": "add" | "mix",
-	#   "modulate": "#rrggbbaa", "beam_to": [x, y, z] + "face": [x, y, z]
-	#   (a quad stretched from `at` to `beam_to`, turned toward `face`)}].
+	#   "modulate": "#rrggbbaa", "beam_to": [x, y, z] (or "beam_to_eye")
+	#   + "face": [x, y, z] or "face_eye": true (a quad stretched from `at`
+	#   to `beam_to`, turned toward `face` / the eye)}].
 	# Unshaded, nearest-filtered, no collision.
-	var eye_xform := Transform3D.IDENTITY
-	if player != null and player.get("camera") != null:
-		eye_xform = (player.get("camera") as Node3D).global_transform
 	for item: Dictionary in _spec.get("sprites", []):
 		var image := Image.load_from_file(str(item["png"]))
 		var hframes := int(item.get("hframes", 1))
@@ -232,11 +252,22 @@ func _run() -> void:
 		room.add_child(shape)
 		var at: Vector3 = (eye_xform * _vec(item["at_eye"])) \
 				if item.has("at_eye") else _vec(item["at"])
-		if item.has("beam_to"):
-			var to := _vec(item["beam_to"])
+		if item.has("beam_to") or item.has("beam_to_eye"):
+			var to := (eye_xform * _vec(item["beam_to_eye"])) \
+					if item.has("beam_to_eye") else _vec(item["beam_to"])
+			# "along": [f0, f1] draws only that stretch of the path (a
+			# round in flight between the muzzle and the hit).
+			if item.has("along"):
+				var span: Array = item["along"]
+				var from := at
+				at = from.lerp(to, float(span[0]))
+				to = from.lerp(to, float(span[1]))
 			quad.size = Vector2(at.distance_to(to), float(item.get("size_m", 0.08)))
 			var along := (to - at).normalized()
-			var toward := _vec(item.get("face", [0, 10, 0])) - (at + to) * 0.5
+			var face := _vec(item.get("face", [0, 10, 0]))
+			if bool(item.get("face_eye", false)):
+				face = eye_xform.origin
+			var toward := face - (at + to) * 0.5
 			var facing := (toward - along * toward.dot(along)).normalized()
 			shape.global_transform = Transform3D(Basis(along,
 					facing.cross(along).normalized(), facing), (at + to) * 0.5)
@@ -280,9 +311,18 @@ func _run() -> void:
 			eye = who.global_position + away * float(shot["dist"]) \
 					+ Vector3(0, 1.6, 0)
 			look = who.global_position + Vector3(0, float(shot.get("aim_y", 0.6)), 0)
-		else:
+		elif shot.has("eye_local"):
+			# Framed in the player camera's frame: an inspection view of
+			# the viewmodel from beside the player's head.
+			eye = eye_xform * _vec(shot["eye_local"])
+			look = eye_xform * _vec(shot["look_local"])
+		elif shot.has("eye"):
 			eye = _vec(shot["eye"])
 			look = _vec(shot["look"])
+		else:
+			# "player_eye" only: framed below, on the player's camera.
+			eye = eye_xform.origin
+			look = eye_xform * Vector3(0, 0, -1)
 		camera.fov = float(shot.get("fov", 90.0))
 		camera.near = 0.05
 		camera.far = 400.0
@@ -319,7 +359,8 @@ func _swap_textures(swaps: Dictionary) -> void:
 				print("[dcap] swapped ", path)
 
 
-func _place(room: Node3D, item: Dictionary) -> void:
+func _place(room: Node3D, item: Dictionary,
+		eye_xform := Transform3D.IDENTITY) -> void:
 	var document := GLTFDocument.new()
 	var state := GLTFState.new()
 	var err := document.append_from_file(str(item["path"]), state)
@@ -332,8 +373,14 @@ func _place(room: Node3D, item: Dictionary) -> void:
 	elif item.has("yaw_deg"):
 		basis = Basis(Vector3.UP, deg_to_rad(float(item["yaw_deg"])))
 	basis = basis.scaled(Vector3.ONE * float(item.get("scale", 1.0)))
-	scene.transform = Transform3D(basis, _vec(item["origin"]))
 	room.add_child(scene)
+	if item.has("eye"):
+		var r := _vec(item.get("eye_rot_deg", [0, 0, 0])) * (PI / 180.0)
+		scene.global_transform = eye_xform * Transform3D(
+				Basis.from_euler(r).scaled(Vector3.ONE * float(item.get("scale", 1.0))),
+				_vec(item["eye"]))
+	else:
+		scene.transform = Transform3D(basis, _vec(item["origin"]))
 	for node in _all(scene, "Node3D"):
 		if "colonly" in str(node.name):
 			(node as Node3D).visible = false

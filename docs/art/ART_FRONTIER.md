@@ -3549,6 +3549,19 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-10 — Five weapons (Batch 068, candidate). STOPPED.
+
+* Layered Glyph effects for Foundry, Sightline, Switchback, Bulkhead and
+  Mass Driver, material impacts and persistent marks
+  (`assets/fx/weapons/`, `tools/glyphui/author_weapon_fx.py`).
+* Five viewmodel maquettes with moving parts and recoil signatures
+  (`assets/models/weapons_five/`, `build_weapon_viewmodels.py`).
+* Handoff: `docs/art-requests/2026-10-10-five-weapon-fx-handoff.md`.
+  Report: `docs/art/reports/2026-10-10-five-weapons.md`.
+* Waiting on: the owner's read of the five silhouettes, the mark scale
+  and the Mass Driver accent; Prod's integration.
+* Batch 067 below: NOT APPROVED (owner, 2026-10-10); superseded.
+
 ### Delivered, 2026-10-10 — Heavy Report effects (Batch 067, candidate). STOPPED.
 
 * Glyph-authored effects for Prod's Heavy Report (treatment "a"):

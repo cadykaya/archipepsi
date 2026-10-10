@@ -5169,9 +5169,21 @@ Handoff: `docs/art/reports/2026-10-08-bloom-noise-and-impact-relay-g1.md`.
 **Later on 2026-10-08:** the owner sent Batch 065 to Prod for G1, with no new design round before the room is played. The tote and weight were added at G1's tested sizes (`review/impact-relay-g1`, `a3b59c46`); neither ships a collider, so the physics is unchanged. Prod's handoff: `docs/art-requests/2026-10-08-impact-relay-g1-batch065-handoff.md`.
 
 
+## Batch 068 — five weapons: layered effects, five viewmodels, recoil signatures (2026-10-10)
+
+*Arty — 2026-10-10*
+
+**CANDIDATE.** For the owner's five-weapon experiment; not integrated, not in the content pack. Supersedes Batch 067's single-layer kit.
+- **Effects:** 37 ECMS Glyph sheets in `assets/fx/weapons/` (`tools/glyphui/author_weapon_fx.py`, painters in `weaponfx_paint.py`), with `fx.json`. Foundry is five layers (smoke, brake tongues, flare, core, afterglow) plus a slug and trail. The other four have their own shapes and palettes. Material impacts and game-scale persistent marks cover metal, stone, organic and wood.
+- **Viewmodels:** five flat-shaded GLBs in `assets/models/weapons_five/` (`tools/blender/build_weapon_viewmodels.py`), 188–312 triangles. They have named muzzle and port nodes, moving parts with their origins at their pivots, and recoil in Prod's spring format. Foundry's springs reproduce his measured mode H.
+- **Checks in the scripts:** empty frames; the impacts' value order; distinct flash silhouettes; distinct gun profiles (worst 0.55); Foundry's muzzle on Prod's `MUZZLE`.
+- **Report:** `docs/art/reports/2026-10-10-five-weapons.md`. **Handoff:** `docs/art-requests/2026-10-10-five-weapon-fx-handoff.md`.
+
 ## Batch 067 — Heavy Report effects, Glyph-authored (2026-10-10)
 
 *Arty — 2026-10-10*
+
+**Dated correction, 2026-10-10:** NOT APPROVED (the owner: flat, single-layer). Superseded by Batch 068, above. Kept as history.
 
 **CANDIDATE.** Eight sprite sheets in `assets/fx/heavy_report/`, drawn in ECMS Glyph by `tools/glyphui/author_heavy_report_fx.py`, with `fx.json` recording frames, durations, events and runtime settings.
 - **The sheets:** `fx_heavy_muzzle`, `fx_heavy_tracer`, `fx_impact_metal`, `fx_spark_streak`, `fx_impact_stone`, `fx_decal_chip`, `fx_impact_organic` and `fx_decal_sap`.

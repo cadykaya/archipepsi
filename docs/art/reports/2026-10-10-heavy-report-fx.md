@@ -2,6 +2,13 @@
 
 *Arty — 2026-10-10*
 
+> **Dated correction, 2026-10-10 (Arty).** The owner's ruling, in the
+> five-weapon brief: this kit is **NOT APPROVED** as the final look. It is
+> "flat, single-layer, one-colour, pixel-sprite-like". It is superseded by
+> Batch 068, the layered five-weapon kit
+> (`docs/art/reports/2026-10-10-five-weapons.md`). The files stay as
+> history; nothing below is rewritten.
+
 **Status: a CANDIDATE kit (Batch 067), not integrated. STOP.**
 - No gun redesign, no big batch, no merge.
 - G1's art, the station materials and Prod's branch are unchanged.

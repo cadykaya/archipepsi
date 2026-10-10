@@ -1,0 +1,791 @@
+{
+  "bulkhead": {
+    "anchor": "viewmodel_origin",
+    "batch": "068",
+    "contract": "review/hand-cannon hand_cannon.gd: REST_POS (0.34, -0.3, -0.62), REST_ROT (0, 8, -4), MUZZLE (0, 0.03, -0.47), SPRINGS format",
+    "fov": 90,
+    "frame": "Viewmodel-local: origin = the Viewmodel node, Godot -Z forward, +Y up; node positions in that frame",
+    "moving_parts": {
+      "pump": {
+        "axis": "slide +z",
+        "motion": "after the recoil peak: back +0.07 m on z (110 ms), forward (130 ms); a hull drops from `ejection` at the back stroke",
+        "pivot": [
+          0,
+          -0.026,
+          -0.25
+        ]
+      }
+    },
+    "nodes": {
+      "ejection": [
+        0.06,
+        0.02,
+        -0.08
+      ],
+      "muzzle": [
+        0.0,
+        0.02,
+        -0.39
+      ],
+      "muzzle_l": [
+        -0.031,
+        0.02,
+        -0.39
+      ],
+      "muzzle_r": [
+        0.031,
+        0.02,
+        -0.39
+      ]
+    },
+    "parts": [
+      "pump",
+      "muzzle",
+      "muzzle_l",
+      "muzzle_r",
+      "ejection"
+    ],
+    "path": "weapons_five/bulkhead.glb",
+    "profile_overlap": {
+      "massdriver": 0.472
+    },
+    "recoil": {
+      "back": {
+        "overshoot": -0.0366,
+        "peak": 0.2638,
+        "peak_ms": 17,
+        "reset_ms": 183,
+        "spring": {
+          "freq": 4.5,
+          "jump": 0.24,
+          "kick": 5.5,
+          "zeta": 0.5
+        }
+      },
+      "cam_lift": {
+        "overshoot": -0.0041,
+        "peak": 0.045,
+        "peak_ms": 0,
+        "reset_ms": 133,
+        "spring": {
+          "freq": 6.0,
+          "jump": 0.045,
+          "kick": 0.7,
+          "zeta": 0.55
+        }
+      },
+      "cam_roll": {
+        "overshoot": -0.152,
+        "peak": 1.6,
+        "peak_ms": 0,
+        "reset_ms": 133,
+        "spring": {
+          "freq": 6.0,
+          "jump": 1.6,
+          "kick": 40.0,
+          "zeta": 0.55
+        }
+      },
+      "fov": {
+        "overshoot": -0.1664,
+        "peak": 4.5,
+        "peak_ms": 0,
+        "reset_ms": 117,
+        "spring": {
+          "freq": 5.5,
+          "jump": 4.5,
+          "kick": 0.0,
+          "zeta": 0.65
+        }
+      },
+      "lift": {
+        "overshoot": -0.0109,
+        "peak": 0.0791,
+        "peak_ms": 17,
+        "reset_ms": 200,
+        "spring": {
+          "freq": 4.5,
+          "jump": 0.07,
+          "kick": 1.8,
+          "zeta": 0.5
+        }
+      },
+      "pitch": {
+        "overshoot": -2.4119,
+        "peak": 15.2153,
+        "peak_ms": 17,
+        "reset_ms": 217,
+        "spring": {
+          "freq": 4.2,
+          "jump": 12.0,
+          "kick": 420.0,
+          "zeta": 0.48
+        }
+      },
+      "roll": {
+        "overshoot": -0.7358,
+        "peak": 4.0,
+        "peak_ms": 0,
+        "reset_ms": 233,
+        "spring": {
+          "freq": 5.0,
+          "jump": 4.0,
+          "kick": 60.0,
+          "zeta": 0.45
+        }
+      }
+    },
+    "recoil_reads_as": "the biggest shove and roll, slow, a body-blow; the pump stroke follows the recoil peak",
+    "rest": {
+      "position": [
+        0.36,
+        -0.32,
+        -0.58
+      ],
+      "rotation_deg": [
+        0,
+        9,
+        -5
+      ]
+    },
+    "size": [
+      0.14,
+      0.485,
+      0.226
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime": [
+      0.14,
+      0.226,
+      0.485
+    ],
+    "status": "CANDIDATE (Arty, 2026-10-10) for the five-weapon range; not integrated, not in the content pack",
+    "texel_density": null,
+    "triangles": 212
+  },
+  "foundry": {
+    "anchor": "viewmodel_origin",
+    "batch": "068",
+    "contract": "review/hand-cannon hand_cannon.gd: REST_POS (0.34, -0.3, -0.62), REST_ROT (0, 8, -4), MUZZLE (0, 0.03, -0.47), SPRINGS format",
+    "fov": 90,
+    "frame": "Viewmodel-local: origin = the Viewmodel node, Godot -Z forward, +Y up; node positions in that frame",
+    "moving_parts": {
+      "cylinder": {
+        "axis": "z",
+        "motion": "roll about the line of fire, -60 deg per shot (six chambers), eased in 90 ms after the shot",
+        "pivot": [
+          0,
+          0.018,
+          -0.06
+        ]
+      },
+      "hammer": {
+        "axis": "x",
+        "motion": "rest = cocked; falls +38 deg about x on the shot (one frame), re-cocks over the cadence's last 120 ms (with Prod's mech_ready)",
+        "pivot": [
+          0,
+          0.044,
+          0.015
+        ]
+      }
+    },
+    "nodes": {
+      "brake_port_l": [
+        -0.034,
+        0.03,
+        -0.43
+      ],
+      "brake_port_r": [
+        0.034,
+        0.03,
+        -0.43
+      ],
+      "muzzle": [
+        0.0,
+        0.03,
+        -0.47
+      ]
+    },
+    "parts": [
+      "cylinder",
+      "hammer",
+      "muzzle",
+      "brake_port_l",
+      "brake_port_r"
+    ],
+    "path": "weapons_five/foundry.glb",
+    "profile_overlap": {
+      "bulkhead": 0.521,
+      "massdriver": 0.546,
+      "sightline": 0.442,
+      "switchback": 0.542
+    },
+    "recoil": {
+      "back": {
+        "overshoot": -0.0338,
+        "peak": 0.19,
+        "peak_ms": 0,
+        "reset_ms": 183,
+        "spring": {
+          "freq": 6.0,
+          "jump": 0.19,
+          "kick": 4.5,
+          "zeta": 0.45
+        }
+      },
+      "cam_lift": {
+        "overshoot": -0.0013,
+        "peak": 0.03,
+        "peak_ms": 0,
+        "reset_ms": 83,
+        "spring": {
+          "freq": 8.0,
+          "jump": 0.03,
+          "kick": 0.5,
+          "zeta": 0.6
+        }
+      },
+      "cam_roll": {
+        "overshoot": -0.0377,
+        "peak": 0.9,
+        "peak_ms": 0,
+        "reset_ms": 83,
+        "spring": {
+          "freq": 8.0,
+          "jump": 0.9,
+          "kick": 25.0,
+          "zeta": 0.6
+        }
+      },
+      "fov": {
+        "overshoot": -0.0327,
+        "peak": 3.0,
+        "peak_ms": 0,
+        "reset_ms": 67,
+        "spring": {
+          "freq": 7.0,
+          "jump": 3.0,
+          "kick": 0.0,
+          "zeta": 0.7
+        }
+      },
+      "lift": {
+        "overshoot": -0.0095,
+        "peak": 0.0526,
+        "peak_ms": 17,
+        "reset_ms": 183,
+        "spring": {
+          "freq": 6.0,
+          "jump": 0.05,
+          "kick": 1.6,
+          "zeta": 0.45
+        }
+      },
+      "pitch": {
+        "overshoot": -3.8107,
+        "peak": 19.0116,
+        "peak_ms": 17,
+        "reset_ms": 217,
+        "spring": {
+          "freq": 5.5,
+          "jump": 16.0,
+          "kick": 620.0,
+          "zeta": 0.42
+        }
+      },
+      "roll": {
+        "overshoot": -0.3174,
+        "peak": 2.5,
+        "peak_ms": 0,
+        "reset_ms": 117,
+        "spring": {
+          "freq": 6.5,
+          "jump": 2.5,
+          "kick": 40.0,
+          "zeta": 0.5
+        }
+      }
+    },
+    "recoil_reads_as": "a heavy flip: big muzzle rise and shove, overshoots past rest and settles (mode H)",
+    "rest": {
+      "position": [
+        0.34,
+        -0.3,
+        -0.62
+      ],
+      "rotation_deg": [
+        0,
+        8,
+        -4
+      ]
+    },
+    "size": [
+      0.094,
+      0.572,
+      0.254
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime": [
+      0.094,
+      0.254,
+      0.572
+    ],
+    "status": "CANDIDATE (Arty, 2026-10-10) for the five-weapon range; not integrated, not in the content pack",
+    "texel_density": null,
+    "triangles": 212
+  },
+  "massdriver": {
+    "anchor": "viewmodel_origin",
+    "batch": "068",
+    "contract": "review/hand-cannon hand_cannon.gd: REST_POS (0.34, -0.3, -0.62), REST_ROT (0, 8, -4), MUZZLE (0, 0.03, -0.47), SPRINGS format",
+    "fov": 90,
+    "frame": "Viewmodel-local: origin = the Viewmodel node, Godot -Z forward, +Y up; node positions in that frame",
+    "moving_parts": {
+      "accumulator_ring_N": {
+        "axis": "slide -z, roll z",
+        "motion": "charging 0->100 %: each ring slides 0.025 m toward the muzzle (ring 3 first, staggered 1/3) and spins about z, 0 -> 720 deg/s; release: all snap back to rest in 60 ms with a 6 deg counter-spin overshoot",
+        "pivot": "each ring's centre on the bore, z = -0.22 / -0.30 / -0.38"
+      }
+    },
+    "nodes": {
+      "accumulator": [
+        0.0,
+        0.01,
+        -0.3
+      ],
+      "muzzle": [
+        0.0,
+        0.01,
+        -0.52
+      ]
+    },
+    "parts": [
+      "accumulator_ring_1",
+      "accumulator_ring_2",
+      "accumulator_ring_3",
+      "muzzle",
+      "accumulator"
+    ],
+    "path": "weapons_five/massdriver.glb",
+    "recoil": {
+      "back": {
+        "overshoot": -0.0084,
+        "peak": 0.3025,
+        "peak_ms": 17,
+        "reset_ms": 133,
+        "spring": {
+          "freq": 3.6,
+          "jump": 0.3,
+          "kick": 3.0,
+          "zeta": 0.7
+        }
+      },
+      "cam_lift": {
+        "overshoot": -0.0,
+        "peak": 0.02,
+        "peak_ms": 0,
+        "reset_ms": 117,
+        "spring": {
+          "freq": 5.0,
+          "jump": 0.02,
+          "kick": 0.2,
+          "zeta": 0.8
+        }
+      },
+      "cam_roll": {
+        "overshoot": 0.0,
+        "peak": 0.0,
+        "peak_ms": 0,
+        "reset_ms": 0,
+        "spring": {
+          "freq": 5.0,
+          "jump": 0.0,
+          "kick": 0.0,
+          "zeta": 1.0
+        }
+      },
+      "fov": {
+        "overshoot": 0.0443,
+        "peak": -4.0,
+        "peak_ms": 0,
+        "reset_ms": 117,
+        "spring": {
+          "freq": 4.0,
+          "jump": -4.0,
+          "kick": 0.0,
+          "zeta": 0.75
+        }
+      },
+      "lift": {
+        "overshoot": -0.0004,
+        "peak": 0.0162,
+        "peak_ms": 17,
+        "reset_ms": 133,
+        "spring": {
+          "freq": 4.0,
+          "jump": 0.015,
+          "kick": 0.3,
+          "zeta": 0.7
+        }
+      },
+      "pitch": {
+        "overshoot": -0.15,
+        "peak": 5.6825,
+        "peak_ms": 17,
+        "reset_ms": 133,
+        "spring": {
+          "freq": 3.8,
+          "jump": 5.0,
+          "kick": 120.0,
+          "zeta": 0.7
+        }
+      },
+      "roll": {
+        "overshoot": 0.0,
+        "peak": 0.0,
+        "peak_ms": 0,
+        "reset_ms": 0,
+        "spring": {
+          "freq": 4.0,
+          "jump": 0.0,
+          "kick": 0.0,
+          "zeta": 1.0
+        }
+      }
+    },
+    "recoil_reads_as": "charge: pull in 0.02 m and a tremble growing with charge (0 -> 0.3 deg, 22 Hz); release: a long straight push back, very little flip, the FOV DIPS (negative) -- a punch, not a bang",
+    "rest": {
+      "position": [
+        0.34,
+        -0.31,
+        -0.55
+      ],
+      "rotation_deg": [
+        0,
+        7,
+        -3
+      ]
+    },
+    "size": [
+      0.11,
+      0.615,
+      0.227
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime": [
+      0.11,
+      0.227,
+      0.615
+    ],
+    "status": "CANDIDATE (Arty, 2026-10-10) for the five-weapon range; not integrated, not in the content pack",
+    "texel_density": null,
+    "triangles": 312
+  },
+  "sightline": {
+    "anchor": "viewmodel_origin",
+    "batch": "068",
+    "contract": "review/hand-cannon hand_cannon.gd: REST_POS (0.34, -0.3, -0.62), REST_ROT (0, 8, -4), MUZZLE (0, 0.03, -0.47), SPRINGS format",
+    "fov": 90,
+    "frame": "Viewmodel-local: origin = the Viewmodel node, Godot -Z forward, +Y up; node positions in that frame",
+    "moving_parts": {
+      "bolt_handle": {
+        "axis": "z then slide +z",
+        "motion": "after the shot: lift 60 deg about z (80 ms), slide back 0.05 m (90 ms), forward and down (170 ms). A visible re-chamber is the cadence's tell",
+        "pivot": [
+          0.015,
+          0.015,
+          0.03
+        ]
+      }
+    },
+    "nodes": {
+      "ejection": [
+        0.022,
+        0.02,
+        -0.02
+      ],
+      "muzzle": [
+        0.0,
+        0.012,
+        -0.75
+      ]
+    },
+    "parts": [
+      "bolt_handle",
+      "muzzle",
+      "ejection"
+    ],
+    "path": "weapons_five/sightline.glb",
+    "profile_overlap": {
+      "bulkhead": 0.309,
+      "massdriver": 0.388,
+      "switchback": 0.425
+    },
+    "recoil": {
+      "back": {
+        "overshoot": 0.0,
+        "peak": 0.07,
+        "peak_ms": 0,
+        "reset_ms": 50,
+        "spring": {
+          "freq": 10.0,
+          "jump": 0.07,
+          "kick": 1.2,
+          "zeta": 0.75
+        }
+      },
+      "cam_lift": {
+        "overshoot": 0.0,
+        "peak": 0.008,
+        "peak_ms": 0,
+        "reset_ms": 50,
+        "spring": {
+          "freq": 12.0,
+          "jump": 0.008,
+          "kick": 0.1,
+          "zeta": 0.8
+        }
+      },
+      "cam_roll": {
+        "overshoot": 0.0,
+        "peak": 0.0,
+        "peak_ms": 0,
+        "reset_ms": 0,
+        "spring": {
+          "freq": 10.0,
+          "jump": 0.0,
+          "kick": 0.0,
+          "zeta": 1.0
+        }
+      },
+      "fov": {
+        "overshoot": 0.0,
+        "peak": 1.2,
+        "peak_ms": 0,
+        "reset_ms": 67,
+        "spring": {
+          "freq": 10.0,
+          "jump": 1.2,
+          "kick": 0.0,
+          "zeta": 0.8
+        }
+      },
+      "lift": {
+        "overshoot": 0.0,
+        "peak": 0.01,
+        "peak_ms": 0,
+        "reset_ms": 50,
+        "spring": {
+          "freq": 10.0,
+          "jump": 0.01,
+          "kick": 0.2,
+          "zeta": 0.75
+        }
+      },
+      "pitch": {
+        "overshoot": -0.01,
+        "peak": 4.0,
+        "peak_ms": 0,
+        "reset_ms": 50,
+        "spring": {
+          "freq": 9.0,
+          "jump": 4.0,
+          "kick": 90.0,
+          "zeta": 0.7
+        }
+      },
+      "roll": {
+        "overshoot": 0.0,
+        "peak": 0.4,
+        "peak_ms": 0,
+        "reset_ms": 67,
+        "spring": {
+          "freq": 10.0,
+          "jump": 0.4,
+          "kick": 4.0,
+          "zeta": 0.8
+        }
+      }
+    },
+    "recoil_reads_as": "a crisp straight jolt, little rise, critically damped: the scope comes back on the target fast",
+    "rest": {
+      "position": [
+        0.3,
+        -0.27,
+        -0.42
+      ],
+      "rotation_deg": [
+        0,
+        4,
+        -2
+      ]
+    },
+    "size": [
+      0.099,
+      1.0,
+      0.236
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime": [
+      0.099,
+      0.236,
+      1.0
+    ],
+    "status": "CANDIDATE (Arty, 2026-10-10) for the five-weapon range; not integrated, not in the content pack",
+    "texel_density": null,
+    "triangles": 256
+  },
+  "switchback": {
+    "anchor": "viewmodel_origin",
+    "batch": "068",
+    "contract": "review/hand-cannon hand_cannon.gd: REST_POS (0.34, -0.3, -0.62), REST_ROT (0, 8, -4), MUZZLE (0, 0.03, -0.47), SPRINGS format",
+    "fov": 90,
+    "frame": "Viewmodel-local: origin = the Viewmodel node, Godot -Z forward, +Y up; node positions in that frame",
+    "moving_parts": {
+      "bolt": {
+        "axis": "slide +z",
+        "motion": "slides +0.035 m on z (back) and returns inside each shot's interval (a saw-tooth at the fire rate); locks back after the last round if there is a magazine",
+        "pivot": [
+          0.03,
+          0.018,
+          -0.12
+        ]
+      }
+    },
+    "nodes": {
+      "ejection": [
+        0.03,
+        0.02,
+        -0.08
+      ],
+      "muzzle": [
+        0.0,
+        0.006,
+        -0.445
+      ]
+    },
+    "parts": [
+      "bolt",
+      "muzzle",
+      "ejection"
+    ],
+    "path": "weapons_five/switchback.glb",
+    "profile_overlap": {
+      "bulkhead": 0.418,
+      "massdriver": 0.413
+    },
+    "recoil": {
+      "back": {
+        "overshoot": -0.0009,
+        "peak": 0.028,
+        "peak_ms": 0,
+        "reset_ms": 33,
+        "spring": {
+          "freq": 14.0,
+          "jump": 0.028,
+          "kick": 0.5,
+          "zeta": 0.55
+        }
+      },
+      "cam_lift": {
+        "overshoot": 0.0,
+        "peak": 0.004,
+        "peak_ms": 0,
+        "reset_ms": 33,
+        "spring": {
+          "freq": 14.0,
+          "jump": 0.004,
+          "kick": 0.05,
+          "zeta": 0.7
+        }
+      },
+      "cam_roll": {
+        "overshoot": -0.0005,
+        "peak": 0.25,
+        "peak_ms": 0,
+        "reset_ms": 17,
+        "spring": {
+          "freq": 14.0,
+          "jump": 0.25,
+          "kick": 6.0,
+          "zeta": 0.6
+        }
+      },
+      "fov": {
+        "overshoot": 0.0,
+        "peak": 0.4,
+        "peak_ms": 0,
+        "reset_ms": 50,
+        "spring": {
+          "freq": 14.0,
+          "jump": 0.4,
+          "kick": 0.0,
+          "zeta": 0.8
+        }
+      },
+      "lift": {
+        "overshoot": -0.0002,
+        "peak": 0.006,
+        "peak_ms": 0,
+        "reset_ms": 33,
+        "spring": {
+          "freq": 14.0,
+          "jump": 0.006,
+          "kick": 0.12,
+          "zeta": 0.55
+        }
+      },
+      "pitch": {
+        "overshoot": -0.1398,
+        "peak": 1.8,
+        "peak_ms": 0,
+        "reset_ms": 50,
+        "spring": {
+          "freq": 12.0,
+          "jump": 1.8,
+          "kick": 40.0,
+          "zeta": 0.5
+        }
+      },
+      "roll": {
+        "overshoot": -0.1565,
+        "peak": 0.8,
+        "peak_ms": 0,
+        "reset_ms": 67,
+        "spring": {
+          "freq": 13.0,
+          "jump": 0.8,
+          "kick": 18.0,
+          "zeta": 0.4
+        }
+      }
+    },
+    "recoil_reads_as": "small per-shot buzz, roll alternating, high frequency; Prod adds a held-fire climb (proposal: +0.5 deg pitch rest offset a shot, capped at 4 deg, recovering at 10 deg/s on release)",
+    "rest": {
+      "position": [
+        0.32,
+        -0.29,
+        -0.56
+      ],
+      "rotation_deg": [
+        0,
+        6,
+        -3
+      ]
+    },
+    "size": [
+      0.087,
+      0.606,
+      0.244
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime": [
+      0.087,
+      0.244,
+      0.606
+    ],
+    "status": "CANDIDATE (Arty, 2026-10-10) for the five-weapon range; not integrated, not in the content pack",
+    "texel_density": null,
+    "triangles": 220
+  }
+}

@@ -497,7 +497,7 @@ SCRIPTS="build_materials build_architecture build_props
   build_twilight build_foundry build_lothric
   build_pack_materials build_crossing_kit
   build_crossing_affordances build_impact_relay
-  build_station_quiet_ceiling"
+  build_station_quiet_ceiling build_weapon_viewmodels"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.
@@ -602,18 +602,22 @@ else
   fi
 fi
 
-# The Heavy Report effects kit (Batch 067) is Glyph-authored like the
-# interface family, so it takes the same gate and says so when it skips.
+# The effects kits are Glyph-authored like the interface family, so they
+# take the same gate and say so when they skip: Heavy Report (Batch 067,
+# assets/fx/heavy_report, not approved but kept) and the five-weapon kit
+# (Batch 068, assets/fx/weapons).
 if [ ! -f "$GLYPH_ROOT/packages/cli/dist/main.js" ]; then
   say "SKIPPED effects kit rebuild -- no built Glyph CLI at $GLYPH_ROOT."
 elif [ -n "$(git status --porcelain -- assets/fx)" ]; then
   say "SKIPPED effects kit rebuild -- assets/fx is already modified."
 else
-  say "rebuilding the Heavy Report effects kit..."
-  GLYPH_ROOT="$GLYPH_ROOT" python3 tools/glyphui/author_heavy_report_fx.py \
-    >/dev/null 2>&1 || \
-    fail "author_heavy_report_fx.py did not complete. Run it directly:
-    GLYPH_ROOT=$GLYPH_ROOT python3 tools/glyphui/author_heavy_report_fx.py"
+  for fx in author_heavy_report_fx author_weapon_fx; do
+    say "rebuilding effects kit ($fx)..."
+    GLYPH_ROOT="$GLYPH_ROOT" python3 "tools/glyphui/$fx.py" \
+      >/dev/null 2>&1 || \
+      fail "$fx.py did not complete. Run it directly:
+    GLYPH_ROOT=$GLYPH_ROOT python3 tools/glyphui/$fx.py"
+  done
   if [ -n "$(git status --porcelain -- assets/fx)" ]; then
     fail "the committed effects kit is out of date with its source:"
     git status --porcelain -- assets/fx | sed 's/^/    /'

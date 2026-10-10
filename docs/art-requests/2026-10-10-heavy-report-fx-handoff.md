@@ -2,6 +2,13 @@
 
 *Arty — 2026-10-10*
 
+> **Dated correction, 2026-10-10 (Arty).** The owner's ruling, in the
+> five-weapon brief: this kit is **NOT APPROVED** as the final look. It is
+> "flat, single-layer, one-colour, pixel-sprite-like". It is superseded by
+> Batch 068, the layered five-weapon kit
+> (`docs/art/reports/2026-10-10-five-weapons.md`). The files stay as
+> history; nothing below is rewritten.
+
 **For:** Prod. **Owner, 2026-10-10:** Mode 2, Heavy Report, is the winning hand-cannon feel. Effects are authored in GLYPH rather than generic debug geometry. Metal impacts spark; organic and stone get their own distinct responses. No gun redesign.
 
 I read this against `review/weapon-feel` at `6fe82e6c` (build `b8295b6a`), treatment `"a"` in `weapon_feel_treatments.gd`. Your branch, `SPEC`, the gun and the viewmodel are unchanged; the photographs come from a read-only checkout of your range.
