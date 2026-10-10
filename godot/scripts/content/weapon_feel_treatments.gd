@@ -27,12 +27,18 @@ extends Node
 
 signal changed(id: String)
 
+## The four references: the Pulse's baseline and the first three
+## treatments, kept as they were delivered.
 const IDS: Array[String] = ["baseline", "a", "b", "c"]
+## And the hand-cannon candidate developed from A (`HandCannon`).
+const HAND := "h"
+const ALL_IDS: Array[String] = ["baseline", "a", "b", "c", "h"]
 const NAMES := {
 	"baseline": "BASELINE · the game as it ships",
 	"a": "A · HEAVY REPORT",
 	"b": "B · CRISP SNAP",
 	"c": "C · ECHO RESONANCE",
+	"h": "H · HAND-CANNON CANDIDATE",
 }
 ## The player's viewmodel at rest (`Player._ready`).
 const REST_POS := Vector3(0.34, -0.3, -0.62)
@@ -123,6 +129,8 @@ var hits := 0
 ## Every cue started, as [name, process frame, playing right after
 ## `play()`]: the check reads when each sound began from here.
 var played: Array = []
+## The hand-cannon candidate, which answers the shot while H is selected.
+var hand: HandCannon
 
 var _base_fov := 75.0
 var _roll_sign := 1.0
@@ -173,16 +181,30 @@ func bind(p: Player, t: Tones, target: Node3D) -> bool:
 	_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.add_child(_marker)
 	_build_sounds()
+	hand = HandCannon.new()
+	hand.name = "HandCannon"
+	add_child(hand)
+	hand.bind(self)
 	player.fired_pulse.connect(_on_fired)
 	player.hit_confirmed.connect(_on_hit)
 	return true
 
 
 func select(id: String) -> void:
-	if not id in IDS:
+	if not id in ALL_IDS:
 		return
+	var was := current
 	current = id
 	_settle_all()
+	if was == HAND and id != HAND:
+		hand.leave()
+	if id == HAND:
+		# Entering hides the Pulse's own transmitter; selecting H again
+		# only settles it.
+		if was != HAND:
+			hand.enter()
+		else:
+			hand.reset()
 	var connected := player.fired_pulse.is_connected(default_feedback)
 	if id == "baseline" and not connected:
 		player.fired_pulse.connect(default_feedback)
@@ -225,6 +247,9 @@ func _settle_all() -> void:
 
 func _on_fired() -> void:
 	shots += 1
+	if current == HAND:
+		hand.on_fired()
+		return
 	if current == "baseline":
 		tones.play("pulse")
 		_log("pulse", tones._players.get("pulse"))
@@ -243,6 +268,9 @@ func _on_fired() -> void:
 
 func _on_hit(killed: bool) -> void:
 	hits += 1
+	if current == HAND:
+		hand.on_hit(killed)
+		return
 	if current == "baseline":
 		if not killed:
 			tones.play("confirm")

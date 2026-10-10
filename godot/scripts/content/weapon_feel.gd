@@ -28,7 +28,14 @@ const TARGET_AT := Vector3(0, 0, -10)
 const RANGE := Rect2(-6, -22, 12, 26)
 const HEIGHT := 5.0
 const WALL := 0.5
-const KEYS := {KEY_1: "baseline", KEY_2: "a", KEY_3: "b", KEY_4: "c"}
+const KEYS := {KEY_1: "baseline", KEY_2: "a", KEY_3: "b", KEY_4: "c",
+		KEY_5: "h"}
+## The material test pieces, left of the line of fire (H's impacts read
+## them; the references ignore them). The miss lane to the back wall's
+## right-hand side stays clear.
+const STEEL_AT := Vector3(-3.6, 0, -9)
+const CRATE_AT := Vector3(-3.4, 0, -14)
+const GEL_AT := Vector3(-2.2, 0, -6.5)
 
 ## The treatment a RESTART comes back to.
 static var _remembered := ""
@@ -44,17 +51,22 @@ var _which: Label
 var _readout: Label
 var _menu: Control = null
 var _range: Node3D
+var gel: HandCannon.GelBlock
 
 
 static func requested() -> bool:
 	return ReviewIsolation.weapon()
 
 
+## The hand-cannon build (the export's `hand_cannon` feature) starts in H.
+const CANNON_FEATURE := "hand_cannon"
+
+
 static func requested_treatment() -> String:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--feel="):
 			return arg.substr(7).to_lower()
-	return "baseline"
+	return "h" if OS.has_feature(CANNON_FEATURE) else "baseline"
 
 
 func _ready() -> void:
@@ -102,11 +114,12 @@ func _ready() -> void:
 	_readout = _label(Vector2(24, 88), 16)
 	var keys := _label(Vector2(24, 560), 15)
 	keys.text = ("1 Baseline · 2 A Heavy report · 3 B Crisp snap · "
-			+ "4 C Echo resonance\nLMB fire (hold to repeat) · WASD move · "
+			+ "4 C Echo resonance · 5 H Hand-cannon (C: cadence)\n"
+			+ "LMB fire (hold to repeat) · WASD move · "
 			+ "E on the dummy resets its count · R back to the mark · Esc menu")
 	feel.changed.connect(_on_changed)
 	var first := _remembered if _remembered != "" else requested_treatment()
-	if not first in WeaponFeelTreatments.IDS:
+	if not first in WeaponFeelTreatments.ALL_IDS:
 		first = "baseline"
 	if bound:
 		feel.select(first)
@@ -158,7 +171,43 @@ func _build_range() -> void:
 	# The Lab's dummy is hit by Echo actions through `Enemy`'s interface;
 	# the Pulse asks `Damageable`, so the range enrols it there.
 	dummy.add_to_group(Damageable.GROUP)
+	# What H's impacts read it as: the sparks the owner liked on it.
+	dummy.set_meta("impact_material", "metal")
 	_range.add_child(dummy)
+	_material_pieces()
+
+
+## A steel plate on a post, a timber crate and a gel block: one surface
+## of each material H tells apart (the walls and floor are the stone).
+func _material_pieces() -> void:
+	var steel := _metal_piece()
+	var plate := ChamberBuilders._box(_range, Vector3(1.0, 1.0, 0.05),
+			STEEL_AT + Vector3(0, 1.3, 0), steel)
+	plate.name = "SteelPlate"
+	plate.set_meta("impact_material", "metal")
+	var post := ChamberBuilders._box(_range, Vector3(0.08, 0.8, 0.08),
+			STEEL_AT + Vector3(0, 0.4, 0), steel)
+	post.name = "SteelPost"
+	post.set_meta("impact_material", "metal")
+	var timber := StandardMaterial3D.new()
+	timber.albedo_color = Color(0.5, 0.34, 0.18)
+	timber.roughness = 0.85
+	var crate := ChamberBuilders._box(_range, Vector3(1.0, 1.0, 1.0),
+			CRATE_AT + Vector3(0, 0.5, 0), timber)
+	crate.name = "TimberCrate"
+	crate.set_meta("impact_material", "wood")
+	gel = HandCannon.GelBlock.new()
+	gel.name = "GelBlock"
+	gel.position = GEL_AT
+	_range.add_child(gel)
+
+
+static func _metal_piece() -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.42, 0.44, 0.46)
+	material.metallic = 0.8
+	material.roughness = 0.35
+	return material
 
 
 func _block(label: String, lo: Vector3, hi: Vector3, material: Material) -> void:
@@ -186,6 +235,17 @@ func _process(_delta: float) -> void:
 		return
 	_readout.text = "Target: %d damage taken · %d shots · %d hits" % [
 			int(round(dummy.absorbed)), feel.shots, feel.hits]
+	if bound and feel.current == WeaponFeelTreatments.HAND:
+		var hand := feel.hand
+		_readout.text += ("\nH: one shot per %.2f s (C to change) · %d a hit · "
+				% [hand.cadence, int(Constants.STATIC_PULSE_DAMAGE)]
+				+ "%.1f damage a second · gel %d" % [
+				Constants.STATIC_PULSE_DAMAGE / hand.cadence,
+				int(round(gel.absorbed))]
+				+ "\nSound: %s" % ("SigmAudio, %d of %d cues" % [
+				hand.sigmaudio_cues(), HandCannon.CUES.size()]
+				if hand.sigmaudio_cues() > 0 else
+				"PLACEHOLDER (Heavy Report's) until SigmAudio's cues arrive"))
 
 
 func _label(at: Vector2, size: int) -> Label:
@@ -221,6 +281,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif KEYS.has(key) and bound:
 		feel.select(KEYS[key])
+		get_viewport().set_input_as_handled()
+	elif key == KEY_C and bound and feel.current == WeaponFeelTreatments.HAND:
+		feel.hand.next_cadence()
 		get_viewport().set_input_as_handled()
 
 
