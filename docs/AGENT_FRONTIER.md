@@ -194,6 +194,25 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-13 (later): Foundry APPROVED; four-weapon form pass. STOP for
+  the owner's choice of forms.** Branch
+  `claude/archipepsi-art-weapon-forms-2026-10-13` (from the study branch).
+  * The owner APPROVED the Foundry's visual direction. It is the quality
+    benchmark for the other four weapons (detail, texture richness,
+    material quality, believable construction), but each keeps its own
+    silhouette, mechanism, personality and material character.
+  * The Foundry is not finished until the owner sees it firing,
+    recovering, moving and aiming in a playable build with Condi's sounds.
+    That build is Prod's. The art side checked the approved GLB unchanged on
+    `review/five-weapons-v3` (`ef157061`): cock 0.683 s, ready 0.733 s,
+    shots 44 frames apart, firing while strafing. Note:
+    `docs/art-requests/2026-10-13-foundry-v3-integration-note.md`.
+  * Two clay forms per weapon (Sightline, Switchback, Bulkhead, Mass
+    Driver), with nodes named for Prod's v3 parts and checked in his
+    range. Report: `docs/art/reports/2026-10-13-weapon-forms-pass.md`;
+    sheets WF0-WF5 in `docs/art/review/weapon_forms_2026-10-13/`.
+  * Waiting on: the owner's pick per weapon, and Prod's answers in the
+    note. No final model until then.
 * **2026-10-13: Foundry fidelity study (one non-production first-person
   Foundry). STOP for the owner's review.** Branch
   `claude/archipepsi-art-foundry-study-2026-10-13`.
