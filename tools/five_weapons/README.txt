@@ -1,4 +1,4 @@
-ARCHIPEPSI - FIVE WEAPONS, SECOND PASS   (revision @REVISION@)
+ARCHIPEPSI - FIVE WEAPONS, SECOND PASS, READINESS CORRECTED   (revision @REVISION@)
 
 Five experimental weapon types in one isolated range, reworked after
 your playtest, with Condi's SigmAudio sounds. Working names, prototype
@@ -15,9 +15,10 @@ START (Windows)
   Windows may warn about an unsigned program: More info, then Run anyway.
 
 THE WEAPONS (keys 1-5 switch at any time; 3 and 4 again: the variant)
-  1  FOUNDRY      heavy hand cannon. The gun heaves back, the sight
-                  settles, the hammer cocks, then the next shot: one per
-                  0.72 s, 15 a hit.
+  1  FOUNDRY      heavy hand cannon. The gun heaves back and comes home,
+                  the hammer cocks and it is READY at 0.72 s while the
+                  last of the sight's climb is still settling: fire then
+                  and the shot goes where the crosshair is. 15 a hit.
   2  SIGHTLINE    scout rifle. The longest reach (60 m) and a hard, quick
                   punch: 12 a hit, one per 0.48 s. Hold RMB to aim.
   3  SWITCHBACK   automatic carbine, its rhythm and spread as you liked
@@ -44,6 +45,7 @@ THE RANGE
 
 CONTROLS
   Left click  fire (Switchback: hold; Mass Driver: hold, then release)
+  F, middle   fire too, exactly like left click (while a weapon is out)
   Right click aim down the sights (Sightline, Switchback, Mass Driver)
               V or a mouse side button also aims. B: aim on V only.
   1-5, 6, 0   switch          3 / 4 again   the other variant
@@ -51,6 +53,11 @@ CONTROLS
   N           all weapon sound on/off
   WASD move - Space jump - mouse look - R back to the mark
   Esc         menu: resume, restart (targets and marks reset), quit
+
+ABOUT RECOIL AND YOUR MOUSE
+  A shot kicks your view up; recovery brings back only what is still
+  up. If you pull the mouse down against the kick yourself, recovery does
+  not pull you down a second time; pull further, or up, and that stays.
 
 ABOUT RIGHT CLICK
   In the campaign, right click fires the first Echo slot, where grapple
