@@ -1,0 +1,66 @@
+{
+ "_kit": {
+  "check_material": "clean",
+  "glyph": "ECMS Glyph CLI, revision 87db9e2",
+  "note": "Albedo palette: 256 colours, median cut, no dither. The normal map is Glyph's own (x-glyph.normal_from_height).",
+  "status": "NON-PRODUCTION FIDELITY STUDY (Arty, 2026-10-13)"
+ },
+ "albedo": {
+  "colours": 256,
+  "patches": 12,
+  "representation": "world_texture",
+  "size": [
+   1024,
+   1024
+  ]
+ },
+ "emission": {
+  "colours": 9,
+  "patches": 4,
+  "representation": "emission_map",
+  "size": [
+   1024,
+   1024
+  ]
+ },
+ "height": {
+  "colours": 165,
+  "patches": 8,
+  "representation": "height_map",
+  "size": [
+   1024,
+   1024
+  ]
+ },
+ "metallic": {
+  "colours": 116,
+  "patches": 8,
+  "representation": "metallic_map",
+  "size": [
+   1024,
+   1024
+  ]
+ },
+ "normal": {
+  "colours": 18823,
+  "derived": "x-glyph.normal_from_height",
+  "handedness": "opengl",
+  "kernel": "sobel",
+  "patches": 414,
+  "representation": "normal_map",
+  "size": [
+   1024,
+   1024
+  ],
+  "strength": 1.0
+ },
+ "roughness": {
+  "colours": 206,
+  "patches": 11,
+  "representation": "roughness_map",
+  "size": [
+   1024,
+   1024
+  ]
+ }
+}
