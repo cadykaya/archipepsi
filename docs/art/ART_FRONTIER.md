@@ -3549,6 +3549,29 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-13 (later) — Foundry approved; four-weapon form pass. STOPPED for the owner's choice.
+
+* **The owner's ruling (2026-10-13):** the Foundry's visual direction is
+  APPROVED and is the benchmark rule for the family: Foundry-level detail,
+  texture richness and wear, material variation, imperfect welds and
+  repairs, Epsilon technology integrated into battered station equipment,
+  functional detail and no decorative glow. The other four must NOT look
+  like the Foundry: each keeps its own silhouette, mechanism, personality
+  and material character.
+* The Foundry stays unfinished until the owner sees it in a playable
+  build (firing, recovering, moving, aiming) with Condi's sounds. That
+  build is Prod's. The approved GLB was checked unchanged on his v3
+  runtime; see `docs/art-requests/2026-10-13-foundry-v3-integration-note.md`.
+* Form pass: two clay proposals per weapon, built from one construction
+  kit, fitted to Prod's v3 part names, muzzles and ADS lines, and
+  photographed in his range. `docs/art/reports/2026-10-13-weapon-forms-pass.md`,
+  sheets WF0-WF5 plus FS5/FS6.
+* Recommended: Sightline A, Switchback B (with the bolt port moved top-left),
+  Bulkhead A, Mass Driver A.
+* Waiting on: the owner's pick per weapon; Prod's answers (the carousel
+  index, the hammer sign, reflections, the import route, `Sight`, the
+  driver core's material).
+
 ### Delivered, 2026-10-13 — Foundry fidelity study (non-production). STOPPED for review.
 
 * The owner's ruling on pass 2: the hybrid is kept as a design hypothesis
@@ -3567,6 +3590,7 @@ played G1. Support only Prod's specific fit, collision and state issues.
   * Prod's answers on the carousel index, the hammer sign and the
     metal/reflection question.
   * Suggested next: Sightline at the same bar.
+  * (2026-10-13, later: the owner APPROVED the visual direction; see the entry above.)
 * Recorded family notes:
   * Sightline: punchy, slightly faster than Foundry.
   * Switchback: keep its firing.

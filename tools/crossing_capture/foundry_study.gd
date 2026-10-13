@@ -7,7 +7,7 @@ extends SceneTree
 ##       --path <checkout>/godot --resolution 1600x900 [--fixed-fps 60 \
 ##       --write-movie <out>/clip.avi] -s res://tests/_arty_foundry_study.gd \
 ##       -- --five-weapons --glb=<foundry_study.glb> --out=<dir> \
-##       --mode=stills|clip|placeholder
+##       --mode=stills|clip|move|placeholder
 ##
 ## It loads the game's own main scene with `--five-weapons`, so the range,
 ## the player, `RangeWeapons`, `RangeRig`, Condi's sounds and the engine's
@@ -36,6 +36,11 @@ extends SceneTree
 ##                hammer, the carousel and Prod's clocks to clip.json. Run
 ##                with --write-movie: the movie maker writes real time at
 ##                the fixed rate, sound included.
+##   move         (added 2026-10-13, for v3) strafing left then right while
+##                firing twice; every frame records the hammer, the
+##                player's x and the cooldown to move.json.
+##
+## Also run unchanged against `review/five-weapons-v3` (ef157061).
 
 const AIM := Vector3(0, 1.2, -10)          # Prod's check aims here too
 const SHOTS := 3
@@ -95,6 +100,8 @@ func _run() -> void:
 			await _stills()
 		"clip":
 			await _clip()
+		"move":
+			await _move()
 	quit(0)
 
 
@@ -229,6 +236,8 @@ func _clip() -> void:
 						drive.basis.x.x)), 0.01),
 				"cooldown": snappedf(cd, 0.001),
 				"back": snappedf(float(_rig.call("displacement", "back")), 0.0001),
+				"view_pitch_deg": snappedf(rad_to_deg((_body.get("camera")
+						as Node3D).rotation.x), 0.001),
 				"pitch": snappedf(float(_rig.call("displacement", "pitch")), 0.01)})
 		# the next press 0.1 s before the weapon is ready: inside Prod's
 		# 0.15 s buffer, so it fires the instant it is ready -- a player
@@ -252,6 +261,40 @@ func _clip() -> void:
 	f.close()
 	print("[study] clip: %d shots, %d frames logged" % [shots.size(),
 			frames.size()])
+
+
+# ============================================================ moving
+
+## Walking with it: strafe left, fire on the move, strafe right, fire
+## again -- the gun's bob and sway are Prod's, the hammer and carousel
+## his runtime's. Logged like the clip, to move.json.
+func _move() -> void:
+	var hammer: Node3D = _rig.call("part", "hammer")
+	var frames: Array = []
+	var plan := {0: ["move_left", true], 50: ["move_left", false],
+			56: ["move_right", true], 110: ["move_right", false]}
+	var fire_at := [25, 85]
+	for frame in 170:
+		if plan.has(frame):
+			var step: Array = plan[frame]
+			if step[1]:
+				Input.action_press(step[0])
+			else:
+				Input.action_release(step[0])
+		if frame in fire_at:
+			Input.action_press("fire_pulse")
+		if frame - 2 in fire_at:
+			Input.action_release("fire_pulse")
+		await physics_frame
+		frames.append({"f": frame, "drawn": Engine.get_frames_drawn(),
+				"hammer_deg": snappedf(hammer.rotation_degrees.x, 0.01),
+				"x": snappedf(_body.global_position.x, 0.001),
+				"cooldown": snappedf(float((_weapons.get("runtime") as Object)
+						.get("cooldown_remaining")), 0.001)})
+	var f := FileAccess.open(_out.path_join("move.json"), FileAccess.WRITE)
+	f.store_string(JSON.stringify({"frames": frames}, " "))
+	f.close()
+	print("[study] move: %d frames logged" % frames.size())
 
 
 # ================================================================ helpers

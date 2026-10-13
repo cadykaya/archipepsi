@@ -1,0 +1,178 @@
+{
+ "bulkhead_a": {
+  "label": "A  Twin-bore breacher",
+  "muzzle": [
+   0,
+   0.02,
+   -0.5
+  ],
+  "nodes": {
+   "Feed": [
+    0.0,
+    -0.11,
+    -0.135
+   ],
+   "Pump": [
+    0.0,
+    -0.016,
+    -0.371
+   ]
+  },
+  "sight_lines_y": [],
+  "triangles": 2012,
+  "weapon": "Bulkhead"
+ },
+ "bulkhead_b": {
+  "label": "B  Drum gun",
+  "muzzle": [
+   0,
+   0.02,
+   -0.5
+  ],
+  "nodes": {
+   "Feed": [
+    0.0,
+    -0.11,
+    -0.035
+   ],
+   "Pump": [
+    0.0,
+    -0.024,
+    -0.371
+   ]
+  },
+  "sight_lines_y": [],
+  "triangles": 2580,
+  "weapon": "Bulkhead"
+ },
+ "driver_a": {
+  "label": "A  Rotor driver",
+  "muzzle": [
+   0,
+   0.0,
+   -0.62
+  ],
+  "nodes": {
+   "Coils": [
+    0.0,
+    0.0,
+    -0.15
+   ],
+   "Core": [
+    0.0,
+    -0.062,
+    -0.055
+   ]
+  },
+  "sight_lines_y": [
+   0.13
+  ],
+  "triangles": 3100,
+  "weapon": "Mass Driver"
+ },
+ "driver_b": {
+  "label": "B  Coil driver",
+  "muzzle": [
+   0,
+   0.0,
+   -0.62
+  ],
+  "nodes": {
+   "Coils": [
+    0.0,
+    0.0,
+    -0.38
+   ],
+   "Core": [
+    0.0,
+    -0.064,
+    -0.07
+   ]
+  },
+  "sight_lines_y": [
+   0.13
+  ],
+  "triangles": 3032,
+  "weapon": "Mass Driver"
+ },
+ "sightline_a": {
+  "label": "A  Accelerator rifle",
+  "muzzle": [
+   0,
+   0.025,
+   -0.74
+  ],
+  "nodes": {
+   "Handle": [
+    0.0,
+    0.021,
+    -0.08
+   ]
+  },
+  "sight_lines_y": [
+   0.075
+  ],
+  "triangles": 4112,
+  "weapon": "Sightline"
+ },
+ "sightline_b": {
+  "label": "B  Reservoir rifle",
+  "muzzle": [
+   0,
+   0.025,
+   -0.74
+  ],
+  "nodes": {
+   "Handle": [
+    0.0,
+    0.023,
+    -0.08
+   ]
+  },
+  "sight_lines_y": [
+   0.075
+  ],
+  "triangles": 2864,
+  "weapon": "Sightline"
+ },
+ "switchback_a": {
+  "label": "A  Jacketed carbine",
+  "muzzle": [
+   0,
+   0.02,
+   -0.42
+  ],
+  "nodes": {
+   "Bolt": [
+    -0.032,
+    0.021,
+    -0.112
+   ]
+  },
+  "sight_lines_y": [
+   0.065
+  ],
+  "triangles": 2280,
+  "weapon": "Switchback"
+ },
+ "switchback_b": {
+  "label": "B  Pan gun",
+  "muzzle": [
+   0,
+   0.02,
+   -0.42
+  ],
+  "nodes": {
+   "Bolt": [
+    0.03,
+    0.02,
+    -0.1
+   ]
+  },
+  "sight_lines_y": [
+   0.065
+  ],
+  "triangles": 2208,
+  "weapon": "Switchback"
+ }
+}

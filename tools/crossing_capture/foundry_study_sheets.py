@@ -106,29 +106,43 @@ def fs1(cap, out):
 
 # ---------------------------------------------------------------- FS2
 
-def fs2(cap, clipdata, out):
+FS2_MOMENTS = [(-2, "rest, cocked"), (0, "fire: hammer falls"),
+               (4, "+0.07 s  heave"), (15, "+0.25 s"),
+               (26, "+0.43 s  carousel turning"), (35, "+0.58 s  gun home"),
+               (39, "+0.65 s  cocked, aim home"),
+               (44, "+0.73 s  ready: the next shot")]
+FS2_HEAD = ("FS2  One shot in real time, over the runtime's states",
+            "From the clip: three shots fired through the real input "
+            "action, each as soon as Prod's runtime allowed. Every frame "
+            "logged the hammer, the carousel, the cooldown and the gun's "
+            "travel.")
+FS2_NOTE = ("What you see is what the game is doing: the hammer drops on the "
+            "shot's own frame (the response is immediate), the carousel "
+            "turns while the gun comes home, the hammer is drawn and cocks "
+            "at 0.65 s, and the weapon is ready at 0.73 s (Prod's 0.72 s "
+            "cooldown on the 60 Hz tick). Cocked is the ready cue; it leads "
+            "readiness by 80 ms, inside Prod's 0.15 s press buffer, so a "
+            "click on the cock fires the instant it may.")
+FS2_MARKS = (("fire", None, 0), ("gun home", "gun", 0),
+             ("aim home / hammer cocked", "mech", 24), ("ready", "ready", 48))
+
+
+def fs2(cap, clipdata, out, moments=FS2_MOMENTS, head=FS2_HEAD,
+        note=FS2_NOTE, marks=FS2_MARKS, span=50):
     frames = clipdata["frames"]
     fps = float(clipdata["fps"])
     fires = [f for a, f in zip(frames, frames[1:])
              if f["cooldown"] > a["cooldown"] + 0.3]
     shot = fires[1]                  # the middle shot: rest before, rhythm
     f0 = shot["f"]
-    seq = [f for f in frames if f0 - 3 <= f["f"] <= f0 + 50]
+    seq = [f for f in frames if f0 - 3 <= f["f"] <= f0 + span]
     # the movie frame for a physics frame: the clip records `drawn`
     def png_for(entry):
         return os.path.join(cap, "frames", "f%08d.png" % entry["drawn"])
-    moments = [(-2, "rest, cocked"), (0, "fire: hammer falls"),
-               (4, "+0.07 s  heave"), (15, "+0.25 s"),
-               (26, "+0.43 s  carousel turning"), (35, "+0.58 s  gun home"),
-               (39, "+0.65 s  cocked, aim home"),
-               (44, "+0.73 s  ready: the next shot")]
     W, H = 2000, 1720
     sheet = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(sheet)
-    title(d, 40, 30, "FS2  One shot in real time, over the runtime's states",
-          "From the clip: three shots fired through the real input action, "
-          "each as soon as Prod's runtime allowed. Every frame logged the "
-          "hammer, the carousel, the cooldown and the gun's travel.")
+    title(d, 40, 30, head[0], head[1])
     tw, th = 470, 330
     by_f = {f["f"]: f for f in frames}
     for i, (df, label) in enumerate(moments):
@@ -148,7 +162,7 @@ def fs2(cap, clipdata, out):
     # the chart
     cx0, cy0, cw, ch = 110, 1000, 1820, 520
     d.rectangle((cx0, cy0, cx0 + cw, cy0 + ch), outline=(70, 72, 78))
-    t_end = 50 / fps
+    t_end = span / fps
 
     def X(t):
         return cx0 + cw * (t + 3 / fps) / (t_end + 3 / fps)
@@ -171,24 +185,15 @@ def fs2(cap, clipdata, out):
         d.text((cx0 + 20 + (k % 2) * 760, cy0 + ch + 14 + (k // 2) * 24),
                "-- " + name, font=font(16), fill=colr)
     clocks = clipdata["last_clocks"]
-    for name, t in (("fire", 0.0), ("gun home", clocks["gun"]),
-                    ("aim home / hammer cocked", clocks["mech"]),
-                    ("ready", clocks["ready"])):
+    for name, key, dy in marks:
+        t = 0.0 if key is None else clocks[key]
+        if t > t_end:
+            continue
         x = X(t)
         d.line((x, cy0, x, cy0 + ch), fill=ACCENT, width=1)
-        d.text((x + 4, cy0 + 6 + {"fire": 0, "gun home": 0,
-                                  "aim home / hammer cocked": 24,
-                                  "ready": 48}[name]),
-               "%s %.2f s" % (name, t), font=font(15), fill=ACCENT)
-    caption(d, 40, 1610,
-            "What you see is what the game is doing: the hammer drops on the "
-            "shot's own frame (the response is immediate), the carousel "
-            "turns while the gun comes home, the hammer is drawn and cocks "
-            "at 0.65 s, and the weapon is ready at 0.73 s (Prod's 0.72 s "
-            "cooldown on the 60 Hz tick). Cocked is the ready cue; it leads "
-            "readiness by 80 ms, inside Prod's 0.15 s press buffer, so a "
-            "click on the cock fires the instant it may.",
-            width_chars=150, size=16, fill=DIM)
+        d.text((x + 4, cy0 + 6 + dy), "%s %.2f s" % (name, t),
+               font=font(15), fill=ACCENT)
+    caption(d, 40, 1610, note, width_chars=150, size=16, fill=DIM)
     sheet.save(out)
 
 
@@ -323,7 +328,76 @@ def gif(cap, clipdata, out):
                 loop=0, optimize=False, disposal=1)
 
 
+# ------------------------------------------------- Prod's v3 runtime
+
+V3_MOMENTS = [(-2, "rest, cocked"), (0, "fire: hammer falls"),
+              (4, "+0.07 s  heave"), (18, "+0.30 s  carousel starts"),
+              (31, "+0.52 s  gun home"), (36, "+0.60 s  hammer drawn"),
+              (41, "+0.68 s  cocked"), (44, "+0.73 s  ready: the next shot")]
+V3_HEAD = ("FS5  The approved Foundry on Prod's corrected runtime (v3)",
+           "review/five-weapons-v3 (ef157061), read-only. The model is the "
+           "approved study, unchanged: every motion below is the v3 "
+           "runtime's own timing, followed by the study's parts.")
+V3_NOTE = ("v3 separates readiness from the aim: the gun is home at 0.52 s, "
+           "the carousel indexes 0.30-0.50 s, the hammer is drawn from 0.60 "
+           "s and cocks at 0.68 s (Prod's mechanical beat), the weapon is "
+           "ready at 0.73 s with about 0.19 deg of climb still owed, and the "
+           "aim is home at 1.05 s. The study needs no change for v3; the "
+           "cock still leads readiness (by 50 ms), so it stays the ready "
+           "cue. Shots landed 44 frames apart.")
+V3_MARKS = (("fire", None, 0), ("gun home", "gun", 0),
+            ("hammer cocked", "mech", 24), ("ready", "ready", 48),
+            ("aim home", "aim", 72))
+
+
+def fs6_move(cap, out):
+    frames = json.load(open(os.path.join(cap, "move.json")))["frames"]
+    fires = [f for a, f in zip(frames, frames[1:])
+             if f["cooldown"] > a["cooldown"] + 0.3]
+    picks = [(0, "standing"), (12, "strafing left"),
+             (fires[0]["f"], "firing on the move"),
+             (fires[0]["f"] + 8, "+0.13 s"), (70, "strafing right"),
+             (fires[1]["f"], "firing again"), (fires[1]["f"] + 12, "+0.2 s"),
+             (150, "stopped, settling")]
+    by_f = {f["f"]: f for f in frames}
+    W, H = 2000, 1000
+    sheet = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(sheet)
+    title(d, 40, 30, "FS6  Moving with it (v3 runtime)",
+          "Strafing left and right through the real move actions, firing on "
+          "the move. Bob, sway and recoil are Prod's; the gun is the "
+          "approved study.")
+    tw, th = 470, 330
+    for i, (fn, label) in enumerate(picks):
+        e = by_f.get(fn)
+        if e is None:
+            continue
+        img = Image.open(os.path.join(cap, "mframes", "m%08d.png"
+                                      % e["drawn"])).convert("RGB")
+        img = img.crop((500, 200, 1600, 900))
+        x = 40 + (i % 4) * (tw + 13)
+        y = 140 + (i // 4) * (th + 60)
+        sheet.paste(fit(img, tw, th), (x, y))
+        d.text((x, y + th + 6), label, font=font(17, True), fill=INK)
+        d.text((x, y + th + 28), "hammer %+.0f deg" % e["hammer_deg"],
+               font=font(14), fill=DIM)
+    sheet.save(out)
+
+
+def main_v3(cap, out):
+    os.makedirs(out, exist_ok=True)
+    clipdata = json.load(open(os.path.join(cap, "clip.json")))
+    fs2(cap, clipdata, os.path.join(out, "FS5_foundry_on_v3.png"),
+        moments=V3_MOMENTS, head=V3_HEAD, note=V3_NOTE, marks=V3_MARKS,
+        span=70)
+    fs6_move(cap, os.path.join(out, "FS6_foundry_moving_v3.png"))
+    print("[fsheets] v3 -> %s" % out)
+
+
 def main():
+    if sys.argv[1] == "v3":
+        return main_v3(os.path.abspath(sys.argv[2]),
+                       os.path.abspath(sys.argv[3]))
     out, sheets = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
     cap = os.path.join(out, "capture")
     os.makedirs(sheets, exist_ok=True)

@@ -1,0 +1,1194 @@
+{
+ "frames": [
+  {
+   "cooldown": 0.0,
+   "drawn": 47,
+   "f": 0,
+   "hammer_deg": -38.0,
+   "x": -0.047
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 48,
+   "f": 1,
+   "hammer_deg": -38.0,
+   "x": -0.121
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 49,
+   "f": 2,
+   "hammer_deg": -38.0,
+   "x": -0.213
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 50,
+   "f": 3,
+   "hammer_deg": -38.0,
+   "x": -0.314
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 51,
+   "f": 4,
+   "hammer_deg": -38.0,
+   "x": -0.422
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 52,
+   "f": 5,
+   "hammer_deg": -38.0,
+   "x": -0.533
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 53,
+   "f": 6,
+   "hammer_deg": -38.0,
+   "x": -0.647
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 54,
+   "f": 7,
+   "hammer_deg": -38.0,
+   "x": -0.761
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 55,
+   "f": 8,
+   "hammer_deg": -38.0,
+   "x": -0.877
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 56,
+   "f": 9,
+   "hammer_deg": -38.0,
+   "x": -0.993
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 57,
+   "f": 10,
+   "hammer_deg": -38.0,
+   "x": -1.109
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 58,
+   "f": 11,
+   "hammer_deg": -38.0,
+   "x": -1.225
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 59,
+   "f": 12,
+   "hammer_deg": -38.0,
+   "x": -1.342
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 60,
+   "f": 13,
+   "hammer_deg": -38.0,
+   "x": -1.458
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 61,
+   "f": 14,
+   "hammer_deg": -38.0,
+   "x": -1.575
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 62,
+   "f": 15,
+   "hammer_deg": -38.0,
+   "x": -1.692
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 63,
+   "f": 16,
+   "hammer_deg": -38.0,
+   "x": -1.808
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 64,
+   "f": 17,
+   "hammer_deg": -38.0,
+   "x": -1.925
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 65,
+   "f": 18,
+   "hammer_deg": -38.0,
+   "x": -2.042
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 66,
+   "f": 19,
+   "hammer_deg": -38.0,
+   "x": -2.158
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 67,
+   "f": 20,
+   "hammer_deg": -38.0,
+   "x": -2.275
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 68,
+   "f": 21,
+   "hammer_deg": -38.0,
+   "x": -2.392
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 69,
+   "f": 22,
+   "hammer_deg": -38.0,
+   "x": -2.508
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 70,
+   "f": 23,
+   "hammer_deg": -38.0,
+   "x": -2.625
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 71,
+   "f": 24,
+   "hammer_deg": -38.0,
+   "x": -2.742
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 72,
+   "f": 25,
+   "hammer_deg": -38.0,
+   "x": -2.858
+  },
+  {
+   "cooldown": 0.703,
+   "drawn": 73,
+   "f": 26,
+   "hammer_deg": 0.0,
+   "x": -2.975
+  },
+  {
+   "cooldown": 0.687,
+   "drawn": 74,
+   "f": 27,
+   "hammer_deg": 0.0,
+   "x": -3.092
+  },
+  {
+   "cooldown": 0.67,
+   "drawn": 75,
+   "f": 28,
+   "hammer_deg": 0.0,
+   "x": -3.208
+  },
+  {
+   "cooldown": 0.653,
+   "drawn": 76,
+   "f": 29,
+   "hammer_deg": 0.0,
+   "x": -3.325
+  },
+  {
+   "cooldown": 0.637,
+   "drawn": 77,
+   "f": 30,
+   "hammer_deg": 0.0,
+   "x": -3.442
+  },
+  {
+   "cooldown": 0.62,
+   "drawn": 78,
+   "f": 31,
+   "hammer_deg": 0.0,
+   "x": -3.558
+  },
+  {
+   "cooldown": 0.603,
+   "drawn": 79,
+   "f": 32,
+   "hammer_deg": 0.0,
+   "x": -3.675
+  },
+  {
+   "cooldown": 0.587,
+   "drawn": 80,
+   "f": 33,
+   "hammer_deg": 0.0,
+   "x": -3.792
+  },
+  {
+   "cooldown": 0.57,
+   "drawn": 81,
+   "f": 34,
+   "hammer_deg": 0.0,
+   "x": -3.908
+  },
+  {
+   "cooldown": 0.553,
+   "drawn": 82,
+   "f": 35,
+   "hammer_deg": 0.0,
+   "x": -4.025
+  },
+  {
+   "cooldown": 0.537,
+   "drawn": 83,
+   "f": 36,
+   "hammer_deg": 0.0,
+   "x": -4.142
+  },
+  {
+   "cooldown": 0.52,
+   "drawn": 84,
+   "f": 37,
+   "hammer_deg": 0.0,
+   "x": -4.258
+  },
+  {
+   "cooldown": 0.503,
+   "drawn": 85,
+   "f": 38,
+   "hammer_deg": 0.0,
+   "x": -4.375
+  },
+  {
+   "cooldown": 0.487,
+   "drawn": 86,
+   "f": 39,
+   "hammer_deg": 0.0,
+   "x": -4.492
+  },
+  {
+   "cooldown": 0.47,
+   "drawn": 87,
+   "f": 40,
+   "hammer_deg": 0.0,
+   "x": -4.608
+  },
+  {
+   "cooldown": 0.453,
+   "drawn": 88,
+   "f": 41,
+   "hammer_deg": 0.0,
+   "x": -4.725
+  },
+  {
+   "cooldown": 0.437,
+   "drawn": 89,
+   "f": 42,
+   "hammer_deg": 0.0,
+   "x": -4.842
+  },
+  {
+   "cooldown": 0.42,
+   "drawn": 90,
+   "f": 43,
+   "hammer_deg": 0.0,
+   "x": -4.958
+  },
+  {
+   "cooldown": 0.403,
+   "drawn": 91,
+   "f": 44,
+   "hammer_deg": 0.0,
+   "x": -5.075
+  },
+  {
+   "cooldown": 0.387,
+   "drawn": 92,
+   "f": 45,
+   "hammer_deg": 0.0,
+   "x": -5.192
+  },
+  {
+   "cooldown": 0.37,
+   "drawn": 93,
+   "f": 46,
+   "hammer_deg": 0.0,
+   "x": -5.308
+  },
+  {
+   "cooldown": 0.353,
+   "drawn": 94,
+   "f": 47,
+   "hammer_deg": 0.0,
+   "x": -5.425
+  },
+  {
+   "cooldown": 0.337,
+   "drawn": 95,
+   "f": 48,
+   "hammer_deg": 0.0,
+   "x": -5.542
+  },
+  {
+   "cooldown": 0.32,
+   "drawn": 96,
+   "f": 49,
+   "hammer_deg": 0.0,
+   "x": -5.6
+  },
+  {
+   "cooldown": 0.303,
+   "drawn": 97,
+   "f": 50,
+   "hammer_deg": 0.0,
+   "x": -5.6
+  },
+  {
+   "cooldown": 0.287,
+   "drawn": 98,
+   "f": 51,
+   "hammer_deg": 0.0,
+   "x": -5.6
+  },
+  {
+   "cooldown": 0.27,
+   "drawn": 99,
+   "f": 52,
+   "hammer_deg": 0.0,
+   "x": -5.6
+  },
+  {
+   "cooldown": 0.253,
+   "drawn": 100,
+   "f": 53,
+   "hammer_deg": 0.0,
+   "x": -5.6
+  },
+  {
+   "cooldown": 0.237,
+   "drawn": 101,
+   "f": 54,
+   "hammer_deg": 0.0,
+   "x": -5.6
+  },
+  {
+   "cooldown": 0.22,
+   "drawn": 102,
+   "f": 55,
+   "hammer_deg": 0.0,
+   "x": -5.6
+  },
+  {
+   "cooldown": 0.203,
+   "drawn": 103,
+   "f": 56,
+   "hammer_deg": 0.0,
+   "x": -5.553
+  },
+  {
+   "cooldown": 0.187,
+   "drawn": 104,
+   "f": 57,
+   "hammer_deg": 0.0,
+   "x": -5.479
+  },
+  {
+   "cooldown": 0.17,
+   "drawn": 105,
+   "f": 58,
+   "hammer_deg": 0.0,
+   "x": -5.387
+  },
+  {
+   "cooldown": 0.153,
+   "drawn": 106,
+   "f": 59,
+   "hammer_deg": 0.0,
+   "x": -5.286
+  },
+  {
+   "cooldown": 0.137,
+   "drawn": 107,
+   "f": 60,
+   "hammer_deg": 0.0,
+   "x": -5.178
+  },
+  {
+   "cooldown": 0.12,
+   "drawn": 108,
+   "f": 61,
+   "hammer_deg": 0.0,
+   "x": -5.067
+  },
+  {
+   "cooldown": 0.103,
+   "drawn": 109,
+   "f": 62,
+   "hammer_deg": -1.06,
+   "x": -4.953
+  },
+  {
+   "cooldown": 0.087,
+   "drawn": 110,
+   "f": 63,
+   "hammer_deg": -4.22,
+   "x": -4.839
+  },
+  {
+   "cooldown": 0.07,
+   "drawn": 111,
+   "f": 64,
+   "hammer_deg": -9.5,
+   "x": -4.723
+  },
+  {
+   "cooldown": 0.053,
+   "drawn": 112,
+   "f": 65,
+   "hammer_deg": -16.89,
+   "x": -4.607
+  },
+  {
+   "cooldown": 0.037,
+   "drawn": 113,
+   "f": 66,
+   "hammer_deg": -26.39,
+   "x": -4.491
+  },
+  {
+   "cooldown": 0.02,
+   "drawn": 114,
+   "f": 67,
+   "hammer_deg": -38.0,
+   "x": -4.375
+  },
+  {
+   "cooldown": 0.003,
+   "drawn": 115,
+   "f": 68,
+   "hammer_deg": -38.0,
+   "x": -4.258
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 116,
+   "f": 69,
+   "hammer_deg": -38.0,
+   "x": -4.142
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 117,
+   "f": 70,
+   "hammer_deg": -38.0,
+   "x": -4.025
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 118,
+   "f": 71,
+   "hammer_deg": -38.0,
+   "x": -3.908
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 119,
+   "f": 72,
+   "hammer_deg": -38.0,
+   "x": -3.792
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 120,
+   "f": 73,
+   "hammer_deg": -38.0,
+   "x": -3.675
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 121,
+   "f": 74,
+   "hammer_deg": -38.0,
+   "x": -3.558
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 122,
+   "f": 75,
+   "hammer_deg": -38.0,
+   "x": -3.442
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 123,
+   "f": 76,
+   "hammer_deg": -38.0,
+   "x": -3.325
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 124,
+   "f": 77,
+   "hammer_deg": -38.0,
+   "x": -3.208
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 125,
+   "f": 78,
+   "hammer_deg": -38.0,
+   "x": -3.092
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 126,
+   "f": 79,
+   "hammer_deg": -38.0,
+   "x": -2.975
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 127,
+   "f": 80,
+   "hammer_deg": -38.0,
+   "x": -2.858
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 128,
+   "f": 81,
+   "hammer_deg": -38.0,
+   "x": -2.742
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 129,
+   "f": 82,
+   "hammer_deg": -38.0,
+   "x": -2.625
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 130,
+   "f": 83,
+   "hammer_deg": -38.0,
+   "x": -2.508
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 131,
+   "f": 84,
+   "hammer_deg": -38.0,
+   "x": -2.392
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 132,
+   "f": 85,
+   "hammer_deg": -38.0,
+   "x": -2.275
+  },
+  {
+   "cooldown": 0.703,
+   "drawn": 133,
+   "f": 86,
+   "hammer_deg": 0.0,
+   "x": -2.158
+  },
+  {
+   "cooldown": 0.687,
+   "drawn": 134,
+   "f": 87,
+   "hammer_deg": 0.0,
+   "x": -2.042
+  },
+  {
+   "cooldown": 0.67,
+   "drawn": 135,
+   "f": 88,
+   "hammer_deg": 0.0,
+   "x": -1.925
+  },
+  {
+   "cooldown": 0.653,
+   "drawn": 136,
+   "f": 89,
+   "hammer_deg": 0.0,
+   "x": -1.808
+  },
+  {
+   "cooldown": 0.637,
+   "drawn": 137,
+   "f": 90,
+   "hammer_deg": 0.0,
+   "x": -1.692
+  },
+  {
+   "cooldown": 0.62,
+   "drawn": 138,
+   "f": 91,
+   "hammer_deg": 0.0,
+   "x": -1.575
+  },
+  {
+   "cooldown": 0.603,
+   "drawn": 139,
+   "f": 92,
+   "hammer_deg": 0.0,
+   "x": -1.458
+  },
+  {
+   "cooldown": 0.587,
+   "drawn": 140,
+   "f": 93,
+   "hammer_deg": 0.0,
+   "x": -1.342
+  },
+  {
+   "cooldown": 0.57,
+   "drawn": 141,
+   "f": 94,
+   "hammer_deg": 0.0,
+   "x": -1.225
+  },
+  {
+   "cooldown": 0.553,
+   "drawn": 142,
+   "f": 95,
+   "hammer_deg": 0.0,
+   "x": -1.108
+  },
+  {
+   "cooldown": 0.537,
+   "drawn": 143,
+   "f": 96,
+   "hammer_deg": 0.0,
+   "x": -0.992
+  },
+  {
+   "cooldown": 0.52,
+   "drawn": 144,
+   "f": 97,
+   "hammer_deg": 0.0,
+   "x": -0.875
+  },
+  {
+   "cooldown": 0.503,
+   "drawn": 145,
+   "f": 98,
+   "hammer_deg": 0.0,
+   "x": -0.758
+  },
+  {
+   "cooldown": 0.487,
+   "drawn": 146,
+   "f": 99,
+   "hammer_deg": 0.0,
+   "x": -0.642
+  },
+  {
+   "cooldown": 0.47,
+   "drawn": 147,
+   "f": 100,
+   "hammer_deg": 0.0,
+   "x": -0.525
+  },
+  {
+   "cooldown": 0.453,
+   "drawn": 148,
+   "f": 101,
+   "hammer_deg": 0.0,
+   "x": -0.408
+  },
+  {
+   "cooldown": 0.437,
+   "drawn": 149,
+   "f": 102,
+   "hammer_deg": 0.0,
+   "x": -0.292
+  },
+  {
+   "cooldown": 0.42,
+   "drawn": 150,
+   "f": 103,
+   "hammer_deg": 0.0,
+   "x": -0.175
+  },
+  {
+   "cooldown": 0.403,
+   "drawn": 151,
+   "f": 104,
+   "hammer_deg": 0.0,
+   "x": -0.058
+  },
+  {
+   "cooldown": 0.387,
+   "drawn": 152,
+   "f": 105,
+   "hammer_deg": 0.0,
+   "x": 0.058
+  },
+  {
+   "cooldown": 0.37,
+   "drawn": 153,
+   "f": 106,
+   "hammer_deg": 0.0,
+   "x": 0.175
+  },
+  {
+   "cooldown": 0.353,
+   "drawn": 154,
+   "f": 107,
+   "hammer_deg": 0.0,
+   "x": 0.292
+  },
+  {
+   "cooldown": 0.337,
+   "drawn": 155,
+   "f": 108,
+   "hammer_deg": 0.0,
+   "x": 0.408
+  },
+  {
+   "cooldown": 0.32,
+   "drawn": 156,
+   "f": 109,
+   "hammer_deg": 0.0,
+   "x": 0.525
+  },
+  {
+   "cooldown": 0.303,
+   "drawn": 157,
+   "f": 110,
+   "hammer_deg": 0.0,
+   "x": 0.595
+  },
+  {
+   "cooldown": 0.287,
+   "drawn": 158,
+   "f": 111,
+   "hammer_deg": 0.0,
+   "x": 0.637
+  },
+  {
+   "cooldown": 0.27,
+   "drawn": 159,
+   "f": 112,
+   "hammer_deg": 0.0,
+   "x": 0.662
+  },
+  {
+   "cooldown": 0.253,
+   "drawn": 160,
+   "f": 113,
+   "hammer_deg": 0.0,
+   "x": 0.677
+  },
+  {
+   "cooldown": 0.237,
+   "drawn": 161,
+   "f": 114,
+   "hammer_deg": 0.0,
+   "x": 0.686
+  },
+  {
+   "cooldown": 0.22,
+   "drawn": 162,
+   "f": 115,
+   "hammer_deg": 0.0,
+   "x": 0.692
+  },
+  {
+   "cooldown": 0.203,
+   "drawn": 163,
+   "f": 116,
+   "hammer_deg": 0.0,
+   "x": 0.695
+  },
+  {
+   "cooldown": 0.187,
+   "drawn": 164,
+   "f": 117,
+   "hammer_deg": 0.0,
+   "x": 0.697
+  },
+  {
+   "cooldown": 0.17,
+   "drawn": 165,
+   "f": 118,
+   "hammer_deg": 0.0,
+   "x": 0.698
+  },
+  {
+   "cooldown": 0.153,
+   "drawn": 166,
+   "f": 119,
+   "hammer_deg": 0.0,
+   "x": 0.699
+  },
+  {
+   "cooldown": 0.137,
+   "drawn": 167,
+   "f": 120,
+   "hammer_deg": 0.0,
+   "x": 0.699
+  },
+  {
+   "cooldown": 0.12,
+   "drawn": 168,
+   "f": 121,
+   "hammer_deg": 0.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.103,
+   "drawn": 169,
+   "f": 122,
+   "hammer_deg": -1.06,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.087,
+   "drawn": 170,
+   "f": 123,
+   "hammer_deg": -4.22,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.07,
+   "drawn": 171,
+   "f": 124,
+   "hammer_deg": -9.5,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.053,
+   "drawn": 172,
+   "f": 125,
+   "hammer_deg": -16.89,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.037,
+   "drawn": 173,
+   "f": 126,
+   "hammer_deg": -26.39,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.02,
+   "drawn": 174,
+   "f": 127,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.003,
+   "drawn": 175,
+   "f": 128,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 176,
+   "f": 129,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 177,
+   "f": 130,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 178,
+   "f": 131,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 179,
+   "f": 132,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 180,
+   "f": 133,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 181,
+   "f": 134,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 182,
+   "f": 135,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 183,
+   "f": 136,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 184,
+   "f": 137,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 185,
+   "f": 138,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 186,
+   "f": 139,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 187,
+   "f": 140,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 188,
+   "f": 141,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 189,
+   "f": 142,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 190,
+   "f": 143,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 191,
+   "f": 144,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 192,
+   "f": 145,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 193,
+   "f": 146,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 194,
+   "f": 147,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 195,
+   "f": 148,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 196,
+   "f": 149,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 197,
+   "f": 150,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 198,
+   "f": 151,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 199,
+   "f": 152,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 200,
+   "f": 153,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 201,
+   "f": 154,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 202,
+   "f": 155,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 203,
+   "f": 156,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 204,
+   "f": 157,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 205,
+   "f": 158,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 206,
+   "f": 159,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 207,
+   "f": 160,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 208,
+   "f": 161,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 209,
+   "f": 162,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 210,
+   "f": 163,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 211,
+   "f": 164,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 212,
+   "f": 165,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 213,
+   "f": 166,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 214,
+   "f": 167,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 215,
+   "f": 168,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  },
+  {
+   "cooldown": 0.0,
+   "drawn": 216,
+   "f": 169,
+   "hammer_deg": -38.0,
+   "x": 0.7
+  }
+ ]
+}
