@@ -142,3 +142,12 @@ python3 tools/crossing_capture/foundry_study_sheets.py v3 CAPDIR SHEETS
 The review copies of the renders in `renders/` are reduced to 256 colours to keep the package small. The sources regenerate them at full depth.
 
 **Stop.** No final model until you have chosen.
+
+## Correction, 2026-10-13 (after the owner's ruling)
+
+The owner chose Sightline A, Switchback A and Mass Driver A as approved
+directions, and Bulkhead A as provisional only (to be revisited). Two
+recommendations above are superseded: Switchback B is not the pick (it is
+kept as a possible future weapon in the same archetype), and Sightline A
+is not to be trimmed toward 3,600 triangles: counts are provisional, and
+optimisation waits for in-game profiling of approved designs.

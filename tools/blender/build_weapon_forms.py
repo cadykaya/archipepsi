@@ -771,7 +771,7 @@ def bulkhead_b():
 
 # =========================================================== MASS DRIVER
 
-def driver_a():
+def driver_a(weight_top=0.058, weight_phase=45):
     """THE ROTOR DRIVER. A heavy rotor round the line of fire spins up
     inside a station guard cage (Prod's `coils` spin with the charge) and
     dumps its momentum through open twin rails. The mass is in the rotor,
@@ -825,9 +825,9 @@ def driver_a():
     R = [tube("rotor", 0.0530, 0.0180, 8, 0, 0.0, -0.225, -0.075, "bare",
               part="coils", bevel=0.002)]
     for k in range(4):
-        w = box("weight%d" % k, -0.009, 0.009, 0.048, 0.058, -0.200, -0.100,
-                "painted", part="coils")
-        rotate(w, (0, 0, 1), 90 * k + 45, (0, 0, 0))
+        w = box("weight%d" % k, -0.009, 0.009, 0.048, weight_top, -0.200,
+                -0.100, "painted", part="coils")
+        rotate(w, (0, 0, 1), 90 * k + weight_phase, (0, 0, 0))
         R.append(w)
     R.append(cyl("rotor_hub", 0.0185, 8, 0, 0.0, -0.232, -0.068,
                  "epsilon", part="coils"))
@@ -1038,6 +1038,11 @@ def render_views(out, label):
             (-0.9, SIDE_CENTRE[1], SIDE_CENTRE[0]))) @ Matrix.Rotation(
             math.radians(-90), 4, "Y"), SIDE_ORTHO, (1600, 760)),
         "eye": ("PERSP", fs._rig_matrix().inverted(), 75.0, (1600, 900)),
+        # from above, muzzle left as in the elevation, the gun's right side
+        # at the top of the frame: a fan or a splay reads here
+        "top": ("ORTHO", Matrix(((0, 1, 0, 0), (0, 0, 1, 0.8),
+                                 (1, 0, 0, SIDE_CENTRE[0]), (0, 0, 0, 1))),
+                SIDE_ORTHO, (1600, 760)),
         "three_q": ("PERSP", _look_at((-0.34, 0.22, 0.26),
                                       (0.0, -0.01, -0.22)), 34.0,
                     (1600, 900)),

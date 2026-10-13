@@ -3549,6 +3549,42 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-13 — weapon development pass. STOPPED for review.
+
+* Bulkhead: three new concepts (C Spreader, D Fan, E Hatch Ram), each one
+  body for both variants; recommended C. Not approved until the owner picks.
+* The three approved directions developed toward the Foundry standard with
+  the Foundry pipeline generalised (`build_weapon_model.py`,
+  `weapon_paint.py` with per-weapon wear specs, `author_weapon_maps.py`,
+  `tools/weapon_model.sh`). Atlases sized to hold the Foundry's density:
+  Sightline and Mass Driver 2048 (~1,900 texels/m), Switchback 1024.
+* Measured in Prod's range: draw calls Sightline 2, Switchback 2, Mass
+  Driver 3 (Foundry 3); texture memory 96 / 24 / 96 MB uncompressed (Foundry
+  24). Provisional; profile after approval, no preemptive reduction.
+* Fixed on the way: the Driver form's balance weights cut through its cage
+  bars (fixed in the development model; the forms record unchanged);
+  Glyph's batch runner took a patch row starting with "$2" for a citation
+  (`$` dropped from the weapon wrapper's alphabet).
+* Report: `docs/art/reports/2026-10-13-weapon-development-pass.md`.
+* Waiting on: the owner's Bulkhead pick and read of the three developed
+  models; Prod's answers (core glow contract, one muzzle for multi-bore
+  concepts, and the study's open questions).
+
+### Ruling, 2026-10-13 — the four-weapon forms
+
+* APPROVED directions: Sightline A (Accelerator), Switchback A (Jacketed),
+  Mass Driver A (exposed Rotor). Bulkhead A PROVISIONAL only: revisit
+  proportions, silhouette and mechanism presentation (too blocky, too
+  generic, not a conventional shotgun with parts attached), keeping the
+  Breacher and Sweeper; show the owner first.
+* Switchback B is kept for a possible future same-archetype weapon.
+  Several guns per archetype: post-release scope only.
+* Triangle counts are provisional. Record triangles, materials, textures
+  and draw calls per weapon; profile in game after approval; no
+  preemptive reduction. (This supersedes the forms report's advice to trim
+  Sightline A toward 3,600 triangles.)
+* Approved concept directions are not approval to merge finished weapons.
+
 ### Delivered, 2026-10-13 (later) — Foundry approved; four-weapon form pass. STOPPED for the owner's choice.
 
 * **The owner's ruling (2026-10-13):** the Foundry's visual direction is

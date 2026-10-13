@@ -1,0 +1,12 @@
+{
+ "draw_calls": 3,
+ "glb": "driver.glb",
+ "mesh_instances": 4,
+ "objects": 3,
+ "primitives": 3312,
+ "renderer": "gl_compatibility (opengl3), xvfb software GL",
+ "surfaces": 4,
+ "texture_mem_added_bytes": 100663290,
+ "triangles_loaded": 3314,
+ "weapon": "driver"
+}

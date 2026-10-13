@@ -1,0 +1,40 @@
+{
+ "frame": "Godot viewmodel space (RangeRig model origin), -Z forward",
+ "label": "Sightline (A, Accelerator)",
+ "metrics": {
+  "atlas_fill": 0.386,
+  "draw_calls_expected": 2,
+  "materials": 1,
+  "meshes": 2,
+  "note": "Triangle counts are provisional (the owner, 2026-10-13); measured in the game separately.",
+  "texels_per_metre": 1910.6,
+  "texture_size": 2048,
+  "textures": [
+   "albedo.png",
+   "emission.png",
+   "metallic.png",
+   "normal.png",
+   "roughness.png"
+  ],
+  "triangles": 4992
+ },
+ "muzzle": [
+  0,
+  0.025,
+  -0.74
+ ],
+ "nodes": {
+  "Handle": {
+   "pivot": [
+    0.0,
+    0.021,
+    -0.08
+   ]
+  }
+ },
+ "sight_lines_y": [
+  0.075
+ ],
+ "status": "DEVELOPMENT MODEL (Arty, 2026-10-13): an approved concept direction developed toward the Foundry's fidelity. Not registered, not merged, not shipping.",
+ "weapon": "sightline"
+}

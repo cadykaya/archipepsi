@@ -1,0 +1,40 @@
+{
+ "frame": "Godot viewmodel space (RangeRig model origin), -Z forward",
+ "label": "Switchback (A, Jacketed)",
+ "metrics": {
+  "atlas_fill": 0.472,
+  "draw_calls_expected": 2,
+  "materials": 1,
+  "meshes": 2,
+  "note": "Triangle counts are provisional (the owner, 2026-10-13); measured in the game separately.",
+  "texels_per_metre": 1318.9,
+  "texture_size": 1024,
+  "textures": [
+   "albedo.png",
+   "emission.png",
+   "metallic.png",
+   "normal.png",
+   "roughness.png"
+  ],
+  "triangles": 2520
+ },
+ "muzzle": [
+  0,
+  0.02,
+  -0.42
+ ],
+ "nodes": {
+  "Bolt": {
+   "pivot": [
+    -0.032,
+    0.021,
+    -0.112
+   ]
+  }
+ },
+ "sight_lines_y": [
+  0.065
+ ],
+ "status": "DEVELOPMENT MODEL (Arty, 2026-10-13): an approved concept direction developed toward the Foundry's fidelity. Not registered, not merged, not shipping.",
+ "weapon": "switchback"
+}
