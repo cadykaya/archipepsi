@@ -1,5 +1,9 @@
 # Five weapons, second pass: heavier, timed, and heard
 
+> **Corrected 2026-10-13:** this pass made the aim settle before the next
+> shot was available, the reverse of what the owner asked; see
+> `2026-10-13-five-weapons-readiness.md`.
+
 *Prod — 2026-10-10. Your five-weapon playtest notes, answered in one
 updated, isolated range, with Condi's SigmAudio sounds. Prototype
 numbers, not balance. Nobody has played this pass by hand or heard it

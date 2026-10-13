@@ -912,6 +912,26 @@ owner's D-06/D-07 rulings and the seam table are in
         and Foundry's ratchet timing.
       - **Next:** the owner plays it and decides Breacher or Sweeper,
         steady or hard, and the campaign's aim button. Not before.
+    - **FIVE WEAPONS, READINESS CORRECTION (owner after Vera's review,
+      2026-10-13): DELIVERED, STOP.**
+      - **The fix.** The second pass required the aim to settle before
+        readiness; it is now the reverse.
+        - Foundry is ready at 0.72 s, its hammer cocking on readiness,
+          with about 0.17° still settling.
+        - Its next shot fires along the look of that frame, with no snap.
+        - Sightline and the Breacher keep their own pattern.
+      - **The view climb.** It is the player's look, moved
+        (`RangeRig._look`): recovery returns only the climb still owed.
+        A pull against it is never corrected twice (the second pass did
+        that: measured with real mouse events), and a pull past it, or
+        up, is kept.
+      - **F and the middle button** fire through the range's trigger,
+        lifted off `fire_echo_b` while a weapon is out.
+      - **Where it is.** Branch `review/five-weapons-v3`. The report is
+        `docs/reports/2026-10-13-five-weapons-readiness.md`, and the
+        contract's "Readiness correction" section supersedes the
+        second pass's clock rule.
+      - **Next:** the owner plays it. Not before.
     - **STANDING CONTEXT, not a task (owner, 2026-10-10): responsive
       music.** Condi owns the composition and the SigmAudio experiment
       (DMC5/Portal-style adaptive music). In weapon and enemy feedback
