@@ -194,6 +194,34 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-13: Foundry fidelity study (one non-production first-person
+  Foundry). STOP for the owner's review.** Branch
+  `claude/archipepsi-art-foundry-study-2026-10-13`.
+  * The owner's direction: keep the hybrid but tone it down; texture
+    detail is a major priority (worn, used, imperfectly repaired);
+    Glyph-authored maps. One Foundry at the provisional 2,500-4,000
+    triangles, in the real renderer: at rest, firing in real time, close.
+  * Report: `docs/art/reports/2026-10-13-foundry-fidelity-study.md`.
+    Sheets, stills and the clip GIF are in
+    `docs/art/review/foundry_study_2026-10-13/` (GLB and maps in `model/`).
+    Prod's questions: `docs/art-requests/2026-10-13-foundry-study-prod-questions.md`.
+  * 2,748 triangles, one 1024 atlas at ~1,150 texels/m. Albedo,
+    roughness, metallic, height and emission are held in Glyph; the
+    normal map comes from `x-glyph.normal_from_height`, and
+    `check_material` is clean.
+  * Photographed in Prod's own game (`review/five-weapons-v2` 257fb75d,
+    read-only checkout, swap in memory). The hammer and carousel follow
+    Prod's runtime states: fall 0, index 0.38-0.58, cocked 0.65, ready
+    0.733.
+  * Departs from the bible only for this study: normal and roughness
+    maps (§5), the texel density, and a triangle range with no category.
+    The bible is unchanged; these are the owner's decisions.
+  * Family notes recorded, not built:
+    * Sightline is substantial and punchy, slightly faster than Foundry;
+    * Switchback keeps its firing behaviour;
+    * Bulkhead is undecided (quick scattergun or heavy shotgun);
+    * Mass Driver has less recoil, more damage, Sightline-class range;
+    * green means active power.
 * **2026-10-10: Weapon design pass 2, hybrid direction (no models). STOP
   for the owner's mechanism approval.** Same branch as the exploration.
   * The owner chose the hybrid: station engineering, Epsilon technology,

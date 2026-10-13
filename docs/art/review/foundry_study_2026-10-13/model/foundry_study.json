@@ -1,0 +1,42 @@
+{
+ "atlas": 1024,
+ "frame": "Godot viewmodel space (RangeRig model origin), -Z forward",
+ "nodes": {
+  "Body": "static",
+  "Carousel": {
+   "axis": "z",
+   "centre": [
+    0.0,
+    0.005999999999999998,
+    -0.061
+   ],
+   "drives": "foundry/cylinder",
+   "index_deg": 60.0
+  },
+  "Hammer": {
+   "axis": "x",
+   "cocked_deg": -38.0,
+   "drives": "foundry/hammer",
+   "fallen_deg": 0.0,
+   "pivot": [
+    0.0,
+    0.052,
+    -0.022
+   ]
+  },
+  "Muzzle": {
+   "at": [
+    0.0,
+    0.03,
+    -0.47
+   ]
+  }
+ },
+ "provisional_range": [
+  2500,
+  4000
+ ],
+ "status": "NON-PRODUCTION FIDELITY STUDY (Arty, 2026-10-13). Not registered, not a budget category, not for shipping.",
+ "texels_per_metre": 1154.3,
+ "triangles": 2748
+}

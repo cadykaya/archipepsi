@@ -3549,6 +3549,31 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-13 — Foundry fidelity study (non-production). STOPPED for review.
+
+* The owner's ruling on pass 2: the hybrid is kept as a design hypothesis
+  (not lore). It is to be toned down, not made boring: believable
+  proportions, sturdy, no oversized novelty. The textures must carry far
+  more (worn, used, imperfectly repaired), authored through Glyph.
+* One Foundry, 2,748 triangles, 1024 atlas (~1,150 texels/m), in Prod's
+  real range. Its moving parts are Prod's runtime parts (hammer and
+  carousel) at Prod's times.
+* `docs/art/reports/2026-10-13-foundry-fidelity-study.md`; FS1-FS4, the
+  stills and the clip; the model in `review/foundry_study_2026-10-13/model/`.
+* Waiting on:
+  * the owner's read of the fidelity bar, the tone and the hammer;
+  * the bible-level numbers (triangles, texel density, normal and
+    roughness maps);
+  * Prod's answers on the carousel index, the hammer sign and the
+    metal/reflection question.
+  * Suggested next: Sightline at the same bar.
+* Recorded family notes:
+  * Sightline: punchy, slightly faster than Foundry.
+  * Switchback: keep its firing.
+  * Bulkhead: undecided.
+  * Mass Driver: less recoil, more damage, Sightline range.
+  * Green: active power.
+
 ### Delivered, 2026-10-10 — Weapon design pass 2, hybrid (no models). STOPPED for mechanism approval.
 
 * The owner's ruling on the exploration: the hybrid direction (station
