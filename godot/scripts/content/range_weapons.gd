@@ -124,6 +124,16 @@ const ADS_RMB := "range_ads_rmb"
 const ADS_ALT := "range_ads_alt"
 ## "rmb" (RMB, V or a side button) or "alt" (V or a side button only).
 static var ads_binding := "rmb"
+## THE ALTERNATE TRIGGER. The weapon sits on the player's second Echo
+## slot, whose own keys (F, the middle button: `fire_echo_b`) would fire it
+## straight through `EchoRuntime`, with no presentation, no buffer and the
+## engine's beam. While a range weapon is out, those keys are lifted off
+## `fire_echo_b` onto this range-only action, which pulls the same trigger
+## as the left button. Put the weapon away (6, 0, leaving) and they go
+## back exactly as the project defines them. Every other Echo binding
+## (RMB, Shift, C, Q) is untouched.
+const ALT_FIRE := "range_fire_alt"
+const ECHO_B := "fire_echo_b"
 ## A press this close to the end of a cooldown fires as soon as it ends.
 const BUFFER := 0.15
 
@@ -177,6 +187,34 @@ func bind(host: WeaponFeel) -> void:
 	audio.setup()
 	player.hit_confirmed.connect(_on_hit)
 	ensure_ads_actions()
+	ensure_alt_fire()
+
+
+## The project's own events for the second Echo slot's key.
+static func echo_b_events() -> Array:
+	var setting: Variant = ProjectSettings.get_setting("input/" + ECHO_B)
+	return (setting as Dictionary).get("events", []) if setting is Dictionary \
+			else []
+
+
+static func ensure_alt_fire() -> void:
+	if not InputMap.has_action(ALT_FIRE):
+		InputMap.add_action(ALT_FIRE)
+		for event: InputEvent in echo_b_events():
+			InputMap.action_add_event(ALT_FIRE, event)
+
+
+## F and the middle button belong to the range's trigger (true) or to the
+## second Echo slot, as the project defines it (false).
+static func lift_echo_b_keys(lift: bool) -> void:
+	InputMap.action_erase_events(ECHO_B)
+	if not lift:
+		for event: InputEvent in echo_b_events():
+			InputMap.action_add_event(ECHO_B, event)
+
+
+func _exit_tree() -> void:
+	lift_echo_b_keys(false)
 
 
 static func ensure_ads_actions() -> void:
@@ -255,6 +293,7 @@ func select(id: String) -> void:
 		rig.release_camera()
 		player.viewmodel.visible = true
 		runtime.set_equipped({})
+		lift_echo_b_keys(false)
 		player._pulse_cooldown = 0.0
 		aiming = false
 		changed.emit("")
@@ -275,6 +314,7 @@ func select(id: String) -> void:
 	action["slot"] = SLOT
 	action["modifiers"] = []
 	runtime.set_equipped(action)
+	lift_echo_b_keys(true)
 	rig.camera_motion = 0.0 if reduced_motion else 1.0
 	rig.select(id)
 	rig.recoil_key = String(_profile.get("recoil", ""))
@@ -299,8 +339,10 @@ func _physics_process(delta: float) -> void:
 		return
 	# The Pulse stays holstered while a weapon is out.
 	player._pulse_cooldown = 999.0
-	var held := Input.is_action_pressed("fire_pulse")
-	var pressed := Input.is_action_just_pressed("fire_pulse")
+	var held := Input.is_action_pressed("fire_pulse") \
+			or Input.is_action_pressed(ALT_FIRE)
+	var pressed := Input.is_action_just_pressed("fire_pulse") \
+			or Input.is_action_just_pressed(ALT_FIRE)
 	var p := _profile
 	_aim_input()
 	_clocks()
@@ -370,6 +412,7 @@ func _clocks() -> void:
 		clocks["aim"] = t
 	if not clocks.has("ready") and runtime.cooldown_remaining <= 0.0:
 		clocks["ready"] = t
+		clocks["owed_at_ready"] = rig.aim_offset().length()
 
 
 ## Calls `call` while catching every node it adds to the tree: the
@@ -405,6 +448,11 @@ func _fire() -> void:
 	_burst += 1
 	_shot_frame = Engine.get_physics_frames()
 	clocks = {}
+	# The direction the engine fired along: the crosshair's, as the look
+	# is NOW (any recoil still settling included).
+	var eye := player.camera.global_position
+	var forward := -player.camera.global_basis.z
+	var owed := rig.aim_offset()
 	var muzzle := rig.muzzle_position()
 	var ends: Array = []
 	for node in caught:
@@ -422,7 +470,9 @@ func _fire() -> void:
 				current == "switchback" and shots % 3 == 0)
 	_impacts(ends)
 	last_shot = {"weapon": current, "variant": variant(),
-			"frame": Engine.get_process_frames(), "muzzle": muzzle,
+			"frame": Engine.get_process_frames(),
+			"physics_frame": Engine.get_physics_frames(), "muzzle": muzzle,
+			"eye": eye, "forward": forward, "owed": owed,
 			"ends": ends, "aiming": aiming, "ads": rig.ads,
 			"spread": float(runtime.equipped["primitive"].get("spread_degrees", 0))}
 	if current == "switchback":
@@ -539,15 +589,17 @@ const HAMMER_COCKED := -38.0
 func _mechanics() -> void:
 	match current:
 		"foundry":
-			# The hammer falls with the shot; the cylinder indexes as the
-			# gun comes home (0.38-0.58 s); the hammer is drawn back and
-			# cocks at 0.66 s, with a small felt click; ready at 0.72 s.
+			# MECHANICAL READINESS, shown: the hammer falls with the
+			# shot, the cylinder indexes as the gun comes home (0.30-0.50
+			# s), the hammer is drawn back and cocks at 0.70 s with a small
+			# felt click: ready at 0.72 s. The last of the view climb is
+			# still settling then (`RangeRig`), and the next shot may go.
 			var hammer := rig.part("hammer")
 			var drum := rig.part("cylinder")
 			if hammer != null:
 				hammer.rotation_degrees.x = 0.0
 				var cock := hammer.create_tween()
-				cock.tween_interval(0.56)
+				cock.tween_interval(0.6)
 				cock.tween_property(hammer, "rotation_degrees:x", HAMMER_COCKED,
 						0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 				cock.tween_callback(_click.bind("foundry", 0.5, 0.003))
@@ -555,7 +607,7 @@ func _mechanics() -> void:
 				var from := float(drum.get_meta("index", 0.0))
 				drum.set_meta("index", from + PI / 3.0)
 				var turn := drum.create_tween()
-				turn.tween_interval(0.38)
+				turn.tween_interval(0.3)
 				turn.tween_method(_index_drum.bind(drum), from, from + PI / 3.0,
 						0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		"sightline":

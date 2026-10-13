@@ -4,6 +4,49 @@
 This is what the range's runtime does now and exactly what it will
 consume from your lanes. Nothing in it is approved art or audio.*
 
+## Readiness correction (2026-10-13, after Vera's review)
+
+**This replaces the second pass's "aim home before ready" rule, which
+inverted the owner's ask.** Mechanical readiness, the gun's visual
+recoil and the aim's recovery are three separate clocks, and readiness
+does not wait for the aim.
+
+- **Foundry, cadence 0.72 s unchanged:**
+  - the gun is home at 0.52 s (no longer stretched to the cooldown);
+  - the cylinder indexes from 0.30 s to 0.50 s;
+  - the hammer is drawn back from 0.60 s and cocks at 0.70 s, the
+    mechanical readiness cue;
+  - ready at 0.73 s, with about 0.17° of the 2.2° climb still settling;
+  - the aim is fully home at about 1.0 s.
+- **A shot taken then goes along the look as it is**, the residual
+  climb included. Nothing snaps back to the old aim; the residual
+  keeps settling under the new kick.
+- **Every weapon keeps its own relation:**
+
+  | Weapon | Gun home | Last mechanical beat | Ready | Aim home |
+  |---|---|---|---|---|
+  | Foundry | 0.52 s | 0.68 s (hammer) | 0.73 s | 1.02 s, after ready |
+  | Sightline | 0.37 s | 0.17 s (bolt, inside the shot) | 0.48 s | 0.37 s, before ready |
+  | Breacher | 0.70 s | 0.90 s (pump slam) | 1.00 s | 0.93 s, before ready |
+
+- **The view climb is the player's look, moved.** A kick lifts the
+  camera's pitch (and the body's yaw, for Switchback's hard variant).
+  Recovery returns only the climb still owed (`RangeRig._look`):
+  - a player move against the climb pays it off, so recovery never
+    corrects it a second time;
+  - a move past it, or up, is kept;
+  - the look keeps recovering after the weapon is put away.
+
+  Per weapon: `aim` (degrees), `attack`, `aim_hold`, `aim_tau` and
+  `aim_floor` (the easing) in `RangeRig.RECOIL`.
+- **Condi:** Foundry's hammer now cocks at 0.70 s (it was 0.66 s). The
+  ask about the ratchet's time in `foundry_fire.wav` stands.
+- **F and the middle button.** While a range weapon is out, they are
+  lifted off `fire_echo_b` onto the range-only `range_fire_alt` and fire
+  exactly like the left button. They are restored from the project's
+  input map when the weapon is put away. RMB (`fire_echo`, the grapple
+  and tether slot) and the other Echo keys are untouched.
+
 ## Second pass (2026-10-10, after the owner's playtest)
 
 What changed for your lanes; the rest of this document still holds
@@ -56,9 +99,10 @@ works like this:
 **Arty: what changed on the rig.**
 - **Recoil.** It is now a timed envelope per weapon
   (`RangeRig.RECOIL`), with springs underneath for texture: an attack, a
-  held peak, then an eased return that settles at a fixed time. The gun
-  comes home, then the view climb returns, then the mechanism finishes,
-  then the weapon is ready:
+  held peak, then an eased return that settles at a fixed time. *As
+  delivered in the second pass, superseded by the readiness correction
+  above:* the gun came home, then the view climb returned, then the
+  mechanism finished, then the weapon was ready:
 
   | Weapon | Gun home | Aim home | Last mechanical beat | Ready |
   |---|---|---|---|---|

@@ -12,20 +12,25 @@ extends Node3D
 ## authored 2D flare layers; the 3D layers here (core, tongues, light,
 ## smoke, sparks, tracer) are Prod's and stay under Arty's frames.
 ##
-## **Three clocks per shot, kept apart and chained** (the owner's
-## five-weapon playtest): the gun's visual recovery (`recover`), the aim
-## settling (`aim_recover`, the view climb coming home) and mechanical
-## readiness (the weapon's cooldown, which `RangeWeapons` animates as a
-## hammer, bolt or pump). Each weapon's `RECOIL` envelope is timed so the
-## gun comes home, then the sight settles, then the mechanism is ready:
-## no dead wait at the end, no early snap.
+## **Readiness, recoil and aim are three separate clocks** (the owner,
+## correcting the second pass). Mechanical readiness is the weapon's
+## cooldown, shown by its mechanism (Foundry's hammer cocks on it). The
+## gun's visual recoil (`RECOIL` envelopes over springs) and the view
+## climb recover on their own time. Readiness does NOT wait for the aim:
+## on Foundry the next shot is available while the last of the climb is
+## still settling, and it fires from wherever the view is then.
 ##
-## **Aim truth.** The view climb is the one thing that turns the camera,
-## and it is temporary and exact: an envelope applied as a delta on top of
-## the player's own look, which returns to precisely zero before the next
-## semi-automatic shot can fire (the check proves it). Everything else is
-## the projection offset, a roll about the line of sight and the field of
-## view. All of it is scaled by `camera_motion` (0 with reduced motion on).
+## **The view climb is the player's own look, moved.** A kick lifts the
+## camera's pitch (and, for some, the body's yaw) like a hand would.
+## Recovery then gives back only the climb still OWED: whatever the
+## player's own mouse already pulled down counts as paid, so recovery
+## never adds a second, unwanted downward correction, and a deliberate
+## move past it (down or up) is kept. Nothing snaps back: the next shot
+## goes where the crosshair is.
+##
+## Everything else is the projection offset, a roll about the line of
+## sight and the field of view. All of it is scaled by `camera_motion` (0
+## with reduced motion on).
 
 const REST := Vector3(0.3, -0.27, -0.55)
 const REST_ROT := Vector3(0, 6, -3)
@@ -64,23 +69,29 @@ const CHANNELS: Array[String] = ["back", "lift", "pitch", "roll", "yaw",
 const GUN_CHANNELS: Array[String] = ["back", "lift", "pitch", "roll", "yaw"]
 ## The springs' integration step and the longest frame they integrate.
 const SUBSTEP := 1.0 / 240.0
+## Owed climb under this is returned at once (invisible: 0.003 degrees).
+const SETTLED_DEGREES := 0.003
 const MAX_FRAME := 0.1
 
 ## Each recoil's envelope (seconds, metres, degrees): a fast `attack` to
 ## the peak, a `hang` there (the weight), then the return, which dips
 ## `dip` past rest and settles, ending exactly at `recover`. `aim` is the
-## view climb (degrees, the one channel that turns the camera), home at
-## `aim_recover`; `aim_yaw` its sideways wander; `jolt` a short camera
-## shake (metres). Keys are recoil profiles, not weapons: a weapon's
+## view climb (degrees, the one channel that turns the player's look),
+## risen over `attack`, held `aim_hold`, then recovered: each second the
+## owed climb shrinks by a 1/e share every `aim_tau` plus `aim_floor`
+## degrees, so it eases home without a long creep. `aim_yaw` is its
+## sideways wander; `jolt` a short camera shake (metres). Keys are recoil profiles, not weapons: a weapon's
 ## variant can carry its own.
 const RECOIL := {
-	"foundry": {"attack": 0.035, "hang": 0.06, "recover": 0.58, "dip": 0.07,
+	"foundry": {"attack": 0.035, "hang": 0.06, "recover": 0.5, "dip": 0.07,
 		"back": 0.27, "lift": 0.06, "pitch": 27.0, "roll": 5.0,
-		"cam_lift": 0.03, "fov": 4.0, "aim": 2.2, "aim_recover": 0.64,
+		"cam_lift": 0.03, "fov": 4.0, "aim": 2.2, "aim_hold": 0.06,
+		"aim_tau": 0.3, "aim_floor": 0.35,
 		"jolt": 0.012},
 	"sightline": {"attack": 0.025, "hang": 0.03, "recover": 0.36, "dip": 0.06,
 		"back": 0.1, "lift": 0.02, "pitch": 9.0, "roll": 1.5,
-		"cam_lift": 0.012, "fov": 1.8, "aim": 1.1, "aim_recover": 0.4,
+		"cam_lift": 0.012, "fov": 1.8, "aim": 1.1, "aim_hold": 0.03,
+		"aim_tau": 0.09, "aim_floor": 0.4,
 		"jolt": 0.005},
 	# Switchback's baseline is its springs alone (the owner liked it);
 	# "hard" is the stronger hip-fire experiment: a heavier gun and a view
@@ -88,18 +99,21 @@ const RECOIL := {
 	"switchback_hard": {"attack": 0.02, "hang": 0.0, "recover": 0.22,
 		"dip": 0.0, "back": 0.03, "lift": 0.006, "pitch": 3.0, "roll": 0.8,
 		"cam_lift": 0.004, "fov": 0.0, "aim": 0.5, "aim_yaw": 0.22,
-		"aim_recover": 0.45, "jolt": 0.002},
+		"aim_hold": 0.0, "aim_tau": 0.16, "aim_floor": 0.2, "jolt": 0.002},
 	"bulkhead_breacher": {"attack": 0.04, "hang": 0.07, "recover": 0.7,
 		"dip": 0.09, "back": 0.3, "lift": 0.05, "pitch": 22.0, "roll": 7.0,
-		"cam_lift": 0.045, "fov": 5.0, "aim": 3.2, "aim_recover": 0.76,
+		"cam_lift": 0.045, "fov": 5.0, "aim": 3.2, "aim_hold": 0.07,
+		"aim_tau": 0.21, "aim_floor": 0.3,
 		"jolt": 0.016},
 	"bulkhead_sweeper": {"attack": 0.03, "hang": 0.03, "recover": 0.42,
 		"dip": 0.06, "back": 0.16, "lift": 0.03, "pitch": 12.0, "roll": 3.5,
-		"cam_lift": 0.025, "fov": 2.5, "aim": 1.6, "aim_recover": 0.47,
+		"cam_lift": 0.025, "fov": 2.5, "aim": 1.6, "aim_hold": 0.03,
+		"aim_tau": 0.17, "aim_floor": 0.3,
 		"jolt": 0.009},
 	"driver": {"attack": 0.05, "hang": 0.09, "recover": 0.62, "dip": 0.05,
 		"back": 0.12, "lift": 0.02, "pitch": 3.5, "roll": 1.0,
-		"cam_lift": 0.02, "fov": 5.5, "aim": 0.7, "aim_recover": 0.7,
+		"cam_lift": 0.02, "fov": 5.5, "aim": 0.7, "aim_hold": 0.09,
+		"aim_tau": 0.22, "aim_floor": 0.2,
 		"jolt": 0.01},
 }
 const ENVELOPED: Array[String] = ["back", "lift", "pitch", "roll",
@@ -178,10 +192,22 @@ var ads := 0.0
 var _kicks: Array = []
 var _env := {}
 var _clock := 0.0
-## The view climb currently added on top of the player's look (degrees:
-## x pitch, y yaw), so it can be taken back exactly.
-var _aim_applied := Vector2.ZERO
-var _aim := Vector2.ZERO
+## The view climb still OWED back to the player (degrees: x pitch, y
+## yaw): what the kicks lifted, less what recovery returned and what the
+## player's own mouse already took back.
+var _owed := Vector2.ZERO
+## Climb still rising: each {"left": Vector2, "time": seconds}.
+var _rising: Array = []
+## Seconds before recovery starts (the held peak), and its rates.
+var _aim_hold := 0.0
+var _aim_tau := 0.25
+var _aim_floor := 0.3
+## The look as this rig last wrote it (degrees: pitch, yaw), to tell the
+## player's own input apart from the rig's.
+var _last_look := Vector2.ZERO
+var _look_known := false
+## Every player look change this rig absorbed as paid recoil (degrees).
+var compensated := Vector2.ZERO
 var _jolt := 0.0
 var _jolt_t := 9.0
 
@@ -271,7 +297,6 @@ func select(w: String) -> void:
 func reset() -> void:
 	for channel in CHANNELS:
 		_state[channel] = Vector2.ZERO
-	_take_back_aim()
 	_kicks.clear()
 	_env.clear()
 	_jolt = 0.0
@@ -320,11 +345,19 @@ func kick(scale := 1.0, aim_scale := -1.0) -> void:
 		_state[channel] = state
 	var spec: Dictionary = RECOIL.get(recoil_key, {})
 	if not spec.is_empty():
-		_kicks.append({"t": _clock, "scale": scale, "aim": aim_scale,
-				"yaw": _rng.randf_range(-1.0, 1.0), "roll": _roll_sign,
+		_kicks.append({"t": _clock, "scale": scale, "roll": _roll_sign,
 				"spec": spec})
 		_jolt = float(spec.get("jolt", 0.0)) * scale
 		_jolt_t = 0.0
+		var climb := Vector2(float(spec.get("aim", 0.0)),
+				float(spec.get("aim_yaw", 0.0)) * _rng.randf_range(-1.0, 1.0)) \
+				* aim_scale * camera_motion
+		if climb != Vector2.ZERO:
+			_rising.append({"left": climb, "time": float(spec["attack"])})
+			_aim_hold = maxf(_aim_hold, float(spec["attack"])
+					+ float(spec.get("aim_hold", 0.0)))
+			_aim_tau = float(spec.get("aim_tau", 0.25))
+			_aim_floor = float(spec.get("aim_floor", 0.3))
 	_envelopes()
 	_apply()
 
@@ -365,6 +398,9 @@ static func envelope(t: float, attack: float, hang: float, recover: float,
 
 
 func _process(delta: float) -> void:
+	# The view climb recovers even after the gun is put away, so nothing
+	# is ever snapped back.
+	_look(delta)
 	if weapon == "":
 		return
 	_clock += delta
@@ -391,16 +427,14 @@ func _process(delta: float) -> void:
 func _envelopes() -> void:
 	for channel in ENVELOPED:
 		_env[channel] = 0.0
-	_aim = Vector2.ZERO
 	var live: Array = []
 	for kick: Dictionary in _kicks:
 		var spec: Dictionary = kick["spec"]
 		var t := _clock - float(kick["t"])
-		var attack := float(spec["attack"])
 		var hang := float(spec["hang"])
 		var recover := float(spec["recover"])
-		var aim_recover := float(spec["aim_recover"])
-		if t >= maxf(recover, aim_recover):
+		var attack := float(spec["attack"])
+		if t >= recover:
 			continue
 		live.append(kick)
 		var e := envelope(t, attack, hang, recover, float(spec["dip"]))
@@ -412,10 +446,6 @@ func _envelopes() -> void:
 			_env[channel] += float(spec.get(channel, 0.0)) * e * scale * way
 		_env["fov"] += float(spec.get("fov", 0.0)) * scale * envelope(t,
 				0.02, 0.0, minf(0.3, recover), 0.0)
-		var a := envelope(t, attack, hang + 0.02, aim_recover, 0.0) \
-				* float(kick["aim"])
-		_aim += Vector2(float(spec.get("aim", 0.0)),
-				float(spec.get("aim_yaw", 0.0)) * float(kick["yaw"])) * a
 	_kicks = live
 
 
@@ -453,31 +483,72 @@ func _apply() -> void:
 	camera.rotation.z = deg_to_rad(_x("cam_roll")) * camera_motion
 	var zoom := lerpf(_base_fov, float(spec.get("fov", _base_fov)), raised)
 	camera.fov = zoom + _x("fov") * camera_motion
-	# The view climb: added as a delta on the player's own look, so mouse
-	# look composes with it and it can be taken back exactly.
-	var want := _aim * camera_motion
-	var step := want - _aim_applied
-	camera.rotation.x += deg_to_rad(step.x)
-	camera.rotation.y += deg_to_rad(step.y)
-	_aim_applied = want
+
+
+## THE VIEW CLIMB, frame by frame, on the player's real look (camera
+## pitch, body yaw).
+## 1. Whatever moved the look since this rig last wrote it is the
+##    player's own input. A move AGAINST the owed climb pays it off, so
+##    recovery will not return it a second time; any move beyond that,
+##    or with the climb, is the player's and is left alone.
+## 2. Rising climb is added over its attack.
+## 3. After the held peak, the owed climb eases home.
+func _look(delta: float) -> void:
+	if player == null:
+		return
+	var camera := player.camera
+	var now := Vector2(rad_to_deg(camera.rotation.x),
+			rad_to_deg(player.rotation.y))
+	if _look_known and _owed != Vector2.ZERO:
+		var moved := now - _last_look
+		for axis in 2:
+			var owed := _owed[axis]
+			if owed != 0.0 and signf(moved[axis]) == -signf(owed):
+				var paid := minf(absf(moved[axis]), absf(owed))
+				_owed[axis] -= signf(owed) * paid
+				compensated[axis] += signf(owed) * paid
+	var step := Vector2.ZERO
+	var still: Array = []
+	for rise: Dictionary in _rising:
+		var left: Vector2 = rise["left"]
+		var time := float(rise["time"])
+		var part := left if delta >= time else left * (delta / time)
+		step += part
+		_owed += part
+		rise["left"] = left - part
+		rise["time"] = time - delta
+		if delta < time:
+			still.append(rise)
+	_rising = still
+	if _aim_hold > 0.0:
+		_aim_hold -= delta
+	elif _owed != Vector2.ZERO:
+		var share := 1.0 - exp(-delta / _aim_tau)
+		for axis in 2:
+			var owed := _owed[axis]
+			if owed == 0.0:
+				continue
+			var back := minf(absf(owed), absf(owed) * share
+					+ _aim_floor * delta)
+			if absf(owed) - back < SETTLED_DEGREES:
+				back = absf(owed)
+			step[axis] -= signf(owed) * back
+			_owed[axis] -= signf(owed) * back
+	if step != Vector2.ZERO:
+		camera.rotation.x = clampf(camera.rotation.x + deg_to_rad(step.x),
+				-PI / 2.0, PI / 2.0)
+		player.rotation.y += deg_to_rad(step.y)
+	_last_look = Vector2(rad_to_deg(camera.rotation.x),
+			rad_to_deg(player.rotation.y))
+	_look_known = true
 
 
 ## The camera put back exactly (leaving a range weapon).
 func release_camera() -> void:
-	_take_back_aim()
 	player.camera.v_offset = 0.0
 	player.camera.h_offset = 0.0
 	player.camera.rotation.z = 0.0
 	player.camera.fov = _base_fov
-
-
-func _take_back_aim() -> void:
-	if player == null:
-		return
-	player.camera.rotation.x -= deg_to_rad(_aim_applied.x)
-	player.camera.rotation.y -= deg_to_rad(_aim_applied.y)
-	_aim_applied = Vector2.ZERO
-	_aim = Vector2.ZERO
 
 
 ## A channel's whole displacement: its spring plus its envelopes.
@@ -504,14 +575,14 @@ func gun_at_rest(eps := 0.002) -> bool:
 	return _settled(GUN_CHANNELS, eps)
 
 
-## The view climb fully home: the aim is exactly where the player left it.
+## The view climb fully home: nothing rising, nothing owed.
 func aim_settled() -> bool:
-	return _aim_applied == Vector2.ZERO
+	return _rising.is_empty() and _owed == Vector2.ZERO
 
 
-## The view climb right now (degrees: pitch, yaw).
+## The view climb still owed back (degrees: pitch, yaw).
 func aim_offset() -> Vector2:
-	return _aim_applied
+	return _owed
 
 
 func _settled(channels: Array, eps: float) -> bool:

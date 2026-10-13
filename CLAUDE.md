@@ -35,6 +35,11 @@ one thing to open, and the report's image references still resolve inside it.
 Send the archive; a couple of key images alongside it are fine when they are
 worth seeing without unzipping.
 
+## Deliveries: the end-of-work message goes in the zip
+Every delivery zip (any lane) includes the end-of-work chat message itself,
+as `MESSAGE.md` at the top of the zip, alongside the report and logs: the
+same text the owner reads in chat, so the zip stands on its own.
+
 ## Art lane: sign the reports
 Every end-of-work Markdown the art lane writes -- the reports under `docs/art/reports/`, review-package READMEs, anything meant to be shared -- is signed **Arty** at the top, under the title. The art lane has a name; a report that arrives unsigned reads like it came from nowhere.
 

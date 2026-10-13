@@ -15,10 +15,11 @@ extends Node
 ## 2. **Each weapon, one shot:** selected by its key; fired through its
 ##    `EchoRuntime` primitive (the Pulse held); the damage the primitive
 ##    says; the engine's tracer hidden and the range's drawn from the
-##    visible muzzle to the engine's resolved hit; THE THREE CLOCKS (the
-##    owner's playtest): the gun comes home, then the aim, then the
-##    weapon is ready, with no dead wait and no early snap, and the aim
-##    back exactly where it was; the material event and its mark;
+##    visible muzzle to the engine's resolved hit; THE CLOCKS KEPT APART
+##    (the owner's correction): the mechanism finishes by readiness with
+##    no dead wait, readiness does not wait for the aim, and each weapon
+##    keeps its own relation (Foundry ready while still settling); hands
+##    off, the aim comes back exactly; the material event and its mark;
 ##    Condi's fire event at her one level.
 ## 3. **Cadence:** clicked or held, each weapon fires at its own rate;
 ##    the carbine's spread grows; the semi-automatics fire once a press.
@@ -45,6 +46,19 @@ extends Node
 ## 11. **Sound, from Condi's events.json:** every event loads; the Mass
 ##    Driver's charge, held loop, release and power-down in order; the
 ##    carbine's release tail; her impact rules; one level for all.
+## 12. **Firing while settling:** Foundry fired again the moment it is
+##    ready, with its climb still settling: the shot goes along the look
+##    as it is then (the crosshair), nothing snaps back, and the residual
+##    keeps settling into the new kick.
+## 13. **The player's own hand on the mouse** (Vera's concern): pulling
+##    down against the climb pays it off, so recovery adds no second,
+##    downward correction; pulling further, or up, is kept. The look is
+##    moved here exactly as the player's mouse handler moves it (headless
+##    Godot cannot capture a mouse); a separate run under a display sends
+##    real mouse events through the player's own handler.
+## 14. **F and the middle button** fire through the range's own trigger,
+##    with the full presentation, never straight through the Echo slot;
+##    put the weapon away and they are the Echo slot's again.
 
 const FLAG := "--five-weapon-check"
 const FPS := 60.0
@@ -58,6 +72,16 @@ const KEYS := {"foundry": KEY_1, "sightline": KEY_2, "switchback": KEY_3,
 const DAMAGE := {"foundry": 15.0, "sightline": 12.0, "switchback": 3.5,
 		"bulkhead": 6.0, "driver": 60.0}
 const RR := preload("res://scripts/content/range_rig.gd")
+## Each semi-automatic's own relation between readiness and the settled
+## aim: Foundry is ready while its climb still settles; Sightline and the
+## Breacher settle first. Not one pattern forced on all.
+const AIM_VS_READY := {"foundry": "after", "sightline": "before",
+		"bulkhead": "before"}
+## Where the mechanism IS the readiness cue (the hammer cocking, the pump
+## slamming home), readiness follows it without a dead wait. Sightline's
+## bolt cycles inside the shot (Condi's baked clicks at 0.13 and 0.18 s)
+## and is not a readiness cue.
+const MECH_IS_READY := {"foundry": true, "sightline": false, "bulkhead": true}
 
 var failures := 0
 var host: WeaponFeel
@@ -121,6 +145,9 @@ func _run() -> void:
 	await _ads(shots)
 	await _long_lane()
 	await _sound()
+	await _follow_up()
+	await _hand_on_mouse()
+	await _alt_trigger()
 	await _pause_restart()
 	print("[five] %s -- %d failure(s)" % ["PASS" if failures == 0 else "FAILED",
 			failures])
@@ -298,9 +325,12 @@ func _one_shot(id: String) -> Dictionary:
 				"%d tracer(s) from the visible muzzle to the engine's resolved "
 				% ends.size() + "hit; the engine's own beam never shows; a "
 				+ "zero-spread shot lands on the crosshair's line")
-	# THE THREE CLOCKS. The view climbs (where the weapon has a climb) and
-	# comes back EXACTLY; the gun is home, then the aim, then the weapon is
-	# ready: no early snap, no dead wait.
+	# THE CLOCKS, KEPT APART (the owner's correction). Hands off, the view
+	# climbs and comes back exactly. The mechanism finishes by readiness,
+	# with no dead wait after it, and the gun is home by then without being
+	# stretched to it. Readiness does NOT wait for the aim: each weapon has
+	# its own relation, and Foundry's next shot is available while the
+	# last of its climb is still settling.
 	var climb := _peak(t["aim"])
 	var home := float(t["aim"][-1])
 	var spec: Dictionary = RR.RECOIL.get(String(p.get("recoil", "")), {})
@@ -310,14 +340,15 @@ func _one_shot(id: String) -> Dictionary:
 				% climb)
 	else:
 		_check(climb > 0.3 * float(spec["aim"]) and home < 1e-4,
-				"the view climbs %.2f degrees and comes back exactly (%.6f off)"
-				% [climb, home])
+				"hands off, the view climbs %.2f degrees and comes back exactly "
+				% climb + "(%.6f off)" % home)
 	var gun := float(clocks.get("gun", -1.0))
 	var settled := float(clocks.get("aim", -1.0))
 	var ready := float(clocks.get("ready", -1.0))
 	var mech := float(clocks.get("mech", 0.0))
+	var owed_at_ready := float(clocks.get("owed_at_ready", 0.0))
 	if id == "driver":
-		_check(gun > 0.0 and settled >= gun - 0.02,
+		_check(gun > 0.0 and settled > 0.0,
 				"recoil after the release: home %s, aim home %s (light, as asked)"
 				% [_s(gun), _s(settled)])
 	elif id == "switchback":
@@ -325,13 +356,23 @@ func _one_shot(id: String) -> Dictionary:
 				% [_s(gun), _s(ready)])
 	else:
 		var tick := 1.5 / FPS
-		var last := maxf(settled, mech)
-		_check(gun > 0.0 and settled >= gun - tick and ready >= last - tick
-				and ready - last <= 0.15 and gun >= 0.6 * ready,
-				"the gun home %s, the aim %s, the mechanism's last beat %s, then "
-				% [_s(gun), _s(settled), _s(mech)] + "ready %s: no early snap "
-				% _s(ready) + "(home after 60% of the cycle), no dead wait "
-				+ "(ready within 0.15 s of the last of them)")
+		var cue := bool(MECH_IS_READY[id])
+		_check(gun > 0.0 and gun <= ready + tick and mech <= ready + tick
+				and (not cue or ready - mech <= 0.15),
+				"the gun home %s and the mechanism's last beat %s, then ready %s"
+				% [_s(gun), _s(mech), _s(ready)] + (" (readiness follows the "
+				+ "mechanism, no dead wait)" if cue else " (the bolt cycles inside "
+				+ "the shot; readiness is the cadence)"))
+		var relation := String(AIM_VS_READY[id])
+		if relation == "after":
+			_check(owed_at_ready >= 0.08 and settled > ready + tick,
+					"ready BEFORE the aim has settled: %.2f degrees still "
+					% owed_at_ready + "settling at readiness, settled at %s"
+					% _s(settled))
+		else:
+			_check(settled <= ready + tick,
+					"its own pattern: the aim settled at %s, before ready at %s"
+					% [_s(settled), _s(ready)])
 	var back := _peak(t["back"])
 	var pitch := _peak(t["pitch"])
 	_check(back > 0.0 and pitch > 0.0, "recoil: %.3f m back, %.1f degrees up"
@@ -1136,6 +1177,214 @@ static func _in_order(seen: Array, want: Array) -> bool:
 		if at < want.size() and name_in == want[at]:
 			at += 1
 	return at == want.size()
+
+
+# ================================ 12. firing while the aim settles
+
+## Foundry fired again the moment it is ready, its climb still settling.
+func _follow_up() -> void:
+	_phase("firing while the aim settles (Foundry)")
+	await _key(KEY_2)
+	await _key(KEY_1)
+	host.recover()
+	await _settle(30)
+	_aim(AIM_DUMMY)
+	await _settle(int(1.5 * FPS))
+	var aim0 := -body.camera.global_basis.z
+	var absorbed := host.dummy.absorbed
+	var shots := weapons.shots
+	var looks := {}
+	var first := -1
+	Input.action_press("fire_pulse")
+	for i in int(1.6 * FPS):
+		await get_tree().physics_frame
+		looks[Engine.get_physics_frames()] = -body.camera.global_basis.z
+		if i == 2:
+			Input.action_release("fire_pulse")
+		if first < 0 and weapons.shots > shots:
+			first = int(weapons.last_shot.get("physics_frame", -1))
+		# Pressed again just before readiness: the buffer fires it on the
+		# first ready frame, with the climb still settling.
+		if weapons.shots == shots + 1 and weapons.runtime.cooldown_remaining \
+				<= 0.1 and not Input.is_action_pressed("fire_pulse") \
+				and i > 10:
+			Input.action_press("fire_pulse")
+		if weapons.shots == shots + 2 and Input.is_action_pressed("fire_pulse"):
+			Input.action_release("fire_pulse")
+	Input.action_release("fire_pulse")
+	var shot: Dictionary = weapons.last_shot
+	var at := int(shot.get("physics_frame", -1))
+	var forward: Vector3 = shot.get("forward", Vector3.ZERO)
+	var owed: Vector2 = shot.get("owed", Vector2.ZERO)
+	var ends: Array = shot.get("ends", [])
+	var hit: Dictionary = ends[0]["hit"] if not ends.is_empty() else {}
+	var off_original := rad_to_deg(aim0.angle_to(forward))
+	var on_line: bool = not hit.is_empty() and rad_to_deg(forward.angle_to(
+			(hit["position"] as Vector3) - (shot["eye"] as Vector3))) < 0.05
+	var gap := (at - first) / FPS
+	_check(weapons.shots == shots + 2 and absf(gap - 0.733) < 0.02
+			and owed.length() >= 0.08,
+			"the second shot fires the moment Foundry is ready (%.3f s after "
+			% gap + "the first), with %.2f degrees of climb still settling"
+			% owed.length())
+	_check(on_line and absf(off_original - owed.length()) < 0.03,
+			"it goes where the crosshair is then: on the look's own line, %.2f "
+			% off_original + "degrees above the first shot's aim, not snapped back "
+			+ "to it")
+	var before: Vector3 = looks.get(at - 1, Vector3.ZERO)
+	var now: Vector3 = looks.get(at, Vector3.ZERO)
+	var step_in := rad_to_deg(before.angle_to(now))
+	_check(rad_to_deg(now.angle_to(forward)) < 1e-3 and step_in < 0.1,
+			"nothing jumps at the shot: the look it fired along is the look of "
+			+ "that frame, %.3f degrees from the frame before" % step_in)
+	await _settle(int(0.4 * FPS))
+	var home := rad_to_deg(aim0.angle_to(-body.camera.global_basis.z))
+	_check(is_equal_approx(host.dummy.absorbed - absorbed, 30.0)
+			and home < 1e-4 and weapons.rig.aim_settled(),
+			"both shots hit (30); hands off, both climbs settle back exactly onto "
+			+ "the first aim (%.6f off)" % home)
+
+
+# =================================== 13. the player's hand on the mouse
+
+## Vera's concern: does automatic recovery fight the player's own hand?
+func _hand_on_mouse() -> void:
+	_phase("the player's hand on the mouse (Foundry)")
+	var real := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	_note("look moved %s" % ("by real mouse events through the player's own "
+			+ "handler" if real else "exactly as the player's mouse handler "
+			+ "moves it (headless: no captured mouse)"))
+	var cases := [["hands off", 0.0, 0.0], ["pulled down 1.0", 1.0, 0.0],
+			["pulled down 1.5", 1.5, 0.0], ["pulled down 4.0, past it", 4.0, 0.0],
+			["pushed up 1.0", 0.0, 1.0]]
+	var rows: Array = []
+	var ok := true
+	for case: Array in cases:
+		host.recover()
+		await _settle(20)
+		_aim(AIM_DUMMY)
+		await _settle(int(1.5 * FPS))
+		var p0 := rad_to_deg(body.camera.rotation.x)
+		var paid0: float = weapons.rig.compensated.x
+		await _click()
+		await _settle(4)
+		var down := float(case[1])
+		var up := float(case[2])
+		for i in 10:
+			if down > 0.0:
+				_look_by(-down / 10.0)
+			await get_tree().physics_frame
+		await _settle(10)
+		for i in 10:
+			if up > 0.0:
+				_look_by(up / 10.0)
+			await get_tree().physics_frame
+		await _settle(int(1.6 * FPS))
+		var final := rad_to_deg(body.camera.rotation.x) - p0
+		var paid: float = weapons.rig.compensated.x - paid0
+		var expected := -(down - paid) + up
+		var row_ok := absf(final - expected) < 0.02 and weapons.rig.aim_settled()
+		if down > 0.0 and down <= 1.5:
+			row_ok = row_ok and absf(final) < 0.02
+		rows.append("%s: ends %+.3f (paid %.2f)" % [case[0], final, paid])
+		ok = ok and row_ok
+	_check(ok, "recovery returns only the climb still owed: " + "; ".join(rows)
+			+ ". A pull against the climb is never corrected a second time; "
+			+ "a pull past it, or up, is kept")
+
+
+## Moves the look up (+) or down (-) by `degrees`, as the player does:
+## real mouse events where a mouse can be captured, otherwise exactly the
+## change the player's own handler makes.
+func _look_by(degrees: float) -> void:
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		var settings := PlayerSettings.shared()
+		var invert := -1.0 if settings.flag("invert_look_y") else 1.0
+		var motion := InputEventMouseMotion.new()
+		motion.relative = Vector2(0.0, -deg_to_rad(degrees)
+				/ float(settings.value("mouse_sensitivity")) * invert)
+		Input.parse_input_event(motion)
+	else:
+		body.camera.rotation.x = clampf(body.camera.rotation.x
+				+ deg_to_rad(degrees), -PI / 2.0, PI / 2.0)
+
+
+# ===================================== 14. F and the middle button
+
+func _alt_trigger() -> void:
+	_phase("F and the middle button")
+	await _key(KEY_2)
+	await _key(KEY_1)
+	_check(InputMap.action_get_events(RW.ECHO_B).is_empty()
+			and InputMap.action_get_events(RW.ALT_FIRE).size()
+				== RW.echo_b_events().size()
+			and RW.echo_b_events().size() >= 2,
+			"with a weapon out, F and the middle button are the range's own "
+			+ "trigger, lifted off the second Echo slot")
+	host.recover()
+	await _settle(20)
+	_aim(AIM_DUMMY)
+	await _settle(int(1.2 * FPS))
+	var rows: Array = []
+	var ok := true
+	for trigger in ["F", "middle button"]:
+		var shots := weapons.shots
+		var from := weapons.audio.played.size()
+		var visible := 0
+		if trigger == "F":
+			_hold_key(KEY_F, true)
+		else:
+			_mouse(MOUSE_BUTTON_MIDDLE, true)
+		for i in 4:
+			await get_tree().process_frame
+			for node in get_tree().current_scene.find_children("*", "Tracer",
+					true, false):
+				if (node as Node3D).visible:
+					visible += 1
+		if trigger == "F":
+			_hold_key(KEY_F, false)
+		else:
+			_mouse(MOUSE_BUTTON_MIDDLE, false)
+		await _settle(10)
+		var heard := false
+		for entry in weapons.audio.played.slice(from):
+			heard = heard or entry[0] == "foundry.fire"
+		var ends: Array = weapons.last_shot.get("ends", [])
+		var drawn: bool = not ends.is_empty() and ends[0].get("tracer") != null
+		var this_ok := weapons.shots == shots + 1 and visible == 0 and heard \
+				and drawn
+		rows.append("%s %s" % [trigger, "ok" if this_ok else "FAILED"])
+		ok = ok and this_ok
+		await _settle(int(1.0 * FPS))
+	await _key(KEY_5)
+	host.recover()
+	await _settle(int(2.0 * FPS))
+	var shots := weapons.shots
+	_hold_key(KEY_F, true)
+	await _settle(int(1.3 * FPS))
+	var charged := weapons.charging
+	_hold_key(KEY_F, false)
+	await _settle(10)
+	ok = ok and charged and weapons.shots == shots + 1 \
+			and weapons.last_shot.get("weapon") == "driver" \
+			and float(weapons.last_shot.get("ratio", 0.0)) > 0.99
+	rows.append("F held charges the Mass Driver and its release fires it")
+	_check(ok, "each fires one shot through the range, with its tracer, its "
+			+ "sound and no engine beam: " + ", ".join(rows))
+	await _key(KEY_0)
+	var restored := InputMap.action_get_events(RW.ECHO_B).size() \
+			== RW.echo_b_events().size()
+	shots = weapons.shots
+	_hold_key(KEY_F, true)
+	await _settle(4)
+	_hold_key(KEY_F, false)
+	await _settle(4)
+	_check(restored and weapons.current == "" and weapons.shots == shots,
+			"put the weapon away (0): F and the middle button are the second "
+			+ "Echo slot's again, exactly as the project defines them")
+	await _key(KEY_1)
+	host.recover()
+	await _settle(20)
 
 
 # ============================================================ helpers
