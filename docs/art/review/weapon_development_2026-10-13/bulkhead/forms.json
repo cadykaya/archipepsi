@@ -1,0 +1,94 @@
+{
+ "bulkhead_a": {
+  "label": "A  Twin-bore breacher",
+  "muzzle": [
+   0,
+   0.02,
+   -0.5
+  ],
+  "nodes": {
+   "Feed": [
+    0.0,
+    -0.11,
+    -0.135
+   ],
+   "Pump": [
+    0.0,
+    -0.016,
+    -0.371
+   ]
+  },
+  "sight_lines_y": [],
+  "triangles": 2012,
+  "weapon": "Bulkhead"
+ },
+ "bulkhead_c": {
+  "label": "C  Spreader",
+  "muzzle": [
+   0.0,
+   0.02,
+   -0.5
+  ],
+  "nodes": {
+   "Feed": [
+    -0.06,
+    0.0,
+    -0.1
+   ],
+   "Pump": [
+    0.0,
+    -0.058,
+    -0.257
+   ]
+  },
+  "sight_lines_y": [],
+  "triangles": 3528,
+  "weapon": "Bulkhead"
+ },
+ "bulkhead_d": {
+  "label": "D  Fan",
+  "muzzle": [
+   0.0,
+   0.02,
+   -0.5
+  ],
+  "nodes": {
+   "Feed": [
+    0.0,
+    -0.052,
+    -0.12
+   ],
+   "Pump": [
+    0.0,
+    -0.05,
+    -0.303
+   ]
+  },
+  "sight_lines_y": [],
+  "triangles": 2584,
+  "weapon": "Bulkhead"
+ },
+ "bulkhead_e": {
+  "label": "E  Hatch ram",
+  "muzzle": [
+   0.0,
+   0.02,
+   -0.5
+  ],
+  "nodes": {
+   "Feed": [
+    -0.065,
+    -0.02,
+    -0.095
+   ],
+   "Pump": [
+    0.0,
+    0.02,
+    -0.297
+   ]
+  },
+  "sight_lines_y": [],
+  "triangles": 3108,
+  "weapon": "Bulkhead"
+ }
+}

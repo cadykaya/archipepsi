@@ -1,0 +1,12 @@
+{
+ "draw_calls": 2,
+ "glb": "switchback.glb",
+ "mesh_instances": 2,
+ "objects": 2,
+ "primitives": 2520,
+ "renderer": "gl_compatibility (opengl3), xvfb software GL",
+ "surfaces": 2,
+ "texture_mem_added_bytes": 25165818,
+ "triangles_loaded": 2520,
+ "weapon": "switchback"
+}

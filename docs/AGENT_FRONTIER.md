@@ -194,6 +194,42 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-13 (delivered): weapon development pass. STOP for the owner's
+  review.** Branch `claude/archipepsi-art-weapon-development-2026-10-13`.
+  * Bulkhead revisited: three new clay concepts (C Spreader, D Fan, E Hatch
+    Ram), each on one body for Breacher and Sweeper, checked in Prod's v3
+    range. Recommended: C. Its form is NOT approved until the owner picks.
+  * Sightline A, Switchback A and Mass Driver A developed through the
+    Foundry study's pipeline, generalised (`tools/weapon_model.sh`): refined
+    geometry, wear spec, painter, Glyph maps (check_material clean), GLB,
+    range captures with clips and measured cost (draw calls 2/2/3; texture
+    memory 96/24/96 MB uncompressed). Development models, not finished.
+  * Report: `docs/art/reports/2026-10-13-weapon-development-pass.md`;
+    sheets WB1-WB2, WD0-WD3 and clips in
+    `docs/art/review/weapon_development_2026-10-13/`. Prod's note:
+    `docs/art-requests/2026-10-13-weapon-development-fit-note.md`.
+* **2026-10-13 (ruling on the forms): three directions approved, Bulkhead
+  to revisit.** Branch `claude/archipepsi-art-weapon-development-2026-10-13`.
+  * APPROVED concept directions (not finished weapons; nothing merges into
+    the campaign): Sightline A Accelerator, Switchback A Jacketed, Mass
+    Driver A Rotor (exposed rotor; charge expressive but not overwhelming
+    the view). Develop toward the Foundry's fidelity: believable sci-fi
+    construction, richly detailed worn textures, imperfect welds, repairs.
+  * Bulkhead A is PROVISIONAL only: both forms read blocky and generic.
+    Revisit proportions, silhouette and mechanism presentation; something
+    distinctive, not a conventional shotgun with parts attached; keep the
+    Breacher and Sweeper variants. Show the owner before its form counts
+    as approved.
+  * Switchback B is kept as a possible future weapon in the same archetype
+    (not discarded, not merged into A). Several distinct guns per archetype
+    is post-release future scope, not a task now.
+  * Metrics rule: triangle counts are provisional. Prioritise visual quality
+    and functional geometry; record triangles, materials, textures and draw
+    calls per weapon; profile in the real game once designs are approved,
+    and optimise only where measurements justify it. No preemptive
+    reduction.
+  * No new weapon families or inventory systems. Fit and animation
+    requirements are coordinated with Prod in writing.
 * **2026-10-13 (later): Foundry APPROVED; four-weapon form pass. STOP for
   the owner's choice of forms.** Branch
   `claude/archipepsi-art-weapon-forms-2026-10-13` (from the study branch).
