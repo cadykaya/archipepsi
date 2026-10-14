@@ -257,6 +257,12 @@ def weapon_sheet(cap, w, v, name, role, out):
                 row = imp[side].get("impacts", {}).get(m, {})
                 lab = "%s, %s" % ("Placeholder" if side == "placeholder"
                                   else "Art", m)
+                hit = {"organic": "gel"}.get(row.get("material"),
+                                             row.get("material"))
+                if row and hit != m:
+                    lab += " (the pattern hit %s)" % hit
+                if block == 0 and row.get("fired_from_m"):
+                    lab += ", from %.0f m" % row["fired_from_m"]
                 if block == 1 and row:
                     lab += ": mark %.2f m" % row.get("mark_size_m", 0)
                     tex = row.get("mark_texture", "")
@@ -512,7 +518,7 @@ def costs_sheet(art, cap, prev, summary, out):
     cols = ["weapon", "triangles", "materials", "draw calls",
             "texture memory: 10-13 → now", "maps", "texels/m",
             "nearest point: rest / ADS / shot", "screen", "crosshair"]
-    xs = [40, 420, 580, 720, 880, 1260, 1520, 1680, 2100, 2260]
+    xs = [40, 380, 660, 790, 940, 1290, 1420, 1560, 2010, 2160]
     rows = []
     for w, v, name, _ in CONFIGS:
         s = summary[base(w, v)]

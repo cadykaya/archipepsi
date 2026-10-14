@@ -1,0 +1,156 @@
+{
+ "art": true,
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 88,
+   "layers": [
+    "sightline_flash"
+   ],
+   "shot": 1,
+   "weapon": "sightline"
+  },
+  {
+   "event": "impact",
+   "frame": 88,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke",
+    "sightline_pop"
+   ],
+   "material": "metal",
+   "weapon": "sightline"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 88,
+   "material": "metal",
+   "sheet": "sightline_mark",
+   "size": 0.170000001788139,
+   "variant": 0,
+   "weapon": "sightline"
+  },
+  {
+   "event": "fired",
+   "frame": 225,
+   "layers": [
+    "sightline_flash"
+   ],
+   "shot": 2,
+   "weapon": "sightline"
+  },
+  {
+   "event": "impact",
+   "frame": 225,
+   "layers": [
+    "impact_stone_dust",
+    "sightline_pop"
+   ],
+   "material": "stone",
+   "weapon": "sightline"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 225,
+   "material": "stone",
+   "sheet": "decal_stone_crater",
+   "size": 0.254999995231628,
+   "variant": 0,
+   "weapon": "sightline"
+  },
+  {
+   "event": "fired",
+   "frame": 362,
+   "layers": [
+    "sightline_flash"
+   ],
+   "shot": 3,
+   "weapon": "sightline"
+  },
+  {
+   "event": "impact",
+   "frame": 362,
+   "layers": [
+    "impact_stone_dust",
+    "sightline_pop"
+   ],
+   "material": "wood",
+   "weapon": "sightline"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 362,
+   "material": "wood",
+   "sheet": "decal_wood_mark",
+   "size": 0.203999996185303,
+   "variant": 0,
+   "weapon": "sightline"
+  },
+  {
+   "event": "fired",
+   "frame": 499,
+   "layers": [
+    "sightline_flash"
+   ],
+   "shot": 4,
+   "weapon": "sightline"
+  },
+  {
+   "event": "impact",
+   "frame": 499,
+   "layers": [
+    "impact_flesh_splash",
+    "sightline_pop"
+   ],
+   "material": "organic",
+   "weapon": "sightline"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 499,
+   "material": "organic",
+   "sheet": "decal_flesh_mark",
+   "size": 0.254999995231628,
+   "variant": 0,
+   "weapon": "sightline"
+  }
+ ],
+ "glyph_fx": true,
+ "impacts": {
+  "gel": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.254999995231628,
+   "mark_texture": "decal_flesh_mark#0",
+   "marks_added": 1,
+   "material": "organic"
+  },
+  "metal": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.170000001788139,
+   "mark_texture": "sightline_mark#0",
+   "marks_added": 1,
+   "material": "metal"
+  },
+  "stone": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.254999995231628,
+   "mark_texture": "decal_stone_crater#0",
+   "marks_added": 1,
+   "material": "stone"
+  },
+  "wood": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.203999996185303,
+   "mark_texture": "decal_wood_mark#0",
+   "marks_added": 1,
+   "material": "wood"
+  }
+ },
+ "tag": "sightline_art",
+ "variant": "",
+ "weapon": "sightline"
+}

@@ -1,0 +1,45 @@
+{
+ "frame": "Godot viewmodel space (RangeRig model origin), -Z forward",
+ "label": "Bulkhead (D, Fan)",
+ "metrics": {
+  "atlas_fill": 0.504,
+  "draw_calls_expected": 3,
+  "materials": 1,
+  "meshes": 3,
+  "note": "Triangle counts are provisional (the owner, 2026-10-13); measured in the game separately.",
+  "texels_per_metre": 1457.9,
+  "texture_size": 1280,
+  "textures": [
+   "albedo (RGB8)",
+   "normal (RGB8)",
+   "roughness (L8)",
+   "metallic (L8)",
+   "emission mask (L8)"
+  ],
+  "triangles": 3200
+ },
+ "muzzle": [
+  0.0,
+  0.02,
+  -0.5
+ ],
+ "nodes": {
+  "Feed": {
+   "pivot": [
+    0.0,
+    -0.052,
+    -0.12
+   ]
+  },
+  "Pump": {
+   "pivot": [
+    0.0,
+    -0.05,
+    -0.303
+   ]
+  }
+ },
+ "sight_lines_y": [],
+ "status": "INTEGRATION CANDIDATE (Arty, 2026-10-14): an approved direction at the Foundry's fidelity, prepared for Prod's runtime. Not registered, not merged.",
+ "weapon": "bulkhead"
+}

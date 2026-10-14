@@ -1,0 +1,37 @@
+{
+ "art": false,
+ "glyph_fx": false,
+ "impacts": {
+  "gel": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.344999998807907,
+   "mark_texture": "",
+   "marks_added": 1,
+   "material": "organic"
+  },
+  "metal": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.230000004172325,
+   "mark_texture": "",
+   "marks_added": 1,
+   "material": "metal"
+  },
+  "stone": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.344999998807907,
+   "mark_texture": "",
+   "marks_added": 1,
+   "material": "stone"
+  },
+  "wood": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.275999993085861,
+   "mark_texture": "",
+   "marks_added": 1,
+   "material": "wood"
+  }
+ },
+ "tag": "foundry_placeholder",
+ "variant": "",
+ "weapon": "foundry"
+}

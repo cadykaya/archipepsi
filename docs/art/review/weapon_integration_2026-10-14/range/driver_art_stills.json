@@ -1,0 +1,43 @@
+{
+ "ads": {
+  "covers_crosshair": true,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.284,
+  "screen_share": 0.0466
+ },
+ "art": true,
+ "cost": {
+  "draw_calls": 3,
+  "materials": 2,
+  "primitives": 3312,
+  "surfaces": 3,
+  "texture_mem_added_bytes": 44324608,
+  "triangles": 3312
+ },
+ "fire_peak": {
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.314
+ },
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 234,
+   "layers": [
+    "massdriver_release"
+   ],
+   "shot": 1,
+   "weapon": "driver"
+  }
+ ],
+ "glyph_fx": true,
+ "normal": "rg",
+ "rest": {
+  "covers_crosshair": false,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.447,
+  "screen_share": 0.0175
+ },
+ "tag": "driver_art",
+ "variant": "",
+ "weapon": "driver"
+}

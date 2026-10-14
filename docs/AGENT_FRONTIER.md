@@ -194,6 +194,39 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-14 (delivered): the five weapons as an integration candidate.
+  STOP for the owner's in-game review.** Branch
+  `claude/archipepsi-art-weapon-integration-2026-10-14`.
+  * Bulkhead D (Fan) developed to the shared standard: 3,200 tris, 1280²
+    maps at 1,458 texels/m, BH-6 wear spec. One model for both variants
+    (Breacher works the Pump, Sweeper shows the Feed; Prod's runtime already
+    does both). `Bore0`-`Bore3` effect points; gameplay ideas are proposals.
+  * All five, plus the Glyph effects, run on Prod's v3 runtime in his range
+    (read-only checkout), Forward+ on software Vulkan (Compatibility does not
+    draw Decals; earlier art-lane captures could not show marks).
+    Clearance: nothing clips (near plane 0.05 m); nearest 0.096 m on the
+    Breacher's kick (placeholder 0.152), 0.142 on the Foundry's (0.200);
+    screen share 1.2-1.8% at rest, crosshair clear. Bulkhead impacts fired
+    from 3 m. Timing: the art's shots, readiness,
+    rest and part motion match his placeholder tick for tick.
+  * Memory, measured in Forward+: Sightline and Mass Driver 64.0 -> 42.3 MB
+    (the 10-13 GLB loads without mipmaps; with them, ~85 MB), Foundry and
+    Switchback 16.0 -> 12.0, Bulkhead 18.8. Same texels: L8 grey maps, an L8
+    lamp mask, the normal loaded as RG8 (pixel-identical), geometry-only
+    GLBs, cardinal packing at the reviewed density (2048 -> 1920). The
+    "96 MB" was the Compatibility renderer's count. VRAM compression is not
+    used; it is a separate decision for the owner and Prod.
+  * Found in Prod's runtime, reported in the note, not patched: the Driver's
+    impact root is added during the slug's `tree_exiting`, so his sparks,
+    light and impact sound never play; Godot renames repeat `Impact_`/`Mark_`
+    nodes. The adapter goes by his lists and plays the Driver impact from
+    the mark.
+  * Note for Prod: `docs/art-requests/2026-10-14-five-weapon-integration-note.md`.
+    Report: `docs/art/reports/2026-10-14-five-weapon-integration.md`.
+    Package: `docs/art/review/weapon_integration_2026-10-14/`.
+  * Waiting on: the owner's in-game review (a build Prod makes from the
+    note); Prod's answers (core-glow contract, Bore points, import route,
+    the adapter, the Driver bug).
 * **2026-10-14 (ruling and assignment): Bulkhead D chosen; prepare all
   five weapons for playable integration.** Branch
   `claude/archipepsi-art-weapon-integration-2026-10-14`.

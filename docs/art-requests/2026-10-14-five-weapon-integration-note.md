@@ -121,9 +121,39 @@ The adapter's numbers (`IMPACT_SCALE`, the ½ and 0.55 scales, the wood tint) ar
 
 ## 4. Measured in your range
 
-COSTS_TABLE
+Measured in your range, Forward+ on software Vulkan. The counters are read with the weapon in view. Texture memory is the counter's rise when the model loads. PL = your placeholder.
 
-TIMING_TABLE
+| Weapon | Triangles | Materials | Draw calls (PL) | Texture memory | Maps | Texels/m | Nearest point: rest / ADS / over the recoil |
+|---|---|---|---|---|---|---|---|
+| Foundry | 2,748 | 1 | 3 (8) | 12.0 MB | 1024² | 1,154 | 0.464 / – / 0.142 m |
+| Sightline | 4,992 | 1 | 2 (10) | 42.3 MB | 1920² | 1,967 | 0.453 / 0.208 / 0.335 m |
+| Switchback | 2,520 | 1 | 2 (9) | 12.0 MB | 1024² | 1,402 | 0.473 / 0.231 / 0.447 m |
+| Bulkhead, Breacher | 2,952 | 1 | 2 (5) | 18.8 MB | 1280² | 1,458 | 0.460 / – / 0.096 m |
+| Bulkhead, Sweeper | 3,200 | 1 | 3 (6) | 18.8 MB | 1280² | 1,458 | 0.460 / – / 0.252 m |
+| Mass Driver | 3,312 | 2 | 3 (11) | 42.3 MB | 1920² | 1,951 | 0.447 / 0.284 / 0.302 m |
+
+Notes on the table:
+- The Driver's second material is the core-glow override.
+- Texture memory is with the normal map loaded as RG8. Imported as RGB8, it would be 51.6 / 23.0 / 14.7 MB.
+- The 10-13 development GLBs measured 64.0 MB (Sightline, Mass Driver) and 16.0 MB (Foundry, Switchback) in the same run. That is without mipmaps, which a runtime-loaded GLB lacks; with them, about 85 and 21 MB.
+- Every nearest point is clear of the 0.05 m near plane.
+- The art comes nearer than your placeholder on two weapons, both on the kick. Their rear ends sit further back than your blocks:
+  - the Foundry: 0.142 m, against 0.200 m for the placeholder;
+  - the Breacher: 0.096 m, against 0.152 m.
+  - Nothing clips. It is for the owner to judge in play.
+
+**Timing.** One burst per weapon, logged every tick, through `fire_pulse`. The art's shots, readiness, return to rest and every part's motion match your placeholder's tick for tick on all six configurations. Times are in ms from the first shot:
+
+| Weapon | Shots | Ready | At rest | Parts |
+|---|---|---|---|---|
+| Foundry | 0, 1167 | 717, 1883 | 483, 1683 | hammer falls at 0, re-cocks 617–683; carousel 317–483 |
+| Sightline | 0, 1167 | 483, 1650 | 350, 1517 | handle 83–183 |
+| Switchback | 13, 150–167 apart | 133, 300 … | 67, 233 … | bolt 0–33 each round |
+| Bulkhead, Breacher | 0, 1333 | 983, 2317 | 683, 2217 | pump 717–950; feed hidden |
+| Bulkhead, Sweeper | 0, 1333 | 483, 1817 | 417, 1750 | feed shown, still; pump still |
+| Mass Driver | release at 0 | 133 | 600 | coils spin through the 1.65 s charge, stop at the release; core glow peaks at energy 5.0 through the override |
+
+The Glyph flash starts on the shot's own tick, every shot. With the adapter reading your lists, every impact and every mark gets its layer: 13 rounds of the Switchback give 13 impacts and 13 marks. From 3 m, each Bulkhead shot gives one blast and four marks (the centre and three chips).
 
 ## 5. Found in your runtime (reported, not patched)
 

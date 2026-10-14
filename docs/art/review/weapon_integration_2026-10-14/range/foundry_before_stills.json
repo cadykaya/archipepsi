@@ -1,0 +1,25 @@
+{
+ "art": true,
+ "cost": {
+  "draw_calls": 3,
+  "materials": 1,
+  "primitives": 2748,
+  "surfaces": 3,
+  "texture_mem_added_bytes": 16777216,
+  "triangles": 2748
+ },
+ "fire_peak": {
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.171
+ },
+ "glyph_fx": false,
+ "rest": {
+  "covers_crosshair": false,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.464,
+  "screen_share": 0.0156
+ },
+ "tag": "foundry_before",
+ "variant": "",
+ "weapon": "foundry"
+}

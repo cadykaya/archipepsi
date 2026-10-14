@@ -1,0 +1,284 @@
+{
+ "art": true,
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 88,
+   "layers": [
+    "bulkhead_flash"
+   ],
+   "shot": 1,
+   "weapon": "bulkhead"
+  },
+  {
+   "event": "impact",
+   "frame": 88,
+   "layers": [
+    "bulkhead_blast"
+   ],
+   "material": "metal",
+   "node": "Impact_metal",
+   "orphan": false,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 88,
+   "material": "metal",
+   "sheet": "bulkhead_mark",
+   "size": 0.159999996423721,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 88,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0900000035762787,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 88,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0900000035762787,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 88,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0900000035762787,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "event": "fired",
+   "frame": 225,
+   "layers": [
+    "bulkhead_flash"
+   ],
+   "shot": 2,
+   "weapon": "bulkhead"
+  },
+  {
+   "event": "impact",
+   "frame": 225,
+   "layers": [
+    "bulkhead_blast"
+   ],
+   "material": "stone",
+   "node": "Impact_stone",
+   "orphan": false,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 225,
+   "material": "stone",
+   "sheet": "bulkhead_mark",
+   "size": 0.239999994635582,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 225,
+   "material": "stone",
+   "sheet": "switchback_pock",
+   "size": 0.135000005364418,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 225,
+   "material": "stone",
+   "sheet": "switchback_pock",
+   "size": 0.135000005364418,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 225,
+   "material": "stone",
+   "sheet": "switchback_pock",
+   "size": 0.135000005364418,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "event": "fired",
+   "frame": 362,
+   "layers": [
+    "bulkhead_flash"
+   ],
+   "shot": 3,
+   "weapon": "bulkhead"
+  },
+  {
+   "event": "impact",
+   "frame": 362,
+   "layers": [
+    "bulkhead_blast"
+   ],
+   "material": "wood",
+   "node": "Impact_wood",
+   "orphan": false,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 362,
+   "material": "wood",
+   "sheet": "bulkhead_mark",
+   "size": 0.19200000166893,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 362,
+   "material": "wood",
+   "sheet": "switchback_pock",
+   "size": 0.108000002801418,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 362,
+   "material": "wood",
+   "sheet": "switchback_pock",
+   "size": 0.108000002801418,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 362,
+   "material": "wood",
+   "sheet": "switchback_pock",
+   "size": 0.108000002801418,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "event": "fired",
+   "frame": 499,
+   "layers": [
+    "bulkhead_flash"
+   ],
+   "shot": 4,
+   "weapon": "bulkhead"
+  },
+  {
+   "event": "impact",
+   "frame": 499,
+   "layers": [
+    "bulkhead_blast"
+   ],
+   "material": "organic",
+   "node": "Impact_organic",
+   "orphan": false,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 499,
+   "material": "organic",
+   "sheet": "bulkhead_mark",
+   "size": 0.239999994635582,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 499,
+   "material": "organic",
+   "sheet": "switchback_pock",
+   "size": 0.135000005364418,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 499,
+   "material": "organic",
+   "sheet": "switchback_pock",
+   "size": 0.135000005364418,
+   "variant": 0,
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": false,
+   "event": "mark",
+   "frame": 499,
+   "material": "organic",
+   "sheet": "switchback_pock",
+   "size": 0.135000005364418,
+   "variant": 0,
+   "weapon": "bulkhead"
+  }
+ ],
+ "glyph_fx": true,
+ "impacts": {
+  "gel": {
+   "fired_from_m": 3.16,
+   "frames_to_hit": 0,
+   "mark_size_m": 0.239999994635582,
+   "mark_texture": "bulkhead_mark#0",
+   "marks_added": 4,
+   "material": "organic"
+  },
+  "metal": {
+   "fired_from_m": 3.33,
+   "frames_to_hit": 0,
+   "mark_size_m": 0.159999996423721,
+   "mark_texture": "bulkhead_mark#0",
+   "marks_added": 4,
+   "material": "metal"
+  },
+  "stone": {
+   "fired_from_m": 3.01,
+   "frames_to_hit": 0,
+   "mark_size_m": 0.239999994635582,
+   "mark_texture": "bulkhead_mark#0",
+   "marks_added": 4,
+   "material": "stone"
+  },
+  "wood": {
+   "fired_from_m": 3.18,
+   "frames_to_hit": 0,
+   "mark_size_m": 0.19200000166893,
+   "mark_texture": "bulkhead_mark#0",
+   "marks_added": 4,
+   "material": "wood"
+  }
+ },
+ "normal": "rg",
+ "tag": "bulkhead_sweeper_art",
+ "variant": "sweeper",
+ "weapon": "bulkhead"
+}

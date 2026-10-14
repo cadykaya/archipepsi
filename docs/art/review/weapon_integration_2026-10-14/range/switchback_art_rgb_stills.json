@@ -1,0 +1,61 @@
+{
+ "ads": {
+  "covers_crosshair": true,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.231,
+  "screen_share": 0.042
+ },
+ "art": true,
+ "cost": {
+  "draw_calls": 2,
+  "materials": 1,
+  "primitives": 2520,
+  "surfaces": 2,
+  "texture_mem_added_bytes": 15389952,
+  "triangles": 2520
+ },
+ "fire_peak": {
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.468
+ },
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 173,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 1,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 173,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "weapon": "switchback"
+  },
+  {
+   "event": "mark",
+   "frame": 173,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  }
+ ],
+ "glyph_fx": true,
+ "rest": {
+  "covers_crosshair": false,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.473,
+  "screen_share": 0.0122
+ },
+ "tag": "switchback_art",
+ "variant": "",
+ "weapon": "switchback"
+}

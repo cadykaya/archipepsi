@@ -1,0 +1,25 @@
+{
+ "art": false,
+ "cost": {
+  "draw_calls": 5,
+  "materials": 2,
+  "primitives": 372,
+  "surfaces": 5,
+  "texture_mem_added_bytes": 0,
+  "triangles": 372
+ },
+ "fire_peak": {
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.199
+ },
+ "glyph_fx": false,
+ "rest": {
+  "covers_crosshair": false,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.423,
+  "screen_share": 0.0225
+ },
+ "tag": "bulkhead_breacher_placeholder",
+ "variant": "breacher",
+ "weapon": "bulkhead"
+}

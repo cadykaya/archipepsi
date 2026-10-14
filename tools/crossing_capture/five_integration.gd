@@ -178,7 +178,15 @@ func _impacts() -> void:
 	near.add_child(cam)
 	cam.make_current()
 	var results := {}
+	var start := _body.global_position
 	for mat in TARGETS:
+		if _weapon == "bulkhead":
+			# a scattergun is used close: from 3 m, not from the range line
+			# (at 9-16 m its 9° spread lands the pattern on whatever is near)
+			var away: Vector3 = (start - TARGETS[mat]) * Vector3(1, 0, 1)
+			_body.global_position = Vector3(TARGETS[mat].x, start.y,
+					TARGETS[mat].z) + away.normalized() * 3.0
+			_body.set("velocity", Vector3.ZERO)
 		_aim(TARGETS[mat])
 		await _settle(30)
 		await _ready_to_fire()
@@ -231,7 +239,10 @@ func _impacts() -> void:
 			row["mark_size_m"] = decal.size.x
 			row["mark_texture"] = decal.texture_albedo.resource_name \
 					if decal.texture_albedo != null else ""
+		row["fired_from_m"] = snappedf((_body.get("camera") as Node3D) \
+				.global_position.distance_to(TARGETS[mat]), 0.01)
 		results[mat] = row
+	_body.global_position = start
 	near.queue_free()
 	_record["impacts"] = results
 

@@ -54,7 +54,9 @@ Gameplay ideas, as proposals only, for you and Prod:
 
 Each model was swapped in for his placeholder in the capturing process's memory, and his runtime drove it. That covers his recoil, readiness, ADS, muzzle, parts and effects, all unchanged. On top of his effects run the authored Glyph layers from Batch 068 (`tools/crossing_capture/glyph_fx_layer.gd`, a reference adapter for Prod).
 
-**First-person clearance.** For each weapon I measured the model's nearest point to the eye against the camera's 0.05 m near plane, at rest, aimed, and over the whole recoil. The nearest anywhere is 0.15 m, on the Bulkhead's kick. At rest each model covers 1.2–1.8% of the screen and leaves the crosshair clear. Aimed, the sights sit over it, as they should.
+**First-person clearance.** For each weapon I measured the model's nearest point to the eye against the camera's 0.05 m near plane, at rest, aimed, and over the whole recoil. Nothing clips. At rest each model covers 1.2–1.8% of the screen and leaves the crosshair clear. Aimed, the sights sit over it, as they should.
+
+The closest moments come on the kick. At the top of the Breacher's kick, its rear sits 0.096 m from the eye; the Foundry's comes to 0.142 m. Both rear ends sit further back than Prod's placeholder blocks, which come to 0.152 m and 0.200 m. That is still about twice the near plane, but it is one to feel in play.
 
 **Animation timing.** One burst through the real fire input was logged every tick (`IW8_timing.png`). For every weapon, the art's shots, readiness, return to rest and every moving part match the placeholder's tick for tick:
 - **Foundry:** the hammer falls on the shot, the carousel indexes at 317–483 ms, and the hammer re-cocks at 617–683 ms. All of that is before ready at 717 ms, which is Prod's corrected order.
@@ -62,7 +64,7 @@ Each model was swapped in for his placeholder in the capturing process's memory,
 - **Breacher:** the pump runs at 717–950 ms.
 - The Glyph flash starts on the shot's own tick, every shot.
 
-**Impacts and bullet marks.** Every weapon was fired at the four tagged surfaces. A second eye 1.8 m off each target, rendered in the same frame, shows the hit. A close camera shows the mark 1.7 s later, after the metal's hot rim has cooled. The authored marks replace Prod's mark textures and keep his sizes, roll and cap. For the Bulkhead, its one central mark gets the pattern and the stray chips get small pocks, as the Batch 068 handoff asked.
+**Impacts and bullet marks.** Every weapon was fired at the four tagged surfaces. The Bulkhead fired from 3 m, where a scattergun is used; from the range line its spread put the pattern on whatever was nearby. A second eye 1.8 m off each target, rendered in the same frame, shows the hit. A close camera shows the mark 1.7 s later, after the metal's hot rim has cooled. The authored marks replace Prod's mark textures and keep his sizes, roll and cap. For the Bulkhead, its one central mark gets the pattern and the stray chips get small pocks, as the Batch 068 handoff asked.
 
 **Renderer.** These captures run on Forward+, the game's own renderer, on software Vulkan. Earlier art-lane captures ran on Compatibility, which does not draw Decals at all, so the bullet marks only show properly from this pass on.
 
@@ -126,5 +128,7 @@ tools/five_integration_package.sh ART CAP docs/art/review/weapon_integration_202
 - The 10-13 captures ran on Compatibility, which does not draw Decals. Captures now run on Forward+, so the bullet marks show.
 - The adapter told a scattergun's stray chips from its centre mark by size, but Prod's chips on stone and gel are 0.135 m. It now tells them apart by position.
 - The adapter matched impact nodes by name, which Godot changes on repeat hits. It now goes by Prod's own lists.
+- A duplicate declaration once left the adapter unparsed, and a whole batch ran without effects. That batch was discarded and re-run, and the capture now refuses to start unless both scripts parse.
+- The Bulkhead's impacts were first fired from the range line, where the spread landed the pattern on neighbours. They are now fired from 3 m, and the sheet labels any surface that differs from the one aimed at.
 - A first draft of the Bulkhead's notes said its inner bores ran hotter, and placed the crack beside the breech. Neither matched its wear spec, and both were corrected before anything was drawn from them.
 - A first memory projection (85 → 48 MB) assumed three-byte colour on the GPU, but Forward+ pads it to four. The figures above are measured, not projected.

@@ -1,0 +1,148 @@
+{
+ "art": true,
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 87,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 1,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 87,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "weapon": "switchback"
+  },
+  {
+   "event": "mark",
+   "frame": 87,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 224,
+   "layers": [
+    "switchback_flash_b"
+   ],
+   "shot": 2,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 224,
+   "layers": [
+    "impact_stone_dust"
+   ],
+   "material": "stone",
+   "weapon": "switchback"
+  },
+  {
+   "event": "mark",
+   "frame": 224,
+   "material": "stone",
+   "sheet": "switchback_pock",
+   "size": 0.119999997317791,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 361,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 3,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 361,
+   "layers": [
+    "impact_stone_dust"
+   ],
+   "material": "wood",
+   "weapon": "switchback"
+  },
+  {
+   "event": "mark",
+   "frame": 361,
+   "material": "wood",
+   "sheet": "switchback_pock",
+   "size": 0.096000000834465,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 498,
+   "layers": [
+    "switchback_flash_b"
+   ],
+   "shot": 4,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 498,
+   "layers": [
+    "impact_flesh_splash"
+   ],
+   "material": "organic",
+   "weapon": "switchback"
+  },
+  {
+   "event": "mark",
+   "frame": 498,
+   "material": "organic",
+   "sheet": "switchback_pock",
+   "size": 0.119999997317791,
+   "variant": 0,
+   "weapon": "switchback"
+  }
+ ],
+ "glyph_fx": true,
+ "impacts": {
+  "gel": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.119999997317791,
+   "mark_texture": "switchback_pock#0",
+   "marks_added": 1,
+   "material": "organic"
+  },
+  "metal": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.0799999982118607,
+   "mark_texture": "switchback_pock#0",
+   "marks_added": 1,
+   "material": "metal"
+  },
+  "stone": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.119999997317791,
+   "mark_texture": "switchback_pock#0",
+   "marks_added": 1,
+   "material": "stone"
+  },
+  "wood": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.096000000834465,
+   "mark_texture": "switchback_pock#0",
+   "marks_added": 1,
+   "material": "wood"
+  }
+ },
+ "tag": "switchback_art",
+ "variant": "",
+ "weapon": "switchback"
+}

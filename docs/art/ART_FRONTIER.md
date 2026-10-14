@@ -3549,6 +3549,33 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-14 — the five weapons as an integration candidate. STOPPED for the owner's in-game review.
+
+* Bulkhead D (Fan) developed: tie strap and collars across the bores,
+  distributor outlets, breech knuckles, a shell clip with two spares; wear
+  by construction and use (heat-straw per bore, the crack on the receiver's
+  left flank welded and ground, BH-6). 3,200 tris; 1280² at 1,458 texels/m.
+  Breacher and Sweeper on one model.
+* In Prod's range (v3 `ef157061`, read-only), Forward+: placeholder against
+  art for all five (the Bulkhead per variant): rest, ADS, the shot, the hit
+  on metal, stone, wood and gel from a same-frame second eye, and the mark
+  1.7 s later; per-tick clip logs; costs. Art timing identical to the
+  placeholder's; nothing clips (nearest 0.096 m, the Breacher's kick; its
+  placeholder 0.152); the Glyph flash on the shot's tick, every shot.
+* Memory (Forward+): 64 -> 42.3 MB (Sightline, Mass Driver), 16 -> 12.0
+  (Foundry, Switchback), Bulkhead 18.8; lossless (see the report). The
+  normal loaded as RG8 is pixel-identical; a Lossless import keeps it RGB8,
+  so it is converted at load.
+* Pipeline: `lean_maps.py`, `foundry_geometry.py` (gated on the approved UV
+  fingerprint), geometry-only GLBs, cardinal packing with density floors;
+  `tools/five_integration.sh` (a parse pre-flight, Forward+), the adapter
+  `glyph_fx_layer.gd`, `five_integration_sheets.py`,
+  `tools/five_integration_package.sh`.
+* Fixed on the way: the adapter matched effect nodes by name (Godot renames
+  repeats) and told Bulkhead chips by size; a duplicate declaration once left
+  it unparsed for a whole batch (discarded and re-run; the pre-flight now
+  refuses to run).
+
 ### Ruling, 2026-10-14 — Bulkhead D; all five toward playable integration
 
 * Bulkhead: D (Fan) chosen. Develop to the shared fidelity standard, keep

@@ -1,0 +1,63 @@
+{
+ "ads": {
+  "covers_crosshair": true,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.208,
+  "screen_share": 0.0557
+ },
+ "art": true,
+ "cost": {
+  "draw_calls": 2,
+  "materials": 1,
+  "primitives": 4992,
+  "surfaces": 2,
+  "texture_mem_added_bytes": 54149376,
+  "triangles": 4992
+ },
+ "fire_peak": {
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.335
+ },
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 174,
+   "layers": [
+    "sightline_flash"
+   ],
+   "shot": 1,
+   "weapon": "sightline"
+  },
+  {
+   "event": "impact",
+   "frame": 174,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke",
+    "sightline_pop"
+   ],
+   "material": "metal",
+   "weapon": "sightline"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 174,
+   "material": "metal",
+   "sheet": "sightline_mark",
+   "size": 0.170000001788139,
+   "variant": 0,
+   "weapon": "sightline"
+  }
+ ],
+ "glyph_fx": true,
+ "rest": {
+  "covers_crosshair": false,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.453,
+  "screen_share": 0.0136
+ },
+ "tag": "sightline_art",
+ "variant": "",
+ "weapon": "sightline"
+}
