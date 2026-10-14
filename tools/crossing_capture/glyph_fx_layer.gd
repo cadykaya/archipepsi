@@ -101,16 +101,28 @@ func _on_node_added(node: Node) -> void:
 	if weapons == null:
 		return
 	var weapon := String(weapons.get("current"))
-	if node is Decal and String(node.name).begins_with("Mark_"):
+	# by kind, not by exact name: a second `Impact_metal` added beside a
+	# live one is renamed by Godot (`@Impact_metal@12`), and so is a second
+	# `Mark_metal` on the same body
+	var n := String(node.name)
+	if node is Decal and n.contains("Mark_"):
 		_mark.call_deferred(node, weapon)
-	elif node is Node3D and String(node.name).begins_with("Impact_"):
+	elif node is Node3D and not node is Decal and n.contains("Impact_"):
 		_impact.call_deferred(node, weapon)
+
+
+## The material in `Impact_<kind>` / `Mark_<kind>`, renamed or not.
+static func _kind(node: Node, prefix: String) -> String:
+	if node.has_meta("mark_kind"):
+		return String(node.get_meta("mark_kind"))
+	var n := String(node.name)
+	return n.substr(n.find(prefix) + prefix.length()).get_slice("@", 0)
 
 
 func _impact(root: Node3D, weapon: String) -> void:
 	if not is_instance_valid(root):
 		return
-	var kind := String(root.name).trim_prefix("Impact_")
+	var kind := _kind(root, "Impact_")
 	var mat := String(MATERIAL_OF.get(kind, "stone"))
 	var scale := float(IMPACT_SCALE.get(weapon, 1.0))
 	var names: Array = []
@@ -143,13 +155,14 @@ func _impact(root: Node3D, weapon: String) -> void:
 				n == "impact_metal_smoke" else 0.0,
 				Color(0.85, 0.78, 0.66) if mat == "wood" else Color.WHITE)
 	events.append({"event": "impact", "weapon": weapon, "material": kind,
+			"node": String(root.name),
 			"frame": Engine.get_physics_frames(), "layers": names})
 
 
 func _mark(decal: Decal, weapon: String) -> void:
 	if not is_instance_valid(decal):
 		return
-	var kind := String(decal.name).trim_prefix("Mark_")
+	var kind := _kind(decal, "Mark_")
 	var mat := String(MATERIAL_OF.get(kind, "stone"))
 	# a scattergun's shot is one blast and one mark at the pattern's centre
 	# (`impacts.last`), then up to three chips for strays (his `chip()`):

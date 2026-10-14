@@ -20,6 +20,8 @@
 # it was delivered before (its maps embedded), tagged <weapon>_before: the
 # "before" of the texture-memory comparison, in the same renderer.
 # SIDES="art" re-runs only the art (default: "placeholder art").
+# MODES="stills" runs only some modes (default: "stills impacts clip").
+# NORMAL=rg loads the art's normal map as RG8 (tags <base>_art_rg).
 #
 # The renderer is the game's own, Forward+ (Prod's project sets no other),
 # on Mesa's software Vulkan (lavapipe; `apt-get install mesa-vulkan-drivers`
@@ -76,18 +78,23 @@ for entry in "${WEAPONS[@]}"; do
     var=()
     [ -n "$v" ] && var=(--variant="$v")
     base="$w${v:+_$v}"
-    art=(--glb="$ART/$w/${w}_geo.glb" --lean="$ART/$w/lean" --fx="$FX")
+    art=(--glb="$ART/$w/${w}_geo.glb" --lean="$ART/$w/lean" --fx="$FX"
+         --normal="${NORMAL:-rgb}")
     for side in ${SIDES:-placeholder art}; do
         tag="${base}_$side"
+        [ "$side" = art ] && [ "${NORMAL:-rgb}" = rg ] && tag="${tag}_rg"
         extra=()
         [ "$side" = art ] && extra=("${art[@]}")
-        for mode in stills impacts; do
-            run "$tag" 60 -- --weapon="$w" "${var[@]}" "${extra[@]}" \
-                --mode="$mode"
+        for mode in ${MODES:-stills impacts clip}; do
+            if [ "$mode" = clip ]; then
+                rm -rf "$OUT/${tag}_clip" && mkdir -p "$OUT/${tag}_clip"
+                run "$tag" 30 --write-movie "$OUT/${tag}_clip/f.png" -- \
+                    --weapon="$w" "${var[@]}" "${extra[@]}" --mode=clip
+            else
+                run "$tag" 60 -- --weapon="$w" "${var[@]}" "${extra[@]}" \
+                    --mode="$mode"
+            fi
         done
-        rm -rf "$OUT/${tag}_clip" && mkdir -p "$OUT/${tag}_clip"
-        run "$tag" 30 --write-movie "$OUT/${tag}_clip/f.png" -- \
-            --weapon="$w" "${var[@]}" "${extra[@]}" --mode=clip
     done
 done
 rm -f "$PROD/godot/tests/_arty_five_integration.gd"* \

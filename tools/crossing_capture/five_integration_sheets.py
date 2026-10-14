@@ -459,6 +459,52 @@ def timing_sheet(summary, out):
     _save(sheet, out)
 
 
+# =============================================================== memory
+
+def memory_sheet(art, prev_dev, summary, out):
+    """Before (the 10-13 development model, 2048² RGBA) beside after (the
+    repacked maps at the reviewed density), the same Cycles cameras."""
+    rows = [("sightline", "Sightline", "close_breech"),
+            ("driver", "Mass Driver", "close_rotor")]
+    cw = (W - 120) // 4
+    sheet = Image.new("RGB", (W, 200 + len(rows) * (round(cw * 9 / 16)
+                                                    + 90)), BG)
+    d = ImageDraw.Draw(sheet)
+    title(d, 40, 30, "The memory came off; the detail did not",
+          "The two 2048² weapons as reviewed on 10-13 (left of each pair) "
+          "and repacked (right): the same Cycles cameras. Same density "
+          "floor, same Glyph painting, fewer bytes. Arty, 2026-10-14.")
+    y = 140
+    for key, name, close in rows:
+        s = summary.get(key, {})
+        before = s.get("tex_before_mb")
+        after = s.get("art_cost", {}).get("texture_mem_added_bytes", 0) \
+            / 2 ** 20
+        d.text((40, y), "%s:  %s MB → %.1f MB in the range" % (
+            name, "%.1f" % before if before else "-", after),
+            font=font(22, True), fill=ACCENT)
+        y += 44
+        for i, (view, which) in enumerate(
+                ((("three_q", "before"), ("three_q", "after"),
+                  (close, "before"), (close, "after")))):
+            root = prev_dev if which == "before" else art
+            p = os.path.join(root, key, "look", "look_%s.png" % view)
+            x = 40 + i * (cw + 13)
+            if os.path.exists(p):
+                im = _img(p)
+                im = im.crop((0, (im.height - round(im.width * 9 / 16)) // 2,
+                              im.width, (im.height + round(im.width * 9 / 16))
+                              // 2))
+                sheet.paste(im.resize((cw, round(cw * 9 / 16)),
+                                      Image.LANCZOS), (x, y))
+            d.text((x, y + round(cw * 9 / 16) + 4), "%s, %s" % (
+                "10-13 (2048², RGBA)" if which == "before"
+                else "now (%d², lean)" % s.get("size", 0),
+                view.replace("_", " ")), font=font(16), fill=DIM)
+        y += round(cw * 9 / 16) + 46
+    _save(sheet, out)
+
+
 # ================================================================ costs
 
 def costs_sheet(art, cap, prev, summary, out):
