@@ -424,7 +424,9 @@ def paint(D):
 
     # ======================================================= straps, nuts
     m = cls == CLS["strap"]
-    scale_ = mix(hx("#2b2d30"), hx("#55585b"), smooth(0.4, 0.6, n1))
+    # mill scale: a narrow, soft variation (a wide one read as camouflage
+    # on the large straps, 2026-10-14)
+    scale_ = mix(hx("#34373a"), hx("#4a4d50"), smooth(0.35, 0.65, n1))
     bentd = smooth(0.6, 0.72, fbm(P, 650.0, 51))
     c = mix(scale_, ramp(RUST_BASE, 0.4), cavity * 0.6 * (1 - oil))
     c = mix(c, STEEL_MID, smooth(0.5, 0.8, convex) * 0.6)

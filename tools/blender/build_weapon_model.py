@@ -42,6 +42,7 @@ import bpy  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
 import build_foundry_study as fs  # noqa: E402
+import build_bulkhead_concepts as bc  # noqa: E402
 import build_weapon_forms as wf  # noqa: E402
 import common  # noqa: E402
 from build_foundry_study import (box, cyl, hexhead, hull, ngon,  # noqa: E402
@@ -50,6 +51,37 @@ from build_weapon_forms import side_panel, weld  # noqa: E402
 
 #: the approved Foundry's measured density (its study record)
 TARGET_DENSITY = 1150.0
+#: each weapon's density floor: the density the owner reviewed it at
+#: (2026-10-13), so no map loses detail she saw; the Bulkhead was not
+#: painted before, so it takes the Switchback's
+DENSITY_FLOOR = {"sightline": 1911.0, "switchback": 1319.0,
+                 "driver": 1936.0, "bulkhead": 1319.0}
+#: atlas sizes step by this (non-power-of-two is fine for Godot, mipmaps
+#: included; a multiple of 128 keeps any later block compression whole)
+ATLAS_STEP = 128
+
+
+def unwrap(objs):
+    """The Foundry study's unwrap, packed tighter (2026-10-14): islands
+    turn only by quarter turns (no 45-degree strips wasting a triangle of
+    map each), concave shapes, a 0.3% gutter. Same projection, same one
+    density across the whole gun."""
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in objs:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.0,
+                             area_weight=0.0, correct_aspect=True,
+                             scale_to_bounds=False)
+    bpy.ops.uv.select_all(action="SELECT")
+    bpy.ops.uv.average_islands_scale()
+    bpy.ops.uv.pack_islands(udim_source="CLOSEST_UDIM", rotate=True,
+                            rotate_method="CARDINAL", scale=True,
+                            merge_overlap=False, margin_method="FRACTION",
+                            margin=0.003, pin=False, shape_method="CONCAVE")
+    bpy.ops.object.mode_set(mode="OBJECT")
 
 
 def _ring_bolts(name, cx, cy, z, r, n, sign, phase=0.0, hr=0.0024,
@@ -322,6 +354,121 @@ SPEC_DRIVER = {
 }
 
 
+# ============================================================= BULKHEAD
+# The owner's choice (2026-10-14): D, the Fan. Keep the four-bore fan and
+# its mechanical personality; carry Breacher and Sweeper on one design.
+
+def _fan_bore(k):
+    """Root, tip and unit direction of fan bore k (the form's numbers)."""
+    x0 = (-0.045, -0.015, 0.015, 0.045)[k]
+    a = math.radians((-15.0, -5.0, 5.0, 15.0)[k])
+    L = 0.248
+    root = (x0, 0.020, -0.234)
+    u = (math.sin(a), 0.0, -math.cos(a))
+    tip = tuple(root[i] + u[i] * L for i in range(3))
+    return root, tip, u
+
+
+def refine_bulkhead():
+    E = []
+    # a forward tie across the four mouths: a fan of short tubes springs
+    # when four charges go at once, so the crew strapped the spacing at
+    # both ends (the form had only the middle bridge)
+    for k in range(4):
+        root, tip, u = _fan_bore(k)
+        E.append(bc.collar("tie_collar%d" % k, root, tip, 0.86, 0.0142,
+                           w=0.009))
+    zt = -0.234 - 0.248 * 0.86 * math.cos(math.radians(5))
+    xt = 0.045 + 0.248 * 0.86 * math.sin(math.radians(15)) + 0.012
+    E.append(box("front_tie", -xt, xt, 0.0315, 0.0365, zt - 0.006,
+                 zt + 0.006, "strap", bevel=0.0008))
+    for sx in (-1, 1):
+        E.append(hexhead("front_tie_bolt%d" % (sx > 0), (sx * (xt - 0.006),
+                                                        0.0365, zt), "y", 1,
+                         0.0022, 0.0014, part="front_tie_bolts"))
+    # the distributor's four outlets: one terminal per charge line
+    for k, x0 in enumerate((-0.045, -0.015, 0.015, 0.045)):
+        E.append(box("outlet%d" % k, x0 * 0.4 - 0.0045, x0 * 0.4 + 0.0045,
+                     0.047, 0.057, -0.156, -0.150, "bare", part="outlets",
+                     bevel=0.0006))
+    # the breech block's hinge knuckles, and a spare-shell clip on the
+    # block's left (the Breacher reloads by hand: two rounds within reach)
+    for sx in (-1, 1):
+        E.append(box("knuckle%d" % (sx > 0), sx * 0.022 - 0.006,
+                     sx * 0.022 + 0.006, -0.034, -0.020, 0.026, 0.046,
+                     "bare", bevel=0.0010))
+    E.append(box("shell_clip", -0.0335, -0.0300, -0.018, 0.020, 0.024,
+                 0.048, "strap", bevel=0.0006))
+    for k, y in enumerate((-0.006, 0.010)):
+        E.append(prism("spare_shell%d" % k, ngon(0.0068, 8, 0.036, y), "x",
+                       -0.0395, -0.0335, "patch", part="spare_shells"))
+        E.append(prism("spare_rim%d" % k, ngon(0.0076, 8, 0.036, y), "x",
+                       -0.0410, -0.0395, "bare", part="spare_shells"))
+    return E, {}
+
+
+def _fan_spec():
+    heat, soot = [], []
+    for k in range(4):
+        root, tip, u = _fan_bore(k)
+        heat.append({"a": list(root), "b": list(tip), "r": 0.012,
+                     "fall": 0.010, "w": 0.55})
+        heat.append({"a": [tip[i] - u[i] * 0.04 for i in range(3)],
+                     "b": list(tip), "r": 0.014, "fall": 0.010, "w": 1.0})
+        soot.append([[tip[i] - u[i] * 0.03 for i in range(3)], list(tip),
+                     0.020, 0.9])
+    heat.append({"a": [-0.06, 0.02, -0.234], "b": [0.06, 0.02, -0.234],
+                 "r": 0.016, "fall": 0.014, "w": 0.9, "burn": True})
+    soot.append([[-0.03, 0.005, 0.020], [0.03, 0.005, 0.020], 0.010, 0.6])
+    return heat, soot
+
+
+_FAN_HEAT, _FAN_SOOT = _fan_spec()
+
+SPEC_BULKHEAD = {
+    "bore": [0.0, 0.020], "ends": [-0.485, 0.052], "bottom_y": -0.034,
+    "trim": 0.30, "grime": 0.24, "seed": 6310,
+    "heat": _FAN_HEAT,
+    "soot": _FAN_SOOT,
+    "contact": [[[0.024, 0.042, 0.046], 0.010, 1.0],      # latch knob
+                [[0.0, -0.050, -0.300], 0.030, 0.7],      # pump
+                [[0.0, 0.074, -0.077], 0.010, 0.8],       # core cap
+                [[-0.020, 0.036, 0.000], 0.020, 0.5],     # hand rest
+                [[0.0, -0.032, 0.030], 0.020, 0.6],       # set down
+                [[0.0, 0.009, -0.470], 0.030, 0.4],       # mouths, set down
+                [[-0.040, 0.002, 0.036], 0.012, 0.8]],    # spare shells
+    "oil": [[[0.0, -0.026, 0.036], 0.016], [[-0.026, 0.044, 0.030], 0.008]],
+    "oil_segs": [[[0.0, -0.050, -0.362], [0.0, -0.050, -0.160], 0.009]],
+    "rust": [[[0.0, -0.006, -0.228], 0.015], [[0.0, -0.030, -0.120], 0.012],
+             [[0.0, 0.004, -0.365], 0.012]],
+    "welds_flat": [[[-0.064, 0.034, -0.2215], [0.0, 0.036, -0.2215],
+                    [0.064, 0.034, -0.2215]],
+                   [[-0.028, 0.034, 0.0195], [0.028, 0.034, 0.0195]]],
+    "cracks": [[[-0.0408, 0.012, -0.100], [-0.0408, 0.004, -0.104],
+                [-0.0408, -0.004, -0.099], [-0.0408, -0.012, -0.103]]],
+    "grinds": [[[-0.0408, 0.000, -0.102], [-1, 0, 0], 0.010]],
+    "touchup": [[[-0.0408, 0.000, -0.102], 0.018]],
+    "torque": [[[0.060, 0.033, -0.2362], [0, 0, -1]],
+               [[-0.060, 0.033, -0.2362], [0, 0, -1]]],
+    "wrenched": [[[-0.066, -0.001, -0.2362], [0, 0, -1]]],
+    "stamps": [["BH-6 0310", [-0.022, 0.0362, 0.048], [1, 0, 0], [0, 0, -1],
+                [0, 1, 0], 0.0011]],
+    "stencils": [["BH-6", [-0.0290, 0.014, -0.035], [0, 0, 1], [0, 1, 0],
+                  [-1, 0, 0], 0.0016]],
+    "tallies": [[[-0.0302, 0.012, 0.024], [0, 0, 1], [0, 1, 0],
+                 [-1, 0, 0]]],
+    "scratch_zones": [
+        [[-0.030, -0.010, 0.000], [-1, 0, 0], [0, 0, 1], [0, 1, 0], 0.020,
+         5, [1.0, 0.25]],
+        [[0.0, 0.040, -0.228], [0, 0, -1], [1, 0, 0], [0, 1, 0], 0.050, 5,
+         [1.0, 0.2]]],
+    "lathe": [],
+    "eps_bites": [],
+    "grip": {"top": [0.0, -0.034, 0.022], "rake": 18},
+    "tape_axes": {"pump": [0.0, -0.050]},
+}
+
+
 MODELS = {
     "sightline": {"form": wf.sightline_a, "refine": refine_sightline,
                   "spec": SPEC_SIGHTLINE, "root": "Sightline",
@@ -348,6 +495,18 @@ MODELS = {
     # the form's balance weights reached r 0.0587 under cage bars whose
     # inner face is at r 0.0565 (they cut through the bars at rest and
     # would clip spinning): lower, and set between the bars at rest
+    "bulkhead": {"form": bc.bulkhead_d, "refine": refine_bulkhead,
+                 "spec": SPEC_BULKHEAD, "root": "Bulkhead",
+                 "label": "Bulkhead (D, Fan)",
+                 "points": {"Bore%d" % k: _fan_bore(k)[1] for k in range(4)},
+                 "closes": {
+                     "close_fan": ((-0.16, 0.13, -0.30),
+                                   (0.0, 0.02, -0.40), 34.0),
+                     "close_breech": ((-0.12, 0.10, 0.15),
+                                      (0.0, 0.01, 0.01), 30.0),
+                     "close_manifold": ((-0.23, 0.10, -0.04),
+                                        (-0.02, 0.01, -0.14), 32.0),
+                 }},
     "driver": {"form": lambda: wf.driver_a(weight_top=0.0545,
                                            weight_phase=0),
                "refine": refine_driver,
@@ -389,6 +548,12 @@ def assemble_objects(key, dress_clay=False):
         fs._pivot(obj, pivot)
         nodes[name] = (obj, pivot)
     muzzle = wf.node("Muzzle", meta["muzzle"])
+    # extra named points (the Fan's four bore mouths): empties that ride
+    # along with the Muzzle, for effects that want each barrel
+    points = [wf.node(n, at) for n, at in M.get("points", {}).items()]
+    for p in points:
+        p.parent = muzzle
+        p.location = p.location - muzzle.location
     return body, nodes, muzzle, meta
 
 
@@ -410,7 +575,7 @@ def export(objs, muzzle, maps_dir, path, root_name, mat_name):
     for o in objs + [muzzle]:
         o.parent = root
     bpy.ops.object.select_all(action="DESELECT")
-    for o in objs + [muzzle, root]:
+    for o in objs + [muzzle, root] + list(muzzle.children):
         o.select_set(True)
     bpy.context.view_layer.objects.active = root
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB",
@@ -419,6 +584,26 @@ def export(objs, muzzle, maps_dir, path, root_name, mat_name):
                               export_tangents=True,
                               export_materials="EXPORT",
                               export_image_format="AUTO", export_yup=True)
+
+
+def export_geometry(objs, muzzle, path, mat_name):
+    """The model as exported above, with one empty, named material slot
+    and no images: geometry, UVs, tangents, nodes and the muzzle."""
+    mat = bpy.data.materials.new(mat_name)
+    for o in objs:
+        o.data.materials.clear()
+        o.data.materials.append(mat)
+    root = objs[0].parent
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in objs + [muzzle, root] + list(muzzle.children):
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = root
+    bpy.ops.export_scene.gltf(filepath=path, export_format="GLB",
+                              use_selection=True, export_apply=False,
+                              export_texcoords=True, export_normals=True,
+                              export_tangents=True,
+                              export_materials="PLACEHOLDER",
+                              export_yup=True)
 
 
 def look(key, objs, maps_dir, out):
@@ -459,13 +644,40 @@ def look(key, objs, maps_dir, out):
         bpy.ops.render.render(write_still=True)
 
 
+def _uvstats(key, objs):
+    """Atlas fill under a few packing settings (no bake): for choosing
+    the packing that holds the same density in the smallest map."""
+    import bmesh  # noqa: F401
+    rows = []
+    for rot in ("ANY", "AXIS_ALIGNED", "CARDINAL"):
+        for shape in ("CONCAVE", "AABB"):
+            bpy.ops.object.select_all(action="DESELECT")
+            for o in objs:
+                o.select_set(True)
+            bpy.context.view_layer.objects.active = objs[0]
+            bpy.ops.object.mode_set(mode="EDIT")
+            bpy.ops.mesh.select_all(action="SELECT")
+            bpy.ops.uv.select_all(action="SELECT")
+            bpy.ops.uv.pack_islands(udim_source="CLOSEST_UDIM", rotate=True,
+                                    rotate_method=rot, scale=True,
+                                    merge_overlap=False,
+                                    margin_method="FRACTION", margin=0.003,
+                                    pin=False, shape_method=shape)
+            bpy.ops.object.mode_set(mode="OBJECT")
+            d, fill = fs.texel_density(objs)
+            rows.append((rot, shape, fill, d))
+            common.log("%s pack %-12s %-8s fill %.0f%%  %.0f t/m at %d"
+                       % (key, rot, shape, 100 * fill, d, fs.ATLAS))
+    return rows
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:]
     mode, key, out = argv[0], argv[1], os.path.abspath(argv[2])
-    if mode not in ("preview", "bake", "assemble", "look") or \
+    if mode not in ("preview", "bake", "assemble", "look", "uvstats") or \
             key not in MODELS:
         raise SystemExit("usage: -- preview|bake|assemble|look "
-                         "sightline|switchback|driver OUT")
+                         "sightline|switchback|bulkhead|driver OUT")
     M = MODELS[key]
     os.makedirs(out, exist_ok=True)
     body, nodes, muzzle, meta = assemble_objects(key, mode == "preview")
@@ -475,14 +687,18 @@ def main():
         common.log("%s: %d tris (clay preview)" % (key, tris))
         wf.render_views(os.path.join(out, "clay"), M["label"])
         return
-    fs.unwrap(objs)
-    # size the atlas so the density matches the approved Foundry's
+    unwrap(objs)
+    if mode == "uvstats":
+        fs.ATLAS = 2048
+        _uvstats(key, objs)
+        return
+    # the smallest atlas (in steps of 128) that holds this weapon's
+    # density floor: the detail the owner reviewed, in the least memory
     fs.ATLAS = 1024
+    d1024, fill = fs.texel_density(objs)
+    floor = max(DENSITY_FLOOR.get(key, TARGET_DENSITY), TARGET_DENSITY)
+    fs.ATLAS = ATLAS_STEP * math.ceil(1024 * floor / d1024 / ATLAS_STEP)
     density, fill = fs.texel_density(objs)
-    # the smallest power-of-two atlas that holds the Foundry's density
-    while density < 0.95 * TARGET_DENSITY and fs.ATLAS < 4096:
-        fs.ATLAS *= 2
-        density, fill = fs.texel_density(objs)
     fp = fs.uv_fingerprint(objs)
     common.log("%s: %d tris, atlas %d, %.0f texels/m, fill %.0f%%, uv %s"
                % (key, tris, fs.ATLAS, density, 100 * fill, fp))
@@ -507,12 +723,17 @@ def main():
         return
     export(objs, muzzle, maps, os.path.join(out, key + ".glb"), M["root"],
            key + "_dev")
-    textures = sorted(f for f in os.listdir(maps) if f.endswith(".png")
-                      and f != "height.png")
+    # the same model with no maps in it: what integration should import,
+    # with the lean maps (lean_maps.py) on its one material, so the
+    # four-channel copies in the review GLB never reach the GPU
+    export_geometry(objs, muzzle, os.path.join(out, key + "_geo.glb"),
+                    key + "_dev")
+    textures = ["albedo (RGB8)", "normal (RGB8)", "roughness (L8)",
+                "metallic (L8)", "emission mask (L8)"]
     record = {
-        "status": "DEVELOPMENT MODEL (Arty, 2026-10-13): an approved "
-                  "concept direction developed toward the Foundry's "
-                  "fidelity. Not registered, not merged, not shipping.",
+        "status": "INTEGRATION CANDIDATE (Arty, 2026-10-14): an approved "
+                  "direction at the Foundry's fidelity, prepared for "
+                  "Prod's runtime. Not registered, not merged.",
         "weapon": key,
         "label": M["label"],
         "metrics": {

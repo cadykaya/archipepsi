@@ -3549,6 +3549,18 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Ruling, 2026-10-14 — Bulkhead D; all five toward playable integration
+
+* Bulkhead: D (Fan) chosen. Develop to the shared fidelity standard, keep
+  the four-barrel arrangement and its mechanical personality, and carry
+  both variants on one design (any gameplay change is a proposal).
+* Sightline, Switchback and Mass Driver: current directions approved for
+  the next stage. Foundry remains the benchmark. No redesigns, no
+  decorative sci-fi clutter; keep the station/Epsilon/Echo identity.
+* Next: integration-ready art for all five plus the layered Glyph
+  effects, checked in Prod's runtime; metrics recorded; the 2048 maps'
+  memory investigated and reduced without losing visible detail.
+
 ### Delivered, 2026-10-13 — weapon development pass. STOPPED for review.
 
 * Bulkhead: three new concepts (C Spreader, D Fan, E Hatch Ram), each one

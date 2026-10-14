@@ -194,6 +194,25 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-14 (ruling and assignment): Bulkhead D chosen; prepare all
+  five weapons for playable integration.** Branch
+  `claude/archipepsi-art-weapon-integration-2026-10-14`.
+  * The owner chose Bulkhead D (Fan): develop it to the same fidelity,
+    keeping the four-barrel arrangement and its mechanical personality;
+    Breacher and Sweeper stay on one design (gameplay changes are
+    proposals only). Sightline, Switchback and Mass Driver directions are
+    approved for the next stage. The Foundry stays the benchmark.
+  * Assignment: prepare the five models and the layered Glyph effects for
+    integration against Prod's latest runtime (still v3 `ef157061`;
+    `8002d457` only adds a CLAUDE.md line): readiness/recoil timing,
+    muzzles, moving parts, ADS, firing events; verify first-person
+    clearance, timing, impacts and bullet marks. Record triangles,
+    materials, draw calls, texture memory; investigate the 96 MB maps and
+    cut unnecessary memory without losing detail (no global quality drop,
+    no new rendering system). No redesigns, no decorative clutter.
+  * Deliver the art package, integration instructions and comparison
+    captures; coordinate with Prod in writing; merge nothing; stop for the
+    owner's in-game review.
 * **2026-10-13 (delivered): weapon development pass. STOP for the owner's
   review.** Branch `claude/archipepsi-art-weapon-development-2026-10-13`.
   * Bulkhead revisited: three new clay concepts (C Spreader, D Fan, E Hatch
