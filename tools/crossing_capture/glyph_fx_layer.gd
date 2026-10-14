@@ -37,6 +37,7 @@ var events: Array = []
 var _shots := 0
 var _tex := {}
 var _rng := RandomNumberGenerator.new()
+var _done := {}
 
 
 func setup(fx_json: String, the_weapons: Node) -> void:
@@ -100,29 +101,49 @@ func _fired(weapon: String, shot: int) -> void:
 func _on_node_added(node: Node) -> void:
 	if weapons == null:
 		return
-	var weapon := String(weapons.get("current"))
-	# by kind, not by exact name: a second `Impact_metal` added beside a
-	# live one is renamed by Godot (`@Impact_metal@12`), and so is a second
-	# `Mark_metal` on the same body
-	var n := String(node.name)
-	if node is Decal and n.contains("Mark_"):
-		_mark.call_deferred(node, weapon)
-	elif node is Node3D and not node is Decal and n.contains("Impact_"):
-		_impact.call_deferred(node, weapon)
+	if node is Node3D:
+		_classify.call_deferred(node, String(weapons.get("current")))
 
 
-## The material in `Impact_<kind>` / `Mark_<kind>`, renamed or not.
-static func _kind(node: Node, prefix: String) -> String:
+## By membership, not by name: Godot renames a node added beside a live
+## sibling of the same name (`@Node3D@12`), so a second `Impact_metal` or
+## a second `Mark_metal` on the same body loses its name. His own lists
+## say what it is: `impacts.effects` holds the impact roots, `impacts.marks`
+## the decals (each with its `mark_kind` meta).
+func _classify(node: Node, weapon: String) -> void:
+	if not is_instance_valid(node) or _done.has(node.get_instance_id()):
+		return
+	var impacts: Object = weapons.get("impacts")
+	if node is Decal and (impacts.get("marks") as Array).has(node):
+		_done[node.get_instance_id()] = true
+		_mark(node, weapon)
+	elif node is Node3D and (impacts.get("effects") as Array).has(node):
+		_done[node.get_instance_id()] = true
+		_impact(node, weapon)
+
+
+## The material of an impact root or a mark.
+func _kind(node: Node) -> String:
 	if node.has_meta("mark_kind"):
 		return String(node.get_meta("mark_kind"))
+	var last: Dictionary = (weapons.get("impacts") as Object).get("last")
+	if last.get("root") == node:
+		return String(last.get("material", "unknown"))
 	var n := String(node.name)
-	return n.substr(n.find(prefix) + prefix.length()).get_slice("@", 0)
+	if n.contains("Impact_"):
+		return n.substr(n.find("Impact_") + 7).get_slice("@", 0)
+	return "unknown"
 
 
 func _impact(root: Node3D, weapon: String) -> void:
 	if not is_instance_valid(root):
 		return
-	var kind := _kind(root, "Impact_")
+	_impact_at(_kind(root), weapon, root.global_position, String(root.name))
+
+
+## The authored layers for one hit of `kind` at `at`.
+func _impact_at(kind: String, weapon: String, at: Vector3, node_name: String,
+		orphan := false) -> void:
 	var mat := String(MATERIAL_OF.get(kind, "stone"))
 	var scale := float(IMPACT_SCALE.get(weapon, 1.0))
 	var names: Array = []
@@ -143,7 +164,6 @@ func _impact(root: Node3D, weapon: String) -> void:
 					names = ["impact_flesh_splash"]
 			if weapon == "sightline":
 				names.append("sightline_pop")
-	var at := root.global_position
 	for n in names:
 		var spec: Dictionary = fx[n]
 		var s := scale
@@ -155,14 +175,28 @@ func _impact(root: Node3D, weapon: String) -> void:
 				n == "impact_metal_smoke" else 0.0,
 				Color(0.85, 0.78, 0.66) if mat == "wood" else Color.WHITE)
 	events.append({"event": "impact", "weapon": weapon, "material": kind,
-			"node": String(root.name),
+			"node": node_name, "orphan": orphan,
 			"frame": Engine.get_physics_frames(), "layers": names})
 
 
 func _mark(decal: Decal, weapon: String) -> void:
 	if not is_instance_valid(decal):
 		return
-	var kind := _kind(decal, "Mark_")
+	var kind := _kind(decal)
+	# his Driver slug lands inside `tree_exiting`, when the scene refuses
+	# new children: the impact root he made never entered the tree (no
+	# sparks, light or sound of his). The authored layers then play from
+	# the mark, where the impact was, and the log says so
+	var last: Dictionary = (weapons.get("impacts") as Object).get("last")
+	var root: Variant = last.get("root")
+	if root is Node3D and is_instance_valid(root) \
+			and not (root as Node3D).is_inside_tree() \
+			and not _done.has((root as Node3D).get_instance_id()):
+		_done[(root as Node3D).get_instance_id()] = true
+		_impact_at(String(last.get("material", kind)), weapon,
+				last.get("at", decal.global_position) as Vector3 \
+				+ (last.get("normal", Vector3.ZERO) as Vector3) * 0.02,
+				String((root as Node3D).name), true)
 	var mat := String(MATERIAL_OF.get(kind, "stone"))
 	# a scattergun's shot is one blast and one mark at the pattern's centre
 	# (`impacts.last`), then up to three chips for strays (his `chip()`):
