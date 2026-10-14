@@ -96,8 +96,8 @@ Gameplay proposals only, for you and the owner. Nothing in the art depends on th
 | Your event | What the adapter does |
 |---|---|
 | `RangeWeapons.shots` goes up | Plays the weapon's flash layers at its `Muzzle`, so they ride your kick. Hides your procedural `rig.flame` petals for that shot, since the authored flash replaces them. Your light, smoke, shock ring and tracer stay. |
-| `Impact_<kind>` node appears (`RangeImpacts.impact`) | Plays the authored 2D layers for that material and weapon, on top of your 3D sparks, chips, fibres and light. |
-| `Mark_<kind>` Decal appears (`RangeImpacts._mark`) | Sets its `texture_albedo` to a random variant of the matching authored mark. Your size, roll, parenting, hot-rim emission and 160 cap are kept. |
+| an impact root joins `impacts.effects` (`RangeImpacts.impact`) | Plays the authored 2D layers for that material and weapon, on top of your 3D sparks, chips, fibres and light. |
+| a Decal joins `impacts.marks` (`RangeImpacts._mark`) | Sets its `texture_albedo` to a random variant of the matching authored mark. Your size, roll, parenting, hot-rim emission and 160 cap are kept. |
 
 Per weapon:
 
@@ -106,8 +106,8 @@ Per weapon:
 | Foundry | `foundry_flash_flare`, `foundry_flash_core`; `foundry_afterglow` 34 ms later | per material: `impact_metal_flash` + `impact_metal_smoke`, `impact_stone_dust`, the same dust at ½ scale tinted for wood, `impact_flesh_splash` | `decal_metal_hole`, `decal_stone_crater`, `decal_wood_mark`, `decal_flesh_mark` |
 | Sightline | `sightline_flash` | the material layers at ½ scale + `sightline_pop` | `sightline_mark` on metal; else per material |
 | Switchback | `switchback_flash_a` and `_b`, alternating | the material layers at 0.45 scale | `switchback_pock` |
-| Bulkhead | `bulkhead_flash` at each `Bore`, 0.55 scale | `bulkhead_blast` | `bulkhead_mark`; your small stray decals (under 0.12 m) get `switchback_pock` |
-| Mass Driver | `massdriver_release` | `massdriver_impact` | `massdriver_mark` |
+| Bulkhead | `bulkhead_flash` at each `Bore`, 0.55 scale | `bulkhead_blast`, once a shot (your `_scatter` makes one impact at the pattern's centre) | `bulkhead_mark` on the centre mark; your `chip()` strays get `switchback_pock` |
+| Mass Driver | `massdriver_release` | `massdriver_impact` (from the mark, while §5 stands) | `massdriver_mark` |
 
 How the sheets play:
 - Each sheet is one row, frame 0 at the left. Frames advance by `durations_ms`.
@@ -125,7 +125,19 @@ COSTS_TABLE
 
 TIMING_TABLE
 
-## 5. Questions (fit only; nothing asks you to change a timing)
+## 5. Found in your runtime (reported, not patched)
+
+**The Mass Driver's impact effects never play.**
+- What happens: `range_weapons.gd` connects `slug.tree_exiting` to `_slug_end()`, and `_slug_end()` calls `impacts.impact()`. That runs while Main is removing the slug, and Main refuses new children then. Godot logs: `Parent node is busy setting up children, add_child() failed`.
+- What is lost: the impact root never enters the tree, so your sparks, light, smoke and shock never show. `play_at` fails too ("Playback can only happen when a node is inside the scene tree"), so the impact sound is lost as well.
+- What survives: the mark, because it is parented to the target body.
+- Where it shows: every Driver hit in the captures, on your placeholder as much as on the art (`IW1_driver.jpg`, the hit row).
+- A one-line fix, for you to judge: `slug.tree_exiting.connect(_slug_end.bind(record), CONNECT_DEFERRED)`. `_slug_end` reads only the record, so it works the same one frame later. Alternatively, defer the `add_child` inside `impact()`.
+- The art lane's adapter does not depend on it. It plays the authored Driver impact from the mark event, at the same point, and logs that it did so.
+
+**Renamed nodes.** When a second `Impact_metal` is added while the first is still alive, Godot names it `@Node3D@N`, and the same happens to a second `Mark_metal` on the same body. Anything that recognises your effects by name therefore misses repeat hits. The adapter's first version did, and logged 4 impacts for a 13-round burst. It now goes by your own lists (`impacts.effects`, `impacts.marks`) and the `mark_kind` meta. Nothing to change on your side; it is noted in case your own checks look nodes up by name.
+
+## 6. Questions (fit only; nothing asks you to change a timing)
 
 1. **The core-glow contract** (§2, still open from 10-13).
 2. **The Bulkhead's `Bore` empties.** Are four effect-only points under the `Muzzle` acceptable? The gameplay muzzle stays one point.
