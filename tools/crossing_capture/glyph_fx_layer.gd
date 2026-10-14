@@ -201,7 +201,6 @@ func _mark(decal: Decal, weapon: String) -> void:
 	# a scattergun's shot is one blast and one mark at the pattern's centre
 	# (`impacts.last`), then up to three chips for strays (his `chip()`):
 	# the centre gets the pattern, a chip a pock
-	var last: Dictionary = (weapons.get("impacts") as Object).get("last")
 	var centre: Vector3 = last.get("at", decal.global_position)
 	var small := decal.global_position.distance_to(centre) > 0.01
 	var name := ""

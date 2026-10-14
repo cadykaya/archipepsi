@@ -51,6 +51,16 @@ cp "$ROOT/tools/crossing_capture/five_integration.gd" \
     "$PROD/godot/tests/_arty_five_integration.gd"
 cp "$ROOT/tools/crossing_capture/glyph_fx_layer.gd" \
     "$PROD/godot/tests/_arty_glyph_fx_layer.gd"
+# both must parse before any run: a parse error does not stop Godot, it
+# leaves each run to wait out its timeout without the effects
+for f in _arty_five_integration.gd _arty_glyph_fx_layer.gd; do
+    if ! timeout 120 "$GODOT" --headless --path "$PROD/godot" --check-only \
+            -s "res://tests/$f" > /dev/null 2>&1; then
+        echo "[five_integration] $f does not parse; nothing run" >&2
+        rm -f "$PROD/godot/tests/_arty_"*
+        exit 1
+    fi
+done
 
 run() {   # tag fps extra-godot-args -- script args...
     local tag="$1" fps="$2"; shift 2
