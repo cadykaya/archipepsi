@@ -58,6 +58,7 @@ var _weapon := ""
 var _variant := ""
 var _tag := ""
 var _mode := "stills"
+var _normal := "rgb"
 var _host: Node = null
 var _body: Node3D = null
 var _weapons: Node = null
@@ -70,7 +71,7 @@ var _record := {}
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		for key in ["out", "glb", "lean", "fx", "weapon", "variant", "tag",
-				"mode"]:
+				"mode", "normal"]:
 			if arg.begins_with("--%s=" % key):
 				set("_" + key, arg.trim_prefix("--%s=" % key))
 	if _tag == "":
@@ -114,7 +115,8 @@ func _run() -> void:
 		root.add_child(_layer)
 		_layer.call("setup", _fx, _weapons)
 	_record = {"weapon": _weapon, "variant": _variant, "tag": _tag,
-			"art": _glb != "", "glyph_fx": _fx != ""}
+			"art": _glb != "", "glyph_fx": _fx != "",
+			"normal": _normal if _lean != "" else ""}
 	_aim(AIM)
 	await _settle(45)
 	match _mode:
@@ -470,7 +472,7 @@ func _apply_lean(scene: Node) -> void:
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	m.albedo_texture = _tex("albedo.png")
 	m.normal_enabled = true
-	m.normal_texture = _tex("normal.png")
+	m.normal_texture = _tex("normal.png", _normal == "rg")
 	m.roughness = 1.0
 	m.roughness_texture = _tex("roughness.png")
 	m.roughness_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_GRAYSCALE
@@ -488,8 +490,12 @@ func _apply_lean(scene: Node) -> void:
 			mesh.surface_set_material(s, m)
 
 
-func _tex(file: String) -> ImageTexture:
+func _tex(file: String, rg := false) -> ImageTexture:
 	var img := Image.load_from_file(_lean.path_join(file))
+	if rg:
+		# Godot's shader reads a normal map's X and Y and rebuilds Z, so
+		# RG8 holds all it uses; RGB8 is padded to RGBA8 on the GPU
+		img.convert(Image.FORMAT_RG8)
 	img.generate_mipmaps()
 	return ImageTexture.create_from_image(img)
 
