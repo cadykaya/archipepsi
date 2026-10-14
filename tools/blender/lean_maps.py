@@ -9,8 +9,13 @@ writes OUT/lean/ plus OUT/lean/lean.json. A channel repack, not a new
 painting: every map keeps its size and its texels, and the check below
 refuses to write if a single texel would change meaning.
 
-  albedo.png     RGB   the colour map; its alpha was 255 everywhere
-  normal.png     RGB   tangent normals; alpha unused
+  albedo.png     RGB   the colour map; its alpha was 255 everywhere (the
+                       GPU pads RGB to RGBA: 4 bytes a texel there)
+  normal.png     RGB   tangent normals; alpha unused. Load it as RG8
+                       (`Image.convert(FORMAT_RG8)`): Godot's shader reads
+                       X and Y and rebuilds Z, so it is pixel-identical
+                       (measured in Prod's range, 2026-10-14), and a
+                       Lossless import would keep RGB8, padded to RGBA8
   roughness.png  L     grey (Glyph wrote it as R = G = B)
   metallic.png   L     grey
   emission.png   L     the lamp's intensity. Its colour (one colour,
@@ -19,10 +24,12 @@ refuses to write if a single texel would change meaning.
 
 Why: the owner asked for the 96 MB of the 2048 maps to be cut where it
 is unnecessary, without losing detail (2026-10-14). Four channels for a
-grey map, an alpha nobody reads and a full-colour map that is 99.9%
-black were the unnecessary part. Godot keeps a grey PNG grey (L8, one
-byte a texel) and an RGB PNG RGB8 when imported Lossless, and its
-StandardMaterial3D reads roughness and metallic from any one channel.
+grey map, an alpha nobody reads, a normal's third channel the shader
+rebuilds anyway and a full-colour map that is 99.9% black were the
+unnecessary part. Godot keeps a grey PNG grey (L8, one byte a texel)
+when imported Lossless, and its StandardMaterial3D reads roughness and
+metallic from any one channel. On the GPU: colour 4 + normal 2 + three
+grey maps 1 each = 9 bytes a texel, against 16.
 """
 
 from __future__ import annotations
@@ -86,7 +93,7 @@ def main():
                                     optimize=True)
 
     h, w = albedo.shape[:2]
-    per_texel = 3 + 3 + 1 + 1 + 1
+    per_texel = 4 + 2 + 1 + 1 + 1     # on the GPU: RGBA8, RG8, 3 x L8
     rec["size"] = [w, h]
     rec["emission_colour_srgb"] = [c / 255.0 for c in colour]
     rec["emission_lit_share"] = round(float(lit.mean()), 6)
@@ -98,7 +105,10 @@ def main():
         "shading": "per-pixel, cull back",
         "texture_filter": "NEAREST_WITH_MIPMAPS (the art bible)",
         "albedo_texture": "albedo.png",
-        "normal_enabled": True, "normal_texture": "normal.png",
+        "normal_enabled": True,
+        "normal_texture": "normal.png, loaded as RG8 "
+                          "(Image.convert(Image.FORMAT_RG8)): the shader "
+                          "rebuilds Z; pixel-identical, 2 bytes not 4",
         "roughness": 1.0, "roughness_texture": "roughness.png",
         "roughness_texture_channel": "GRAYSCALE",
         "metallic": 1.0, "metallic_texture": "metallic.png",
@@ -109,7 +119,7 @@ def main():
         "emission_colour_srgb": rec["emission_colour_srgb"],
         "emission_energy_multiplier": 1.0,
         "import": "Compress Mode: Lossless, Mipmaps: on (Godot keeps L8 "
-                  "and RGB8 as they are)",
+                  "as it is; RGB8 is padded to RGBA8 on the GPU)",
     }
     with open(os.path.join(dst, "lean.json"), "w") as fh:
         json.dump(rec, fh, indent=1, sort_keys=True)

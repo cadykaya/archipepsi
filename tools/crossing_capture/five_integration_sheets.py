@@ -472,8 +472,9 @@ def memory_sheet(art, prev_dev, summary, out):
     d = ImageDraw.Draw(sheet)
     title(d, 40, 30, "The memory came off; the detail did not",
           "The two 2048² weapons as reviewed on 10-13 (left of each pair) "
-          "and repacked (right): the same Cycles cameras. Same density "
-          "floor, same Glyph painting, fewer bytes. Arty, 2026-10-14.")
+          "and repacked at 1920² (right): the same Cycles cameras, the same "
+          "density floor, the same Glyph painting. Memory as measured in "
+          "Prod's range, Forward+. Arty, 2026-10-14.")
     y = 140
     for key, name, close in rows:
         s = summary.get(key, {})
@@ -550,15 +551,21 @@ def costs_sheet(art, cap, prev, summary, out):
             d.text((x, y), val, font=font(19), fill=INK)
     y += 90
     caption(d, 40, y,
-            "Texture memory, 10-13: four RGBA8 maps embedded in the GLB, "
-            "2048² for Sightline, Switchback and Mass Driver (96.0 MB each in "
-            "the range), 1024² for the Foundry (24.0 MB). Now: the same "
-            "texels in the formats they need (colour and normal RGB8; "
-            "roughness, metallic and the lamp mask one byte each), a "
-            "geometry-only GLB so no RGBA copy loads, and an atlas sized to "
-            "the density the owner reviewed (packed square to the axes, "
-            "which fills more of it). No map was resampled below that "
-            "density; nothing was compressed. Nearest point: the model's "
+            "Texture memory, both measured here in the game's renderer "
+            "(Forward+). 10-13: the development GLB, its four maps embedded "
+            "as RGBA8; loaded at run time they come without mipmaps (64 MB "
+            "at 2048², 16 MB at 1024²; with the mipmaps Prod's Lossless "
+            "imports give his other art they would be 85 and 21 MB). The "
+            "'96 MB' of 10-13 is the same maps as the Compatibility "
+            "renderer counts them. Now: the same texels, with mipmaps (the "
+            "art bible's NEAREST_WITH_MIPMAPS), in the formats they need: "
+            "colour RGB (the GPU pads it to RGBA), the normal as RG (the "
+            "shader rebuilds Z; pixel-identical in the range), roughness, "
+            "metallic and the lamp mask one byte each; a geometry-only GLB, "
+            "so no RGBA copy loads; and an atlas packed square to the axes "
+            "and sized to the density the owner reviewed. Nothing was "
+            "resampled below that density; nothing was compressed. The "
+            "Bulkhead is new: no 10-13 model. Nearest point: the model's "
             "closest corner to the eye, against the camera's 0.05 m near "
             "plane; 'shot' is the nearest over the whole recoil. PL = "
             "Prod's placeholder.", width_chars=200, size=17, fill=DIM)
