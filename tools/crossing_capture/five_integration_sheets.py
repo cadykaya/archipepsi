@@ -12,16 +12,16 @@ in-range metrics (`<w>_metrics.json`); PREV_DEV the 10-13 development
 build (per weapon <w>/look/), the "before" of the memory sheet.
 Writes, into OUT:
 
-  IW0_lineup.png            the five at rest and firing, from the eye
-  IW2_bulkhead_d.png        Bulkhead D (Fan) developed: Cycles looks,
+  IW0_lineup.jpg            the five at rest and firing, from the eye
+  IW2_bulkhead_d.jpg        Bulkhead D (Fan) developed: Cycles looks,
                             close looks, the elevation, and Breacher and
                             Sweeper in the range
-  IW1_<config>.png          per weapon (the Bulkhead per variant): Prod's
+  IW1_<config>.jpg          per weapon (the Bulkhead per variant): Prod's
                             placeholder against the art at rest, aimed and
                             firing; the impact on four materials from a
                             second eye 1.8 m off the target, in the same
                             frame; and the mark each leaves
-  IW6_memory.png            the 10-13 model beside the repacked one, same
+  IW6_memory.jpg            the 10-13 model beside the repacked one, same
                             camera, whole and in the close looks: the
                             memory came off, the detail did not
   IW7_costs.png             triangles, materials, draw calls, texture
@@ -29,7 +29,8 @@ Writes, into OUT:
   IW8_timing.png            when each moving part moves against the shot,
                             the readiness and the Glyph flash, placeholder
                             against art, from the per-frame clip logs
-  <config>_clip.gif         placeholder | art, side by side, 15 fps
+  <config>_clip.gif         placeholder | art, side by side, 15 fps, the
+                            gun's part of the frame
   integration_summary.json  every number on the sheets
 
 Everything is drawn from files the runs wrote; nothing is retouched.
@@ -114,7 +115,7 @@ def lineup(cap, out):
                         (i * cw, y + 40))
             _label(d, i * cw + 14, y + 6, name.split(":")[0]
                    if r == 0 else "the shot", None, ACCENT if r else INK)
-    sheet.save(out, optimize=True)
+    _save(sheet, out)
 
 
 # ======================================================== Bulkhead D
@@ -183,7 +184,7 @@ def bulkhead_sheet(art, cap, out):
                                   m["texels_per_metre"]),
                font=font(20, True), fill=ACCENT)
     caption(d, 40, ty + 40, BULKHEAD_NOTE, 205, 18)
-    sheet.save(out, optimize=True)
+    _save(sheet, out)
 
 
 # ============================================================ per weapon
@@ -265,12 +266,30 @@ def weapon_sheet(cap, w, v, name, role, out):
                     lab += "  (NO MARK)"
                 d.text((x, y + 6), lab, font=font(17), fill=INK)
             y += qh + 48
-    sheet.save(out, optimize=True)
+    _save(sheet, out)
 
 
 # ================================================================ clips
 
-def clip_gif(cap, w, v, out, every=2, size=(480, 270)):
+#: the gun and the crosshair's part of the 1600x900 frame (16:9)
+CLIP_CROP = (480, 240, 1600, 870)
+
+
+def _save(img, out):
+    if out.endswith(".jpg"):
+        save_photo(img, out)
+    else:
+        img.save(out, optimize=True)
+
+
+def save_photo(img, out):
+    """The capture sheets as JPEG at q92 without chroma subsampling: side
+    by side with the PNG no difference shows at 1:1, at a third of the
+    size (the delivery has a 30 MiB limit)."""
+    img.save(out, quality=92, subsampling=0, optimize=True)
+
+
+def clip_gif(cap, w, v, out, every=2, size=(400, 225)):
     frames = []
     sides = []
     for side in ("placeholder", "art"):
@@ -283,9 +302,9 @@ def clip_gif(cap, w, v, out, every=2, size=(480, 270)):
     for i in range(0, n, every):
         c = Image.new("RGB", (size[0] * 2 + 8, size[1]), BG)
         for k, files in enumerate(sides):
-            c.paste(_img(files[i]).resize(size, Image.LANCZOS),
-                    (k * (size[0] + 8), 0))
-        frames.append(c.quantize(160, method=Image.MEDIANCUT,
+            c.paste(_img(files[i]).crop(CLIP_CROP).resize(
+                size, Image.LANCZOS), (k * (size[0] + 8), 0))
+        frames.append(c.quantize(128, method=Image.MEDIANCUT,
                                  dither=Image.NONE))
     frames[0].save(out, save_all=True, append_images=frames[1:],
                    duration=round(1000 * every / 30), loop=0, optimize=True)
@@ -437,7 +456,7 @@ def timing_sheet(summary, out):
             d.text((110, yy + 26), _parts_text(r), font=font(16), fill=DIM)
             yy += 60
         y += 180
-    sheet.save(out, optimize=True)
+    _save(sheet, out)
 
 
 # ================================================================ costs
@@ -497,7 +516,7 @@ def costs_sheet(art, cap, prev, summary, out):
             "closest corner to the eye, against the camera's 0.05 m near "
             "plane; 'shot' is the nearest over the whole recoil. PL = "
             "Prod's placeholder.", width_chars=200, size=17, fill=DIM)
-    sheet.save(out, optimize=True)
+    _save(sheet, out)
 
 
 # ================================================================= main
@@ -550,15 +569,15 @@ def main():
             s["before_source"] = "the 10-13 record (Compatibility)"
         summary[b] = s
         weapon_sheet(cap, w, v, name, role,
-                     os.path.join(out, "IW1_%s.png" % b))
+                     os.path.join(out, "IW1_%s.jpg" % b))
         clip_gif(cap, w, v, os.path.join(out, "%s_clip.gif" % b))
-    lineup(cap, os.path.join(out, "IW0_lineup.png"))
-    bulkhead_sheet(art, cap, os.path.join(out, "IW2_bulkhead_d.png"))
+    lineup(cap, os.path.join(out, "IW0_lineup.jpg"))
+    bulkhead_sheet(art, cap, os.path.join(out, "IW2_bulkhead_d.jpg"))
     costs_sheet(art, cap, prev, summary, os.path.join(out, "IW7_costs.png"))
     timing_sheet(summary, os.path.join(out, "IW8_timing.png"))
     if prev_dev:
         memory_sheet(art, prev_dev, summary, os.path.join(out,
-                                                          "IW6_memory.png"))
+                                                          "IW6_memory.jpg"))
     with open(os.path.join(out, "integration_summary.json"), "w") as fh:
         json.dump(summary, fh, indent=1, sort_keys=True)
         fh.write("\n")
