@@ -3,12 +3,13 @@
 (Arty, 2026-10-14.)
 
     python3 tools/crossing_capture/five_integration_sheets.py ART CAP OUT \
-        [PREV_METRICS]
+        [PREV_METRICS [PREV_DEV]]
 
 ART is the art build (per weapon <w>/<w>.json, <w>/lean/lean.json and
 <w>/look/; tools/weapon_model.sh). CAP is tools/five_integration.sh's
 output from Prod's range. PREV_METRICS is the folder of the 2026-10-13
-in-range metrics (`<w>_metrics.json`), the "before" of the memory table.
+in-range metrics (`<w>_metrics.json`); PREV_DEV the 10-13 development
+build (per weapon <w>/look/), the "before" of the memory sheet.
 Writes, into OUT:
 
   IW0_lineup.png            the five at rest and firing, from the eye
@@ -20,6 +21,9 @@ Writes, into OUT:
                             firing; the impact on four materials from a
                             second eye 1.8 m off the target, in the same
                             frame; and the mark each leaves
+  IW6_memory.png            the 10-13 model beside the repacked one, same
+                            camera, whole and in the close looks: the
+                            memory came off, the detail did not
   IW7_costs.png             triangles, materials, draw calls, texture
                             memory before and after, clearance
   IW8_timing.png            when each moving part moves against the shot,
@@ -395,6 +399,52 @@ def timing_sheet(summary, out):
     sheet.save(out, optimize=True)
 
 
+# =============================================================== memory
+
+def memory_sheet(art, prev_dev, summary, out):
+    """Before (the 10-13 development model, 2048² RGBA) beside after (the
+    repacked maps at the reviewed density), the same Cycles cameras."""
+    rows = [("sightline", "Sightline", "close_breech"),
+            ("driver", "Mass Driver", "close_rotor")]
+    cw = (W - 120) // 4
+    sheet = Image.new("RGB", (W, 200 + len(rows) * (round(cw * 9 / 16)
+                                                    + 90)), BG)
+    d = ImageDraw.Draw(sheet)
+    title(d, 40, 30, "The memory came off; the detail did not",
+          "The two 2048² weapons as reviewed on 10-13 (left of each pair) "
+          "and repacked (right): the same Cycles cameras. Same density "
+          "floor, same Glyph painting, fewer bytes. Arty, 2026-10-14.")
+    y = 140
+    for key, name, close in rows:
+        s = summary.get(key, {})
+        before = s.get("tex_before_mb")
+        after = s.get("art_cost", {}).get("texture_mem_added_bytes", 0) \
+            / 2 ** 20
+        d.text((40, y), "%s:  %s MB → %.1f MB in the range" % (
+            name, "%.1f" % before if before else "-", after),
+            font=font(22, True), fill=ACCENT)
+        y += 44
+        for i, (view, which) in enumerate(
+                ((("three_q", "before"), ("three_q", "after"),
+                  (close, "before"), (close, "after")))):
+            root = prev_dev if which == "before" else art
+            p = os.path.join(root, key, "look", "look_%s.png" % view)
+            x = 40 + i * (cw + 13)
+            if os.path.exists(p):
+                im = _img(p)
+                im = im.crop((0, (im.height - round(im.width * 9 / 16)) // 2,
+                              im.width, (im.height + round(im.width * 9 / 16))
+                              // 2))
+                sheet.paste(im.resize((cw, round(cw * 9 / 16)),
+                                      Image.LANCZOS), (x, y))
+            d.text((x, y + round(cw * 9 / 16) + 4), "%s, %s" % (
+                "10-13 (2048², RGBA)" if which == "before"
+                else "now (%d², lean)" % s.get("size", 0),
+                view.replace("_", " ")), font=font(16), fill=DIM)
+        y += round(cw * 9 / 16) + 46
+    sheet.save(out, optimize=True)
+
+
 # ================================================================ costs
 
 def costs_sheet(art, cap, prev, summary, out):
@@ -460,6 +510,7 @@ def costs_sheet(art, cap, prev, summary, out):
 def main():
     art, cap, out = sys.argv[1], sys.argv[2], sys.argv[3]
     prev = sys.argv[4] if len(sys.argv) > 4 else ""
+    prev_dev = sys.argv[5] if len(sys.argv) > 5 else ""
     os.makedirs(out, exist_ok=True)
     summary = {}
     for w, v, name, role in CONFIGS:
@@ -490,9 +541,18 @@ def main():
         s["texels_per_metre"] = model.get("texels_per_metre",
                                           1319.0 if w == "foundry" else 0)
         s["model_triangles"] = model.get("triangles")
+        # the "before": the 10-13 GLB measured in this run's renderer when
+        # five_integration.sh ran it (`before=`), else the 10-13 record
+        bf = _load(os.path.join(cap, w + "_before_stills.json"))
         pm = _load(os.path.join(prev, w + "_metrics.json")) if prev else {}
-        if pm:
+        if bf.get("cost"):
+            s["tex_before_mb"] = bf["cost"]["texture_mem_added_bytes"] \
+                / 2 ** 20
+            s["before_cost"] = bf["cost"]
+            s["before_source"] = "this run, the 10-13 GLB"
+        elif pm:
             s["tex_before_mb"] = pm["texture_mem_added_bytes"] / 2 ** 20
+            s["before_source"] = "the 10-13 record (Compatibility)"
         summary[b] = s
         weapon_sheet(cap, w, v, name, role,
                      os.path.join(out, "IW1_%s.png" % b))
@@ -501,6 +561,9 @@ def main():
     bulkhead_sheet(art, cap, os.path.join(out, "IW2_bulkhead_d.png"))
     costs_sheet(art, cap, prev, summary, os.path.join(out, "IW7_costs.png"))
     timing_sheet(summary, os.path.join(out, "IW8_timing.png"))
+    if prev_dev:
+        memory_sheet(art, prev_dev, summary, os.path.join(out,
+                                                          "IW6_memory.png"))
     with open(os.path.join(out, "integration_summary.json"), "w") as fh:
         json.dump(summary, fh, indent=1, sort_keys=True)
         fh.write("\n")
