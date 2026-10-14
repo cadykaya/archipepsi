@@ -213,8 +213,14 @@ func _impacts() -> void:
 		var marks: Array = impacts.get("marks")
 		var row := {"frames_to_hit": waited, "material": last.get("material"),
 				"marks_added": int(impacts.call("live_marks")) - marks_before}
-		if not marks.is_empty() and is_instance_valid(marks[-1]):
-			var decal: Decal = marks[-1]
+		# the mark at the hit (a scattergun adds chips for strays after it)
+		var decal: Decal = null
+		for m in marks:
+			if is_instance_valid(m) and (decal == null
+					or (m as Decal).global_position.distance_to(at)
+					< decal.global_position.distance_to(at)):
+				decal = m
+		if decal != null:
 			var n: Vector3 = last.get("normal", Vector3.BACK)
 			cam.global_position = at + n * 0.55 + Vector3(0.0, 0.08, 0.0)
 			cam.look_at(at, Vector3.UP if absf(n.y) < 0.9 else Vector3.FORWARD)

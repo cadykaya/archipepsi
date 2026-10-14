@@ -292,11 +292,13 @@ def clip_gif(cap, w, v, out, every=2, size=(480, 270)):
 
 # =============================================================== timing
 
-def _runs(ticks):
-    """Contiguous runs of ticks: [(first, last), ...]."""
+def _runs(ticks, gap=2):
+    """Runs of ticks, joining gaps of up to `gap` ticks: the clip renders
+    at 30 fps over 60 physics ticks a second, so an animation advances on
+    every other tick and a still tick between two moves is not a stop."""
     runs = []
     for t in ticks:
-        if runs and t == runs[-1][1] + 1:
+        if runs and t - runs[-1][1] <= gap:
             runs[-1][1] = t
         else:
             runs.append([t, t])
@@ -344,104 +346,95 @@ def timing(clip, events, w):
             "clearance_min_m": min(r["clearance"] for r in rows)}
 
 
+def _ms(tick, s0):
+    return round((tick - s0) * TICK_MS)
+
+
+def _shots_text(r):
+    s0 = r["shots"][0]
+    shots = [_ms(t, s0) for t in r["shots"]]
+    if len(shots) > 3:
+        gaps = sorted({b - a for a, b in zip(shots, shots[1:])})
+        return "%d shots, %s ms apart" % (len(shots), "-".join(
+            str(g) for g in (gaps[0], gaps[-1])) if len(gaps) > 1
+            else str(gaps[0]))
+    return "shots at " + ", ".join("%d" % x for x in shots) + " ms"
+
+
+def _parts_text(r):
+    s0 = r["shots"][0]
+    out = []
+    for key, p in r["parts"].items():
+        runs = p["moving_ticks"]
+        if not runs:
+            out.append("%s still%s" % (key, "" if p["visible"]
+                                       else " (hidden)"))
+            continue
+        txt = ", ".join("%d" % _ms(a, s0) if a == b else "%d-%d" % (
+            _ms(a, s0), _ms(b, s0)) for a, b in runs[:4])
+        if len(runs) > 4:
+            txt += ", … (%d runs)" % len(runs)
+        out.append("%s %s" % (key, txt))
+    return ";  ".join(out)
+
+
+def _same(a, b):
+    """The art moves exactly when the placeholder does: the same shots,
+    readiness, rest, and the same motion runs for every part."""
+    if not a or not b:
+        return None
+    if a["shots"] != b["shots"] or a["ready"] != b["ready"] \
+            or a["gun_at_rest"] != b["gun_at_rest"]:
+        return False
+    return all(a["parts"][k]["moving_ticks"] == b["parts"].get(
+        k, {}).get("moving_ticks") for k in a["parts"])
+
+
 def timing_sheet(summary, out):
-    lines = []
-    for w, v, name, _ in CONFIGS:
-        t = summary[base(w, v)]
-        lines.append((name, t))
-    sheet = Image.new("RGB", (W, 240 + 230 * len(lines)), BG)
+    sheet = Image.new("RGB", (W, 330 + 180 * len(CONFIGS)), BG)
     d = ImageDraw.Draw(sheet)
     title(d, 40, 30, "Timing: the art moves when the runtime says, not "
           "on its own clock",
-          "From the per-tick logs of one burst through the real fire "
-          "input (60 ticks a second, 16.7 ms each), the placeholder and the "
-          "art on the same runtime. Times are from the shot.")
-    y = 140
-    d.text((40, y), "PL = Prod's placeholder, ART = the art. A part "
-           "moving 0-29 ms means it starts on the shot's tick and stops "
-           "29 ms later.", font=font(17), fill=DIM)
-    y += 60
-    for name, t in lines:
+          "Per-tick logs of one burst through the real fire input (60 "
+          "ticks a second, 16.7 ms each); Prod's placeholder and the art on "
+          "the same runtime. Times in ms from the first shot.")
+    caption(d, 40, 120,
+            "Ready = the runtime's cooldown reaches zero. At rest = his rig "
+            "says the gun is home. A part 'moves 617-683' between those "
+            "times; a lone number is a snap (the hammer falling on the "
+            "shot). Glyph flash = the authored muzzle flash started on the "
+            "shot's own tick. Identical = the art's shots, readiness, rest "
+            "and every part's motion match the placeholder's tick for "
+            "tick.", width_chars=210, size=17, fill=DIM)
+    y = 220
+    for w, v, name, _ in CONFIGS:
+        t = summary[base(w, v)]
+        pl, art = t.get("placeholder", {}), t.get("art", {})
+        same = _same(pl, art)
         d.text((40, y), name, font=font(22, True), fill=INK)
-        yy = y + 36
-        for side in ("placeholder", "art"):
-            r = t.get(side, {})
-            if not r:
+        verdict = {True: "IDENTICAL to the placeholder", False:
+                   "DIFFERS from the placeholder", None: "not captured"}[same]
+        d.text((900, y + 2), verdict, font=font(19, True),
+               fill=ACCENT if same else (230, 120, 110))
+        yy = y + 38
+        for label, r in (("PL", pl), ("ART", art)):
+            if not r or not r.get("shots"):
                 continue
-            s0 = r["shots"][0] if r["shots"] else 0
-
-            def ms(tick, s=s0):
-                return "%d" % round((tick - s) * TICK_MS)
-            txt = "%s  shots at %s ms" % (
-                "PL " if side == "placeholder" else "ART",
-                ", ".join(ms(s) for s in r["shots"]))
-            txt += "; ready %s ms" % ", ".join(ms(s) for s in r["ready"])
-            txt += "; back at rest %s ms" % ", ".join(
-                ms(s) for s in r["gun_at_rest"])
-            if side == "art":
+            s0 = r["shots"][0]
+            line = "%-4s %s;  ready %s;  at rest %s" % (
+                label, _shots_text(r),
+                ", ".join(str(_ms(x, s0)) for x in r["ready"][:2]),
+                ", ".join(str(_ms(x, s0)) for x in r["gun_at_rest"][:2]))
+            if label == "ART":
                 fl = r.get("fx_fired_frames", [])
-                txt += "; Glyph flash on the shot's tick: %s" % (
-                    "yes, every shot" if len(fl) == len(r["shots"])
+                line += ";  Glyph flash on the shot's tick: %s" % (
+                    "every shot" if len(fl) == len(r["shots"])
                     else "%d of %d" % (len(fl), len(r["shots"])))
-            d.text((70, yy), txt, font=font(17), fill=INK if side == "art"
-                   else DIM)
-            yy += 28
-            for key, p in r["parts"].items():
-                runs = ", ".join("%s-%s" % (ms(a), ms(b))
-                                 for a, b in p["moving_ticks"][:6])
-                d.text((110, yy), "%s %s: moves %s ms%s" % (
-                    "PL " if side == "placeholder" else "ART", key,
-                    runs or "never (not used by this variant)",
-                    "" if p["visible"] else "; hidden"),
-                    font=font(16), fill=DIM)
-                yy += 24
-        y += 230
-    sheet.save(out, optimize=True)
-
-
-# =============================================================== memory
-
-def memory_sheet(art, prev_dev, summary, out):
-    """Before (the 10-13 development model, 2048² RGBA) beside after (the
-    repacked maps at the reviewed density), the same Cycles cameras."""
-    rows = [("sightline", "Sightline", "close_breech"),
-            ("driver", "Mass Driver", "close_rotor")]
-    cw = (W - 120) // 4
-    sheet = Image.new("RGB", (W, 200 + len(rows) * (round(cw * 9 / 16)
-                                                    + 90)), BG)
-    d = ImageDraw.Draw(sheet)
-    title(d, 40, 30, "The memory came off; the detail did not",
-          "The two 2048² weapons as reviewed on 10-13 (left of each pair) "
-          "and repacked (right): the same Cycles cameras. Same density "
-          "floor, same Glyph painting, fewer bytes. Arty, 2026-10-14.")
-    y = 140
-    for key, name, close in rows:
-        s = summary.get(key, {})
-        before = s.get("tex_before_mb")
-        after = s.get("art_cost", {}).get("texture_mem_added_bytes", 0) \
-            / 2 ** 20
-        d.text((40, y), "%s:  %s MB → %.1f MB in the range" % (
-            name, "%.1f" % before if before else "-", after),
-            font=font(22, True), fill=ACCENT)
-        y += 44
-        for i, (view, which) in enumerate(
-                ((("three_q", "before"), ("three_q", "after"),
-                  (close, "before"), (close, "after")))):
-            root = prev_dev if which == "before" else art
-            p = os.path.join(root, key, "look", "look_%s.png" % view)
-            x = 40 + i * (cw + 13)
-            if os.path.exists(p):
-                im = _img(p)
-                im = im.crop((0, (im.height - round(im.width * 9 / 16)) // 2,
-                              im.width, (im.height + round(im.width * 9 / 16))
-                              // 2))
-                sheet.paste(im.resize((cw, round(cw * 9 / 16)),
-                                      Image.LANCZOS), (x, y))
-            d.text((x, y + round(cw * 9 / 16) + 4), "%s, %s" % (
-                "10-13 (2048², RGBA)" if which == "before"
-                else "now (%d², lean)" % s.get("size", 0),
-                view.replace("_", " ")), font=font(16), fill=DIM)
-        y += round(cw * 9 / 16) + 46
+            d.text((70, yy), line, font=font(17),
+                   fill=INK if label == "ART" else DIM)
+            d.text((110, yy + 26), _parts_text(r), font=font(16), fill=DIM)
+            yy += 60
+        y += 180
     sheet.save(out, optimize=True)
 
 
