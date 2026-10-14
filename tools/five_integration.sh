@@ -21,7 +21,9 @@
 # "before" of the texture-memory comparison, in the same renderer.
 # SIDES="art" re-runs only the art (default: "placeholder art").
 # MODES="stills" runs only some modes (default: "stills impacts clip").
-# NORMAL=rg loads the art's normal map as RG8 (tags <base>_art_rg).
+# The art's normal map loads as RG8 (Godot's shader rebuilds Z: pixel-
+# identical, 18% less texture memory); NORMAL=rgb loads it as imported,
+# RGB8 (tags <base>_art_rgb).
 #
 # The renderer is the game's own, Forward+ (Prod's project sets no other),
 # on Mesa's software Vulkan (lavapipe; `apt-get install mesa-vulkan-drivers`
@@ -79,10 +81,10 @@ for entry in "${WEAPONS[@]}"; do
     [ -n "$v" ] && var=(--variant="$v")
     base="$w${v:+_$v}"
     art=(--glb="$ART/$w/${w}_geo.glb" --lean="$ART/$w/lean" --fx="$FX"
-         --normal="${NORMAL:-rgb}")
+         --normal="${NORMAL:-rg}")
     for side in ${SIDES:-placeholder art}; do
         tag="${base}_$side"
-        [ "$side" = art ] && [ "${NORMAL:-rgb}" = rg ] && tag="${tag}_rg"
+        [ "$side" = art ] && [ "${NORMAL:-rg}" = rgb ] && tag="${tag}_rgb"
         extra=()
         [ "$side" = art ] && extra=("${art[@]}")
         for mode in ${MODES:-stills impacts clip}; do
