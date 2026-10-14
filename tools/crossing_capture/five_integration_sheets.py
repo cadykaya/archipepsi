@@ -552,8 +552,13 @@ def main():
         s["size"] = lean.get("size", [0])[0]
         s["lean_bytes_with_mips"] = lean.get("bytes_with_mips", {})
         model = _load(os.path.join(art, w, w + ".json")).get("metrics", {})
-        s["texels_per_metre"] = model.get("texels_per_metre",
-                                          1319.0 if w == "foundry" else 0)
+        if w == "foundry":
+            # the approved study's own record (its geometry is reproduced
+            # exactly, its UV fingerprint checked: foundry_geometry.py)
+            model = _load(os.path.join(os.path.dirname(os.path.abspath(
+                __file__)), "..", "..", "docs", "art", "review",
+                "foundry_study_2026-10-13", "model", "foundry_study.json"))
+        s["texels_per_metre"] = model.get("texels_per_metre", 0)
         s["model_triangles"] = model.get("triangles")
         # the "before": the 10-13 GLB measured in this run's renderer when
         # five_integration.sh ran it (`before=`), else the 10-13 record
