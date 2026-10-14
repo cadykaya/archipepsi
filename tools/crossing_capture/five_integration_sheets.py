@@ -227,10 +227,12 @@ def weapon_sheet(cap, w, v, name, role, out):
                 if "screen_share" in c:
                     sub += "; %.1f%% of the screen; crosshair %s" % (
                         100 * c["screen_share"],
-                        "COVERED" if c["covers_crosshair"] else "clear")
-            _label(d, x, y + 4, "%s, %s" % (
+                        ("under the sights, as aimed" if vw == "ads"
+                         else "COVERED") if c["covers_crosshair"]
+                        else "clear")
+            _label(d, x, y - 4, "%s, %s" % (
                 "Placeholder" if side == "placeholder" else "Art", say[vw]))
-            d.text((x + 560, y + 8), sub, font=font(16), fill=DIM)
+            d.text((x, y + 22), sub, font=font(16), fill=DIM)
         y += vh + 60
     for block, (suffix, what) in enumerate((
             ("impact_%s_near", "THE HIT, from a second eye 1.8 m off the "
