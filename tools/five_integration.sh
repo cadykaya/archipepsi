@@ -16,6 +16,11 @@
 #   impacts  (--fixed-fps 60)  metal, stone, wood, gel: impact and mark
 #   clip     (--fixed-fps 30, movie frames)  a burst, every frame logged
 #
+# An entry `before=<weapon>=<glb>` instead runs only the stills of a GLB as
+# it was delivered before (its maps embedded), tagged <weapon>_before: the
+# "before" of the texture-memory comparison, in the same renderer.
+# SIDES="art" re-runs only the art (default: "placeholder art").
+#
 # The renderer is the game's own, Forward+ (Prod's project sets no other),
 # on Mesa's software Vulkan (lavapipe; `apt-get install mesa-vulkan-drivers`
 # on a GPU-less machine). Not Compatibility: the bullet marks are Decals,
@@ -58,6 +63,13 @@ run() {   # tag fps extra-godot-args -- script args...
 }
 
 for entry in "${WEAPONS[@]}"; do
+    if [ "${entry%%=*}" = before ]; then
+        rest="${entry#before=}"
+        w="${rest%%=*}"
+        run "${w}_before" 60 -- --weapon="$w" --glb="$(cd "$(dirname \
+            "${rest#*=}")" && pwd)/$(basename "${rest#*=}")" --mode=stills
+        continue
+    fi
     w="${entry%%:*}"
     v=""
     [ "$entry" != "$w" ] && v="${entry#*:}"
@@ -65,7 +77,7 @@ for entry in "${WEAPONS[@]}"; do
     [ -n "$v" ] && var=(--variant="$v")
     base="$w${v:+_$v}"
     art=(--glb="$ART/$w/${w}_geo.glb" --lean="$ART/$w/lean" --fx="$FX")
-    for side in placeholder art; do
+    for side in ${SIDES:-placeholder art}; do
         tag="${base}_$side"
         extra=()
         [ "$side" = art ] && extra=("${art[@]}")
