@@ -19,7 +19,7 @@ Each weapon is one **geometry GLB** plus five **maps**. The GLB carries no textu
 
     models/<weapon>/<weapon>_geo.glb   the model: Body, its moving nodes, Muzzle
     models/<weapon>/lean/albedo.png     RGB   colour
-    models/<weapon>/lean/normal.png     RGB   tangent-space normals (OpenGL, +Y)
+    models/<weapon>/lean/normal.png     RGB   tangent-space normals (OpenGL, +Y); load as RG8
     models/<weapon>/lean/roughness.png  L     grey
     models/<weapon>/lean/metallic.png   L     grey
     models/<weapon>/lean/emission.png   L     the lamp's intensity mask
@@ -29,19 +29,24 @@ How they are made: `tools/weapon_model.sh` builds Sightline, Switchback, Bulkhea
 
 ### Import (the Godot import dock)
 
-| Map | Compress mode | Mipmaps | Other |
-|---|---|---|---|
-| albedo, roughness, metallic, emission | **Lossless** | on | — |
-| normal | **Lossless** | on | Normal Map: **Enable** |
+All five maps: **Compress Mode: Lossless, Mipmaps: on**, which is how your project already imports 239 of its 241 PNGs. Lossless keeps a grey PNG as L8 (one byte a texel). VRAM compression would change the texels the owner reviewed, so it is not used here. If you want it later, that is a separate measured decision, taken with her.
 
-Lossless keeps RGB8 as RGB8 and L8 as L8. VRAM compression would change the texels the owner reviewed, so it is not used here. If you want VRAM compression later, that is a separate measured decision, taken with her.
+**Load the normal map as RG8.** Godot's shader reads a normal map's X and Y and rebuilds Z. In your range, all five weapons render pixel-identical with the normal as RG8 and as RGB8: zero pixels differ in the rest frames. RG8 takes 2 bytes a texel. An RGB8 texture is padded to RGBA8 on the GPU, which takes 4. Godot's Lossless import keeps a normal map RGB8 whether or not "Normal Map" is set and whichever channel pack is chosen; both were tested. So the conversion happens at load:
+
+    var img := (load("res://…/normal.png") as Texture2D).get_image()
+    img.convert(Image.FORMAT_RG8)
+    if not img.has_mipmaps():
+        img.generate_mipmaps()
+    material.normal_texture = ImageTexture.create_from_image(img)
+
+`_tex(file, rg)` in `tools/crossing_capture/five_integration.gd` is the reference. That route saves 18% of each weapon's texture memory (see §4).
 
 ### The material (one per weapon; every surface uses it)
 
     StandardMaterial3D
       texture_filter            = NEAREST_WITH_MIPMAPS   (the art bible)
       albedo_texture            = albedo.png
-      normal_enabled            = true;  normal_texture = normal.png
+      normal_enabled            = true;  normal_texture = normal.png as RG8
       roughness = 1.0;  roughness_texture = roughness.png
       roughness_texture_channel = GRAYSCALE
       metallic  = 1.0;  metallic_texture  = metallic.png
@@ -57,7 +62,18 @@ Lossless keeps RGB8 as RGB8 and L8 as L8. VRAM compression would change the texe
 
 The node names are the ones your rig already looks up. Swap the model in under your `models[w]` node and **keep your runtime-owned children** (`Muzzle`, and on the driver `ChargeOrb` and `ChargeLight`). Freeing them breaks `show_charge` and your muzzle anchoring. `_swap()` in the capture script is the reference.
 
-PARTS_TABLE
+| Your part | Model node | Pivot (model space, m) | Your motion | In your range |
+|---|---|---|---|---|
+| `foundry/hammer` | `Hammer` | (0, 0.052, −0.022), turns on X | cocked −38°, falls to 0 on the shot, re-cocks before ready | falls on the shot's tick, re-cocks 617–683 ms, ready at 717 ms: identical to your placeholder |
+| `foundry/cylinder` | `Carousel` via `CarouselDrive` | (0, 0.006, −0.061), turns on Z, 60° a chamber | your `_index_drum` | indexes 317–483 ms: identical |
+| `sightline/handle` | `Handle` | (0, 0.021, −0.080) | `_stroke` 0.022 m back | see the timing sheet |
+| `switchback/bolt` | `Bolt` | (−0.032, 0.021, −0.112) | 0.035 m back each round | 0–33 ms each round, 13 rounds: identical |
+| `bulkhead/pump` | `Pump` | (0, −0.050, −0.303) | 0.1 m back at 0.72 s (Breacher) | 717–950 ms: identical |
+| `bulkhead/feed` | `Feed` | (0, −0.052, −0.120) | shown for the Sweeper only | hidden on the Breacher, shown on the Sweeper |
+| `driver/coils` | `Coils` (the rotor) | (0, 0, −0.150) | `rotation.z` spins with the charge | see the timing sheet |
+| `driver/core` | `Core` (the accumulator) | (0, −0.062, −0.055) | glow through `material_override` | see below |
+
+Muzzles sit at your `MUZZLES[w].at`: Foundry (0, 0.03, −0.47), Sightline (0, 0.025, −0.74), Switchback (0, 0.02, −0.42), Bulkhead (0, 0.02, −0.50), Mass Driver (0, 0, −0.62).
 
 **The Foundry's carousel adapter.** Your `_index_drum` writes `Basis(RIGHT, PI/2) * Basis(UP, a)` for a Y-up drum, but the art's carousel turns on its own Z. The capture inserts a `CarouselDrive` node between the two, unchanged from the study, and your index then reads correctly. You could do the same, or write the carousel's Z rotation directly. Either is yours to choose.
 
