@@ -3549,6 +3549,18 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Ruling, 2026-10-16 — the five-weapon package goes into the first unified review build
+
+* The owner: the approved five-weapon art package is Prod's starting point
+  for the first unified Archipepsi review build.
+* The art lane supports him only with specific integration issues: weapon
+  models, Glyph VFX, animation, muzzle attachment, materials. The fix is
+  the smallest necessary, with a precise handoff.
+* No redesign and no new asset batch unless a genuine integration problem
+  requires it. Keep the worn, welded, richly textured sci-fi identity.
+  Otherwise, rest.
+* As of 2026-10-16, no issue is open: Prod's `review/d22-slice` names none.
+
 ### Delivered, 2026-10-14 — the five weapons as an integration candidate. STOPPED for the owner's in-game review.
 
 * Bulkhead D (Fan) developed: tie strap and collars across the bores,

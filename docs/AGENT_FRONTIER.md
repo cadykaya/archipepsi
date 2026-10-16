@@ -194,6 +194,18 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-16 (owner): the five-weapon art package is approved as the
+  starting point for Prod's first unified review build. The art lane is on
+  call, not working.**
+  * Support Prod only with specific integration problems that appear:
+    weapon models, Glyph VFX, animation, muzzle attachment, materials.
+  * Each fix is the smallest that solves it, with a precise written
+    handoff.
+  * No visual redesign and no new asset batch unless a real integration
+    problem requires one.
+  * Keep the worn, welded, richly textured identity.
+  * Checked 2026-10-16: Prod's newest branch (`review/d22-slice`, `7ab7526f`)
+    names no weapon or art issue. Nothing is open for the art lane.
 * **2026-10-14 (delivered): the five weapons as an integration candidate.
   STOP for the owner's in-game review.** Branch
   `claude/archipepsi-art-weapon-integration-2026-10-14`.
