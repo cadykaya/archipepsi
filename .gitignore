@@ -69,3 +69,4 @@ godot/tests/fixtures/sample/layouts/
 .ordinary-live-saves/
 saves-d22-slice*/
 .d22-slice-check/
+.unified-check/

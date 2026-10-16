@@ -38,6 +38,8 @@ func _run() -> void:
 		match phase_from_cmdline():
 			"weapons":
 				await _phase_weapons()
+			"art":
+				await _phase_art()
 			_:
 				_check(false, "no --unified-live phase was named")
 	_save_state()
@@ -166,6 +168,153 @@ func _phase_weapons() -> void:
 			"a Foundry shot takes 15 from a Crossing enemy (%.1f -> %s)"
 			% [hp_before, str(enemy.hp) if is_instance_valid(enemy) else "dead"])
 	_state["weapons_zone"] = zid
+
+
+# -- art ------------------------------------------------------------------------
+
+## Arty's weapons and Glyph effects on the game's player, and her two
+## reported issues: Mass Driver impacts that never entered the world, and
+## effect nodes renamed on repeated hits (counted by list, never by name).
+func _phase_art() -> void:
+	if not await _await_live("the campaign",
+			func() -> bool: return BridgeClient.hub_mode() != "NO_CAMPAIGN",
+			30.0):
+		return
+	var hub := await _the_hub()
+	if hub == null:
+		return
+	var armory: UnifiedArmory = main.armory
+	var w := armory.weapons
+	var rig := w.rig
+	_check(armory.dressed.size() == 5,
+			"all five weapons wear Arty's art (%s)" % ", ".join(armory.dressed))
+	for id: String in RangeWeapons.IDS:
+		var model: Node3D = rig.models[id]
+		var art := model.get_node_or_null("WeaponArt")
+		var muzzle := model.get_node_or_null("Muzzle")
+		var placeholder := 0
+		for child in model.get_children():
+			if not String(child.name) in WeaponArt.RIG_OWNED \
+					and child != art and not child.is_queued_for_deletion():
+				placeholder += 1
+		_check(art != null and muzzle != null and placeholder == 0,
+				"%s: the art is in, the rig's Muzzle kept, no placeholder left"
+				% id)
+		for key: String in WeaponArt.PARTS[id]:
+			var part: Node3D = (rig.get("_parts") as Dictionary).get(id + "/" + key)
+			_check(part != null and art != null and art.is_ancestor_of(part)
+					or (part != null and String(part.name) == "CarouselDrive"),
+					"%s/%s drives the art's %s" % [id, key, WeaponArt.PARTS[id][key]])
+		var lean: StandardMaterial3D = WeaponArt._materials.get(id)
+		_check(lean != null
+				and lean.emission_operator == BaseMaterial3D.EMISSION_OP_MULTIPLY
+				and lean.normal_texture.get_image().get_format() == Image.FORMAT_RG8
+				and lean.texture_filter
+						== BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS,
+				"%s: lean material (MULTIPLY lamp, RG8 normal, nearest+mips)" % id)
+	var core := (rig.get("_parts") as Dictionary).get("driver/core") as MeshInstance3D
+	# Every sheet fx.json names loads, as it will in an exported build.
+	var unloaded: Array[String] = []
+	var sheets: Dictionary = armory.fx.fx
+	for sheet: String in sheets:
+		if sheet.begins_with("_"):
+			continue
+		var path := armory.fx.fx_dir.path_join(String(sheets[sheet]["file"]))
+		if not load(path) is Texture2D:
+			unloaded.append(sheet)
+	_check(unloaded.is_empty() and sheets.size() > 30,
+			"all %d Glyph sheets load through the importer%s" % [sheets.size() - 1,
+			"" if unloaded.is_empty() else " (missing: %s)" % ", ".join(unloaded)])
+	_check(core != null and core.material_override is StandardMaterial3D
+			and (core.material_override as StandardMaterial3D).emission_operator
+					== BaseMaterial3D.EMISSION_OP_ADD,
+			"the Driver's core glow is the ADD override the rig drives")
+
+	# Face the back wall, 13 m off.
+	_look_at(hub.player, hub.player.global_position + Vector3(0, 1.0, 10))
+	# One shot each: its authored flash plays on the shot.
+	for key: int in [KEY_1, KEY_2, KEY_4]:
+		await _key(key)
+		var fired := _fx_events("fired").size()
+		await _press("fire_pulse")
+		await _settle(30)
+		_check(_fx_events("fired").size() == fired + 1,
+				"%s: one authored flash on the shot" % armory.out())
+		await _settle(90)
+
+	# Arty's issue 2: a burst, every hit counted by list, never by name.
+	await _key(KEY_3)
+	var impacts_before := _fx_events("impact").size()
+	var marks_before := _fx_events("mark").size()
+	var shots_before := w.shots
+	Input.action_press("fire_pulse")
+	for _i in 120:
+		await get_tree().physics_frame
+	Input.action_release("fire_pulse")
+	await _settle(40)
+	var rounds := w.shots - shots_before
+	var fx_impacts := _fx_events("impact").size() - impacts_before
+	var fx_marks := _fx_events("mark").size() - marks_before
+	var renamed := 0
+	for node: Variant in w.impacts.marks:
+		if node is Node and is_instance_valid(node) \
+				and String((node as Node).name).begins_with("@"):
+			renamed += 1
+	_check(rounds >= 10 and fx_impacts == rounds and fx_marks == rounds,
+			"Switchback burst: %d rounds, %d authored impacts, %d authored marks"
+			% [rounds, fx_impacts, fx_marks])
+	_note("issue 2: %d of the burst's marks carry Godot's renamed form "
+			% renamed + "(@...), and every one was still counted (by list)")
+
+	# Arty's issue 1: the Mass Driver's impact and its sound enter the world.
+	await _key(KEY_5)
+	await _settle(30)
+	var sounds_before := _impact_sounds(hub).size()
+	Input.action_press("fire_pulse")
+	await _settle(110)
+	Input.action_release("fire_pulse")
+	var landed := false
+	for _i in 120:
+		await get_tree().physics_frame
+		if not w.last_slug.is_empty():
+			landed = true
+			break
+	await _settle(4)
+	var last: Dictionary = w.impacts.last
+	var root: Variant = last.get("root")
+	_check(landed and root is Node3D and is_instance_valid(root)
+			and (root as Node3D).is_inside_tree(),
+			"Mass Driver: the impact's sparks/light root is in the world")
+	_check(_impact_sounds(hub).size() > sounds_before,
+			"Mass Driver: the impact sound is in the world and playing")
+	var orphan := false
+	for e: Dictionary in _fx_events("impact"):
+		if String(e.get("weapon", "")) == "driver" and bool(e.get("orphan", false)):
+			orphan = true
+	_check(not orphan,
+			"Mass Driver: the authored impact plays from the impact itself, "
+			+ "not the adapter's fallback")
+
+
+func _fx_events(kind: String) -> Array:
+	var out: Array = []
+	var armory: UnifiedArmory = main.armory
+	for e: Dictionary in armory.fx.events:
+		if String(e.get("event", "")) == kind:
+			out.append(e)
+	return out
+
+
+## Positional impact sounds alive in the tree.
+func _impact_sounds(_hub: Node) -> Array:
+	var out: Array = []
+	for node: Node in get_tree().root.find_children("*", "AudioStreamPlayer3D",
+			true, false):
+		var sound := node as AudioStreamPlayer3D
+		if sound.is_inside_tree() and sound.stream != null \
+				and sound.stream.resource_path.get_file().contains("impact"):
+			out.append(sound)
+	return out
 
 
 func _key(key: int) -> void:

@@ -769,7 +769,11 @@ func _adopt(slug: EchoProjectile, ratio: float, muzzle: Vector3) -> void:
 	var record := {"node": slug, "last": slug.global_position,
 			"dir": slug.direction, "speed": slug.speed, "ratio": ratio}
 	_slugs.append(record)
-	slug.tree_exiting.connect(_slug_end.bind(record))
+	# DEFERRED (Arty, 2026-10-14 integration note §5): `tree_exiting` runs
+	# while the slug's parent is busy removing it, and an `add_child` made
+	# there fails -- the impact's sparks, light and sound never entered the
+	# world. `_slug_end` reads only the record, so a frame later is the same.
+	slug.tree_exiting.connect(_slug_end.bind(record), CONNECT_DEFERRED)
 	_reskin.call_deferred(slug, ratio, muzzle)
 
 

@@ -1,0 +1,818 @@
+{
+  "_kit": {
+    "glyph": "ECMS Glyph CLI, revision 87db9e2",
+    "layout": "one row a sheet, frame 0 at the left; nearest filter",
+    "loops": "'variants' = pick a frame (random or by rule), not a clip; 'by_charge' = frame by charge quarter",
+    "material_tag": "Prod's `impact_material` meta (metal | stone | wood | flesh), as on review/hand-cannon",
+    "status": "CANDIDATE (Arty, 2026-10-10), Batch 068, for the five-weapon range; supersedes Batch 067 (not approved)"
+  },
+  "bulkhead_blast": {
+    "blend": "mix",
+    "cell": [
+      96,
+      96
+    ],
+    "colours": 56,
+    "durations_ms": [
+      33,
+      50,
+      83,
+      117
+    ],
+    "event": "impact:pattern centre",
+    "file": "bulkhead/bulkhead_blast.png",
+    "frames": 4,
+    "loop": "once",
+    "note": "ONE central blast per shot per surface, not one per pellet",
+    "order": 2,
+    "orient": "billboard at the pattern's centre",
+    "size_m": 0.9,
+    "weapon": "bulkhead"
+  },
+  "bulkhead_flash": {
+    "at": "muzzle",
+    "blend": "add",
+    "cell": [
+      128,
+      64
+    ],
+    "colours": 88,
+    "durations_ms": [
+      17,
+      25,
+      40
+    ],
+    "event": "fired",
+    "file": "bulkhead/bulkhead_flash.png",
+    "frames": 3,
+    "loop": "once",
+    "note": "a flat, wide spray with pellet spikes, much wider than tall",
+    "order": 3,
+    "orient": "billboard (wide)",
+    "size_m": 0.7,
+    "weapon": "bulkhead"
+  },
+  "bulkhead_mark": {
+    "blend": "mix",
+    "cell": [
+      64,
+      64
+    ],
+    "colours": 88,
+    "durations_ms": [
+      1
+    ],
+    "event": "mark:pattern",
+    "file": "bulkhead/bulkhead_mark.png",
+    "frames": 1,
+    "loop": "variants",
+    "note": "one coherent pattern: a centre and its pocks",
+    "order": 1,
+    "orient": "decal at the centre",
+    "size_m": 0.45,
+    "weapon": "bulkhead"
+  },
+  "bulkhead_pellet": {
+    "blend": "add",
+    "cell": [
+      64,
+      4
+    ],
+    "colours": 5,
+    "durations_ms": [
+      25
+    ],
+    "event": "projectile (per pellet)",
+    "file": "bulkhead/bulkhead_pellet.png",
+    "frames": 1,
+    "loop": "hold_last",
+    "note": "thin, many, short-lived",
+    "order": 1,
+    "orient": "axis ribbon",
+    "size_m": 0.4,
+    "weapon": "bulkhead"
+  },
+  "bulkhead_smoke": {
+    "at": "muzzle (world)",
+    "blend": "mix",
+    "cell": [
+      96,
+      64
+    ],
+    "colours": 8,
+    "durations_ms": [
+      70,
+      90,
+      120,
+      160,
+      200,
+      260
+    ],
+    "event": "fired",
+    "file": "bulkhead/bulkhead_smoke.png",
+    "frames": 6,
+    "loop": "once",
+    "note": "a thick wide cloud",
+    "order": 1,
+    "orient": "billboard",
+    "size_m": 0.6,
+    "weapon": "bulkhead"
+  },
+  "decal_flesh_mark": {
+    "blend": "mix",
+    "cell": [
+      48,
+      48
+    ],
+    "colours": 8,
+    "durations_ms": [
+      1
+    ],
+    "event": "mark:flesh",
+    "file": "marks/decal_flesh_mark.png",
+    "frames": 1,
+    "loop": "variants",
+    "note": "puncture, wet rim, muted bruise; no gore",
+    "order": 1,
+    "orient": "decal on the hit normal",
+    "size_m": 0.18,
+    "weapon": "marks"
+  },
+  "decal_metal_dent": {
+    "blend": "mix",
+    "cell": [
+      48,
+      48
+    ],
+    "colours": 88,
+    "durations_ms": [
+      1
+    ],
+    "event": "mark:metal",
+    "file": "marks/decal_metal_dent.png",
+    "frames": 1,
+    "loop": "variants",
+    "note": "heavy blunt hits (Mass Driver; Bulkhead's centre)",
+    "order": 1,
+    "orient": "decal on the hit normal",
+    "size_m": 0.2,
+    "weapon": "marks"
+  },
+  "decal_metal_hole": {
+    "blend": "mix",
+    "cell": [
+      48,
+      48
+    ],
+    "colours": 38,
+    "durations_ms": [
+      1,
+      1
+    ],
+    "event": "mark:metal",
+    "file": "marks/decal_metal_hole.png",
+    "frames": 2,
+    "loop": "variants",
+    "note": "black bore, bright scraped rim, chipped paint, soot",
+    "order": 1,
+    "orient": "decal on the hit normal; random roll",
+    "size_m": 0.16,
+    "weapon": "marks"
+  },
+  "decal_stone_crater": {
+    "blend": "mix",
+    "cell": [
+      48,
+      48
+    ],
+    "colours": 88,
+    "durations_ms": [
+      1,
+      1
+    ],
+    "event": "mark:stone",
+    "file": "marks/decal_stone_crater.png",
+    "frames": 2,
+    "loop": "variants",
+    "note": "chipped crater, cracks, dust halo",
+    "order": 1,
+    "orient": "decal on the hit normal; random roll",
+    "size_m": 0.24,
+    "weapon": "marks"
+  },
+  "decal_wood_mark": {
+    "blend": "mix",
+    "cell": [
+      48,
+      48
+    ],
+    "colours": 8,
+    "durations_ms": [
+      1
+    ],
+    "event": "mark:wood",
+    "file": "marks/decal_wood_mark.png",
+    "frames": 1,
+    "loop": "variants",
+    "note": "for Prod's timber crate",
+    "order": 1,
+    "orient": "decal; +X along the grain",
+    "size_m": 0.18,
+    "weapon": "marks"
+  },
+  "foundry_afterglow": {
+    "at": "muzzle",
+    "blend": "add",
+    "cell": [
+      16,
+      16
+    ],
+    "colours": 8,
+    "durations_ms": [
+      50,
+      80,
+      120,
+      200
+    ],
+    "event": "fired",
+    "file": "foundry/foundry_afterglow.png",
+    "frames": 4,
+    "loop": "once",
+    "note": "the bore's ember after the flash",
+    "order": 5,
+    "orient": "billboard",
+    "size_m": 0.05,
+    "weapon": "foundry"
+  },
+  "foundry_brake_tongue": {
+    "at": "brake_port_l / brake_port_r",
+    "blend": "add",
+    "cell": [
+      96,
+      32
+    ],
+    "colours": 14,
+    "durations_ms": [
+      17,
+      17,
+      33
+    ],
+    "event": "fired",
+    "file": "foundry/foundry_brake_tongue.png",
+    "frames": 3,
+    "loop": "once",
+    "note": "side tongues out of the muzzle brake's ports",
+    "order": 2,
+    "orient": "plane, +X out of each brake port (two, mirrored)",
+    "size_m": 0.36,
+    "weapon": "foundry"
+  },
+  "foundry_flash_core": {
+    "at": "muzzle",
+    "blend": "add",
+    "cell": [
+      32,
+      32
+    ],
+    "colours": 8,
+    "durations_ms": [
+      17,
+      17
+    ],
+    "event": "fired",
+    "file": "foundry/foundry_flash_core.png",
+    "frames": 2,
+    "loop": "once",
+    "note": "white-hot centre; drawn last, on top",
+    "order": 4,
+    "orient": "billboard",
+    "size_m": 0.18,
+    "weapon": "foundry"
+  },
+  "foundry_flash_flare": {
+    "at": "muzzle",
+    "blend": "add",
+    "cell": [
+      96,
+      96
+    ],
+    "colours": 16,
+    "durations_ms": [
+      17,
+      17,
+      33
+    ],
+    "event": "fired",
+    "file": "foundry/foundry_flash_flare.png",
+    "frames": 3,
+    "loop": "once",
+    "note": "irregular orange flare; roll it randomly per shot",
+    "order": 3,
+    "orient": "billboard",
+    "size_m": 0.5,
+    "weapon": "foundry"
+  },
+  "foundry_slug": {
+    "at": "the round, muzzle -> resolved hit",
+    "blend": "add",
+    "cell": [
+      32,
+      16
+    ],
+    "colours": 15,
+    "durations_ms": [
+      17,
+      17
+    ],
+    "event": "projectile",
+    "file": "foundry/foundry_slug.png",
+    "frames": 2,
+    "loop": "loop",
+    "note": "the hot round itself",
+    "order": 2,
+    "orient": "axis: +X along travel, face the camera",
+    "size_m": 0.16,
+    "weapon": "foundry"
+  },
+  "foundry_smoke": {
+    "at": "muzzle (world)",
+    "blend": "mix",
+    "cell": [
+      64,
+      64
+    ],
+    "colours": 8,
+    "durations_ms": [
+      60,
+      80,
+      100,
+      140,
+      180,
+      240
+    ],
+    "event": "fired",
+    "file": "foundry/foundry_smoke.png",
+    "frames": 6,
+    "loop": "once",
+    "note": "residual smoke; starts 0.25 m ahead of the muzzle, drifts up ~0.3 m over 0.8 s",
+    "order": 1,
+    "orient": "billboard, world-anchored where the shot left the barrel",
+    "size_m": 0.4,
+    "weapon": "foundry"
+  },
+  "foundry_trail": {
+    "at": "behind the round",
+    "blend": "mix",
+    "cell": [
+      128,
+      16
+    ],
+    "colours": 12,
+    "durations_ms": [
+      60
+    ],
+    "event": "projectile",
+    "file": "foundry/foundry_trail.png",
+    "frames": 1,
+    "loop": "hold_last",
+    "note": "hot near the round, smoke behind",
+    "order": 1,
+    "orient": "axis ribbon: +X head end",
+    "size_m": 1.6,
+    "weapon": "foundry"
+  },
+  "impact_flesh_splash": {
+    "blend": "mix",
+    "cell": [
+      64,
+      64
+    ],
+    "colours": 9,
+    "durations_ms": [
+      33,
+      50,
+      83,
+      117
+    ],
+    "event": "impact:flesh",
+    "file": "impacts/impact_flesh_splash.png",
+    "frames": 4,
+    "loop": "once",
+    "note": "a soft wet burst, muted, not gore; no light, no sparks",
+    "order": 2,
+    "orient": "billboard",
+    "size_m": 0.45,
+    "weapon": "impacts"
+  },
+  "impact_metal_flash": {
+    "blend": "add",
+    "cell": [
+      64,
+      64
+    ],
+    "colours": 77,
+    "durations_ms": [
+      17,
+      17,
+      33
+    ],
+    "event": "impact:metal",
+    "file": "impacts/impact_metal_flash.png",
+    "frames": 3,
+    "loop": "once",
+    "note": "white-hot star breaking into streaks; Prod's 3D sparks fly from the same point",
+    "order": 3,
+    "orient": "billboard at hit + normal * 0.03",
+    "size_m": 0.5,
+    "weapon": "impacts"
+  },
+  "impact_metal_heat": {
+    "blend": "add",
+    "cell": [
+      32,
+      32
+    ],
+    "colours": 11,
+    "durations_ms": [
+      120,
+      300,
+      600,
+      1000
+    ],
+    "event": "impact:metal",
+    "file": "impacts/impact_metal_heat.png",
+    "frames": 4,
+    "loop": "once",
+    "note": "the hole's hot rim cooling over ~2 s, then gone; the hole stays",
+    "order": 2,
+    "orient": "surface (on the normal), over the hole decal",
+    "size_m": 0.16,
+    "weapon": "impacts"
+  },
+  "impact_metal_smoke": {
+    "blend": "mix",
+    "cell": [
+      48,
+      48
+    ],
+    "colours": 7,
+    "durations_ms": [
+      60,
+      80,
+      120,
+      160,
+      220
+    ],
+    "event": "impact:metal",
+    "file": "impacts/impact_metal_smoke.png",
+    "frames": 5,
+    "loop": "once",
+    "note": "a wisp off the struck steel",
+    "order": 1,
+    "orient": "billboard",
+    "size_m": 0.35,
+    "weapon": "impacts"
+  },
+  "impact_stone_chips": {
+    "blend": "mix",
+    "cell": [
+      24,
+      8
+    ],
+    "colours": 34,
+    "durations_ms": [
+      1
+    ],
+    "event": "impact:stone",
+    "file": "impacts/impact_stone_chips.png",
+    "frames": 1,
+    "loop": "variants",
+    "note": "Prod's chip particles: pick a variant",
+    "order": 1,
+    "orient": "particle quad (three variants side by side)",
+    "size_m": 0.03,
+    "weapon": "impacts"
+  },
+  "impact_stone_dust": {
+    "blend": "mix",
+    "cell": [
+      96,
+      96
+    ],
+    "colours": 62,
+    "durations_ms": [
+      33,
+      50,
+      83,
+      117,
+      167
+    ],
+    "event": "impact:stone",
+    "file": "impacts/impact_stone_dust.png",
+    "frames": 5,
+    "loop": "once",
+    "note": "dust jets, then a billowing cloud; no light, no sparks",
+    "order": 2,
+    "orient": "billboard at hit + normal * 0.05",
+    "size_m": 0.8,
+    "weapon": "impacts"
+  },
+  "massdriver_charge": {
+    "at": "accumulator",
+    "blend": "add",
+    "cell": [
+      64,
+      32
+    ],
+    "colours": 12,
+    "durations_ms": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "event": "charging",
+    "file": "massdriver/massdriver_charge.png",
+    "frames": 4,
+    "loop": "by_charge",
+    "note": "frame = charge quarter (0-25-50-75-100 %)",
+    "order": 2,
+    "orient": "plane along the accumulator rails",
+    "size_m": 0.3,
+    "weapon": "massdriver"
+  },
+  "massdriver_impact": {
+    "blend": "mix",
+    "cell": [
+      96,
+      96
+    ],
+    "colours": 58,
+    "durations_ms": [
+      33,
+      50,
+      83,
+      133
+    ],
+    "event": "impact:any",
+    "file": "massdriver/massdriver_impact.png",
+    "frames": 4,
+    "loop": "once",
+    "note": "a kinetic shock: a dust ring outward, a brief violet-white flash",
+    "order": 3,
+    "orient": "billboard",
+    "size_m": 1.1,
+    "weapon": "massdriver"
+  },
+  "massdriver_mark": {
+    "blend": "mix",
+    "cell": [
+      64,
+      64
+    ],
+    "colours": 10,
+    "durations_ms": [
+      1
+    ],
+    "event": "mark:any",
+    "file": "massdriver/massdriver_mark.png",
+    "frames": 1,
+    "loop": "variants",
+    "note": "a broad flattened dish with stress fractures; any surface",
+    "order": 1,
+    "orient": "decal",
+    "size_m": 0.4,
+    "weapon": "massdriver"
+  },
+  "massdriver_release": {
+    "at": "muzzle",
+    "blend": "add",
+    "cell": [
+      96,
+      96
+    ],
+    "colours": 77,
+    "durations_ms": [
+      17,
+      33,
+      50
+    ],
+    "event": "released",
+    "file": "massdriver/massdriver_release.png",
+    "frames": 3,
+    "loop": "once",
+    "note": "pressure lines bursting outward -- not a ring",
+    "order": 3,
+    "orient": "billboard",
+    "size_m": 0.5,
+    "weapon": "massdriver"
+  },
+  "massdriver_slug": {
+    "blend": "add",
+    "cell": [
+      48,
+      16
+    ],
+    "colours": 12,
+    "durations_ms": [
+      33,
+      33
+    ],
+    "event": "projectile",
+    "file": "massdriver/massdriver_slug.png",
+    "frames": 2,
+    "loop": "loop",
+    "note": "a dense slug, slower",
+    "order": 2,
+    "orient": "axis",
+    "size_m": 0.25,
+    "weapon": "massdriver"
+  },
+  "massdriver_trail": {
+    "blend": "add",
+    "cell": [
+      128,
+      16
+    ],
+    "colours": 10,
+    "durations_ms": [
+      60
+    ],
+    "event": "projectile",
+    "file": "massdriver/massdriver_trail.png",
+    "frames": 1,
+    "loop": "hold_last",
+    "note": "pulsed segments: its mass, made visible",
+    "order": 1,
+    "orient": "axis ribbon",
+    "size_m": 2.0,
+    "weapon": "massdriver"
+  },
+  "sightline_flash": {
+    "at": "muzzle",
+    "blend": "add",
+    "cell": [
+      48,
+      48
+    ],
+    "colours": 8,
+    "durations_ms": [
+      17,
+      17
+    ],
+    "event": "fired",
+    "file": "sightline/sightline_flash.png",
+    "frames": 2,
+    "loop": "once",
+    "note": "a cold, narrow flick",
+    "order": 3,
+    "orient": "billboard",
+    "size_m": 0.22,
+    "weapon": "sightline"
+  },
+  "sightline_mark": {
+    "blend": "mix",
+    "cell": [
+      24,
+      24
+    ],
+    "colours": 22,
+    "durations_ms": [
+      1
+    ],
+    "event": "mark:metal",
+    "file": "sightline/sightline_mark.png",
+    "frames": 1,
+    "loop": "variants",
+    "note": "a small clean hole",
+    "order": 1,
+    "orient": "decal",
+    "size_m": 0.08,
+    "weapon": "sightline"
+  },
+  "sightline_pop": {
+    "blend": "add",
+    "cell": [
+      32,
+      32
+    ],
+    "colours": 30,
+    "durations_ms": [
+      17,
+      33
+    ],
+    "event": "impact:any",
+    "file": "sightline/sightline_pop.png",
+    "frames": 2,
+    "loop": "once",
+    "note": "a precise cold pop over the material's own response at 0.5 scale",
+    "order": 4,
+    "orient": "billboard",
+    "size_m": 0.2,
+    "weapon": "sightline"
+  },
+  "sightline_tracer": {
+    "blend": "add",
+    "cell": [
+      128,
+      4
+    ],
+    "colours": 4,
+    "durations_ms": [
+      33
+    ],
+    "event": "projectile",
+    "file": "sightline/sightline_tracer.png",
+    "frames": 1,
+    "loop": "hold_last",
+    "note": "a thin needle, fast",
+    "order": 1,
+    "orient": "axis ribbon",
+    "size_m": 1.2,
+    "weapon": "sightline"
+  },
+  "switchback_flash_a": {
+    "at": "muzzle",
+    "blend": "add",
+    "cell": [
+      48,
+      48
+    ],
+    "colours": 16,
+    "durations_ms": [
+      17,
+      17
+    ],
+    "event": "fired (odd rounds)",
+    "file": "switchback/switchback_flash_a.png",
+    "frames": 2,
+    "loop": "once",
+    "note": "three-prong; alternates with B so the stream flickers",
+    "order": 3,
+    "orient": "billboard",
+    "size_m": 0.24,
+    "weapon": "switchback"
+  },
+  "switchback_flash_b": {
+    "at": "muzzle",
+    "blend": "add",
+    "cell": [
+      48,
+      48
+    ],
+    "colours": 16,
+    "durations_ms": [
+      17,
+      17
+    ],
+    "event": "fired (even rounds)",
+    "file": "switchback/switchback_flash_b.png",
+    "frames": 2,
+    "loop": "once",
+    "note": "four-prong partner of A",
+    "order": 3,
+    "orient": "billboard",
+    "size_m": 0.24,
+    "weapon": "switchback"
+  },
+  "switchback_pock": {
+    "blend": "mix",
+    "cell": [
+      16,
+      16
+    ],
+    "colours": 26,
+    "durations_ms": [
+      1
+    ],
+    "event": "mark:any",
+    "file": "switchback/switchback_pock.png",
+    "frames": 1,
+    "loop": "variants",
+    "note": "a small pock; cap these hard, they come fast",
+    "order": 1,
+    "orient": "decal",
+    "size_m": 0.07,
+    "weapon": "switchback"
+  },
+  "switchback_tracer": {
+    "blend": "add",
+    "cell": [
+      48,
+      6
+    ],
+    "colours": 7,
+    "durations_ms": [
+      33
+    ],
+    "event": "projectile",
+    "file": "switchback/switchback_tracer.png",
+    "frames": 1,
+    "loop": "hold_last",
+    "note": "short speck; every second round only",
+    "order": 1,
+    "orient": "axis ribbon",
+    "size_m": 0.5,
+    "weapon": "switchback"
+  }
+}

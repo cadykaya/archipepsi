@@ -25,9 +25,14 @@ const KEYS := {KEY_1: "foundry", KEY_2: "sightline", KEY_3: "switchback",
 ## player is built for each). "" is the Static Pulse.
 static var remembered := ""
 
+const FX_JSON := "res://content/fx/weapons/fx.json"
+
 var player: Player
 var feel: WeaponFeelTreatments
 var weapons: RangeWeapons
+## The weapons wearing Arty's art (a missing one keeps its placeholder).
+var dressed: Array[String] = []
+var fx: GlyphFxLayer
 var _target: Node3D
 var _label: Label
 
@@ -51,6 +56,12 @@ func setup(p: Player, tones: Tones) -> bool:
 	weapons = RangeWeapons.new()
 	add_child(weapons)
 	weapons.bind(self)
+	# Arty's five weapons and her layered Glyph effects (2026-10-14).
+	dressed = WeaponArt.dress(weapons.rig)
+	fx = GlyphFxLayer.new()
+	fx.name = "GlyphFx"
+	add_child(fx)
+	fx.setup(FX_JSON, weapons)
 	var layer := CanvasLayer.new()
 	layer.layer = 2
 	add_child(layer)
