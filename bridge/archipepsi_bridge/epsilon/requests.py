@@ -81,6 +81,21 @@ class CampaignContext(Strict):
     is_finale: bool = False
     static_glitch_units: int = Field(ge=0)
     completed_zone_summaries: tuple[ZoneSummary, ...] = ()
+    #: D-22 slice: how many times the player has asked for a different
+    #: draft of this Crossing. 0 for every first draft, so a request
+    #: without it composes exactly as before; above 0 it is VARIATION the
+    #: provider must honour (the fallback folds it into its seeds), never
+    #: a reason to touch the allocated Checks.
+    redraw: int = Field(default=0, ge=0, le=8)
+
+    @model_serializer(mode="wrap")
+    def _omit_first_draft(self, handler):
+        """A first draft serializes exactly as every request did before
+        the slice, so recorded requests and baselines stay identical."""
+        data = handler(self)
+        if isinstance(data, dict) and data.get("redraw") == 0:
+            data.pop("redraw")
+        return data
 
     #: How much content this Zone must contain (CAMPAIGN_SCALE.md 5).
     #:

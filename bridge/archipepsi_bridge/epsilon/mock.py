@@ -492,7 +492,9 @@ class MockEpsilonProvider:
             return fallback_zone(request)
 
         rng = random.Random(C.prng_seed(
-            request.campaign.seed_name, request.zone_id, "mock_epsilon"))
+            request.campaign.seed_name, request.zone_id, "mock_epsilon",
+            *((f"redraw{request.campaign.redraw}",)
+              if request.campaign.redraw else ())))
         locations = list(request.locations)
 
         # An opening corridor, then one reward chamber per allocated Check,
@@ -534,7 +536,9 @@ class MockEpsilonProvider:
         # every 3-Check Zone land on the same word, because the number of
         # prior draws was identical.
         namer = random.Random(C.prng_seed(
-            request.campaign.seed_name, request.zone_id, "mock_name"))
+            request.campaign.seed_name, request.zone_id, "mock_name",
+            *((f"redraw{request.campaign.redraw}",)
+              if request.campaign.redraw else ())))
         return {
             "schema_version": 7,
             "zone_id": request.zone_id,

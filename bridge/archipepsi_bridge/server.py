@@ -166,7 +166,9 @@ class BridgeServer:
         elif m.type == "start_mock_campaign":
             await self._connect_mock()
         elif m.type == "request_next_zone":
-            await engine.handle_request_next_zone(m.finale)
+            await engine.handle_request_next_zone(m.finale, m.track)
+        elif m.type == "redraw_zone":
+            await engine.handle_redraw_zone(m.zone_id)
         elif m.type == "enter_zone":
             await engine.handle_enter_zone(m.zone_id)
         elif m.type == "leave_zone":

@@ -1883,3 +1883,9 @@ godot-return-journey: godot-import
 	$(GODOT) --headless --path godot -- --integration-test \
 	  --return-journey; \
 	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS
+
+# D-22 SLICE: §6.A of docs/D22_SLICE_BRIEF.md through a real slice bridge
+# and three real restarts, with A11's isolation checks around it.
+.PHONY: godot-d22-slice
+godot-d22-slice: godot-import
+	tools/d22_slice_check.sh

@@ -1,5 +1,28 @@
 # AGENT FRONTIER
 
+## PROD LANE — D-22 slice delivered for play; STOPPED (2026-10-16)
+
+**Isolated experiment, owner-authorised. Branch `review/d22-slice`, not
+merged.** Report: `docs/reports/2026-10-16-d22-slice.md`.
+
+- **What was built:** Station 1 → the Forge with Epsilon → Crossing 1 →
+  leave and resume → untether → area 2 → Forge → Crossing 2, stopping at
+  Crossing 2's first committed layout.
+- **The switch:** all of it is gated on a `--d22-slice` bridge, so an
+  ordinary run is unchanged.
+- **The check:** `make godot-d22-slice` passes all 76 checks from source,
+  from the exported build and under Wine. The bridge suite passes in full.
+- **Build:** `tools/d22_slice/package.sh` produces
+  `Archipepsi-D22-Slice-446270eb`.
+- **Prototype rule, NOT policy:** a Crossing untethers when all of its
+  allocated Checks are confirmed. How station progress stays possible when
+  Checks need remote items or other Crossings is **open**, and it is the
+  owner's and Dess's to decide before any real-AP extension.
+- **Next:** none authorised. Wait for the owner's play of the loop.
+  Stage 2, which covers the return anchor (A7: 52 m) and the re-sent
+  layout toast, is not started.
+- **Still held, do not start:** HB-F4g, HB-F4f, the CK9-F1 sweep.
+
 ## BRIDGE LANE — HOLDING at the Wave 3 checkpoint (owner, 2026-09-25)
 
 **Hold.** Wave 3 is complete on the Dess side (owner, 2026-09-25). The
@@ -80,7 +103,14 @@ under the owner's hand-back rule.
 - DESS-29 was found and fixed while landing it: a player past the claim
   holds the tool.
 
-**Waiting on the owner:** CI (Prod's N-6).
+**Delivered for review, 2026-10-02: D-17, Crossing D's room brief**
+(`docs/D17_CROSSING_D_ROOM_BRIEF.md`). It is a proposal: not approved
+for building, and no production change. Prod builds and Arty supplies
+the visual kit only once the owner approves. It records DESS-30 (the
+bridge still says a rail needs dash; the fix waits for approval).
+Prod's N-17 to N-21 wait, untouched this round.
+
+**Waiting on the owner:** the D-17 review; CI (Prod's N-6).
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for
