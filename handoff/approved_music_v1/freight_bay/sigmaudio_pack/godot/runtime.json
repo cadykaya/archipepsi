@@ -1,0 +1,1037 @@
+{
+  "schemaVersion": 1,
+  "minimumGodot": "4.5",
+  "semantics": "sigmaudio-godot-layer-runtime-v1",
+  "bpm": 144,
+  "beatsPerBar": 4,
+  "beatUnit": 4,
+  "loopBars": 16,
+  "phraseLengthBars": 2,
+  "sampleRate": 48000,
+  "loopStartSamples": 0,
+  "loopEndSamples": 1279999,
+  "loopFrames": 1280000,
+  "mainFile": "audio/freight_bay_four_parts_loop.wav",
+  "adaptive": true,
+  "gameplayInputCapture": {
+    "version": 1,
+    "available": true,
+    "cueId": "cue_000000001gsfsyz4334vqn",
+    "cueRevisionFormat": "cue-v1",
+    "cueSha256": "0f4448b3796160893732e8e8f9019bf1f58780ef5b741e9f2d8a95ca7a833946",
+    "meter": {
+      "beatsPerBar": 4,
+      "beatUnit": 4,
+      "subdivisionTree": [
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    "maximumSeconds": 300,
+    "maximumInputs": 1024,
+    "maximumBytes": 262144,
+    "acceptedKinds": [
+      "parameter",
+      "state",
+      "event"
+    ],
+    "clock": "elapsed-seconds",
+    "scope": "Accepted controls from fresh Play. Pause/restart/overflow/multi-event batches invalidate capture. Selected stinger packs refuse capture; inputs are not decisions or PCM."
+  },
+  "scenarioReplay": {
+    "version": 1,
+    "mode": "music-only",
+    "available": false,
+    "scenarios": [],
+    "maximumInputLatenessSeconds": 0.12,
+    "maximumReceiptRecords": 256,
+    "controller": "Authored BPM/meter and shared 120ms lookahead commit policy; scheduled state is distinct from native audible state. Layer gains and Stop apply on observed engine frames.",
+    "scope": "Explicit saved inputs, ramps and retained-state repeats on the native playback clock. No reference recordings, inferred stinger/duck audio, cold seek or sample-accurate transition/endpoint promise."
+  },
+  "audioBake": {
+    "renderVersion": "sigmaudio-audio-12",
+    "stateId": "sta_00000001v7k443fh5d4esw",
+    "appliedSnapshotIds": [],
+    "manualSnapshotIds": [],
+    "resolvedTracks": [
+      {
+        "trackId": "trk_0000000001z5paqsjz5axv",
+        "offset": {
+          "trackId": "trk_0000000001z5paqsjz5axv",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -5,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.3,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000066e5fa4sbn0dz",
+        "offset": {
+          "trackId": "trk_00000000066e5fa4sbn0dz",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -10,
+        "lowpassHz": 3000,
+        "highpassHz": null,
+        "sendWet": 0.3,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_000000000h1nwwn6ty852y",
+        "offset": {
+          "trackId": "trk_000000000h1nwwn6ty852y",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -6,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.25,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_0000000034pj203ead212f",
+        "offset": {
+          "trackId": "trk_0000000034pj203ead212f",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -4,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_000000005kwwxx0tbp3089",
+        "offset": {
+          "trackId": "trk_000000005kwwxx0tbp3089",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -5,
+        "lowpassHz": 4000,
+        "highpassHz": null,
+        "sendWet": 0.4,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_000000009prbysceaysd78",
+        "offset": {
+          "trackId": "trk_000000009prbysceaysd78",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -6,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.45,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000a5963vxb177wf3",
+        "offset": {
+          "trackId": "trk_00000000a5963vxb177wf3",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -8,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.6,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000ag6p3mgnxwfpa2",
+        "offset": {
+          "trackId": "trk_00000000ag6p3mgnxwfpa2",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -3.8,
+        "lowpassHz": 5000,
+        "highpassHz": null,
+        "sendWet": 0.1,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000j5wpc445fs9mf4",
+        "offset": {
+          "trackId": "trk_00000000j5wpc445fs9mf4",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 2.3,
+        "lowpassHz": 5000,
+        "highpassHz": null,
+        "sendWet": 0.1,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000mm982b3rwkqay7",
+        "offset": {
+          "trackId": "trk_00000000mm982b3rwkqay7",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -9.5,
+        "lowpassHz": 5000,
+        "highpassHz": null,
+        "sendWet": 0.1,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000w95312hnd9y6aj",
+        "offset": {
+          "trackId": "trk_00000000w95312hnd9y6aj",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 3.4,
+        "lowpassHz": 5000,
+        "highpassHz": null,
+        "sendWet": 0.1,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000yrqkd2zmfwpznf",
+        "offset": {
+          "trackId": "trk_00000000yrqkd2zmfwpznf",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -7.2,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.18,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001638b0g8z28906g",
+        "offset": {
+          "trackId": "trk_00000001638b0g8z28906g",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -8.7,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.25,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001bp7w515p6sq0x9",
+        "offset": {
+          "trackId": "trk_00000001bp7w515p6sq0x9",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -7.7,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001exdg97tkj5aw7m",
+        "offset": {
+          "trackId": "trk_00000001exdg97tkj5aw7m",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -1.5,
+        "lowpassHz": 6000,
+        "highpassHz": null,
+        "sendWet": 0.3,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001q0ny1nkks7vxsj",
+        "offset": {
+          "trackId": "trk_00000001q0ny1nkks7vxsj",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 9.3,
+        "lowpassHz": 5500,
+        "highpassHz": null,
+        "sendWet": 0.3,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001r5dt7eqwn3yrmr",
+        "offset": {
+          "trackId": "trk_00000001r5dt7eqwn3yrmr",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -8.5,
+        "lowpassHz": 3500,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001sas3g2a6nemqd7",
+        "offset": {
+          "trackId": "trk_00000001sas3g2a6nemqd7",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -4,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.25,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001sdy8fgj5s5pwff",
+        "offset": {
+          "trackId": "trk_00000001sdy8fgj5s5pwff",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 8,
+        "lowpassHz": 500,
+        "highpassHz": null,
+        "sendWet": 0.3,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001sgrcbv9b96q0s9",
+        "offset": {
+          "trackId": "trk_00000001sgrcbv9b96q0s9",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 1,
+        "lowpassHz": 5000,
+        "highpassHz": null,
+        "sendWet": 0.1,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001skmkwsf812q287",
+        "offset": {
+          "trackId": "trk_00000001skmkwsf812q287",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 0,
+        "lowpassHz": 5000,
+        "highpassHz": null,
+        "sendWet": 0.2,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001spmest8a2z4yyt",
+        "offset": {
+          "trackId": "trk_00000001spmest8a2z4yyt",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -5,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.25,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001ssddrq40dcz20y",
+        "offset": {
+          "trackId": "trk_00000001ssddrq40dcz20y",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -9,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001sw318wan090gte",
+        "offset": {
+          "trackId": "trk_00000001sw318wan090gte",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -4,
+        "lowpassHz": 3500,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001szsta38psammn9",
+        "offset": {
+          "trackId": "trk_00000001szsta38psammn9",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -6,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001t2msq8znqv73mm",
+        "offset": {
+          "trackId": "trk_00000001t2msq8znqv73mm",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 1.5,
+        "lowpassHz": 5000,
+        "highpassHz": null,
+        "sendWet": 0.4,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001t513kxzf4ga2js",
+        "offset": {
+          "trackId": "trk_00000001t513kxzf4ga2js",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 12,
+        "lowpassHz": 5000,
+        "highpassHz": null,
+        "sendWet": 0.45,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001t8zr3gsc36rm0j",
+        "offset": {
+          "trackId": "trk_00000001t8zr3gsc36rm0j",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -6,
+        "lowpassHz": 3500,
+        "highpassHz": null,
+        "sendWet": 0.4,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001tb7k6xyaa7enhb",
+        "offset": {
+          "trackId": "trk_00000001tb7k6xyaa7enhb",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -6,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.4,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001teawg50zqdb322",
+        "offset": {
+          "trackId": "trk_00000001teawg50zqdb322",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -4,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.1,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001thrjc3zfhqbhpg",
+        "offset": {
+          "trackId": "trk_00000001thrjc3zfhqbhpg",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -10,
+        "lowpassHz": 3000,
+        "highpassHz": null,
+        "sendWet": 0.3,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001tmx25taxartvj4",
+        "offset": {
+          "trackId": "trk_00000001tmx25taxartvj4",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -6,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.25,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      }
+    ],
+    "conflicts": [],
+    "snapshotProcessingBaked": true,
+    "layerActiveGainsBaked": true,
+    "trackEffectsBaked": true,
+    "gainAutomationBaked": true
+  },
+  "supportedStateIds": [
+    "sta_00000001v7k443fh5d4esw",
+    "sta_00000001v89xte10pbe1py",
+    "sta_00000001v9s8wt0mxc3eaa",
+    "sta_00000001vak5tx46aefbvg"
+  ],
+  "unsupportedStateIds": [],
+  "capabilities": {
+    "synchronizedLayers": true,
+    "layerStateSwitching": true,
+    "parameterTransitions": true,
+    "eventTransitions": true,
+    "sampleAccurateTransitions": false,
+    "stateSnapshotSwitching": false,
+    "stingerAudio": false,
+    "gameplayInputCapture": true,
+    "savedScenarioReplay": false,
+    "stingerDucking": false,
+    "crossCueSequencing": false,
+    "exactMainMixReconstruction": false,
+    "maximumLayers": 32
+  },
+  "baseStateId": "sta_00000001v7k443fh5d4esw",
+  "layers": [
+    {
+      "id": "lay_00000001v3qr5xnq7cztv6",
+      "name": "Bay",
+      "file": "audio/stems/freight_bay_four_parts_bay.wav",
+      "fadeBeats": 4
+    },
+    {
+      "id": "lay_00000001v4k5xbnm4jpe6q",
+      "name": "Exploration",
+      "file": "audio/stems/freight_bay_four_parts_exploration.wav",
+      "fadeBeats": 4
+    },
+    {
+      "id": "lay_00000001v5yjwm3ddwx2fb",
+      "name": "Combat",
+      "file": "audio/stems/freight_bay_four_parts_combat.wav",
+      "fadeBeats": 0
+    },
+    {
+      "id": "lay_00000001v62res57hpe232",
+      "name": "Stingers",
+      "file": "audio/stems/freight_bay_four_parts_stingers.wav",
+      "fadeBeats": 0
+    }
+  ],
+  "states": [
+    {
+      "id": "sta_00000001v7k443fh5d4esw",
+      "name": "Exploration",
+      "activeLayerIds": [
+        "lay_00000001v3qr5xnq7cztv6",
+        "lay_00000001v4k5xbnm4jpe6q"
+      ],
+      "mixSnapshotId": null
+    },
+    {
+      "id": "sta_00000001v89xte10pbe1py",
+      "name": "Entry",
+      "activeLayerIds": [
+        "lay_00000001v3qr5xnq7cztv6"
+      ],
+      "mixSnapshotId": null
+    },
+    {
+      "id": "sta_00000001v9s8wt0mxc3eaa",
+      "name": "Combat",
+      "activeLayerIds": [
+        "lay_00000001v3qr5xnq7cztv6",
+        "lay_00000001v5yjwm3ddwx2fb"
+      ],
+      "mixSnapshotId": null
+    },
+    {
+      "id": "sta_00000001vak5tx46aefbvg",
+      "name": "Victory",
+      "activeLayerIds": [
+        "lay_00000001v3qr5xnq7cztv6"
+      ],
+      "mixSnapshotId": null
+    }
+  ],
+  "parameters": [],
+  "events": [
+    {
+      "id": "evt_00000001vbejm4jadjh931",
+      "name": "engage"
+    },
+    {
+      "id": "evt_00000001vcxjjj4smgb0x1",
+      "name": "victory"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "trn_00000001vd9t0hf1szaaxz",
+      "fromStateId": "sta_00000001v7k443fh5d4esw",
+      "toStateId": "sta_00000001v89xte10pbe1py",
+      "when": {
+        "kind": "event",
+        "eventId": "evt_00000001vbejm4jadjh931"
+      },
+      "quantize": "phrase",
+      "fadeBeats": 0,
+      "priority": 5,
+      "enterAbove": null,
+      "exitBelow": null,
+      "dwellMs": 0
+    },
+    {
+      "id": "trn_00000001ve6sn7zpha31jw",
+      "fromStateId": "sta_00000001v89xte10pbe1py",
+      "toStateId": "sta_00000001v9s8wt0mxc3eaa",
+      "when": {
+        "kind": "always"
+      },
+      "quantize": "phrase",
+      "fadeBeats": 0,
+      "priority": 5,
+      "enterAbove": null,
+      "exitBelow": null,
+      "dwellMs": 3000
+    },
+    {
+      "id": "trn_00000001vfbde968nsz3cm",
+      "fromStateId": "sta_00000001v9s8wt0mxc3eaa",
+      "toStateId": "sta_00000001vak5tx46aefbvg",
+      "when": {
+        "kind": "event",
+        "eventId": "evt_00000001vcxjjj4smgb0x1"
+      },
+      "quantize": "phrase",
+      "fadeBeats": 0,
+      "priority": 6,
+      "enterAbove": null,
+      "exitBelow": null,
+      "dwellMs": 0
+    },
+    {
+      "id": "trn_00000001vgq3c3ebbct5jj",
+      "fromStateId": "sta_00000001vak5tx46aefbvg",
+      "toStateId": "sta_00000001v7k443fh5d4esw",
+      "when": {
+        "kind": "always"
+      },
+      "quantize": "phrase",
+      "fadeBeats": 4,
+      "priority": 1,
+      "enterAbove": null,
+      "exitBelow": null,
+      "dwellMs": 3000
+    },
+    {
+      "id": "trn_00000001vhd414hbvg939a",
+      "fromStateId": "sta_00000001vak5tx46aefbvg",
+      "toStateId": "sta_00000001v89xte10pbe1py",
+      "when": {
+        "kind": "event",
+        "eventId": "evt_00000001vbejm4jadjh931"
+      },
+      "quantize": "phrase",
+      "fadeBeats": 0,
+      "priority": 5,
+      "enterAbove": null,
+      "exitBelow": null,
+      "dwellMs": 0
+    }
+  ],
+  "mixSnapshots": [],
+  "stingers": [
+    {
+      "id": "stg_00000001w5gjxk3h7pb9z8",
+      "name": "Entry: press",
+      "patternId": "pat_00000001vj4b2jqbdv92y8",
+      "trackId": "trk_00000001sas3g2a6nemqd7",
+      "eventId": "evt_00000001vbejm4jadjh931",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 0.8,
+      "allowedStateIds": [
+        "sta_00000001v7k443fh5d4esw",
+        "sta_00000001vak5tx46aefbvg"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001wf52mbg5fq33ec",
+      "name": "Entry: motor",
+      "patternId": "pat_00000001w65xh8t0bgpfda",
+      "trackId": "trk_00000001sdy8fgj5s5pwff",
+      "eventId": "evt_00000001vbejm4jadjh931",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 0.6,
+      "allowedStateIds": [
+        "sta_00000001v7k443fh5d4esw",
+        "sta_00000001vak5tx46aefbvg"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001x49dkwx3qkdsh2",
+      "name": "Entry: muted guitar",
+      "patternId": "pat_00000001wgxyempn27z7kz",
+      "trackId": "trk_00000001sgrcbv9b96q0s9",
+      "eventId": "evt_00000001vbejm4jadjh931",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 0.4,
+      "allowedStateIds": [
+        "sta_00000001v7k443fh5d4esw",
+        "sta_00000001vak5tx46aefbvg"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001xpz5qcsk4gt28n",
+      "name": "Entry: guitar",
+      "patternId": "pat_00000001x547txrwrq8mnc",
+      "trackId": "trk_00000001skmkwsf812q287",
+      "eventId": "evt_00000001vbejm4jadjh931",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 0.8,
+      "allowedStateIds": [
+        "sta_00000001v7k443fh5d4esw",
+        "sta_00000001vak5tx46aefbvg"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001y4hgmykcrar02k",
+      "name": "Entry: kit",
+      "patternId": "pat_00000001xqxz0mw8h6tzfb",
+      "trackId": "trk_00000001spmest8a2z4yyt",
+      "eventId": "evt_00000001vbejm4jadjh931",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 0.6,
+      "allowedStateIds": [
+        "sta_00000001v7k443fh5d4esw",
+        "sta_00000001vak5tx46aefbvg"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001yaedbepn51xeb8",
+      "name": "Entry: impacts",
+      "patternId": "pat_00000001y548m8m3m2qyf6",
+      "trackId": "trk_00000001ssddrq40dcz20y",
+      "eventId": "evt_00000001vbejm4jadjh931",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 1.2,
+      "allowedStateIds": [
+        "sta_00000001v7k443fh5d4esw",
+        "sta_00000001vak5tx46aefbvg"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001ygymf87ysbyev5",
+      "name": "Entry: air horn",
+      "patternId": "pat_00000001ybc71xfphq3wjv",
+      "trackId": "trk_00000001sw318wan090gte",
+      "eventId": "evt_00000001vbejm4jadjh931",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 0.6,
+      "allowedStateIds": [
+        "sta_00000001v7k443fh5d4esw",
+        "sta_00000001vak5tx46aefbvg"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001yyz3qrp1qkp9w7",
+      "name": "Entry: bass",
+      "patternId": "pat_00000001yhv28w25d3fzxa",
+      "trackId": "trk_00000001szsta38psammn9",
+      "eventId": "evt_00000001vbejm4jadjh931",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 0.4,
+      "allowedStateIds": [
+        "sta_00000001v7k443fh5d4esw",
+        "sta_00000001vak5tx46aefbvg"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001z51fp1yn4tb2c8",
+      "name": "Victory: E major",
+      "patternId": "pat_00000001yzdb7bnjwzbgre",
+      "trackId": "trk_00000001t2msq8znqv73mm",
+      "eventId": "evt_00000001vcxjjj4smgb0x1",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 1.5,
+      "allowedStateIds": [
+        "sta_00000001v9s8wt0mxc3eaa"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001zd3ga51dq1c2e9",
+      "name": "Victory: lead",
+      "patternId": "pat_00000001z66dety97zwq4e",
+      "trackId": "trk_00000001t513kxzf4ga2js",
+      "eventId": "evt_00000001vcxjjj4smgb0x1",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 1.5,
+      "allowedStateIds": [
+        "sta_00000001v9s8wt0mxc3eaa"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001zkxsw0jdz1pfmy",
+      "name": "Victory: air horn",
+      "patternId": "pat_00000001zeck11d6427me8",
+      "trackId": "trk_00000001t8zr3gsc36rm0j",
+      "eventId": "evt_00000001vcxjjj4smgb0x1",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 1,
+      "allowedStateIds": [
+        "sta_00000001v9s8wt0mxc3eaa"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001zrczem8ng26d0y",
+      "name": "Victory: impacts",
+      "patternId": "pat_00000001zmztcv1bsqnz6y",
+      "trackId": "trk_00000001tb7k6xyaa7enhb",
+      "eventId": "evt_00000001vcxjjj4smgb0x1",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 1.5,
+      "allowedStateIds": [
+        "sta_00000001v9s8wt0mxc3eaa"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001zvwate73cz52eb",
+      "name": "Victory: low E",
+      "patternId": "pat_00000001zs1xspj5p6hhkr",
+      "trackId": "trk_00000001teawg50zqdb322",
+      "eventId": "evt_00000001vcxjjj4smgb0x1",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 1,
+      "allowedStateIds": [
+        "sta_00000001v9s8wt0mxc3eaa"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_00000001zyxxtg3yrjadt9",
+      "name": "Victory: motor",
+      "patternId": "pat_00000001zwvnj51d4twq5k",
+      "trackId": "trk_00000001thrjc3zfhqbhpg",
+      "eventId": "evt_00000001vcxjjj4smgb0x1",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 1,
+      "allowedStateIds": [
+        "sta_00000001v9s8wt0mxc3eaa"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    },
+    {
+      "id": "stg_0000000209nphtngmwt742",
+      "name": "Victory: press",
+      "patternId": "pat_00000001zz4ymr6cyqjvtz",
+      "trackId": "trk_00000001tmx25taxartvj4",
+      "eventId": "evt_00000001vcxjjj4smgb0x1",
+      "quantize": "phrase",
+      "keyLock": false,
+      "duckBed": null,
+      "cooldownMs": 0,
+      "maxVoices": 1,
+      "tailSeconds": 0.8,
+      "allowedStateIds": [
+        "sta_00000001v9s8wt0mxc3eaa"
+      ],
+      "file": null,
+      "audioStatus": "not-rendered"
+    }
+  ],
+  "stingerAudio": false,
+  "warnings": [
+    "Godot 4.5+ is required. State fades and decisions run on engine frames, not sample-accurate automation callbacks.",
+    "Stems include their authored active gains and effects. The runtime switches unity/silence without applying those gains twice.",
+    "Stems are rendered separately through bus compression/effects. Their sum is not guaranteed to reconstruct the combined live or main mix exactly.",
+    "Authored stingers have no rendered files in this pack. Godot stinger playback and ducking are not exported."
+  ]
+}

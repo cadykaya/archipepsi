@@ -1,0 +1,13 @@
+{
+ "lengthSeconds": 92.0,
+ "fadeOutSeconds": 4.0,
+ "startState": "Exploration",
+ "events": [
+  {"at": 24.0, "event": "engage", "why": "the Shunter notices the player and sounds its horn"},
+  {"at": 64.0, "event": "victory", "why": "the Shunter is down"}
+ ],
+ "sfx": [
+  {"at": 24.0, "file": "sfx-shunter-horn-tuned-48k.wav", "gainDb": -7.5, "why": "the Shunter's horn as it notices you"},
+  {"at": 47.0, "file": "sfx-shunter-horn-tuned-48k.wav", "gainDb": -7.5, "why": "the horn again as it charges, mid-fight"}
+ ]
+}

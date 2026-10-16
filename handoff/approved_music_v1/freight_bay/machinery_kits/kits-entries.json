@@ -1,0 +1,119 @@
+[
+  {
+    "id": "bayConveyor",
+    "label": "Freight bay: conveyor",
+    "blurb": "An industrial conveyor belt running, as a seamless loop.",
+    "type": "atmosphere",
+    "voiceCost": 2,
+    "gainDb": -14,
+    "zones": [
+      {
+        "file": "conveyor-loop.wav",
+        "rootMidi": 60
+      }
+    ],
+    "license": {
+      "name": "CC0",
+      "author": "Kinoton (Freesound)",
+      "source": "https://freesound.org/people/Kinoton/sounds/519027/"
+    }
+  },
+  {
+    "id": "bayHeavy",
+    "label": "Freight bay: heavy impacts",
+    "blurb": "Heavy metal impacts, a pneumatic hammer and a big pressure release.",
+    "type": "kit",
+    "voiceCost": 1,
+    "gainDb": -4,
+    "pieces": {
+      "clap": "clap-hammer-rattle.wav",
+      "kick": "kick-heavy-boom.wav",
+      "openHat": "open-hat-pressure-release.wav",
+      "ride": "ride-press-clank-2.wav",
+      "snare": "snare-heavy-clang.wav"
+    },
+    "license": {
+      "name": "CC0",
+      "author": "magnuswaker, ldezem, davidlay1, mark646 (Freesound)",
+      "source": "https://freesound.org/people/magnuswaker/sounds/614063/ ; https://freesound.org/people/magnuswaker/sounds/614062/ ; https://freesound.org/people/ldezem/sounds/386302/ ; https://freesound.org/people/davidlay1/sounds/416080/ ; https://freesound.org/people/mark646/sounds/209217/"
+    }
+  },
+  {
+    "id": "bayHorn",
+    "label": "Freight bay: air horn",
+    "blurb": "One tone of an industrial air horn, tuned and playable.",
+    "type": "pitched",
+    "voiceCost": 2,
+    "gainDb": -8,
+    "zones": [
+      {
+        "file": "horn-ds4.wav",
+        "rootMidi": 63
+      }
+    ],
+    "license": {
+      "name": "CC0",
+      "author": "mcpable (Freesound)",
+      "source": "https://freesound.org/people/mcpable/sounds/131930/"
+    }
+  },
+  {
+    "id": "bayHydraulic",
+    "label": "Freight bay: hydraulic hum",
+    "blurb": "A scissor lift's hydraulic hum, tuned to F and playable.",
+    "type": "pitched",
+    "voiceCost": 2,
+    "gainDb": -8,
+    "zones": [
+      {
+        "file": "hydraulic-f4.wav",
+        "rootMidi": 65
+      }
+    ],
+    "license": {
+      "name": "CC0",
+      "author": "kyles (Freesound)",
+      "source": "https://freesound.org/people/kyles/sounds/637811/"
+    }
+  },
+  {
+    "id": "bayMachine",
+    "label": "Freight bay: machines",
+    "blurb": "A stamping press, a hydraulic cutter, air valves and a struck plate, cut into a drum kit.",
+    "type": "kit",
+    "voiceCost": 1,
+    "gainDb": -4,
+    "pieces": {
+      "clap": "clap-air-puff.wav",
+      "closedHat": "closed-hat-press-clank.wav",
+      "kick": "kick-press-stroke.wav",
+      "openHat": "open-hat-valve-hiss.wav",
+      "ride": "ride-metal-ping.wav",
+      "snare": "snare-cutter-crunch.wav"
+    },
+    "license": {
+      "name": "CC0",
+      "author": "mark646, kyles, mcpable, o_ciz, ronnyver (Freesound)",
+      "source": "https://freesound.org/people/mark646/sounds/209219/ ; https://freesound.org/people/mark646/sounds/209217/ ; https://freesound.org/people/kyles/sounds/453303/ ; https://freesound.org/people/mcpable/sounds/131934/ ; https://freesound.org/people/o_ciz/sounds/475427/ ; https://freesound.org/people/ronnyver/sounds/488589/"
+    }
+  },
+  {
+    "id": "bayMotor",
+    "label": "Freight bay: electric motor",
+    "blurb": "A steady electric motor whir, tuned to B and playable as a drone.",
+    "type": "pitched",
+    "voiceCost": 2,
+    "gainDb": -8,
+    "zones": [
+      {
+        "file": "motor-b2.wav",
+        "rootMidi": 47
+      }
+    ],
+    "license": {
+      "name": "CC0",
+      "author": "jasonLON (Freesound)",
+      "source": "https://freesound.org/people/jasonLON/sounds/125401/"
+    }
+  }
+]

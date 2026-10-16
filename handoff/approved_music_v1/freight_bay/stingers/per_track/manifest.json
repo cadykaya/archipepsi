@@ -1,0 +1,252 @@
+{
+  "version": "sigmaudio-game-stinger-assets-1",
+  "cueId": "cue_000000001gsfsyz4334vqn",
+  "sourceSha256": "6add8e38020a9e61f415c2742d850dd081fa2e95225aa55cf5bd9ecfcf338096",
+  "cueSha256": "0f4448b3796160893732e8e8f9019bf1f58780ef5b741e9f2d8a95ca7a833946",
+  "pcmBytes": 16710424,
+  "eventCount": 15,
+  "sampleRate": 48000,
+  "channels": 2,
+  "bitDepth": 16,
+  "assets": [
+    {
+      "stingerId": "stg_00000001w5gjxk3h7pb9z8",
+      "file": "audio/event_001.wav",
+      "frames": 198400,
+      "bodyFrames": 160000,
+      "tailFrames": 38400,
+      "endSeconds": 4.133333333333334,
+      "bytes": 793644,
+      "dataOffset": 44,
+      "dataBytes": 793600,
+      "wavSha256": "07569831747372a3d24cdb819ead302f0ed833d69ab1839adede3aa9803aabe9"
+    },
+    {
+      "stingerId": "stg_00000001wf52mbg5fq33ec",
+      "file": "audio/event_002.wav",
+      "frames": 188801,
+      "bodyFrames": 160000,
+      "tailFrames": 28801,
+      "endSeconds": 3.9333333333333336,
+      "bytes": 755248,
+      "dataOffset": 44,
+      "dataBytes": 755204,
+      "wavSha256": "69203a039fa5e444545c6ab15e2a9429204be44afb4052de1758b7a1b498b73e"
+    },
+    {
+      "stingerId": "stg_00000001x49dkwx3qkdsh2",
+      "file": "audio/event_003.wav",
+      "frames": 179200,
+      "bodyFrames": 160000,
+      "tailFrames": 19200,
+      "endSeconds": 3.7333333333333334,
+      "bytes": 716844,
+      "dataOffset": 44,
+      "dataBytes": 716800,
+      "wavSha256": "934e5d085e67d1fff8bc51ef44a3e86e005d9b771e1c48cf26fc579024e12983"
+    },
+    {
+      "stingerId": "stg_00000001xpz5qcsk4gt28n",
+      "file": "audio/event_004.wav",
+      "frames": 198400,
+      "bodyFrames": 160000,
+      "tailFrames": 38400,
+      "endSeconds": 4.133333333333334,
+      "bytes": 793644,
+      "dataOffset": 44,
+      "dataBytes": 793600,
+      "wavSha256": "ec9b5d769aa0200d4ef1a07c3c6cafcabe60130ae20da864873d6d391eb0c6c6"
+    },
+    {
+      "stingerId": "stg_00000001y4hgmykcrar02k",
+      "file": "audio/event_005.wav",
+      "frames": 188801,
+      "bodyFrames": 160000,
+      "tailFrames": 28801,
+      "endSeconds": 3.9333333333333336,
+      "bytes": 755248,
+      "dataOffset": 44,
+      "dataBytes": 755204,
+      "wavSha256": "1db6804f65bb243ed70eaefa2306bb6430ceb4a342d58252c606407a7ed10ea6"
+    },
+    {
+      "stingerId": "stg_00000001yaedbepn51xeb8",
+      "file": "audio/event_006.wav",
+      "frames": 217600,
+      "bodyFrames": 160000,
+      "tailFrames": 57600,
+      "endSeconds": 4.533333333333333,
+      "bytes": 870444,
+      "dataOffset": 44,
+      "dataBytes": 870400,
+      "wavSha256": "72e0b9383855e832a6ee44b063d6b85bb3e5cb4702bc879306814f60ce09fa88"
+    },
+    {
+      "stingerId": "stg_00000001ygymf87ysbyev5",
+      "file": "audio/event_007.wav",
+      "frames": 188801,
+      "bodyFrames": 160000,
+      "tailFrames": 28801,
+      "endSeconds": 3.9333333333333336,
+      "bytes": 755248,
+      "dataOffset": 44,
+      "dataBytes": 755204,
+      "wavSha256": "cedc54ecfca241288ebd9518e746ccf1e1b4da28ee6c8306a720da26bd9d9e34"
+    },
+    {
+      "stingerId": "stg_00000001yyz3qrp1qkp9w7",
+      "file": "audio/event_008.wav",
+      "frames": 179200,
+      "bodyFrames": 160000,
+      "tailFrames": 19200,
+      "endSeconds": 3.7333333333333334,
+      "bytes": 716844,
+      "dataOffset": 44,
+      "dataBytes": 716800,
+      "wavSha256": "0132805158fdeadacb161bc0411a5c235ad0b97e354a8ca66861153f9391afaf"
+    },
+    {
+      "stingerId": "stg_00000001z51fp1yn4tb2c8",
+      "file": "audio/event_009.wav",
+      "frames": 392001,
+      "bodyFrames": 320000,
+      "tailFrames": 72001,
+      "endSeconds": 8.166666666666668,
+      "bytes": 1568048,
+      "dataOffset": 44,
+      "dataBytes": 1568004,
+      "wavSha256": "8f421e5e5c51c4af9225251a8cd29b12c9c41740b8c9f4177482ff10fb09a47a"
+    },
+    {
+      "stingerId": "stg_00000001zd3ga51dq1c2e9",
+      "file": "audio/event_010.wav",
+      "frames": 392001,
+      "bodyFrames": 320000,
+      "tailFrames": 72001,
+      "endSeconds": 8.166666666666668,
+      "bytes": 1568048,
+      "dataOffset": 44,
+      "dataBytes": 1568004,
+      "wavSha256": "e7a01cf793b530a4cc0995872135a4b384a316f6ba66f2b42c6cb3bb1e03ad2c"
+    },
+    {
+      "stingerId": "stg_00000001zkxsw0jdz1pfmy",
+      "file": "audio/event_011.wav",
+      "frames": 368000,
+      "bodyFrames": 320000,
+      "tailFrames": 48000,
+      "endSeconds": 7.666666666666667,
+      "bytes": 1472044,
+      "dataOffset": 44,
+      "dataBytes": 1472000,
+      "wavSha256": "55daff4ef7897be151fdd4fb7fd8e991b87df9fdadc43dc70e43562981335f27"
+    },
+    {
+      "stingerId": "stg_00000001zrczem8ng26d0y",
+      "file": "audio/event_012.wav",
+      "frames": 392001,
+      "bodyFrames": 320000,
+      "tailFrames": 72001,
+      "endSeconds": 8.166666666666668,
+      "bytes": 1568048,
+      "dataOffset": 44,
+      "dataBytes": 1568004,
+      "wavSha256": "6fa64f25dcfc0a5303bfd4600c961424333ff65463241ac110785b4dee50c568"
+    },
+    {
+      "stingerId": "stg_00000001zvwate73cz52eb",
+      "file": "audio/event_013.wav",
+      "frames": 368000,
+      "bodyFrames": 320000,
+      "tailFrames": 48000,
+      "endSeconds": 7.666666666666667,
+      "bytes": 1472044,
+      "dataOffset": 44,
+      "dataBytes": 1472000,
+      "wavSha256": "e4110b4637fc2bc4184f93a98a922dfb2875595825c3e32c73c3f3111e2e9906"
+    },
+    {
+      "stingerId": "stg_00000001zyxxtg3yrjadt9",
+      "file": "audio/event_014.wav",
+      "frames": 368000,
+      "bodyFrames": 320000,
+      "tailFrames": 48000,
+      "endSeconds": 7.666666666666667,
+      "bytes": 1472044,
+      "dataOffset": 44,
+      "dataBytes": 1472000,
+      "wavSha256": "ecd7a8ec9190ecdc999a0ced8f5858f594a0f02a9f58b73cd4c468152d74f341"
+    },
+    {
+      "stingerId": "stg_0000000209nphtngmwt742",
+      "file": "audio/event_015.wav",
+      "frames": 358400,
+      "bodyFrames": 320000,
+      "tailFrames": 38400,
+      "endSeconds": 7.466666666666667,
+      "bytes": 1433644,
+      "dataOffset": 44,
+      "dataBytes": 1433600,
+      "wavSha256": "3af1da7a696c831292615d75d8113f0931ac184f175e549a2444b47b41c21228"
+    }
+  ],
+  "renderer": "sigmaudio-stinger-render-1",
+  "licenses": [
+    {
+      "name": "CC0",
+      "author": "Kinoton (Freesound)",
+      "source": "https://freesound.org/people/Kinoton/sounds/519027/"
+    },
+    {
+      "name": "CC0",
+      "author": "jasonLON (Freesound)",
+      "source": "https://freesound.org/people/jasonLON/sounds/125401/"
+    },
+    {
+      "name": "CC0",
+      "author": "mark646, kyles, mcpable, o_ciz, ronnyver (Freesound)",
+      "source": "https://freesound.org/people/mark646/sounds/209219/ ; https://freesound.org/people/mark646/sounds/209217/ ; https://freesound.org/people/kyles/sounds/453303/ ; https://freesound.org/people/mcpable/sounds/131934/ ; https://freesound.org/people/o_ciz/sounds/475427/ ; https://freesound.org/people/ronnyver/sounds/488589/"
+    },
+    {
+      "name": "CC0",
+      "author": "kyles (Freesound)",
+      "source": "https://freesound.org/people/kyles/sounds/637811/"
+    },
+    {
+      "name": "CC0",
+      "author": "Karoryfer Samples (Brian Wood), Black And Green Guitars v1.000",
+      "source": "https://github.com/sfzinstruments/karoryfer.black-and-green-guitars"
+    },
+    {
+      "name": "CC0",
+      "author": "Karoryfer Samples (Brian Wood), Black And Green Guitars v1.000",
+      "source": "https://github.com/sfzinstruments/karoryfer.black-and-green-guitars"
+    },
+    {
+      "name": "CC0",
+      "author": "Karoryfer Samples (Brian Wood), Black And Green Guitars v1.000",
+      "source": "https://github.com/sfzinstruments/karoryfer.black-and-green-guitars"
+    },
+    {
+      "name": "CC0",
+      "author": "Karoryfer Samples (Brian Wood), Black And Green Guitars v1.000",
+      "source": "https://github.com/sfzinstruments/karoryfer.black-and-green-guitars"
+    },
+    {
+      "name": "Public domain",
+      "author": "Alexander Holm, Salamander Drumkit",
+      "source": "https://archive.org/details/SalamanderDrumkit"
+    },
+    {
+      "name": "CC0",
+      "author": "mcpable (Freesound)",
+      "source": "https://freesound.org/people/mcpable/sounds/131930/"
+    },
+    {
+      "name": "CC0",
+      "author": "magnuswaker, ldezem, davidlay1, mark646 (Freesound)",
+      "source": "https://freesound.org/people/magnuswaker/sounds/614063/ ; https://freesound.org/people/magnuswaker/sounds/614062/ ; https://freesound.org/people/ldezem/sounds/386302/ ; https://freesound.org/people/davidlay1/sounds/416080/ ; https://freesound.org/people/mark646/sounds/209217/"
+    }
+  ],
+  "policy": "Cold isolated authored event graph, key lock, microtiming and master finite fade baked once. Original source retained. No bed rendering, playback or listening/review approval."
+}

@@ -1,0 +1,98 @@
+[
+ {
+  "file": "kick-press-stroke.wav",
+  "source": "press-highspeed-1",
+  "edit": "one press stroke from 50.066 s, 0.30 s, 80 ms fade-out",
+  "seconds": 0.3
+ },
+ {
+  "file": "closed-hat-press-clank.wav",
+  "source": "press-highspeed-3",
+  "edit": "one die clank from 4.671 s, 0.14 s",
+  "seconds": 0.14
+ },
+ {
+  "file": "snare-cutter-crunch.wav",
+  "source": "hydraulic-cutter-crunch",
+  "edit": "one crunch from 2.403 s, 0.32 s",
+  "seconds": 0.32
+ },
+ {
+  "file": "clap-air-puff.wav",
+  "source": "air-release-slips",
+  "edit": "first 0.30 s of the release from 0.444 s, shortened with a 0.12 s decay",
+  "seconds": 0.3
+ },
+ {
+  "file": "open-hat-valve-hiss.wav",
+  "source": "valve-air-release",
+  "edit": "0.6 s of valve hiss from 0.267 s",
+  "seconds": 0.6
+ },
+ {
+  "file": "ride-metal-ping.wav",
+  "source": "metal-impact-hard",
+  "edit": "the impact from 0.128 s, 1.2 s",
+  "seconds": 1.2
+ },
+ {
+  "file": "kick-heavy-boom.wav",
+  "source": "metal-impact-heavy-2",
+  "edit": "whole impact, 1.4 s",
+  "seconds": 1.4
+ },
+ {
+  "file": "snare-heavy-clang.wav",
+  "source": "metal-impact-heavy-1",
+  "edit": "whole impact, first 1.3 s",
+  "seconds": 1.3
+ },
+ {
+  "file": "clap-hammer-rattle.wav",
+  "source": "pneumatic-hammer-forging",
+  "edit": "the hammer burst, 0.74 s",
+  "seconds": 0.74
+ },
+ {
+  "file": "open-hat-pressure-release.wav",
+  "source": "air-release",
+  "edit": "whole release, 3.6 s",
+  "seconds": 3.6
+ },
+ {
+  "file": "ride-press-clank-2.wav",
+  "source": "press-highspeed-3",
+  "edit": "a second clank from 2.060 s",
+  "seconds": 0.2
+ },
+ {
+  "file": "horn-D#4.wav",
+  "source": "horn-industrial-air",
+  "edit": "steady part and release, 0.33-2.28 s; the 385.5 Hz second horn removed with a harmonic mask so one tone remains; tuned -34 cents to exactly D#4 (311.1 Hz)",
+  "seconds": 1.989
+ },
+ {
+  "file": "motor-B2.wav",
+  "source": "motor-electric-whir",
+  "edit": "steady whir 14.5-22.1 s; tuned +52 cents to exactly B2 (123.5 Hz)",
+  "seconds": 7.374
+ },
+ {
+  "file": "hydraulic-F4.wav",
+  "source": "hydraulic-scissor-lift-2",
+  "edit": "hydraulic hum 28.5-36.0 s; tuned +21 cents to F4",
+  "seconds": 7.409
+ },
+ {
+  "file": "conveyor-loop.wav",
+  "source": "conveyor-industrial",
+  "edit": "60-77 s, with the last second crossfaded into the first so it loops without a seam (16 s loop)",
+  "seconds": 16.0
+ },
+ {
+  "file": "../sfx-shunter-horn.wav",
+  "source": "horn-freight-train",
+  "edit": "first 2.45 s (the horn chord, before the train passes); 10 ms fade-in, 0.3 s fade-out. Not imported: the game would play it as a sound effect",
+  "seconds": 2.45
+ }
+]

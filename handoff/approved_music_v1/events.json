@@ -1,0 +1,72 @@
+{
+  "handoff": "approved_music_v1",
+  "date": "2026-10-16",
+  "note": "Music hooks for Prod. Only the calls below are approved uses. Names resolve in the SigmAudio runtime; stable IDs are given too.",
+  "cues": {
+    "station": {
+      "autoload": "StationMusic",
+      "script": "res://audio/music/station/godot/sigmaudio_cue.gd",
+      "piece": "One Note Apart: Crossing, Explore state only",
+      "approved": "Skyiah 2026-10-10 (loved the exploration music) and 2026-10-14 (placed on the station)",
+      "bpm": 150,
+      "loopFrames": 1228800,
+      "sampleRate": 48000,
+      "loopSeconds": 25.6,
+      "baseState": {"name": "Explore", "id": "sta_00000001nf19qjpbwcg665"},
+      "calls": [
+        {"when": "the player is in the station (and not in a Crossing or the Freight Bay)", "call": "StationMusic.play()"},
+        {"when": "the player leaves the station for a space with its own music", "call": "StationMusic.stop()"}
+      ],
+      "doNotCall": [
+        "set_parameter(threat|style): drives One Note Apart's Combat, Climax and Resolution states, which are reserved for a hacking/technical-puzzle use and are not approved for the station",
+        "set_state(anything but Explore)"
+      ]
+    },
+    "freightBay": {
+      "autoload": "FreightBayMusic",
+      "script": "res://audio/music/freight_bay/godot/sigmaudio_cue.gd",
+      "piece": "The Freight Bay, four parts (Shunter encounter)",
+      "approved": "Skyiah 2026-10-13 (\"its good!\")",
+      "bpm": 144,
+      "loopFrames": 1280000,
+      "sampleRate": 48000,
+      "loopSeconds": 26.666667,
+      "phraseLengthBars": 2,
+      "phraseSeconds": 3.333333,
+      "baseState": {"name": "Exploration", "id": "sta_00000001v7k443fh5d4esw"},
+      "states": {
+        "Exploration": "sta_00000001v7k443fh5d4esw",
+        "Entry": "sta_00000001v89xte10pbe1py",
+        "Combat": "sta_00000001v9s8wt0mxc3eaa",
+        "Victory": "sta_00000001vak5tx46aefbvg"
+      },
+      "events": {
+        "engage": "evt_00000001vbejm4jadjh931",
+        "victory": "evt_00000001vcxjjj4smgb0x1"
+      },
+      "calls": [
+        {"when": "the player enters the Freight Bay", "call": "StationMusic.stop(); FreightBayMusic.play()"},
+        {"when": "the Shunter enters HORN (it noticed the player and sounds its horn)", "call": "FreightBayMusic.trigger_event(\"engage\")"},
+        {"when": "the Shunter goes DOWN", "call": "FreightBayMusic.trigger_event(\"victory\")"},
+        {"when": "RESTART or player death", "call": "FreightBayMusic.stop(); FreightBayMusic.play()"},
+        {"when": "the player leaves the Freight Bay", "call": "FreightBayMusic.stop(); StationMusic.play()"}
+      ],
+      "onStateChanged": {
+        "Entry": "play res://audio/music/freight_bay_stingers/freight_bay_entry_stinger.wav once, on the Music bus",
+        "Victory": "play res://audio/music/freight_bay_stingers/freight_bay_victory_stinger.wav once, on the Music bus"
+      },
+      "authoredTransitions": [
+        {"from": "Exploration", "to": "Entry", "when": "event engage", "quantize": "phrase (2 bars)", "fadeBeats": 0},
+        {"from": "Entry", "to": "Combat", "when": "always, after 3.0 s", "quantize": "phrase", "fadeBeats": 0},
+        {"from": "Combat", "to": "Victory", "when": "event victory", "quantize": "phrase", "fadeBeats": 0},
+        {"from": "Victory", "to": "Exploration", "when": "always, after 3.0 s", "quantize": "phrase", "fadeBeats": 4},
+        {"from": "Victory", "to": "Entry", "when": "event engage", "quantize": "phrase", "fadeBeats": 0}
+      ],
+      "notAuthored": "There is no route from Combat back to Exploration except victory. See README, 'Open points for Prod'."
+    }
+  },
+  "buses": {
+    "Music": "both cue players and the stinger player",
+    "SFX": "the Shunter's warning horn and all gameplay sounds; never routed through the Music bus"
+  }
+}
