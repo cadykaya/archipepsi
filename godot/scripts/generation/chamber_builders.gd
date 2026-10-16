@@ -944,8 +944,11 @@ static func _perimeter(root: Node3D, width: float, depth: float,
 		_box(root, Vector3(WALL_THICKNESS, height, depth),
 				Vector3(-half_w, height / 2.0, depth / 2.0), wall)
 	if bool(cut.get("side_right", false)):
+		# `side_right_z` places the opening off-centre; absent, it is the
+		# middle of the wall as it always was.
 		_side_wall_with_gap(root, half_w, height, depth, wall,
-				depth / 2.0, DOOR_WIDTH, DOOR_HEIGHT)
+				float(cut.get("side_right_z", depth / 2.0)),
+				DOOR_WIDTH, DOOR_HEIGHT)
 	else:
 		_box(root, Vector3(WALL_THICKNESS, height, depth),
 				Vector3(half_w, height / 2.0, depth / 2.0), wall)
