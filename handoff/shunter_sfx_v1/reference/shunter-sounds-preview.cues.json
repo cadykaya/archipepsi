@@ -1,0 +1,95 @@
+{
+ "music_gain_db": 8.16,
+ "overall_trim_db": -1.83,
+ "part_b_starts": 24.0,
+ "cues": [
+  [
+   0.5,
+   "horn (approved, unchanged)"
+  ],
+  [
+   3.9,
+   "plough scrape (brace)"
+  ],
+  [
+   5.9,
+   "rush"
+  ],
+  [
+   8.1,
+   "crumple clang (rush hits steel)"
+  ],
+  [
+   11.4,
+   "skid (rush misses)"
+  ],
+  [
+   13.55,
+   "vent gust (heavy hit in recovery)"
+  ],
+  [
+   15.2,
+   "plume hiss (a 1.8 s window, faded over its last 0.2 s)"
+  ],
+  [
+   17.9,
+   "power-down"
+  ],
+  [
+   24.6,
+   "HORN: it noticed you"
+  ],
+  [
+   27.0,
+   "BRACE: plough down"
+  ],
+  [
+   27.7,
+   "RUSH"
+  ],
+  [
+   28.8,
+   "it hits a pillar: crumple"
+  ],
+  [
+   29.0,
+   "RECOVER 1.8 s: plume"
+  ],
+  [
+   29.6,
+   "a heavy hit: vent gust"
+  ],
+  [
+   33.5,
+   "BRACE"
+  ],
+  [
+   34.2,
+   "RUSH"
+  ],
+  [
+   35.3,
+   "it misses on open floor: skid"
+  ],
+  [
+   35.5,
+   "RECOVER 1.1 s: plume"
+  ],
+  [
+   39.0,
+   "BRACE"
+  ],
+  [
+   39.7,
+   "RUSH, and it goes down mid-rush"
+  ],
+  [
+   40.4,
+   "skid"
+  ],
+  [
+   40.4,
+   "DOWN: power-down"
+  ]
+ ]
+}

@@ -1,0 +1,320 @@
+{
+ "set": "shunter_sfx_v1",
+ "policy": "Only recordings whose own Freesound page showed CC0 1.0 when checked. CC0 needs no attribution; creators are credited anyway. No game audio, no YouTube, no CC BY.",
+ "licenceCheck": "Every page was checked on 2026-10-13 for the Freight Bay music. The Freesound site refused this session on 2026-10-16, so the licences were not re-checked today.",
+ "audioSource": "Freesound's public high-quality MP3 preview of each sound, as in the Freight Bay handoff. The exact files used are in source/raw/.",
+ "samples": [
+  {
+   "id": "horn-freight-train",
+   "title": "freight train horn and approach pass near.flac",
+   "creator": "kyles",
+   "page": "https://freesound.org/people/kyles/sounds/454025/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/454/454025_612689-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": null,
+   "used": [
+    {
+     "file": "shunter_horn.wav",
+     "edit": "the approved tuned horn, copied byte for byte from handoff/approved_music_v1/freight_bay/shunter_horn_reference/shunter-horn-tuned.wav (sha256 3c706618...)"
+    }
+   ]
+  },
+  {
+   "id": "hydraulic-scissor-lift-2",
+   "title": "scissor lifts machines up down hydraulic movements2.flac",
+   "creator": "kyles",
+   "page": "https://freesound.org/people/kyles/sounds/637811/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/637/637811_612689-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/hydraulic-scissor-lift-2.mp3",
+   "used": [
+    {
+     "file": "shunter_plume_hiss.wav",
+     "edit": "30.5-33.1 s, low-passed 500 Hz: warm pump hum under the plume"
+    },
+    {
+     "file": "shunter_power_down.wav",
+     "edit": "36.6-39.4 s: a real hydraulic pump spinning down"
+    }
+   ]
+  },
+  {
+   "id": "hydraulic-cutter-crunch",
+   "title": "machine hydraulic metal cutter close crunch1.flac",
+   "creator": "kyles",
+   "page": "https://freesound.org/people/kyles/sounds/453303/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/453/453303_612689-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/hydraulic-cutter-crunch.mp3",
+   "used": [
+    {
+     "file": "shunter_plough_scrape.wav",
+     "edit": "17.25-18.2 s, rising varispeed: grind under the scrape"
+    },
+    {
+     "file": "shunter_crumple_clang.wav",
+     "edit": "2.25-2.8 s: the crumple"
+    },
+    {
+     "file": "shunter_skid.wav",
+     "edit": "32.5-33.75 s, falling varispeed, closing lowpass: the skid grind"
+    }
+   ]
+  },
+  {
+   "id": "press-highspeed-3",
+   "title": "Schnelll\u00e4uferpresse 03.WAV",
+   "creator": "mark646",
+   "page": "https://freesound.org/people/mark646/sounds/209217/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/209/209217_2971579-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/press-highspeed-3.mp3",
+   "used": [
+    {
+     "file": "shunter_vent_gust.wav",
+     "edit": "one clank at 4.671 s: the flaps banging open"
+    },
+    {
+     "file": "shunter_plume_hiss.wav",
+     "edit": "the same clank, quiet: the flaps opening"
+    }
+   ]
+  },
+  {
+   "id": "conveyor-metal-rollers",
+   "title": "metal rollers conveyor belt with no belt to bring boxes to store basement normal and slow prickly gritty movement.flac",
+   "creator": "kyles",
+   "page": "https://freesound.org/people/kyles/sounds/454082/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/454/454082_612689-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/conveyor-metal-rollers.mp3",
+   "used": [
+    {
+     "file": "shunter_plough_scrape.wav",
+     "edit": "9.0-10.0 s, high-passed: the scrape grit"
+    },
+    {
+     "file": "shunter_rush.wav",
+     "edit": "9.2-10.5 s, high-passed: the lip skimming the deck"
+    },
+    {
+     "file": "shunter_skid.wav",
+     "edit": "9.0-10.4 s, falling varispeed: skid grit"
+    }
+   ]
+  },
+  {
+   "id": "conveyor-industrial",
+   "title": "Industrial Conveyor Belt",
+   "creator": "Kinoton",
+   "page": "https://freesound.org/people/Kinoton/sounds/519027/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/519/519027_2247456-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/conveyor-industrial.mp3",
+   "used": [
+    {
+     "file": "shunter_rush.wav",
+     "edit": "20-21.4 s, low-passed 450 Hz: rumble"
+    }
+   ]
+  },
+  {
+   "id": "valve-air-release",
+   "title": "Valve_1(air, release).wav",
+   "creator": "o_ciz",
+   "page": "https://freesound.org/people/o_ciz/sounds/475427/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/475/475427_7009965-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/valve-air-release.mp3",
+   "used": [
+    {
+     "file": "shunter_plough_scrape.wav",
+     "edit": "0.6-0.9 s, band-passed: the hydraulic drop as the plough lowers"
+    },
+    {
+     "file": "shunter_plume_hiss.wav",
+     "edit": "0.6-3.2 s, band-passed 250 Hz-7 kHz: the plume"
+    }
+   ]
+  },
+  {
+   "id": "air-release",
+   "title": "Air release",
+   "creator": "davidlay1",
+   "page": "https://freesound.org/people/davidlay1/sounds/416080/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/416/416080_7175960-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/air-release.mp3",
+   "used": [
+    {
+     "file": "shunter_vent_gust.wav",
+     "edit": "0-0.45 s, low-passed: the pressure puff"
+    },
+    {
+     "file": "shunter_power_down.wav",
+     "edit": "whole release, low-passed: the hydraulic sigh"
+    }
+   ]
+  },
+  {
+   "id": "air-release-slips",
+   "title": "Slips air release v1",
+   "creator": "mcpable",
+   "page": "https://freesound.org/people/mcpable/sounds/131934/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/131/131934_1542102-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/air-release-slips.mp3",
+   "used": [
+    {
+     "file": "shunter_crumple_clang.wav",
+     "edit": "0.42-2.0 s: the steam burst"
+    },
+    {
+     "file": "shunter_vent_gust.wav",
+     "edit": "0.43-1.13 s: the gust"
+    }
+   ]
+  },
+  {
+   "id": "motor-electric-whir",
+   "title": "Electric Motor Whir.aif",
+   "creator": "jasonLON",
+   "page": "https://freesound.org/people/jasonLON/sounds/125401/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/125/125401_2279655-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/motor-electric-whir.mp3",
+   "used": [
+    {
+     "file": "shunter_rush.wav",
+     "edit": "6.0-8.5 s, sped up 0.85x to 1.6x: drive spool-up"
+    },
+    {
+     "file": "shunter_power_down.wav",
+     "edit": "10-14 s, slowed 1.0x to 0.15x: the motor spinning down"
+    }
+   ]
+  },
+  {
+   "id": "motor-turret",
+   "title": "Rotating tank turret planetary electric motor",
+   "creator": "lorefold",
+   "page": "https://freesound.org/people/lorefold/sounds/607310/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/607/607310_4702348-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/motor-turret.mp3",
+   "used": [
+    {
+     "file": "shunter_rush.wav",
+     "edit": "10-12.5 s, 0.7x to 1.3x: the heavy drive motor"
+    }
+   ]
+  },
+  {
+   "id": "metal-impact-heavy-1",
+   "title": "Heavy Metal Impact",
+   "creator": "magnuswaker",
+   "page": "https://freesound.org/people/magnuswaker/sounds/614062/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/614/614062_11537497-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/metal-impact-heavy-1.mp3",
+   "used": [
+    {
+     "file": "shunter_crumple_clang.wav",
+     "edit": "first 1.9 s: the plough hitting steel"
+    }
+   ]
+  },
+  {
+   "id": "metal-impact-heavy-2",
+   "title": "Heavy Metal Impact 2",
+   "creator": "magnuswaker",
+   "page": "https://freesound.org/people/magnuswaker/sounds/614063/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/614/614063_11537497-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/metal-impact-heavy-2.mp3",
+   "used": [
+    {
+     "file": "shunter_rush.wav",
+     "edit": "slowed 0.5x, low-passed, 250 ms: each footfall of the gallop"
+    },
+    {
+     "file": "shunter_crumple_clang.wav",
+     "edit": "slowed 0.7x: weight under the clang"
+    },
+    {
+     "file": "shunter_skid.wav",
+     "edit": "slowed 0.55x: the nose digging in"
+    },
+    {
+     "file": "shunter_power_down.wav",
+     "edit": "slowed 0.45x: the body settling onto the deck"
+    }
+   ]
+  },
+  {
+   "id": "metal-impact-hard",
+   "title": "Hard metal impact",
+   "creator": "ronnyver",
+   "page": "https://freesound.org/people/ronnyver/sounds/488589/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/488/488589_7015196-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "rawFile": "source/raw/metal-impact-hard.mp3",
+   "used": [
+    {
+     "file": "shunter_plough_scrape.wav",
+     "edit": "slowed to 0.72x: the lip touching the deck"
+    },
+    {
+     "file": "shunter_crumple_clang.wav",
+     "edit": "slowed to 0.85x: the rebound"
+    },
+    {
+     "file": "shunter_power_down.wav",
+     "edit": "slowed to 0.6x: the relay clunk"
+    }
+   ]
+  }
+ ]
+}
