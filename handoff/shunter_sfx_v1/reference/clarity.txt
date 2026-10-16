@@ -1,0 +1,8 @@
+horn            81.4 % of its energy above the combat music (worst of 8 starts)
+plough_scrape   75.7 % of its energy above the combat music (worst of 8 starts)
+rush            60.7 % of its energy above the combat music (worst of 8 starts)
+crumple_clang   83.1 % of its energy above the combat music (worst of 8 starts)
+skid            66.7 % of its energy above the combat music (worst of 8 starts)
+vent_gust       80.4 % of its energy above the combat music (worst of 8 starts)
+plume_hiss      55.7 % of its energy above the combat music (worst of 8 starts)
+power_down      65.7 % of its energy above the combat music (worst of 8 starts)
