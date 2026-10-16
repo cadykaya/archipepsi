@@ -472,3 +472,109 @@ Play with sound, three runs:
    Recommended: yes.
 3. **The freight gate** as a planned tool (about 1.6 s to close), not a
    reflex button? Recommended: yes.
+
+---
+
+## 13. Addendum, 2026-10-16: the integration test's provisional rulings, checked
+
+These are checked against the weapons as now built: `review/five-weapons-v3`
+`8002d457`, `godot/scripts/content/range_weapons.gd:54-118`.
+
+| Weapon (v3) | Per hit | Cadence |
+|---|---|---|
+| Foundry | 15 | every 0.72 s |
+| Sightline | **12** | every 0.48 s |
+| Switchback | 3.5 | every 0.135 s |
+| Bulkhead **Breacher** | 10 × 6 (60) | every 1.0 s |
+| Bulkhead **Sweeper** | 7 × 4 (28) | every 0.5 s |
+| Mass Driver | **14 → 60** over a 1.2 s charge | 1.8 s cooldown |
+
+**Damage per recovery window** (§3.1 windows; firing from 0.2 s; plough
+up):
+
+| Weapon | Hit 0.7 s | Miss 1.1 s | Steel 1.8 s |
+|---|---|---|---|
+| Pulse | 12 | 18 | 30 |
+| Foundry | 15 | 30 | 45 |
+| Sightline | 24 | 24 | 48 |
+| Switchback (80 %) | 11 | 20 | 34 |
+| Breacher, within about 6 m | 60 | 60 | 60+ |
+| Sweeper, close | 56 | 56 | 56+ |
+| Mass Driver, held full | 60 | 60 | 60 |
+
+The Breacher lands about 95 % of its pellets at 6 m, 60 % at 8 m and
+38 % at 10 m.
+
+**The rulings:**
+
+1. **Freight Bay as an optional annex off Station 1: yes, with one
+   correction.**
+   - Revision 2's booth door that "closes behind you" assumed a range
+     with RESTART.
+   - **In the unified build the annex must always have a way out.** Make
+     its entrance a personnel door the Shunter can't pass. It needs a
+     dogleg, so there's no line of fire from safety (the reason for the
+     one-way rule).
+   - Death in the annex returns the player to Station 1 with the annex
+     reset.
+   - **No Checks and no save writes.** The annex never sits on a
+     required route (D-22 slice §5).
+2. **40 HP: yes.**
+3. **Sightline's 12 must not break the brace: yes. But not as a
+   Sightline exception.**
+   - Sightline at 12 now meets revision 2's "heavy" rule (≥ 12, the rated
+     rule).
+   - **Give the Shunter's plough its own rating: 14.** Use it for every
+     Shunter heavy reaction: the horn delay, the CLOSE halt, the brace
+     break and the recovery jolt.
+   - Panels and shutters keep 12, so Sightline still cracks them.
+   - It's one physical language: each object has a rating, and the
+     plough's is higher. No weapon names in the rule.
+   - **Test:** Sightline (12) refused, Foundry (15) accepted. That
+     assertion guards against drift.
+4. **Does Foundry keep a meaningful advantage? Yes, but by position,
+   not by exclusivity.**
+   - **The other brace-breakers at 14:**
+     - the Breacher (60) and the Sweeper (16 or more with 4 or more
+       pellets), but only within a few metres of a bracing ram, which is
+       the risk;
+     - the Mass Driver, even on a tap (14).
+   - **Foundry is the only one that breaks a brace instantly from
+     range,** and is ready again in 0.72 s. So it still has its full
+     punish (30 / 45) in the same cycle.
+   - A tap-broken Mass Driver is on a 1.8 s cooldown and usually reaches
+     the window uncharged.
+   - Foundry's edge is "break it safely **and** still punish". That
+     choice is worth testing.
+5. **The Mass Driver's living-target cap of 30: avoid it. I'm revising
+   my own revision 2 suggestion.**
+   - **Players can't see it.** The same slug does 60 to a wall or panel
+     and 30 to a Shunter, which breaks the one physical language.
+   - **It's inconsistent.** The Breacher is allowed its one-shot, and
+     both are deliberate "one perfect shot" weapons. The Breacher
+     commits to closing in; the Driver commits to a 1.2 s charge held
+     through the dodge.
+   - **Recommended:** no per-target cap. Treat both one-shots as
+     big-gun payoffs for this first playtest, and **measure fight length
+     per weapon.**
+   - If Skyiah finds they rob the fight, change **that weapon's own
+     numbers everywhere**, as a weapon decision. Not a Shunter special
+     case, and not more HP.
+6. **The Breacher's point-blank one-shot: acceptable. But know what it
+   means.**
+   - The Shunter stops 1–3 m from you after a miss or a steel stop. The
+     Breacher still lands about 57 at 6 m.
+   - **So with the Breacher, one clean dodge ends the fight.**
+   - The Sweeper also kills in one open window (2 shots, 56).
+   - The fight's full loop (bait, dodge, use the gate, punish) is
+     carried by the Pulse, Sightline, Switchback and Foundry. The
+     scatterguns are the "commit close and finish it" answer.
+   - That is a legitimate weapon identity, provided the playtest
+     compares weapons side by side, not one run.
+7. **The freight gate stays an environmental tool: yes,** unchanged
+   (§6, about 1.6 s to close, it never closes on anyone).
+
+**Add to §8.A:**
+- the plough-rating assertion (Sightline refused, Foundry accepted);
+- the annex always offers a way out (door, death reset);
+- telemetry: **time-to-kill and rushes taken, per weapon.**
