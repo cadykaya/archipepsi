@@ -39,6 +39,7 @@ from .schemas.protocol import (
     BridgeError, CampaignSave, CampaignSnapshot, EarnedLocalReward, HubStatus,
     Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneHandle,
     ZoneReady, ZoneRecord,
+    ForgeCrossing, ForgeSignal, ForgeView, MAX_REDRAWS,
 )
 from .schemas import protocol as P
 from .schemas.zone import Zone, validate_zone
@@ -287,8 +288,13 @@ class CampaignEngine:
                  save_dir: Path | None = None,
                  archive_dir: Path | None = None,
                  quiet_generation: bool = False,
-                 candidate_steps: tuple[str, ...] = ()):
+                 candidate_steps: tuple[str, ...] = (),
+                 d22_slice: bool = False):
         self.provider = provider
+        #: D-22 slice (`--d22-slice`): the Forge's signal choice, its
+        #: redraw and its snapshot view. Off by default, so a campaign
+        #: run without the flag behaves, saves and sends exactly as before.
+        self.d22_slice = d22_slice
         self.provider_name = provider_name
         self.save_dir = save_dir or store.DEFAULT_SAVE_DIR
         self.archive_dir = archive_dir
@@ -488,24 +494,47 @@ class CampaignEngine:
         return {i for i in pool
                 if (s := self.ap.scouts.get(i)) and not s.recipient_is_self}
 
-    def _select_zone_locations(self) -> tuple[list[int], str]:
-        """§10.5 steps 1–8. Never advances the cursor."""
+    def _eligible_by_track(self) -> dict[str, list[int]]:
+        """The eligible pool, grouped by signal (track), ids sorted."""
+        by_track: dict[str, list[int]] = defaultdict(list)
+        for loc in sorted(self.zone_candidates()):
+            scout = self.ap.scouts.get(loc)
+            key = scout.track_key if scout else "Unknown"
+            by_track[key].append(loc)
+        return by_track
+
+    def _track_scan(self, by_track: dict[str, list[int]]) -> list[str]:
+        """The round-robin order, starting at the cursor."""
+        save = self.save
+        order = list(save.track_order) or sorted(by_track)
+        n = len(order)
+        start = save.track_cursor % n
+        return [order[(start + i) % n] for i in range(n)]
+
+    def _select_zone_locations(self, preferred: str | None = None
+                               ) -> tuple[list[int], str]:
+        """§10.5 steps 1–8. Never advances the cursor.
+
+        D-22 slice: `preferred` is the signal the player chose at the
+        Forge. It replaces only the cursor's first-eligible pick; the
+        shuffle, the top-up from other tracks and the cursor are
+        unchanged, and a track with nothing eligible is refused rather
+        than silently swapped for another.
+        """
         save = self.save
         pool = self.zone_candidates()
         if not pool:
             raise IntentError("nothing is eligible to allocate")
 
-        by_track: dict[str, list[int]] = defaultdict(list)
-        for loc in sorted(pool):
-            scout = self.ap.scouts.get(loc)
-            key = scout.track_key if scout else "Unknown"
-            by_track[key].append(loc)
-
-        order = list(save.track_order) or sorted(by_track)
-        n = len(order)
-        start = save.track_cursor % n
-        scan = [order[(start + i) % n] for i in range(n)]
-        target = next((t for t in scan if by_track.get(t)), None)
+        by_track = self._eligible_by_track()
+        scan = self._track_scan(by_track)
+        if preferred is not None:
+            if not by_track.get(preferred):
+                raise IntentError(
+                    f"no eligible Checks follow the signal {preferred!r}")
+            target = preferred
+        else:
+            target = next((t for t in scan if by_track.get(t)), None)
         if target is None:                       # scouts missing a track name
             target = sorted(by_track)[0]
 
@@ -724,6 +753,7 @@ class CampaignEngine:
                 if save and save.active_zone
                 and save.active_zone.zone is not None else ""),
             completed_zone_count=save.completed_zone_count if save else 0,
+            forge=self._forge_view() if self.d22_slice else None,
             shop=save.shop if save else ShopState(),
             pending_checks=save.pending_checks if save else (),
             hub=self.hub_status(),
@@ -992,6 +1022,7 @@ class CampaignEngine:
                 seed_name=save.seed_name, slot_name=save.slot_name,
                 team=save.team, slot_id=save.slot_id,
                 zone_index=record.generation_index + 1,
+                redraw=record.redraw_count,
                 target_game=_clamp_ap_string(record.target_game),
                 is_finale=record.is_finale,
                 static_glitch_units=ap.static_received,
@@ -1365,7 +1396,8 @@ class CampaignEngine:
         if record is not None:
             instrumentation.append_record(self.save_dir, record)
 
-    async def handle_request_next_zone(self, finale: bool) -> None:
+    async def handle_request_next_zone(self, finale: bool,
+                                       track: str | None = None) -> None:
         if self.save is None:
             raise IntentError("no campaign loaded")
         hub = self.hub_status()
@@ -1381,13 +1413,81 @@ class CampaignEngine:
             target = goal_scout.track_key if goal_scout else "Archipepsi"
             ids: list[int] = [self.config.goal_location_id]
         else:
-            ids, target = self._select_zone_locations()
+            if track is not None and not self.d22_slice:
+                raise IntentError("choosing a signal is a D-22 slice "
+                                  "feature; this bridge was not started "
+                                  "with --d22-slice")
+            ids, target = self._select_zone_locations(track)
         zone_id = f"zone_{self.save.generation_counter + 1:03d}"
         self._apply(T.start_generation(
             self.save, zone_id=zone_id, allocated_location_ids=ids,
             target_game=_clamp_ap_string(target), is_finale=finale))
         await self.broadcast_snapshot()          # GENERATING is visible state
         self._start_generation_task(zone_id)
+
+    async def handle_redraw_zone(self, zone_id: str) -> None:
+        """D-22 slice: a different draft of a Crossing not yet entered.
+
+        `T.redraw_zone` refuses anything but an unentered GENERATED Zone
+        under its redraw cap; the Zone then goes back to the provider
+        against the ids it already holds, exactly as a refused layout's
+        recovery does.
+        """
+        self._require_save()
+        if not self.d22_slice:
+            raise IntentError("a redraw is a D-22 slice feature; this bridge "
+                              "was not started with --d22-slice")
+        try:
+            self._apply(T.redraw_zone(self.save, zone_id))
+        except ValueError as exc:
+            raise IntentError(str(exc)) from exc
+        await self.broadcast_snapshot()          # GENERATING is visible
+        self._start_generation_task(zone_id)
+
+    def _forge_view(self) -> ForgeView:
+        """D-22 slice: the Forge console's view, derived on every send."""
+        save = self.save
+        if save is None:
+            return ForgeView()
+        checked = set(self.ap.checked)
+        signals: tuple = ()
+        default = ""
+        try:
+            by_track = self._eligible_by_track()
+            if by_track:
+                scan = self._track_scan(by_track)
+                signals = tuple(
+                    ForgeSignal(track=_clamp_ap_string(t),
+                                eligible=len(by_track[t]))
+                    for t in scan if by_track.get(t))
+                default = signals[0].track if signals else ""
+        except Exception:                        # never break a snapshot
+            log.exception("forge view: signals unavailable")
+
+        def crossing(rec) -> ForgeCrossing:
+            name = rec.zone.display_name if rec.zone is not None else \
+                rec.zone_id
+            return ForgeCrossing(
+                zone_id=rec.zone_id, display_name=name[:C.MAX_TEXT_LEN],
+                target_game=_clamp_ap_string(rec.target_game),
+                remaining=sum(1 for i in rec.allocated_location_ids
+                              if i not in checked))
+
+        resume_id = self.hub_status().resume_zone_id
+        resume = None
+        if resume_id:
+            rec = save.zone_by_id(resume_id)
+            if rec is not None:
+                resume = crossing(rec)
+        active = save.active_zone
+        left = 0
+        if active is not None and active.state == "GENERATED":
+            left = max(0, MAX_REDRAWS - active.redraw_count)
+        return ForgeView(
+            signals=signals, default_track=default, redraws_left=left,
+            resume=resume,
+            untethered=tuple(crossing(z) for z in save.zones
+                             if z.state == "COMPLETE"))
 
     # ------------------------------------------------------------------
     # Zone traversal intents

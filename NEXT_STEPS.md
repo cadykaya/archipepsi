@@ -1,5 +1,30 @@
 # Archipepsi — build state
 
+## 2026-10-16 (Prod) — D-22 slice: the first playable Crossing loop, for review
+
+**STOPPED for the owner's play.** Branch `review/d22-slice`, not merged.
+
+- **Bridge (`15c6b2c1`):**
+  - `RequestNextZone.track`;
+  - `redraw_zone` (at most 2, only while GENERATED and before the first
+    entry, same ids, the variation reaching the providers);
+  - the snapshot's `forge` view;
+  - all of it behind `--d22-slice`, so non-slice serialisation is
+    unchanged.
+- **Godot (`446270eb`):**
+  - the Forge screen;
+  - an exit that is always usable;
+  - the untether moment;
+  - station area 2, with its count-gated door, lever, ServiceShutter and
+    second Forge;
+  - the `--d22-slice` auto-start;
+  - the launchers and the review-build packaging.
+- **Evidence and known issues:** `docs/reports/2026-10-16-d22-slice.md`.
+  It covers §6.A A1–A11, A7 = 52.27 m, the pre-existing re-sent-layout
+  toast, and the 2-Check Crossings at prototype scale.
+- **Open, not decided:** station progression when Checks need remote
+  items or other Crossings. The all-Checks untether is prototype-only.
+
 ## 2026-09-23 (engine) — Overnight 05: physical carry to a consumer, a reversible lever, three minors in Zones, twelve verbs and two Statuses in the engine
 
 **HANDED OFF.** This was the owner's Overnight 05 work order

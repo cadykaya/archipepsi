@@ -2205,11 +2205,31 @@ func refresh() -> void:
 		if not BridgeClient.is_checked(location):
 			outstanding += 1
 	var complete := outstanding == 0
+	if D22Slice.active():
+		_refresh_slice_exit(outstanding)
+		return
 	_exit_portal.set_unlocked(complete, outstanding)
 	# The unlock is pushed on every snapshot, so remark on the edge only.
 	if complete and _portal_was_locked and hud != null:
 		hud.say_line("portal_open")
 	_portal_was_locked = not complete
+
+## D-22 slice: the exit is always a way out, and the untether is the
+## BRIDGE's COMPLETE -- the Crossing in the Forge's Untethered list -- not
+## this client's count. The moment plays on the edge; a Crossing already
+## untethered when it loads shows the released anchor with no line.
+var _slice_seen_tethered := false
+var _slice_settled := false
+func _refresh_slice_exit(outstanding: int) -> void:
+	var released := D22Slice.is_untethered(zone_id)
+	_exit_portal.set_slice(outstanding, released)
+	if not released:
+		_slice_seen_tethered = true
+	elif not _slice_settled:
+		_exit_portal.release_tether(_slice_seen_tethered, player)
+		if _slice_seen_tethered and hud != null:
+			hud.say_line("untethered")
+	_slice_settled = released or _slice_settled
 
 ## Connector segments belong to no chamber, so the current chamber holds
 ## until the next one's bounds are genuinely entered — hysteresis for free.

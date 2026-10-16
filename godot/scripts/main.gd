@@ -17,6 +17,10 @@ var reveal: RevealLayer
 var equipment: EquipmentFace
 var shop: ShopUI
 var station_panel: StationPanel
+## D-22 slice: the Forge's screen. Built always, opened only by a Forge
+## console, and a Forge console exists only in a slice run.
+var forge_screen: ForgeScreen
+var _slice_autostarted := false
 var pause_menu: PauseMenu
 ## H-3D-SHELL (CP3): the one pause interface, four walls of a box. The
 ## pause menu is its Settings wall and `equipment` its Equipment wall.
@@ -266,6 +270,13 @@ func _ready() -> void:
 	# H-RESUME-R: an encounter resumed as it was left, through a real
 	# bridge and a restart, beside `Main` for the same reason -- `_to_zone`
 	# is what hands the saved encounter to the Zone before it is built.
+	# D-22 slice: its §6.A check, beside the real `Main` for the same
+	# reason -- what it is checking is the Hub, the Forge, the Crossing and
+	# the save that `Main` drives.
+	if D22SliceDriver.phase_from_cmdline() != "":
+		var slice_driver := D22SliceDriver.new()
+		slice_driver.main = self
+		add_child(slice_driver)
 	if ResumeLiveDriver.resume_phase() != "":
 		var resume_driver := ResumeLiveDriver.new()
 		resume_driver.main = self
@@ -413,6 +424,10 @@ func boot() -> void:
 	add_child(shop)
 	station_panel = StationPanel.new()
 	add_child(station_panel)
+	forge_screen = ForgeScreen.new()
+	add_child(forge_screen)
+	forge_screen.closed.connect(_update_modal)
+	forge_screen.accept_requested.connect(_on_enter_zone)
 	debug = DebugOverlay.new()
 	add_child(debug)
 	nav = NavSchematic.new()
@@ -467,6 +482,13 @@ func _on_menu_mock() -> void:
 # ---------------------------------------------------------------------------
 
 func _on_snapshot(_snapshot: Dictionary) -> void:
+	# THE SLICE LAUNCHER skips the menu: `--d22-slice` starts (or resumes)
+	# the offline mock campaign once, exactly as the menu's mock button
+	# does. Without the flag this does nothing.
+	if not _slice_autostarted and D22Slice.requested_on_cmdline() \
+			and view == View.MENU and BridgeClient.hub_mode() == "NO_CAMPAIGN":
+		_slice_autostarted = true
+		_on_menu_mock()
 	menu.refresh()
 	debug.refresh()
 	_refresh_nav()
@@ -497,6 +519,11 @@ func _on_snapshot(_snapshot: Dictionary) -> void:
 				_sync_equipped()
 	if shop.visible:
 		shop.rebuild()
+	if forge_screen.visible:
+		if view == View.HUB:
+			forge_screen.rebuild()
+		else:
+			forge_screen.close()
 	hud.point_at_new_consumables(_snapshot)
 	hud.refresh_echo()
 
@@ -665,6 +692,7 @@ func _to_hub() -> void:
 	hub.enter_zone_requested.connect(_on_enter_zone)
 	hub.open_inventory_requested.connect(_toggle_inventory)
 	hub.open_shop_requested.connect(_toggle_shop)
+	hub.forge_requested.connect(_open_forge)
 	# Epsilon speaks in the Hub too now. Handed the HUD rather than
 	# reaching for it: the Hub is built by this file, so this file is
 	# where the wiring belongs.
@@ -703,6 +731,14 @@ func _close_menu() -> void:
 func _on_menu_closed() -> void:
 	pause_menu.visible = false
 	equipment.close()
+	_update_modal()
+
+## A Forge console was used (D-22 slice). `area` is which station area's
+## console: the screen is the same at both.
+func _open_forge(area: int) -> void:
+	if view != View.HUB:
+		return
+	forge_screen.open(area)
 	_update_modal()
 
 func _toggle_shop() -> void:
@@ -958,6 +994,19 @@ func _on_build_failed(failed_id: String, reason: String) -> void:
 	_to_hub()
 
 func _on_exit_zone() -> void:
+	# D-22 slice, SECURE = LEAVE: through the exit with transfers still
+	# out, the Crossing goes DORMANT holding its Checks -- the bridge's
+	# own `exit_zone` already does that -- and the way back must be where
+	# a pause-menu Return would have left it, so its progress is
+	# remembered the same way.
+	if D22Slice.active() and zone != null \
+			and not D22Slice.is_untethered(zone.zone_id):
+		_send_zone_timing(false)
+		_remember_zone_progress()
+		BridgeClient.send_intent({"type": "exit_zone",
+				"zone_id": zone.zone_id})
+		_to_hub()
+		return
 	_send_zone_timing(true)
 	BridgeClient.send_intent({"type": "exit_zone", "zone_id": zone.zone_id})
 	_to_hub()
@@ -1112,7 +1161,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if view == View.MENU:
 		return
 	if event.is_action_pressed("pause"):
-		if shop.visible:
+		if forge_screen.visible:
+			forge_screen.close()
+		elif shop.visible:
 			shop.close()
 		elif not menu_shell.is_open():
 			_open_menu("settings")
@@ -1198,7 +1249,7 @@ func _refresh_nav() -> void:
 ## consume unrelated gameplay inputs."
 func _update_modal() -> void:
 	var modal: bool = menu_shell.is_open() \
-			or shop.visible or station_panel.visible
+			or shop.visible or station_panel.visible or forge_screen.visible
 	var player: Player = null
 	if hub != null:
 		player = hub.player
@@ -1213,7 +1264,7 @@ func _update_modal() -> void:
 			player.release(Player.MODAL_HOLD)
 	hud.set_crosshair_visible(not modal)
 	if view == View.MENU or menu_shell.is_open() \
-			or shop.visible or station_panel.visible:
+			or shop.visible or station_panel.visible or forge_screen.visible:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

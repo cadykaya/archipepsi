@@ -67,3 +67,5 @@ godot/tests/fixtures/sample/layouts/
 .named-case-saves/
 # `godot-ordinary-live`: one ordinary Zone at default scale, its own save.
 .ordinary-live-saves/
+saves-d22-slice*/
+.d22-slice-check/

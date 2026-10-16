@@ -8,6 +8,8 @@ extends Node3D
 signal enter_zone_requested
 signal open_inventory_requested
 signal open_shop_requested
+## D-22 slice: a Forge console was used; `area` is the station area.
+signal forge_requested(area: int)
 
 const THEME := "concrete_facility"
 # Room dimensions live with the anchors that derive from them, so a
@@ -38,6 +40,8 @@ var _board_pulse := 0.0
 var _working_line := 0
 ## The Echo Lab annexe. Built with the room; never a Zone, never a Check.
 var lab: EchoLab
+## D-22 slice: station area 2, or null outside a slice run.
+var area_two: StationAreaTwo = null
 
 # --- Epsilon between Zones -------------------------------------------------
 #
@@ -210,9 +214,19 @@ func _build_room() -> void:
 	# The Lab doorway is a real hole in the left wall, cut here rather
 	# than drawn over a solid one by `_cut_lab_doorway`.
 	# `ceiling = false`: the Hub raises its own, two lines below.
+	# D-22 slice: one more real hole, in the right wall, to station area 2.
+	# Outside a slice run `cut` stays empty and the walls are as before.
+	var slice := D22Slice.active()
+	var cut := {"entry": false, "exit": false, "side_right": true,
+			"side_right_z": StationAreaTwo.DOOR_Z} if slice else {}
 	b._perimeter(root, W, D, H, THEME, false, false, 0.0,
 			HubAnchors.LAB_DOOR_Z, HubAnchors.LAB_DOOR_WIDTH,
-			HubAnchors.LAB_DOOR_HEIGHT, false)
+			HubAnchors.LAB_DOOR_HEIGHT, false, cut)
+	if slice:
+		area_two = StationAreaTwo.new()
+		add_child(area_two)
+		area_two.forge_used.connect(
+				func() -> void: forge_requested.emit(2))
 	b._box(root, Vector3(W, 0.4, D), Vector3(0, H, D / 2.0),
 			ThemeMaterials.trim_mat(THEME))
 	for at in [Vector3(-W / 4.0, H - 0.4, D / 2.0),
@@ -364,6 +378,11 @@ static func discard_target() -> String:
 	return str(BridgeClient.hub().get("discard_zone_id", ""))
 
 func _on_portal_activated() -> void:
+	# D-22 slice: the portal IS the Forge console -- same anchor, same
+	# activation path, a new screen (brief §2 step 1).
+	if D22Slice.active():
+		forge_requested.emit(1)
+		return
 	var mode := BridgeClient.hub_mode()
 	# ZONE_FAILED IS NOT IN EITHER LIST, and the bridge asserts that.
 	# Nothing to enter and nothing to generate: the only move is the
@@ -401,6 +420,8 @@ func refresh() -> void:
 	var snapshot := BridgeClient.snapshot
 	var hub := BridgeClient.hub()
 	var mode := BridgeClient.hub_mode()
+	if area_two != null:
+		area_two.refresh()
 
 	var static_units := int(snapshot.get("static_glitch_units", 0))
 	_board.text = _garble(str(hub.get("headline", "")), static_units)
@@ -803,6 +824,13 @@ class HubPortal extends StaticBody3D:
 			_label.text = "FINALE"
 			_core.material_override = ThemeMaterials.glow_material(
 					Color(1.0, 0.25, 0.2), 1.8 if _enabled else 0.3)
+			return
+		if D22Slice.active():
+			_enabled = true
+			_prompt = "[E] USE THE FORGE"
+			_label.text = "THE FORGE"
+			_core.material_override = ThemeMaterials.glow_material(
+					Color(1.0, 0.7, 0.3), 1.8)
 			return
 		_enabled = bool(hub.get("portal_enabled", false))
 		match mode:

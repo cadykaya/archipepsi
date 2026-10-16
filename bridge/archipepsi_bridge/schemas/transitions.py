@@ -34,7 +34,7 @@ try:
     from . import constants as C
     from .echo import EchoInterpretation
     from .protocol import (
-        MAX_LAYOUT_REFUSALS,
+        MAX_LAYOUT_REFUSALS, MAX_REDRAWS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
         CampaignSave, ConsumableAuthorization, ConsumableUse,
@@ -50,7 +50,7 @@ except ImportError:  # pragma: no cover
     import constants as C
     from echo import EchoInterpretation
     from protocol import (
-        MAX_LAYOUT_REFUSALS,
+        MAX_LAYOUT_REFUSALS, MAX_REDRAWS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
         CampaignSave, ConsumableAuthorization, ConsumableUse,
@@ -494,6 +494,43 @@ def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
                                         layout_state="REFUSED",
                                         layout_refusals=tries),
                     active_zone_id=None if clear else save.active_zone_id)
+
+
+def redraw_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
+    """D-22 slice: the player asked Epsilon for a different draft.
+
+    GENERATED -> PENDING_GENERATION **against the same
+    `allocated_location_ids`**: the recovery `refuse_layout` already gives
+    a fresh proposal, chosen by the player instead of the validator.
+    Nothing is re-allocated, so no Check changes; composition, proof and
+    validation all run again when the provider answers. `redraw_count`
+    rises, and reaches the provider as variation, so the draft changes.
+
+    Refused, with a domain error rather than a schema one:
+      * in any state but GENERATED;
+      * once the Zone has been entered -- a manifest, or a layout attempt
+        the engine already made, means the player has been inside, and
+        "a committed layout is replayed, never replaced";
+      * past `MAX_REDRAWS`.
+    """
+    rec = _require_zone(save, zone_id)
+    if rec.state != "GENERATED":
+        raise ValueError(f"Zone '{zone_id}' is {rec.state}; only a draft "
+                         "that has not been entered can be redrawn")
+    if (rec.manifest is not None or rec.layout_refusals > 0
+            or rec.layout_state != "UNCERTIFIED" or rec.unhostable_rooms):
+        raise ValueError(f"Zone '{zone_id}' has been entered; its layout is "
+                         "the player's now")
+    if rec.redraw_count >= MAX_REDRAWS:
+        raise ValueError(f"Zone '{zone_id}' has used its {MAX_REDRAWS} "
+                         "redraws")
+    return _rebuild(save,
+                    zones=_replace_zone(save, zone_id,
+                                        state="PENDING_GENERATION",
+                                        zone=None, manifest=None,
+                                        used_fallback=False,
+                                        redraw_count=rec.redraw_count + 1),
+                    active_zone_id=zone_id)
 
 
 def reselect_hosts(save: CampaignSave, zone_id: str, rooms,
@@ -1790,4 +1827,5 @@ TRANSITIONS = (
     recover_transported_object,
     reselect_hosts,
     commit_layout, refuse_layout,
+    redraw_zone,
 )
