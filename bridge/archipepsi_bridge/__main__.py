@@ -95,6 +95,11 @@ def main() -> None:
              "by name (logged, and recorded under <save dir>/candidate/). "
              "Off by default: without this flag every Zone is composed "
              "exactly as it always was. Use a separate save slot.")
+    parser.add_argument(
+        "--d22-slice", action="store_true",
+        help="D-22 SLICE (review only): the Forge's signal choice and "
+             "redraw, and the Forge view in the snapshot. Off by default; "
+             "use with --ap=mock and a separate --save-dir.")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
     from .candidate import parse as parse_candidate
@@ -115,7 +120,8 @@ def main() -> None:
         save_dir=args.save_dir,
         archive_dir=args.archive_dir,
         quiet_generation=args.quiet_generation,
-        candidate_steps=candidate_steps)
+        candidate_steps=candidate_steps,
+        d22_slice=args.d22_slice)
     server = BridgeServer(engine, ap_default=args.ap,
                           mock_config=MOCK_SCALES[args.mock_scale],
                           **({} if args.port is None
