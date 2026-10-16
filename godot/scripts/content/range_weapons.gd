@@ -171,7 +171,9 @@ var _hold_loop := false
 var _shot_frame := -1
 
 
-func bind(host: WeaponFeel) -> void:
+## `host` is anything with `player` and `feel`: the range (`WeaponFeel`)
+## or, in the unified build, `UnifiedArmory`.
+func bind(host: Node) -> void:
 	name = "RangeWeapons"
 	player = host.player
 	feel = host.feel

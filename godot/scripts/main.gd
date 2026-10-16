@@ -8,6 +8,9 @@ enum View { MENU, HUB, ZONE }
 var view := View.MENU
 var world: Node3D
 var hub: HubController
+## Unified build: the five weapons on the current player (one per Hub,
+## Crossing or annex player), or null.
+var armory: UnifiedArmory = null
 var zone: ZoneController
 var menu: MainMenu
 var hud: Hud
@@ -315,7 +318,12 @@ func _ready() -> void:
 	# D-22 slice: its §6.A check, beside the real `Main` for the same
 	# reason -- what it is checking is the Hub, the Forge, the Crossing and
 	# the save that `Main` drives.
-	if D22SliceDriver.phase_from_cmdline() != "":
+	# Unified build: its seams, beside the real `Main` for the same reason.
+	if UnifiedCheck.phase_from_cmdline() != "":
+		var unified_driver := UnifiedCheck.new()
+		unified_driver.main = self
+		add_child(unified_driver)
+	elif D22SliceDriver.phase_from_cmdline() != "":
 		var slice_driver := D22SliceDriver.new()
 		slice_driver.main = self
 		add_child(slice_driver)
@@ -618,6 +626,12 @@ func _sync_equipped() -> void:
 func _equip_all_slots(target: Player) -> void:
 	for slot: String in Constants.SLOT_NAMES:
 		var runtime: EchoRuntime = target.runtimes.get(slot)
+		# Unified build: a weapon out owns the second slot until holstered,
+		# when the armory hands the saved Echo back.
+		if armory != null and is_instance_valid(armory) \
+				and armory.player == target and armory.out() != "" \
+				and slot == RangeWeapons.SLOT:
+			continue
 		if runtime != null:
 			runtime.set_equipped(BridgeClient.slotted_action(slot))
 
@@ -779,8 +793,24 @@ func _to_hub() -> void:
 	hub.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
 	_equip_all_slots(hub.player)
 	_bind_rule_runtime(hub.player, null)
+	_arm(hub.player, hub)
 	tones.play_ambience(1.0)
 	_update_modal()
+
+## Unified build: the five weapons on `target`, parented to the world node
+## that owns it so they go when it goes. Outside the unified build, nothing.
+func _arm(target: Player, owner_node: Node) -> void:
+	armory = null
+	if not Unified.active() or target == null:
+		return
+	var built := UnifiedArmory.new()
+	owner_node.add_child(built)
+	if not built.setup(target, tones):
+		push_warning("unified: the player's shot feedback was not found; "
+				+ "no weapons armed")
+		built.queue_free()
+		return
+	armory = built
 
 func _toggle_inventory() -> void:
 	if menu_shell.is_open():
@@ -984,6 +1014,7 @@ func _to_zone(zone_dict: Dictionary) -> void:
 		if not killed:
 			tones.play("confirm"))
 	_bind_rule_runtime(zone.player, zone)
+	_arm(zone.player, zone)
 	rule_runtime.notify("zone_enter")
 	var theme := str(zone_dict.get("theme", "void_glitch"))
 	# The last transmission gets a lower, heavier room tone than any Zone
