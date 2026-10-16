@@ -1,0 +1,364 @@
+{
+ "piece": "Freight Bay",
+ "policy": "Only sounds whose own Freesound page shows the CC0 1.0 licence. CC0 needs no attribution; creators are credited anyway.",
+ "audioSource": "Freesound's public high-quality MP3 preview of each sound (the original uploads need a Freesound login).",
+ "samples": [
+  {
+   "id": "horn-freight-train",
+   "title": "freight train horn and approach pass near.flac",
+   "creator": "kyles",
+   "page": "https://freesound.org/people/kyles/sounds/454025/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/454/454025_612689-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "sfx-shunter-horn.wav",
+     "kit": "sound-effect reference (not in SigmAudio)",
+     "edit": "first 2.45 s (the horn chord, before the train passes); 10 ms fade-in, 0.3 s fade-out. Not imported: the game would play it as a sound effect",
+     "seconds": 2.45
+    },
+    {
+     "file": "sfx-shunter-horn-tuned.wav",
+     "kit": "sound-effect reference (not in SigmAudio)",
+     "edit": "the three horn tones separated with harmonic masks and tuned to D#4, F#4 and B4 (the original F# is 35 cents sharp), then summed with the untouched breath noise; 2.5 s",
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "id": "horn-train",
+   "title": "Train horn",
+   "creator": "L83",
+   "page": "https://freesound.org/people/L83/sounds/455157/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/455/455157_5900016-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": []
+  },
+  {
+   "id": "hydraulic-scissor-lift-1",
+   "title": "scissor lifts machines up down hydraulic movements1.flac",
+   "creator": "kyles",
+   "page": "https://freesound.org/people/kyles/sounds/637810/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/637/637810_612689-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": []
+  },
+  {
+   "id": "hydraulic-scissor-lift-2",
+   "title": "scissor lifts machines up down hydraulic movements2.flac",
+   "creator": "kyles",
+   "page": "https://freesound.org/people/kyles/sounds/637811/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/637/637811_612689-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "hydraulic-F4.wav",
+     "kit": "bayHydraulic",
+     "edit": "hydraulic hum 28.5-36.0 s; tuned +21 cents to F4",
+     "seconds": 7.409
+    }
+   ]
+  },
+  {
+   "id": "hydraulic-cutter-crunch",
+   "title": "machine hydraulic metal cutter close crunch1.flac",
+   "creator": "kyles",
+   "page": "https://freesound.org/people/kyles/sounds/453303/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/453/453303_612689-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "snare-cutter-crunch.wav",
+     "kit": "bayMachine",
+     "edit": "one crunch from 2.403 s, 0.32 s",
+     "seconds": 0.32
+    }
+   ]
+  },
+  {
+   "id": "press-highspeed-1",
+   "title": "Schnelll\u00e4uferpresse 01.WAV",
+   "creator": "mark646",
+   "page": "https://freesound.org/people/mark646/sounds/209219/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/209/209219_2971579-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "kick-press-stroke.wav",
+     "kit": "bayMachine",
+     "edit": "one press stroke from 50.066 s, 0.30 s, 80 ms fade-out",
+     "seconds": 0.3
+    }
+   ]
+  },
+  {
+   "id": "press-highspeed-3",
+   "title": "Schnelll\u00e4uferpresse 03.WAV",
+   "creator": "mark646",
+   "page": "https://freesound.org/people/mark646/sounds/209217/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/209/209217_2971579-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "closed-hat-press-clank.wav",
+     "kit": "bayMachine",
+     "edit": "one die clank from 4.671 s, 0.14 s",
+     "seconds": 0.14
+    },
+    {
+     "file": "ride-press-clank-2.wav",
+     "kit": "bayHeavy",
+     "edit": "a second clank from 2.060 s",
+     "seconds": 0.2
+    }
+   ]
+  },
+  {
+   "id": "conveyor-metal-rollers",
+   "title": "metal rollers conveyor belt with no belt to bring boxes to store basement normal and slow prickly gritty movement.flac",
+   "creator": "kyles",
+   "page": "https://freesound.org/people/kyles/sounds/454082/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/454/454082_612689-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": []
+  },
+  {
+   "id": "conveyor-industrial",
+   "title": "Industrial Conveyor Belt",
+   "creator": "Kinoton",
+   "page": "https://freesound.org/people/Kinoton/sounds/519027/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/519/519027_2247456-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "conveyor-loop.wav",
+     "kit": "bayConveyor",
+     "edit": "60-77 s, with the last second crossfaded into the first so it loops without a seam (16 s loop)",
+     "seconds": 16.0
+    }
+   ]
+  },
+  {
+   "id": "valve-air-release",
+   "title": "Valve_1(air, release).wav",
+   "creator": "o_ciz",
+   "page": "https://freesound.org/people/o_ciz/sounds/475427/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/475/475427_7009965-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "open-hat-valve-hiss.wav",
+     "kit": "bayMachine",
+     "edit": "0.6 s of valve hiss from 0.267 s",
+     "seconds": 0.6
+    }
+   ]
+  },
+  {
+   "id": "air-release",
+   "title": "Air release",
+   "creator": "davidlay1",
+   "page": "https://freesound.org/people/davidlay1/sounds/416080/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/416/416080_7175960-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "open-hat-pressure-release.wav",
+     "kit": "bayHeavy",
+     "edit": "whole release, 3.6 s",
+     "seconds": 3.6
+    }
+   ]
+  },
+  {
+   "id": "air-release-slips",
+   "title": "Slips air release v1",
+   "creator": "mcpable",
+   "page": "https://freesound.org/people/mcpable/sounds/131934/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/131/131934_1542102-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "clap-air-puff.wav",
+     "kit": "bayMachine",
+     "edit": "first 0.30 s of the release from 0.444 s, shortened with a 0.12 s decay",
+     "seconds": 0.3
+    }
+   ]
+  },
+  {
+   "id": "motor-electric-whir",
+   "title": "Electric Motor Whir.aif",
+   "creator": "jasonLON",
+   "page": "https://freesound.org/people/jasonLON/sounds/125401/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/125/125401_2279655-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "motor-B2.wav",
+     "kit": "bayMotor",
+     "edit": "steady whir 14.5-22.1 s; tuned +52 cents to exactly B2 (123.5 Hz)",
+     "seconds": 7.374
+    }
+   ]
+  },
+  {
+   "id": "motor-turret",
+   "title": "Rotating tank turret planetary electric motor",
+   "creator": "lorefold",
+   "page": "https://freesound.org/people/lorefold/sounds/607310/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/607/607310_4702348-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": []
+  },
+  {
+   "id": "pneumatic-hammer-forging",
+   "title": "Pneumatic hammer - Deprag zn231 - Forging 1",
+   "creator": "ldezem",
+   "page": "https://freesound.org/people/ldezem/sounds/386302/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/386/386302_1655965-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "clap-hammer-rattle.wav",
+     "kit": "bayHeavy",
+     "edit": "the hammer burst, 0.74 s",
+     "seconds": 0.74
+    }
+   ]
+  },
+  {
+   "id": "metal-impact-heavy-1",
+   "title": "Heavy Metal Impact",
+   "creator": "magnuswaker",
+   "page": "https://freesound.org/people/magnuswaker/sounds/614062/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/614/614062_11537497-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "snare-heavy-clang.wav",
+     "kit": "bayHeavy",
+     "edit": "whole impact, first 1.3 s",
+     "seconds": 1.3
+    }
+   ]
+  },
+  {
+   "id": "metal-impact-heavy-2",
+   "title": "Heavy Metal Impact 2",
+   "creator": "magnuswaker",
+   "page": "https://freesound.org/people/magnuswaker/sounds/614063/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/614/614063_11537497-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "kick-heavy-boom.wav",
+     "kit": "bayHeavy",
+     "edit": "whole impact, 1.4 s",
+     "seconds": 1.4
+    }
+   ]
+  },
+  {
+   "id": "metal-impact-hard",
+   "title": "Hard metal impact",
+   "creator": "ronnyver",
+   "page": "https://freesound.org/people/ronnyver/sounds/488589/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/488/488589_7015196-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "ride-metal-ping.wav",
+     "kit": "bayMachine",
+     "edit": "the impact from 0.128 s, 1.2 s",
+     "seconds": 1.2
+    }
+   ]
+  },
+  {
+   "id": "factory-machine-04",
+   "title": "Factory machine 04",
+   "creator": "jmbphilmes",
+   "page": "https://freesound.org/people/jmbphilmes/sounds/194489/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/194/194489_2322692-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": []
+  },
+  {
+   "id": "horn-industrial-air",
+   "title": "Industrial Air Horn",
+   "creator": "mcpable",
+   "page": "https://freesound.org/people/mcpable/sounds/131930/",
+   "audioDownloaded": "https://cdn.freesound.org/previews/131/131930_1542102-hq.mp3",
+   "license": "CC0 1.0 Universal (public domain dedication)",
+   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "licenseCheckedOn": "2026-10-13, on the sound page itself",
+   "attributionRequired": false,
+   "used": [
+    {
+     "file": "horn-D#4.wav",
+     "kit": "bayHorn",
+     "edit": "steady part and release, 0.33-2.28 s; the 385.5 Hz second horn removed with a harmonic mask so one tone remains; tuned -34 cents to exactly D#4 (311.1 Hz)",
+     "seconds": 1.989
+    }
+   ]
+  }
+ ]
+}

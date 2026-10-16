@@ -1,0 +1,2766 @@
+{
+  "summary": null,
+  "conflicts": [],
+  "findings": [
+    {
+      "severity": "caution",
+      "area": "level",
+      "observed": "Peak level is -15.5 dBFS, a little under the -6 to -1 a finished cue usually reaches.",
+      "meaning": "Fine for a deliberately quiet bed. Worth raising if this is meant to sit at normal volume."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Bay: motor uses 1 distinct pitch across 8 notes.",
+      "meaning": "That is a rhythm part rather than a melodic one. Deliberate for a pedal or an ostinato, static if this was meant to be the tune."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Bay: motor is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Working: press plays the identical bar 16 times with no variation.",
+      "meaning": "Fine for a pulse or a drone, wearing for a melody. A loop is heard dozens of times in a session, so one changed bar in four buys a lot of patience."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Working: hydraulic lift uses 2 distinct pitches across 12 notes.",
+      "meaning": "That is a rhythm part rather than a melodic one. Deliberate for a pedal or an ostinato, static if this was meant to be the tune."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Working: hydraulic lift is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Working: bell is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Combat: kit is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Working: pulse and Working: bell sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Working: pulse and Combat: lead guitar sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Working: hydraulic lift and Combat: rhythm guitar, open sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Working: hydraulic lift and Combat: second guitar, open sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Working: bell and Combat: synth arpeggio sit 4 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Working: bell and Combat: lead guitar sit 0 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Combat: rhythm guitar, open and Combat: second guitar, open sit 0 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Combat: rhythm guitar, muted and Combat: second guitar, muted sit 0 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Combat: rhythm guitar, muted and Combat: bass sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Combat: second guitar, muted and Combat: bass sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Combat: synth arpeggio and Combat: lead guitar sit 4 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "note",
+      "area": "structure",
+      "observed": "Entry: press and Entry: motor and Entry: muted guitar and Entry: guitar and Entry: kit and Entry: impacts and Entry: air horn and Entry: bass and Victory: E major and Victory: lead and Victory: air horn and Victory: impacts and Victory: low E and Victory: motor and Victory: press have no scheduled notes or unmuted audio clips.",
+      "meaning": "These tracks have no placed material. Other tracks may still contribute to their shared layer stems."
+    },
+    {
+      "severity": "fault",
+      "area": "intent",
+      "observed": "The plan reserves room for concentration, but the cue runs 111.4 notes per bar.",
+      "meaning": "The attention budget is meant to be a hard cap, not a preference. Something is busier than the brief allows and will compete with the thing it was supposed to stay under."
+    },
+    {
+      "severity": "caution",
+      "area": "intent",
+      "observed": "The plan describes low energy (0.30), but the cue places 111.4 notes per bar.",
+      "meaning": "Density and energy usually track together. A calm scene with this much movement tends to read as anxious rather than restful."
+    }
+  ],
+  "quality": {
+    "disclaimer": "SigmAudio can measure mechanics and compare the result with the plan. It cannot decide whether this cue is good. That part stays with the person listening.",
+    "predictions": [
+      {
+        "id": "activity",
+        "title": "Movement",
+        "expected": "The plan asks for low energy, so it predicts light movement.",
+        "observed": "The written cue has 111.4 note starts per bar. That is outside the rough 0-10 note starts per bar guide.",
+        "status": "different",
+        "evidence": [
+          {
+            "kind": "inferred",
+            "label": "Plan expectation",
+            "detail": "Energy usually changes how many musical events arrive, but it does not determine whether they feel exciting."
+          },
+          {
+            "kind": "symbolic",
+            "label": "Written note count",
+            "detail": "111.4 note starts per bar across the current loop."
+          }
+        ]
+      },
+      {
+        "id": "focus",
+        "title": "Room for the game",
+        "expected": "The plan protects concentration.",
+        "observed": "The cue has 111.4 note starts per bar against a conservative 14-note focus guide.",
+        "status": "different",
+        "evidence": [
+          {
+            "kind": "inferred",
+            "label": "Attention budget",
+            "detail": "The cue was planned as focusSafe."
+          },
+          {
+            "kind": "symbolic",
+            "label": "Written note count",
+            "detail": "Note density is a useful proxy for distraction, not a substitute for playing the game."
+          }
+        ]
+      },
+      {
+        "id": "render",
+        "title": "What the render actually did",
+        "expected": "The plan asked for a dreamy palette.",
+        "observed": "The measured peak is -15.5 dBFS.",
+        "status": "supported",
+        "evidence": [
+          {
+            "kind": "rendered",
+            "label": "Offline render measurement",
+            "detail": "Level and spectrum describe the audio file, but they cannot judge whether its mood is right."
+          }
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "id": "claim-0",
+        "severity": "caution",
+        "area": "level",
+        "observed": "Peak level is -15.5 dBFS, a little under the -6 to -1 a finished cue usually reaches.",
+        "interpretation": "Fine for a deliberately quiet bed. Worth raising if this is meant to sit at normal volume.",
+        "evidence": [
+          {
+            "kind": "rendered",
+            "label": "Level measurement",
+            "detail": "Measured from the render or its export manifest."
+          }
+        ]
+      },
+      {
+        "id": "claim-1",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Bay: motor uses 1 distinct pitch across 8 notes.",
+        "interpretation": "That is a rhythm part rather than a melodic one. Deliberate for a pedal or an ostinato, static if this was meant to be the tune.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-2",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Bay: motor is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-3",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Working: press plays the identical bar 16 times with no variation.",
+        "interpretation": "Fine for a pulse or a drone, wearing for a melody. A loop is heard dozens of times in a session, so one changed bar in four buys a lot of patience.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-4",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Working: hydraulic lift uses 2 distinct pitches across 12 notes.",
+        "interpretation": "That is a rhythm part rather than a melodic one. Deliberate for a pedal or an ostinato, static if this was meant to be the tune.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-5",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Working: hydraulic lift is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-6",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Working: bell is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-7",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Combat: kit is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-8",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Working: pulse and Working: bell sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-9",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Working: pulse and Combat: lead guitar sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-10",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Working: hydraulic lift and Combat: rhythm guitar, open sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-11",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Working: hydraulic lift and Combat: second guitar, open sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-12",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Working: bell and Combat: synth arpeggio sit 4 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-13",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Working: bell and Combat: lead guitar sit 0 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-14",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Combat: rhythm guitar, open and Combat: second guitar, open sit 0 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-15",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Combat: rhythm guitar, muted and Combat: second guitar, muted sit 0 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-16",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Combat: rhythm guitar, muted and Combat: bass sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-17",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Combat: second guitar, muted and Combat: bass sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-18",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Combat: synth arpeggio and Combat: lead guitar sit 4 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-19",
+        "severity": "note",
+        "area": "structure",
+        "observed": "Entry: press and Entry: motor and Entry: muted guitar and Entry: guitar and Entry: kit and Entry: impacts and Entry: air horn and Entry: bass and Victory: E major and Victory: lead and Victory: air horn and Victory: impacts and Victory: low E and Victory: motor and Victory: press have no scheduled notes or unmuted audio clips.",
+        "interpretation": "These tracks have no placed material. Other tracks may still contribute to their shared layer stems.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-20",
+        "severity": "fault",
+        "area": "intent",
+        "observed": "The plan reserves room for concentration, but the cue runs 111.4 notes per bar.",
+        "interpretation": "The attention budget is meant to be a hard cap, not a preference. Something is busier than the brief allows and will compete with the thing it was supposed to stay under.",
+        "evidence": [
+          {
+            "kind": "inferred",
+            "label": "Plan expectation",
+            "detail": "The plan’s intended energy and attention budget are interpreted, not heard."
+          },
+          {
+            "kind": "symbolic",
+            "label": "Written note count",
+            "detail": "The result is compared with the cue’s actual note density."
+          }
+        ]
+      },
+      {
+        "id": "claim-21",
+        "severity": "caution",
+        "area": "intent",
+        "observed": "The plan describes low energy (0.30), but the cue places 111.4 notes per bar.",
+        "interpretation": "Density and energy usually track together. A calm scene with this much movement tends to read as anxious rather than restful.",
+        "evidence": [
+          {
+            "kind": "inferred",
+            "label": "Plan expectation",
+            "detail": "The plan’s intended energy and attention budget are interpreted, not heard."
+          },
+          {
+            "kind": "symbolic",
+            "label": "Written note count",
+            "detail": "The result is compared with the cue’s actual note density."
+          }
+        ]
+      }
+    ],
+    "listeningPrompts": [
+      {
+        "id": "motif",
+        "focus": "melody",
+        "question": "After hearing it twice, can you recognise or hum the main musical idea?",
+        "whyOnlyYouCanAnswer": "Pitch counts cannot tell whether an idea sticks in your head."
+      },
+      {
+        "id": "gameplay",
+        "focus": "gameplay",
+        "question": "While the game is busy, does this leave enough room for concentration?",
+        "whyOnlyYouCanAnswer": "The analyser cannot see your combat, UI, dialogue, or controller in the player’s hands."
+      },
+      {
+        "id": "loop",
+        "focus": "loop",
+        "question": "By the third loop, does it still feel intentional instead of tiring or annoying?",
+        "whyOnlyYouCanAnswer": "A repeated-bar check spots literal copies, not when a perfectly valid loop has worn out its welcome."
+      }
+    ],
+    "report": {
+      "findings": [
+        {
+          "severity": "caution",
+          "area": "level",
+          "observed": "Peak level is -15.5 dBFS, a little under the -6 to -1 a finished cue usually reaches.",
+          "meaning": "Fine for a deliberately quiet bed. Worth raising if this is meant to sit at normal volume."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Bay: motor uses 1 distinct pitch across 8 notes.",
+          "meaning": "That is a rhythm part rather than a melodic one. Deliberate for a pedal or an ostinato, static if this was meant to be the tune."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Bay: motor is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Working: press plays the identical bar 16 times with no variation.",
+          "meaning": "Fine for a pulse or a drone, wearing for a melody. A loop is heard dozens of times in a session, so one changed bar in four buys a lot of patience."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Working: hydraulic lift uses 2 distinct pitches across 12 notes.",
+          "meaning": "That is a rhythm part rather than a melodic one. Deliberate for a pedal or an ostinato, static if this was meant to be the tune."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Working: hydraulic lift is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Working: bell is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Combat: kit is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Working: pulse and Working: bell sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Working: pulse and Combat: lead guitar sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Working: hydraulic lift and Combat: rhythm guitar, open sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Working: hydraulic lift and Combat: second guitar, open sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Working: bell and Combat: synth arpeggio sit 4 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Working: bell and Combat: lead guitar sit 0 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Combat: rhythm guitar, open and Combat: second guitar, open sit 0 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Combat: rhythm guitar, muted and Combat: second guitar, muted sit 0 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Combat: rhythm guitar, muted and Combat: bass sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Combat: second guitar, muted and Combat: bass sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Combat: synth arpeggio and Combat: lead guitar sit 4 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "note",
+          "area": "structure",
+          "observed": "Entry: press and Entry: motor and Entry: muted guitar and Entry: guitar and Entry: kit and Entry: impacts and Entry: air horn and Entry: bass and Victory: E major and Victory: lead and Victory: air horn and Victory: impacts and Victory: low E and Victory: motor and Victory: press have no scheduled notes or unmuted audio clips.",
+          "meaning": "These tracks have no placed material. Other tracks may still contribute to their shared layer stems."
+        },
+        {
+          "severity": "fault",
+          "area": "intent",
+          "observed": "The plan reserves room for concentration, but the cue runs 111.4 notes per bar.",
+          "meaning": "The attention budget is meant to be a hard cap, not a preference. Something is busier than the brief allows and will compete with the thing it was supposed to stay under."
+        },
+        {
+          "severity": "caution",
+          "area": "intent",
+          "observed": "The plan describes low energy (0.30), but the cue places 111.4 notes per bar.",
+          "meaning": "Density and energy usually track together. A calm scene with this much movement tends to read as anxious rather than restful."
+        }
+      ],
+      "symbolic": {
+        "lengthBars": 16,
+        "audioClipCount": 0,
+        "scope": "written-notes-and-recording-placement",
+        "totalNotes": 1782,
+        "notesPerBar": 111.375,
+        "tracks": [
+          {
+            "trackId": "trk_0000000001z5paqsjz5axv",
+            "name": "Bay: conveyor",
+            "role": "texture",
+            "instrumentId": "bayConveyor",
+            "noteCount": 2,
+            "audioClipCount": 0,
+            "notesPerBar": 0.125,
+            "distinctPitches": 1,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 60,
+            "lowestPitch": 60,
+            "highestPitch": 60,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 1,
+            "distinctBars": 2,
+            "barsWithNotes": 2,
+            "occupancy": 0.0078125
+          },
+          {
+            "trackId": "trk_00000000066e5fa4sbn0dz",
+            "name": "Bay: motor",
+            "role": "pad",
+            "instrumentId": "bayMotor",
+            "noteCount": 8,
+            "audioClipCount": 0,
+            "notesPerBar": 0.5,
+            "distinctPitches": 1,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 52,
+            "lowestPitch": 52,
+            "highestPitch": 52,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 1,
+            "distinctBars": 2,
+            "barsWithNotes": 8,
+            "occupancy": 0.03125
+          },
+          {
+            "trackId": "trk_000000000h1nwwn6ty852y",
+            "name": "Working: press",
+            "role": "drums",
+            "instrumentId": "bayMachine",
+            "noteCount": 80,
+            "audioClipCount": 0,
+            "notesPerBar": 5,
+            "distinctPitches": 1,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 36,
+            "lowestPitch": 36,
+            "highestPitch": 36,
+            "distinctVelocities": 2,
+            "velocitySpread": 22,
+            "distinctOnsetsInBar": 5,
+            "distinctBars": 1,
+            "barsWithNotes": 16,
+            "occupancy": 0.3125
+          },
+          {
+            "trackId": "trk_0000000034pj203ead212f",
+            "name": "Working: clanks and valves",
+            "role": "drums",
+            "instrumentId": "bayMachine",
+            "noteCount": 76,
+            "audioClipCount": 0,
+            "notesPerBar": 4.75,
+            "distinctPitches": 3,
+            "pitchRangeSemitones": 12,
+            "medianPitch": 42,
+            "lowestPitch": 39,
+            "highestPitch": 51,
+            "distinctVelocities": 4,
+            "velocitySpread": 18,
+            "distinctOnsetsInBar": 5,
+            "distinctBars": 3,
+            "barsWithNotes": 16,
+            "occupancy": 0.265625
+          },
+          {
+            "trackId": "trk_000000005kwwxx0tbp3089",
+            "name": "Working: pulse",
+            "role": "motif",
+            "instrumentId": "brightPluck",
+            "noteCount": 128,
+            "audioClipCount": 0,
+            "notesPerBar": 8,
+            "distinctPitches": 8,
+            "pitchRangeSemitones": 17,
+            "medianPitch": 71,
+            "lowestPitch": 64,
+            "highestPitch": 81,
+            "distinctVelocities": 2,
+            "velocitySpread": 16,
+            "distinctOnsetsInBar": 8,
+            "distinctBars": 5,
+            "barsWithNotes": 16,
+            "occupancy": 0.5
+          },
+          {
+            "trackId": "trk_000000009prbysceaysd78",
+            "name": "Working: hydraulic lift",
+            "role": "pad",
+            "instrumentId": "bayHydraulic",
+            "noteCount": 12,
+            "audioClipCount": 0,
+            "notesPerBar": 0.75,
+            "distinctPitches": 2,
+            "pitchRangeSemitones": 1,
+            "medianPitch": 52,
+            "lowestPitch": 52,
+            "highestPitch": 53,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 3,
+            "distinctBars": 2,
+            "barsWithNotes": 8,
+            "occupancy": 0.046875
+          },
+          {
+            "trackId": "trk_00000000a5963vxb177wf3",
+            "name": "Working: bell",
+            "role": "melody",
+            "instrumentId": "glassBell",
+            "noteCount": 8,
+            "audioClipCount": 0,
+            "notesPerBar": 0.5,
+            "distinctPitches": 4,
+            "pitchRangeSemitones": 7,
+            "medianPitch": 73,
+            "lowestPitch": 71,
+            "highestPitch": 78,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 4,
+            "distinctBars": 2,
+            "barsWithNotes": 2,
+            "occupancy": 0.03125
+          },
+          {
+            "trackId": "trk_00000000ag6p3mgnxwfpa2",
+            "name": "Combat: rhythm guitar, open",
+            "role": "motif",
+            "instrumentId": "hollowGuitar",
+            "noteCount": 242,
+            "audioClipCount": 0,
+            "notesPerBar": 15.125,
+            "distinctPitches": 15,
+            "pitchRangeSemitones": 23,
+            "medianPitch": 50,
+            "lowestPitch": 40,
+            "highestPitch": 63,
+            "distinctVelocities": 7,
+            "velocitySpread": 12,
+            "distinctOnsetsInBar": 7,
+            "distinctBars": 6,
+            "barsWithNotes": 16,
+            "occupancy": 0.3046875
+          },
+          {
+            "trackId": "trk_00000000j5wpc445fs9mf4",
+            "name": "Combat: rhythm guitar, muted",
+            "role": "motif",
+            "instrumentId": "hollowGuitarMuted",
+            "noteCount": 76,
+            "audioClipCount": 0,
+            "notesPerBar": 4.75,
+            "distinctPitches": 5,
+            "pitchRangeSemitones": 10,
+            "medianPitch": 40,
+            "lowestPitch": 40,
+            "highestPitch": 50,
+            "distinctVelocities": 2,
+            "velocitySpread": 10,
+            "distinctOnsetsInBar": 7,
+            "distinctBars": 6,
+            "barsWithNotes": 16,
+            "occupancy": 0.296875
+          },
+          {
+            "trackId": "trk_00000000mm982b3rwkqay7",
+            "name": "Combat: second guitar, open",
+            "role": "motif",
+            "instrumentId": "clubGuitar",
+            "noteCount": 242,
+            "audioClipCount": 0,
+            "notesPerBar": 15.125,
+            "distinctPitches": 15,
+            "pitchRangeSemitones": 23,
+            "medianPitch": 50,
+            "lowestPitch": 40,
+            "highestPitch": 63,
+            "distinctVelocities": 7,
+            "velocitySpread": 12,
+            "distinctOnsetsInBar": 7,
+            "distinctBars": 6,
+            "barsWithNotes": 16,
+            "occupancy": 0.3046875
+          },
+          {
+            "trackId": "trk_00000000w95312hnd9y6aj",
+            "name": "Combat: second guitar, muted",
+            "role": "motif",
+            "instrumentId": "clubGuitarMuted",
+            "noteCount": 76,
+            "audioClipCount": 0,
+            "notesPerBar": 4.75,
+            "distinctPitches": 5,
+            "pitchRangeSemitones": 10,
+            "medianPitch": 40,
+            "lowestPitch": 40,
+            "highestPitch": 50,
+            "distinctVelocities": 2,
+            "velocitySpread": 10,
+            "distinctOnsetsInBar": 7,
+            "distinctBars": 6,
+            "barsWithNotes": 16,
+            "occupancy": 0.296875
+          },
+          {
+            "trackId": "trk_00000000yrqkd2zmfwpznf",
+            "name": "Combat: kit",
+            "role": "drums",
+            "instrumentId": "rockKit",
+            "noteCount": 232,
+            "audioClipCount": 0,
+            "notesPerBar": 14.5,
+            "distinctPitches": 4,
+            "pitchRangeSemitones": 10,
+            "medianPitch": 38,
+            "lowestPitch": 36,
+            "highestPitch": 46,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 13,
+            "distinctBars": 3,
+            "barsWithNotes": 16,
+            "occupancy": 0.5859375
+          },
+          {
+            "trackId": "trk_00000001638b0g8z28906g",
+            "name": "Combat: machine kit",
+            "role": "drums",
+            "instrumentId": "bayMachine",
+            "noteCount": 176,
+            "audioClipCount": 0,
+            "notesPerBar": 11,
+            "distinctPitches": 4,
+            "pitchRangeSemitones": 6,
+            "medianPitch": 38,
+            "lowestPitch": 36,
+            "highestPitch": 42,
+            "distinctVelocities": 2,
+            "velocitySpread": 22,
+            "distinctOnsetsInBar": 13,
+            "distinctBars": 3,
+            "barsWithNotes": 16,
+            "occupancy": 0.5546875
+          },
+          {
+            "trackId": "trk_00000001bp7w515p6sq0x9",
+            "name": "Combat: bass",
+            "role": "bass",
+            "instrumentId": "driveBass",
+            "noteCount": 100,
+            "audioClipCount": 0,
+            "notesPerBar": 6.25,
+            "distinctPitches": 6,
+            "pitchRangeSemitones": 10,
+            "medianPitch": 41,
+            "lowestPitch": 40,
+            "highestPitch": 50,
+            "distinctVelocities": 5,
+            "velocitySpread": 24,
+            "distinctOnsetsInBar": 12,
+            "distinctBars": 6,
+            "barsWithNotes": 16,
+            "occupancy": 0.390625
+          },
+          {
+            "trackId": "trk_00000001exdg97tkj5aw7m",
+            "name": "Combat: synth arpeggio",
+            "role": "motif",
+            "instrumentId": "supersaw",
+            "noteCount": 256,
+            "audioClipCount": 0,
+            "notesPerBar": 16,
+            "distinctPitches": 26,
+            "pitchRangeSemitones": 34,
+            "medianPitch": 77,
+            "lowestPitch": 64,
+            "highestPitch": 98,
+            "distinctVelocities": 2,
+            "velocitySpread": 22,
+            "distinctOnsetsInBar": 16,
+            "distinctBars": 5,
+            "barsWithNotes": 16,
+            "occupancy": 1
+          },
+          {
+            "trackId": "trk_00000001q0ny1nkks7vxsj",
+            "name": "Combat: lead guitar",
+            "role": "motif",
+            "instrumentId": "hollowGuitar",
+            "noteCount": 34,
+            "audioClipCount": 0,
+            "notesPerBar": 2.125,
+            "distinctPitches": 9,
+            "pitchRangeSemitones": 14,
+            "medianPitch": 73,
+            "lowestPitch": 64,
+            "highestPitch": 78,
+            "distinctVelocities": 7,
+            "velocitySpread": 14,
+            "distinctOnsetsInBar": 8,
+            "distinctBars": 5,
+            "barsWithNotes": 8,
+            "occupancy": 0.1328125
+          },
+          {
+            "trackId": "trk_00000001r5dt7eqwn3yrmr",
+            "name": "Combat: air horn",
+            "role": "melody",
+            "instrumentId": "bayHorn",
+            "noteCount": 34,
+            "audioClipCount": 0,
+            "notesPerBar": 2.125,
+            "distinctPitches": 9,
+            "pitchRangeSemitones": 14,
+            "medianPitch": 61,
+            "lowestPitch": 52,
+            "highestPitch": 66,
+            "distinctVelocities": 7,
+            "velocitySpread": 14,
+            "distinctOnsetsInBar": 8,
+            "distinctBars": 5,
+            "barsWithNotes": 8,
+            "occupancy": 0.1328125
+          },
+          {
+            "trackId": "trk_00000001sas3g2a6nemqd7",
+            "name": "Entry: press",
+            "role": "drums",
+            "instrumentId": "bayMachine",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001sdy8fgj5s5pwff",
+            "name": "Entry: motor",
+            "role": "pad",
+            "instrumentId": "bayMotor",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001sgrcbv9b96q0s9",
+            "name": "Entry: muted guitar",
+            "role": "motif",
+            "instrumentId": "hollowGuitarMuted",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001skmkwsf812q287",
+            "name": "Entry: guitar",
+            "role": "motif",
+            "instrumentId": "hollowGuitar",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001spmest8a2z4yyt",
+            "name": "Entry: kit",
+            "role": "drums",
+            "instrumentId": "rockKit",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001ssddrq40dcz20y",
+            "name": "Entry: impacts",
+            "role": "drums",
+            "instrumentId": "bayHeavy",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001sw318wan090gte",
+            "name": "Entry: air horn",
+            "role": "melody",
+            "instrumentId": "bayHorn",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001szsta38psammn9",
+            "name": "Entry: bass",
+            "role": "bass",
+            "instrumentId": "driveBass",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001t2msq8znqv73mm",
+            "name": "Victory: E major",
+            "role": "motif",
+            "instrumentId": "hollowGuitar",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001t513kxzf4ga2js",
+            "name": "Victory: lead",
+            "role": "motif",
+            "instrumentId": "hollowGuitar",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001t8zr3gsc36rm0j",
+            "name": "Victory: air horn",
+            "role": "melody",
+            "instrumentId": "bayHorn",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001tb7k6xyaa7enhb",
+            "name": "Victory: impacts",
+            "role": "drums",
+            "instrumentId": "bayHeavy",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001teawg50zqdb322",
+            "name": "Victory: low E",
+            "role": "bass",
+            "instrumentId": "roundBass",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001thrjc3zfhqbhpg",
+            "name": "Victory: motor",
+            "role": "pad",
+            "instrumentId": "bayMotor",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          },
+          {
+            "trackId": "trk_00000001tmx25taxartvj4",
+            "name": "Victory: press",
+            "role": "drums",
+            "instrumentId": "bayMachine",
+            "noteCount": 0,
+            "audioClipCount": 0,
+            "notesPerBar": 0,
+            "distinctPitches": 0,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 0,
+            "lowestPitch": 0,
+            "highestPitch": 0,
+            "distinctVelocities": 0,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 0,
+            "distinctBars": 0,
+            "barsWithNotes": 0,
+            "occupancy": 0
+          }
+        ],
+        "clashes": [
+          {
+            "a": "Bay: motor",
+            "b": "Working: hydraulic lift",
+            "semitonesApart": 0,
+            "overlapShare": 0
+          },
+          {
+            "a": "Bay: motor",
+            "b": "Combat: rhythm guitar, open",
+            "semitonesApart": 2,
+            "overlapShare": 0
+          },
+          {
+            "a": "Bay: motor",
+            "b": "Combat: second guitar, open",
+            "semitonesApart": 2,
+            "overlapShare": 0
+          },
+          {
+            "a": "Working: pulse",
+            "b": "Working: bell",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Working: pulse",
+            "b": "Combat: lead guitar",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Working: hydraulic lift",
+            "b": "Combat: rhythm guitar, open",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Working: hydraulic lift",
+            "b": "Combat: second guitar, open",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Working: bell",
+            "b": "Combat: synth arpeggio",
+            "semitonesApart": 4,
+            "overlapShare": 1
+          },
+          {
+            "a": "Working: bell",
+            "b": "Combat: lead guitar",
+            "semitonesApart": 0,
+            "overlapShare": 1
+          },
+          {
+            "a": "Combat: rhythm guitar, open",
+            "b": "Combat: second guitar, open",
+            "semitonesApart": 0,
+            "overlapShare": 1
+          },
+          {
+            "a": "Combat: rhythm guitar, muted",
+            "b": "Combat: second guitar, muted",
+            "semitonesApart": 0,
+            "overlapShare": 1
+          },
+          {
+            "a": "Combat: rhythm guitar, muted",
+            "b": "Combat: bass",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Combat: second guitar, muted",
+            "b": "Combat: bass",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Combat: synth arpeggio",
+            "b": "Combat: lead guitar",
+            "semitonesApart": 4,
+            "overlapShare": 1
+          }
+        ],
+        "silentTracks": [
+          "Entry: press",
+          "Entry: motor",
+          "Entry: muted guitar",
+          "Entry: guitar",
+          "Entry: kit",
+          "Entry: impacts",
+          "Entry: air horn",
+          "Entry: bass",
+          "Victory: E major",
+          "Victory: lead",
+          "Victory: air horn",
+          "Victory: impacts",
+          "Victory: low E",
+          "Victory: motor",
+          "Victory: press"
+        ],
+        "harmonicVariety": 42
+      },
+      "levels": {
+        "peakDb": -15.52,
+        "rmsDb": -32.9,
+        "crestDb": 17.38,
+        "dynamicRangeDb": null
+      },
+      "spectrum": null,
+      "stems": [],
+      "counts": {
+        "fault": 1,
+        "caution": 20,
+        "note": 1
+      }
+    }
+  },
+  "ok": true,
+  "warnings": [
+    "The stingers layer rendered as silence; its stem is included but empty.",
+    "Bay: conveyor (texture): shortened 1 overlapping note of the same pitch (MIDI cannot hold two at once).",
+    "Bay: motor (pad): shortened 7 overlapping notes of the same pitch (MIDI cannot hold two at once).",
+    "Combat: bass (bass): shortened 4 overlapping notes of the same pitch (MIDI cannot hold two at once).",
+    "Track EQ, delay and compression are rendered into WAV and kept in the editable project. MIDI does not carry these effects.",
+    "This arrangement uses MIDI ports to keep parts independent. Import each track separately in software that ignores MIDI port metadata.",
+    "This cue is still a review draft. The export is usable for testing, but it is not marked as the approved version.",
+    "Godot 4.5+ is required. State fades and decisions run on engine frames, not sample-accurate automation callbacks.",
+    "Stems include their authored active gains and effects. The runtime switches unity/silence without applying those gains twice.",
+    "Stems are rendered separately through bus compression/effects. Their sum is not guaranteed to reconstruct the combined live or main mix exactly.",
+    "Authored stingers have no rendered files in this pack. Godot stinger playback and ducking are not exported."
+  ],
+  "manifest": {
+    "schemaVersion": 3,
+    "cueId": "cue_000000001gsfsyz4334vqn",
+    "cueName": "Freight Bay (four parts)",
+    "bpm": 144,
+    "meter": "4/4",
+    "key": "E Natural minor",
+    "loopBars": 16,
+    "phraseLengthBars": 2,
+    "sampleRate": 48000,
+    "loopStartSamples": 0,
+    "loopEndSamples": 1279999,
+    "loopSeconds": 26.666666666666668,
+    "loopMode": "loopLocked",
+    "loopJoinDb": -52.52,
+    "loopContinuationErrorDb": -95.68,
+    "loopContinuationFrames": 1200,
+    "loopWarmupIterations": 1,
+    "renderAttempts": 1,
+    "peakDb": -15.52,
+    "rmsDb": -32.9,
+    "sections": [
+      {
+        "id": "sec_00000001tzqn6nat5ks9fg",
+        "name": "Phrase 1: the riff on the press (E)",
+        "kind": "loop",
+        "startBar": 0,
+        "lengthBars": 4
+      },
+      {
+        "id": "sec_00000001v09vcvtftm3qn4",
+        "name": "Phrase 2: the horn signal (C, D, B)",
+        "kind": "loop",
+        "startBar": 4,
+        "lengthBars": 4
+      },
+      {
+        "id": "sec_00000001v1wnpe1tzgeymj",
+        "name": "Phrase 3: the riff again (E)",
+        "kind": "loop",
+        "startBar": 8,
+        "lengthBars": 4
+      },
+      {
+        "id": "sec_00000001v2vrkjdg33d5dj",
+        "name": "Phrase 4: the signal climbs (C, F, B)",
+        "kind": "loop",
+        "startBar": 12,
+        "lengthBars": 4
+      }
+    ],
+    "layers": [
+      {
+        "id": "lay_00000001v3qr5xnq7cztv6",
+        "name": "Bay",
+        "purpose": "base",
+        "file": "audio/stems/freight_bay_four_parts_bay.wav",
+        "gainDb": 0,
+        "fadeBeats": 4
+      },
+      {
+        "id": "lay_00000001v4k5xbnm4jpe6q",
+        "name": "Exploration",
+        "purpose": "texture",
+        "file": "audio/stems/freight_bay_four_parts_exploration.wav",
+        "gainDb": 0,
+        "fadeBeats": 4
+      },
+      {
+        "id": "lay_00000001v5yjwm3ddwx2fb",
+        "name": "Combat",
+        "purpose": "combat",
+        "file": "audio/stems/freight_bay_four_parts_combat.wav",
+        "gainDb": 0,
+        "fadeBeats": 0
+      },
+      {
+        "id": "lay_00000001v62res57hpe232",
+        "name": "Stingers",
+        "purpose": "harmony",
+        "file": "audio/stems/freight_bay_four_parts_stingers.wav",
+        "gainDb": 0,
+        "fadeBeats": 0
+      }
+    ],
+    "userSamples": [],
+    "baseStateId": "sta_00000001v7k443fh5d4esw",
+    "states": [
+      {
+        "id": "sta_00000001v7k443fh5d4esw",
+        "name": "Exploration",
+        "activeLayerIds": [
+          "lay_00000001v3qr5xnq7cztv6",
+          "lay_00000001v4k5xbnm4jpe6q"
+        ],
+        "mixSnapshotId": null
+      },
+      {
+        "id": "sta_00000001v89xte10pbe1py",
+        "name": "Entry",
+        "activeLayerIds": [
+          "lay_00000001v3qr5xnq7cztv6"
+        ],
+        "mixSnapshotId": null
+      },
+      {
+        "id": "sta_00000001v9s8wt0mxc3eaa",
+        "name": "Combat",
+        "activeLayerIds": [
+          "lay_00000001v3qr5xnq7cztv6",
+          "lay_00000001v5yjwm3ddwx2fb"
+        ],
+        "mixSnapshotId": null
+      },
+      {
+        "id": "sta_00000001vak5tx46aefbvg",
+        "name": "Victory",
+        "activeLayerIds": [
+          "lay_00000001v3qr5xnq7cztv6"
+        ],
+        "mixSnapshotId": null
+      }
+    ],
+    "parameters": [],
+    "transitions": [
+      {
+        "id": "trn_00000001vd9t0hf1szaaxz",
+        "fromStateId": "sta_00000001v7k443fh5d4esw",
+        "toStateId": "sta_00000001v89xte10pbe1py",
+        "when": {
+          "kind": "event",
+          "eventId": "evt_00000001vbejm4jadjh931"
+        },
+        "quantize": "phrase",
+        "fadeBeats": 0,
+        "priority": 5,
+        "enterAbove": null,
+        "exitBelow": null,
+        "dwellMs": 0,
+        "from": "sta_00000001v7k443fh5d4esw",
+        "to": "sta_00000001v89xte10pbe1py"
+      },
+      {
+        "id": "trn_00000001ve6sn7zpha31jw",
+        "fromStateId": "sta_00000001v89xte10pbe1py",
+        "toStateId": "sta_00000001v9s8wt0mxc3eaa",
+        "when": {
+          "kind": "always"
+        },
+        "quantize": "phrase",
+        "fadeBeats": 0,
+        "priority": 5,
+        "enterAbove": null,
+        "exitBelow": null,
+        "dwellMs": 3000,
+        "from": "sta_00000001v89xte10pbe1py",
+        "to": "sta_00000001v9s8wt0mxc3eaa"
+      },
+      {
+        "id": "trn_00000001vfbde968nsz3cm",
+        "fromStateId": "sta_00000001v9s8wt0mxc3eaa",
+        "toStateId": "sta_00000001vak5tx46aefbvg",
+        "when": {
+          "kind": "event",
+          "eventId": "evt_00000001vcxjjj4smgb0x1"
+        },
+        "quantize": "phrase",
+        "fadeBeats": 0,
+        "priority": 6,
+        "enterAbove": null,
+        "exitBelow": null,
+        "dwellMs": 0,
+        "from": "sta_00000001v9s8wt0mxc3eaa",
+        "to": "sta_00000001vak5tx46aefbvg"
+      },
+      {
+        "id": "trn_00000001vgq3c3ebbct5jj",
+        "fromStateId": "sta_00000001vak5tx46aefbvg",
+        "toStateId": "sta_00000001v7k443fh5d4esw",
+        "when": {
+          "kind": "always"
+        },
+        "quantize": "phrase",
+        "fadeBeats": 4,
+        "priority": 1,
+        "enterAbove": null,
+        "exitBelow": null,
+        "dwellMs": 3000,
+        "from": "sta_00000001vak5tx46aefbvg",
+        "to": "sta_00000001v7k443fh5d4esw"
+      },
+      {
+        "id": "trn_00000001vhd414hbvg939a",
+        "fromStateId": "sta_00000001vak5tx46aefbvg",
+        "toStateId": "sta_00000001v89xte10pbe1py",
+        "when": {
+          "kind": "event",
+          "eventId": "evt_00000001vbejm4jadjh931"
+        },
+        "quantize": "phrase",
+        "fadeBeats": 0,
+        "priority": 5,
+        "enterAbove": null,
+        "exitBelow": null,
+        "dwellMs": 0,
+        "from": "sta_00000001vak5tx46aefbvg",
+        "to": "sta_00000001v89xte10pbe1py"
+      }
+    ],
+    "events": [
+      {
+        "id": "evt_00000001vbejm4jadjh931",
+        "name": "engage"
+      },
+      {
+        "id": "evt_00000001vcxjjj4smgb0x1",
+        "name": "victory"
+      }
+    ],
+    "mixSnapshots": [],
+    "stingers": [
+      {
+        "id": "stg_00000001w5gjxk3h7pb9z8",
+        "name": "Entry: press",
+        "patternId": "pat_00000001vj4b2jqbdv92y8",
+        "trackId": "trk_00000001sas3g2a6nemqd7",
+        "eventId": "evt_00000001vbejm4jadjh931",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 0.8,
+        "allowedStateIds": [
+          "sta_00000001v7k443fh5d4esw",
+          "sta_00000001vak5tx46aefbvg"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001wf52mbg5fq33ec",
+        "name": "Entry: motor",
+        "patternId": "pat_00000001w65xh8t0bgpfda",
+        "trackId": "trk_00000001sdy8fgj5s5pwff",
+        "eventId": "evt_00000001vbejm4jadjh931",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 0.6,
+        "allowedStateIds": [
+          "sta_00000001v7k443fh5d4esw",
+          "sta_00000001vak5tx46aefbvg"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001x49dkwx3qkdsh2",
+        "name": "Entry: muted guitar",
+        "patternId": "pat_00000001wgxyempn27z7kz",
+        "trackId": "trk_00000001sgrcbv9b96q0s9",
+        "eventId": "evt_00000001vbejm4jadjh931",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 0.4,
+        "allowedStateIds": [
+          "sta_00000001v7k443fh5d4esw",
+          "sta_00000001vak5tx46aefbvg"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001xpz5qcsk4gt28n",
+        "name": "Entry: guitar",
+        "patternId": "pat_00000001x547txrwrq8mnc",
+        "trackId": "trk_00000001skmkwsf812q287",
+        "eventId": "evt_00000001vbejm4jadjh931",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 0.8,
+        "allowedStateIds": [
+          "sta_00000001v7k443fh5d4esw",
+          "sta_00000001vak5tx46aefbvg"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001y4hgmykcrar02k",
+        "name": "Entry: kit",
+        "patternId": "pat_00000001xqxz0mw8h6tzfb",
+        "trackId": "trk_00000001spmest8a2z4yyt",
+        "eventId": "evt_00000001vbejm4jadjh931",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 0.6,
+        "allowedStateIds": [
+          "sta_00000001v7k443fh5d4esw",
+          "sta_00000001vak5tx46aefbvg"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001yaedbepn51xeb8",
+        "name": "Entry: impacts",
+        "patternId": "pat_00000001y548m8m3m2qyf6",
+        "trackId": "trk_00000001ssddrq40dcz20y",
+        "eventId": "evt_00000001vbejm4jadjh931",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 1.2,
+        "allowedStateIds": [
+          "sta_00000001v7k443fh5d4esw",
+          "sta_00000001vak5tx46aefbvg"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001ygymf87ysbyev5",
+        "name": "Entry: air horn",
+        "patternId": "pat_00000001ybc71xfphq3wjv",
+        "trackId": "trk_00000001sw318wan090gte",
+        "eventId": "evt_00000001vbejm4jadjh931",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 0.6,
+        "allowedStateIds": [
+          "sta_00000001v7k443fh5d4esw",
+          "sta_00000001vak5tx46aefbvg"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001yyz3qrp1qkp9w7",
+        "name": "Entry: bass",
+        "patternId": "pat_00000001yhv28w25d3fzxa",
+        "trackId": "trk_00000001szsta38psammn9",
+        "eventId": "evt_00000001vbejm4jadjh931",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 0.4,
+        "allowedStateIds": [
+          "sta_00000001v7k443fh5d4esw",
+          "sta_00000001vak5tx46aefbvg"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001z51fp1yn4tb2c8",
+        "name": "Victory: E major",
+        "patternId": "pat_00000001yzdb7bnjwzbgre",
+        "trackId": "trk_00000001t2msq8znqv73mm",
+        "eventId": "evt_00000001vcxjjj4smgb0x1",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 1.5,
+        "allowedStateIds": [
+          "sta_00000001v9s8wt0mxc3eaa"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001zd3ga51dq1c2e9",
+        "name": "Victory: lead",
+        "patternId": "pat_00000001z66dety97zwq4e",
+        "trackId": "trk_00000001t513kxzf4ga2js",
+        "eventId": "evt_00000001vcxjjj4smgb0x1",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 1.5,
+        "allowedStateIds": [
+          "sta_00000001v9s8wt0mxc3eaa"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001zkxsw0jdz1pfmy",
+        "name": "Victory: air horn",
+        "patternId": "pat_00000001zeck11d6427me8",
+        "trackId": "trk_00000001t8zr3gsc36rm0j",
+        "eventId": "evt_00000001vcxjjj4smgb0x1",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 1,
+        "allowedStateIds": [
+          "sta_00000001v9s8wt0mxc3eaa"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001zrczem8ng26d0y",
+        "name": "Victory: impacts",
+        "patternId": "pat_00000001zmztcv1bsqnz6y",
+        "trackId": "trk_00000001tb7k6xyaa7enhb",
+        "eventId": "evt_00000001vcxjjj4smgb0x1",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 1.5,
+        "allowedStateIds": [
+          "sta_00000001v9s8wt0mxc3eaa"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001zvwate73cz52eb",
+        "name": "Victory: low E",
+        "patternId": "pat_00000001zs1xspj5p6hhkr",
+        "trackId": "trk_00000001teawg50zqdb322",
+        "eventId": "evt_00000001vcxjjj4smgb0x1",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 1,
+        "allowedStateIds": [
+          "sta_00000001v9s8wt0mxc3eaa"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_00000001zyxxtg3yrjadt9",
+        "name": "Victory: motor",
+        "patternId": "pat_00000001zwvnj51d4twq5k",
+        "trackId": "trk_00000001thrjc3zfhqbhpg",
+        "eventId": "evt_00000001vcxjjj4smgb0x1",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 1,
+        "allowedStateIds": [
+          "sta_00000001v9s8wt0mxc3eaa"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      },
+      {
+        "id": "stg_0000000209nphtngmwt742",
+        "name": "Victory: press",
+        "patternId": "pat_00000001zz4ymr6cyqjvtz",
+        "trackId": "trk_00000001tmx25taxartvj4",
+        "eventId": "evt_00000001vcxjjj4smgb0x1",
+        "quantize": "phrase",
+        "keyLock": false,
+        "duckBed": null,
+        "cooldownMs": 0,
+        "maxVoices": 1,
+        "tailSeconds": 0.8,
+        "allowedStateIds": [
+          "sta_00000001v9s8wt0mxc3eaa"
+        ],
+        "file": null,
+        "audioStatus": "not-rendered"
+      }
+    ],
+    "review": {
+      "status": "draft",
+      "openFeedback": 0,
+      "appliedRevisions": 0,
+      "approvedAt": null
+    },
+    "receipt": {
+      "engineVersion": "0.1.0-alpha.1",
+      "renderVersion": "sigmaudio-audio-12",
+      "generatorVersion": "sigmaudio-symbolic-4",
+      "rngSeed": "condi-Freight Bay (four parts)",
+      "planHash": "5d4ba267",
+      "attentionBudget": "focusSafe",
+      "harmonyStrategy": "modalPlaning",
+      "density": {
+        "requested": "sparse",
+        "resolved": "sparse",
+        "ceiling": "light",
+        "source": "inferred",
+        "clamped": false
+      },
+      "originalGenerationTrace": [
+        {
+          "rule": "phrase structure",
+          "because": "24 bars at 4 bars per phrase",
+          "resultedIn": "statement → answer → variation → turnaround → statement → turnaround"
+        },
+        {
+          "rule": "harmony strategy",
+          "because": "modalPlaning",
+          "resultedIn": "degrees 1-1-2-2-1-1-7-7-1-1-2-2-1-1-2-2-1-1-2-2-1-1-2-2"
+        },
+        {
+          "rule": "development harmony",
+          "because": "Keep bass and chord changes on one bar-indexed progression.",
+          "resultedIn": "Statements and returns revisit their harmonic home; later contrast phrases rotate the chosen progression unless parallel motion was requested. Held chord boundaries keep the style harmonic rhythm."
+        },
+        {
+          "rule": "development identity",
+          "because": "3-note seeded source; degree contour 0,1,2; onset grid 0,2,6",
+          "resultedIn": "Statement and return keep source order, intervals and one common rhythm scale. Answers change only the last degree. Fragments and sequences are confined to development; rests are not backfilled. Register fitting uses one octave shift for the whole theme. Symbolic evidence only."
+        },
+        {
+          "rule": "development phrase 1",
+          "because": "bars 1-4; cycle 1; statement",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 0:62,5:64,16:65. Rests 40-64"
+        },
+        {
+          "rule": "development phrase 2",
+          "because": "bars 5-8; cycle 1; answer",
+          "resultedIn": "{\"kind\":\"answer\",\"cadenceDegree\":1}+{\"kind\":\"augmentation\",\"factor\":2}: 3/3 notes, fit x1.3333; attacks 64:62,69:64,80:64. Rests 104-128"
+        },
+        {
+          "rule": "development phrase 3",
+          "because": "bars 9-12; cycle 1; contrast (variation)",
+          "resultedIn": "{\"kind\":\"fragment\",\"start\":0,\"count\":2}+{\"kind\":\"augmentation\",\"factor\":2}: 2/2 notes, fit x1; attacks 128:62,132:64. Rests 140-192"
+        },
+        {
+          "rule": "development phrase 4",
+          "because": "bars 13-16; cycle 1; return (turnaround)",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 192:62,197:64,208:65. Rests 232-256"
+        },
+        {
+          "rule": "development phrase 5",
+          "because": "bars 17-20; cycle 2; statement",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 256:62,261:64,272:65. Rests 296-320"
+        },
+        {
+          "rule": "development phrase 6",
+          "because": "bars 21-24; cycle 2; return (turnaround)",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 320:62,325:64,336:65. Rests 360-384"
+        },
+        {
+          "rule": "motif",
+          "because": "slowMedium tempo, dorian, register middle",
+          "resultedIn": "3-note source cell; the Quiet puzzle grammar chooses full statements and fragments"
+        },
+        {
+          "rule": "style grammar",
+          "because": "sigmaudio-symbolic-4. Selected for thinking with gentle pressure in dreamy. Gameplay context leads the background arrangement; instruments stay as chosen.",
+          "resultedIn": "Quiet puzzle: One held bass root per harmonic change; two soft chord tones answer on alternating bars, with no regular drum pulse."
+        },
+        {
+          "rule": "style phrase development",
+          "because": "A complete idea, a slower answer, a small fragment and a familiar return leave room for thinking.",
+          "resultedIn": "Replies, fills and extra texture are omitted for the attention budget."
+        },
+        {
+          "rule": "style harmony and performance",
+          "because": "Short separated chord tones and soft phrase markers keep space around the foreground.",
+          "resultedIn": "A chord step lasts 2 bars. Bass and harmony use the same progression; BPM and instruments are unchanged."
+        },
+        {
+          "rule": "style palette",
+          "because": "Keys, bells and muted plucks suit this grammar. Existing instrument choices stay unchanged.",
+          "resultedIn": "No patches were substituted by the grammar. These are symbolic decisions, not a listening verdict."
+        },
+        {
+          "rule": "development performance",
+          "because": "Microtiming must fit the written gate and the next same-pitch attack, including MIDI ticks.",
+          "resultedIn": "0 late offsets brought forward to avoid retrigger overlap. Written lengths and velocities retained; strum and melodic offsets remain wherever there is room."
+        },
+        {
+          "rule": "style density budget",
+          "because": "sparse; focusSafe",
+          "resultedIn": "75 of 75 candidate attacks retained. The style never raises the attention ceiling."
+        },
+        {
+          "rule": "development orchestration",
+          "because": "8 named parts share sparse; source phrase rests and 17 foreground attacks are retained.",
+          "resultedIn": "Complete gestures retain pitch, onset, gate, velocity and microtiming on their assigned lane. Bass/harmony and percussion are routed without rewriting them. 0 quieter counterline attacks use post-phrase gaps and remaining shared capacity; dialogue/focus forbids counterlines. 4 lanes have notes; unused color lanes stay silent."
+        },
+        {
+          "rule": "adaptive allocation",
+          "because": "sigmaudio-adaptive-parts-1; sigmaudio-symbolic-4; requested purposes base,harmony,magic. Only nonempty independent optional parts qualify for danger/combat/magic.",
+          "resultedIn": "8 tracks and 8 patterns retained unchanged. 2/5 candidate layers have notes. Omitted magic,pulse,texture: no independently allocated notes. Core theme, answers, all harmony and bass retain their existing role layers. No hidden tracks or generated replacement notes."
+        },
+        {
+          "rule": "adaptive layer base",
+          "because": "sigmaudio-adaptive-parts-1; lay_0000000000qmv54v75vwe3",
+          "resultedIn": "lead (trk_00000000056p8p7tv47srt): 14 notes; response (trk_000000000882j91zv4ztha): 3 notes; bass (trk_000000000hjx51xhw28sxa): 12 notes"
+        },
+        {
+          "rule": "adaptive layer harmony",
+          "because": "sigmaudio-adaptive-parts-1; lay_0000000001v3bemgy481eg",
+          "resultedIn": "harmony (trk_000000000b4ys6thvqssw2): 46 notes; arpeggio (trk_000000000ejeqw0c35d5mj): 0 notes"
+        },
+        {
+          "rule": "adaptive state Explore",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Distinct written-note selection; perceived contrast needs listening."
+        },
+        {
+          "rule": "adaptive state Tension",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Same written-note selection as Explore; retained state-name/transition alias, not added contrast."
+        },
+        {
+          "rule": "adaptive state Combat",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Same written-note selection as Explore; retained state-name/transition alias, not added contrast."
+        },
+        {
+          "rule": "adaptive state Magic",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Same written-note selection as Explore; retained state-name/transition alias, not added contrast."
+        }
+      ],
+      "privateUserSamples": [],
+      "note": "This receipt documents how SigmAudio generated and transformed the cue. It does not guarantee copyright clearance."
+    },
+    "audioBake": {
+      "renderVersion": "sigmaudio-audio-12",
+      "stateId": "sta_00000001v7k443fh5d4esw",
+      "appliedSnapshotIds": [],
+      "manualSnapshotIds": [],
+      "resolvedTracks": [
+        {
+          "trackId": "trk_0000000001z5paqsjz5axv",
+          "offset": {
+            "trackId": "trk_0000000001z5paqsjz5axv",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -5,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.3,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000066e5fa4sbn0dz",
+          "offset": {
+            "trackId": "trk_00000000066e5fa4sbn0dz",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -10,
+          "lowpassHz": 3000,
+          "highpassHz": null,
+          "sendWet": 0.3,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_000000000h1nwwn6ty852y",
+          "offset": {
+            "trackId": "trk_000000000h1nwwn6ty852y",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -6,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.25,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_0000000034pj203ead212f",
+          "offset": {
+            "trackId": "trk_0000000034pj203ead212f",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -4,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_000000005kwwxx0tbp3089",
+          "offset": {
+            "trackId": "trk_000000005kwwxx0tbp3089",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -5,
+          "lowpassHz": 4000,
+          "highpassHz": null,
+          "sendWet": 0.4,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_000000009prbysceaysd78",
+          "offset": {
+            "trackId": "trk_000000009prbysceaysd78",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -6,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.45,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000a5963vxb177wf3",
+          "offset": {
+            "trackId": "trk_00000000a5963vxb177wf3",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -8,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.6,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000ag6p3mgnxwfpa2",
+          "offset": {
+            "trackId": "trk_00000000ag6p3mgnxwfpa2",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -3.8,
+          "lowpassHz": 5000,
+          "highpassHz": null,
+          "sendWet": 0.1,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000j5wpc445fs9mf4",
+          "offset": {
+            "trackId": "trk_00000000j5wpc445fs9mf4",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 2.3,
+          "lowpassHz": 5000,
+          "highpassHz": null,
+          "sendWet": 0.1,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000mm982b3rwkqay7",
+          "offset": {
+            "trackId": "trk_00000000mm982b3rwkqay7",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -9.5,
+          "lowpassHz": 5000,
+          "highpassHz": null,
+          "sendWet": 0.1,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000w95312hnd9y6aj",
+          "offset": {
+            "trackId": "trk_00000000w95312hnd9y6aj",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 3.4,
+          "lowpassHz": 5000,
+          "highpassHz": null,
+          "sendWet": 0.1,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000yrqkd2zmfwpznf",
+          "offset": {
+            "trackId": "trk_00000000yrqkd2zmfwpznf",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -7.2,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.18,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001638b0g8z28906g",
+          "offset": {
+            "trackId": "trk_00000001638b0g8z28906g",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -8.7,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.25,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001bp7w515p6sq0x9",
+          "offset": {
+            "trackId": "trk_00000001bp7w515p6sq0x9",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -7.7,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001exdg97tkj5aw7m",
+          "offset": {
+            "trackId": "trk_00000001exdg97tkj5aw7m",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -1.5,
+          "lowpassHz": 6000,
+          "highpassHz": null,
+          "sendWet": 0.3,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001q0ny1nkks7vxsj",
+          "offset": {
+            "trackId": "trk_00000001q0ny1nkks7vxsj",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 9.3,
+          "lowpassHz": 5500,
+          "highpassHz": null,
+          "sendWet": 0.3,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001r5dt7eqwn3yrmr",
+          "offset": {
+            "trackId": "trk_00000001r5dt7eqwn3yrmr",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -8.5,
+          "lowpassHz": 3500,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001sas3g2a6nemqd7",
+          "offset": {
+            "trackId": "trk_00000001sas3g2a6nemqd7",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -4,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.25,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001sdy8fgj5s5pwff",
+          "offset": {
+            "trackId": "trk_00000001sdy8fgj5s5pwff",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 8,
+          "lowpassHz": 500,
+          "highpassHz": null,
+          "sendWet": 0.3,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001sgrcbv9b96q0s9",
+          "offset": {
+            "trackId": "trk_00000001sgrcbv9b96q0s9",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 1,
+          "lowpassHz": 5000,
+          "highpassHz": null,
+          "sendWet": 0.1,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001skmkwsf812q287",
+          "offset": {
+            "trackId": "trk_00000001skmkwsf812q287",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 0,
+          "lowpassHz": 5000,
+          "highpassHz": null,
+          "sendWet": 0.2,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001spmest8a2z4yyt",
+          "offset": {
+            "trackId": "trk_00000001spmest8a2z4yyt",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -5,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.25,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001ssddrq40dcz20y",
+          "offset": {
+            "trackId": "trk_00000001ssddrq40dcz20y",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -9,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001sw318wan090gte",
+          "offset": {
+            "trackId": "trk_00000001sw318wan090gte",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -4,
+          "lowpassHz": 3500,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001szsta38psammn9",
+          "offset": {
+            "trackId": "trk_00000001szsta38psammn9",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -6,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001t2msq8znqv73mm",
+          "offset": {
+            "trackId": "trk_00000001t2msq8znqv73mm",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 1.5,
+          "lowpassHz": 5000,
+          "highpassHz": null,
+          "sendWet": 0.4,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001t513kxzf4ga2js",
+          "offset": {
+            "trackId": "trk_00000001t513kxzf4ga2js",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 12,
+          "lowpassHz": 5000,
+          "highpassHz": null,
+          "sendWet": 0.45,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001t8zr3gsc36rm0j",
+          "offset": {
+            "trackId": "trk_00000001t8zr3gsc36rm0j",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -6,
+          "lowpassHz": 3500,
+          "highpassHz": null,
+          "sendWet": 0.4,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001tb7k6xyaa7enhb",
+          "offset": {
+            "trackId": "trk_00000001tb7k6xyaa7enhb",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -6,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.4,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001teawg50zqdb322",
+          "offset": {
+            "trackId": "trk_00000001teawg50zqdb322",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -4,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.1,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001thrjc3zfhqbhpg",
+          "offset": {
+            "trackId": "trk_00000001thrjc3zfhqbhpg",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -10,
+          "lowpassHz": 3000,
+          "highpassHz": null,
+          "sendWet": 0.3,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001tmx25taxartvj4",
+          "offset": {
+            "trackId": "trk_00000001tmx25taxartvj4",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -6,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.25,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        }
+      ],
+      "conflicts": [],
+      "snapshotProcessingBaked": true,
+      "layerActiveGainsBaked": true,
+      "trackEffectsBaked": true,
+      "gainAutomationBaked": true
+    },
+    "godot": {
+      "minimumGodot": "4.5",
+      "capabilities": {
+        "synchronizedLayers": true,
+        "layerStateSwitching": true,
+        "parameterTransitions": true,
+        "eventTransitions": true,
+        "sampleAccurateTransitions": false,
+        "stateSnapshotSwitching": false,
+        "stingerAudio": false,
+        "gameplayInputCapture": true,
+        "savedScenarioReplay": false,
+        "stingerDucking": false,
+        "crossCueSequencing": false,
+        "exactMainMixReconstruction": false,
+        "maximumLayers": 32
+      },
+      "supportedStateIds": [
+        "sta_00000001v7k443fh5d4esw",
+        "sta_00000001v89xte10pbe1py",
+        "sta_00000001v9s8wt0mxc3eaa",
+        "sta_00000001vak5tx46aefbvg"
+      ],
+      "unsupportedStateIds": [],
+      "warnings": [
+        "Godot 4.5+ is required. State fades and decisions run on engine frames, not sample-accurate automation callbacks.",
+        "Stems include their authored active gains and effects. The runtime switches unity/silence without applying those gains twice.",
+        "Stems are rendered separately through bus compression/effects. Their sum is not guaranteed to reconstruct the combined live or main mix exactly.",
+        "Authored stingers have no rendered files in this pack. Godot stinger playback and ducking are not exported."
+      ],
+      "runtimeFile": "godot/sigmaudio_cue.gd",
+      "configurationFile": "godot/runtime.json"
+    }
+  },
+  "fileName": "freight_bay_four_parts_sigmaudio.zip",
+  "source": {
+    "path": "/tmp/claude-0/-home-user/6c39e66c-08db-5341-8747-12c34ce6c2e7/scratchpad/comp/fb-v3.sigmaudio.json",
+    "sha256": "6add8e38020a9e61f415c2742d850dd081fa2e95225aa55cf5bd9ecfcf338096",
+    "bytes": 512267
+  },
+  "delivery": {
+    "schemaVersion": 1,
+    "status": "complete",
+    "transactionId": "ddd90c92-56cf-4169-b496-27e0e16cd762",
+    "mp4": {
+      "status": "not-requested"
+    },
+    "ogg": {
+      "status": "not-requested"
+    },
+    "backupDir": null,
+    "files": [
+      {
+        "path": "audio/freight_bay_four_parts_loop.wav",
+        "bytes": 5120884,
+        "sha256": "efd592942268401cd1d70f3b90f53ca95badb91b7fd11040f8025da03eb6cc26"
+      },
+      {
+        "path": "audio/stems/freight_bay_four_parts_bay.wav",
+        "bytes": 5120112,
+        "sha256": "d0bbbdd47cd7cc5d802149df5ce57857c97bc6b331d0b0cb39d72355bdea8e56"
+      },
+      {
+        "path": "audio/stems/freight_bay_four_parts_exploration.wav",
+        "bytes": 5120112,
+        "sha256": "3f1918ce29c1f2f879a8c08b53b478b4e04b4409e13bf6cd4dbfb0c917a50a32"
+      },
+      {
+        "path": "audio/stems/freight_bay_four_parts_combat.wav",
+        "bytes": 5120112,
+        "sha256": "b1a8a2c7e883dbdcd5ef6a314a12f7c2761327d97cc6dd9d6916172fca5dac5d"
+      },
+      {
+        "path": "audio/stems/freight_bay_four_parts_stingers.wav",
+        "bytes": 5120112,
+        "sha256": "5b919cb44bf4d49751d8163454024f0bbdbd9d23a6e601c3bc99b37bfcb1be01"
+      },
+      {
+        "path": "midi/freight_bay_four_parts.mid",
+        "bytes": 17211,
+        "sha256": "1cf962ecf5173aa4b4d92d501c29800e7e0f10a43e650bcfa8bfa1c2cc2e6580"
+      },
+      {
+        "path": "manifest.json",
+        "bytes": 36534,
+        "sha256": "b3c9a626635f064a3439efbe13a776b3a2824658d353671b25d30a63163735fe"
+      },
+      {
+        "path": "project.sigmaudio.json",
+        "bytes": 512266,
+        "sha256": "523085a3c5d74c3e7bf1bc1e15dc831b8d72d05e5d520f142db7d81904b53eb5"
+      },
+      {
+        "path": "godot/sigmaudio_cue.gd",
+        "bytes": 57578,
+        "sha256": "6d3afd31abf7dd0c2845d9024870e96c1bb8c66786b10c7e008cf713b38ecd51"
+      },
+      {
+        "path": "godot/runtime.json",
+        "bytes": 28101,
+        "sha256": "639013aabb8b6fd800df0bf871e334913e6c2b60775da3b6c7c4fb1ee5e3f41e"
+      },
+      {
+        "path": "audio/freight_bay_four_parts_loop.wav.import",
+        "bytes": 253,
+        "sha256": "ae8f814faaac657d9a2b15045ec0c08b0e441cfcab63c182621964a586b10486"
+      },
+      {
+        "path": "audio/stems/freight_bay_four_parts_bay.wav.import",
+        "bytes": 253,
+        "sha256": "ae8f814faaac657d9a2b15045ec0c08b0e441cfcab63c182621964a586b10486"
+      },
+      {
+        "path": "audio/stems/freight_bay_four_parts_exploration.wav.import",
+        "bytes": 253,
+        "sha256": "ae8f814faaac657d9a2b15045ec0c08b0e441cfcab63c182621964a586b10486"
+      },
+      {
+        "path": "audio/stems/freight_bay_four_parts_combat.wav.import",
+        "bytes": 253,
+        "sha256": "ae8f814faaac657d9a2b15045ec0c08b0e441cfcab63c182621964a586b10486"
+      },
+      {
+        "path": "audio/stems/freight_bay_four_parts_stingers.wav.import",
+        "bytes": 253,
+        "sha256": "ae8f814faaac657d9a2b15045ec0c08b0e441cfcab63c182621964a586b10486"
+      },
+      {
+        "path": "godot/freight_bay_four_parts_loop.wav.import",
+        "bytes": 253,
+        "sha256": "ae8f814faaac657d9a2b15045ec0c08b0e441cfcab63c182621964a586b10486"
+      },
+      {
+        "path": "README.md",
+        "bytes": 11933,
+        "sha256": "afcb475984734d44f836ba95d2caf7323f678de98a0db969e0c472009792b1cf"
+      }
+    ]
+  }
+}

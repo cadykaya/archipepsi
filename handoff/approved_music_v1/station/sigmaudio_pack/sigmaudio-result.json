@@ -1,0 +1,3192 @@
+{
+  "summary": null,
+  "conflicts": [],
+  "findings": [
+    {
+      "severity": "caution",
+      "area": "level",
+      "observed": "Peak level is -16.5 dBFS, a little under the -6 to -1 a finished cue usually reaches.",
+      "meaning": "Fine for a deliberately quiet bed. Worth raising if this is meant to sit at normal volume."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Floor: machine pulse uses 2 distinct pitches across 132 notes.",
+      "meaning": "That is a rhythm part rather than a melodic one. Deliberate for a pedal or an ostinato, static if this was meant to be the tune."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Argument: synth chords is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Argument: brass chords is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Payoff: synth stabs (G, high) is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Payoff: fiddle is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Truce: synth in unison is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Every note in Truce: horn in unison is played at exactly the same strength.",
+      "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Truce: low E plays the identical bar 4 times with no variation.",
+      "meaning": "Fine for a pulse or a drone, wearing for a melody. A loop is heard dozens of times in a session, so one changed bar in four buys a lot of patience."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Truce: timpani and cymbal plays the identical bar 4 times with no variation.",
+      "meaning": "Fine for a pulse or a drone, wearing for a melody. A loop is heard dozens of times in a session, so one changed bar in four buys a lot of patience."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Floor: hurdy-gurdy pedal and Floor: hurdy-gurdy pedal, alternate sit 0 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Floor: hurdy-gurdy pedal and Engine: riff bass sit 3.5 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Floor: hurdy-gurdy pedal, alternate and Engine: riff bass sit 3.5 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Floor: machine pulse and Echoes: horn (G#) sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Floor: machine pulse and Argument: brass chords sit 1.5 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Floor: machine pulse and Payoff: brass (G#, low) sit 0.5 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Floor: machine pulse and Truce: brass chord sit 3.5 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Echoes: synth (G) and Argument: horn (G#) sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Echoes: synth (G) and Argument: synth chords sit 0 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Echoes: synth (G) and Payoff: horn hook sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Echoes: synth (G) and Payoff: fiddle sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Echoes: synth (G) and Truce: synth in unison sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Echoes: synth (G) and Truce: horn in unison sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Echoes: horn (G#) and Argument: brass chords sit 3.5 semitones apart and overlap across 83% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Echoes: horn (G#) and Payoff: brass (G#, low) sit 1.5 semitones apart and overlap across 91% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Echoes: horn (G#) and Truce: brass chord sit 1.5 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: synth lead (G) and Payoff: synth hook sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: synth lead (G) and Payoff: synth stabs (G, high) sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: horn (G#) and Argument: synth chords sit 1 semitones apart and overlap across 73% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: horn (G#) and Payoff: horn hook sit 0 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: horn (G#) and Payoff: fiddle sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: horn (G#) and Truce: synth in unison sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: horn (G#) and Truce: horn in unison sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: synth chords and Payoff: horn hook sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: synth chords and Payoff: fiddle sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: synth chords and Truce: synth in unison sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: synth chords and Truce: horn in unison sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: brass chords and Payoff: brass (G#, low) sit 2 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Argument: brass chords and Truce: brass chord sit 5 semitones apart and overlap across 83% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Payoff: synth hook and Payoff: synth stabs (G, high) sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Payoff: horn hook and Payoff: fiddle sit 2 semitones apart and overlap across 77% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Payoff: horn hook and Truce: synth in unison sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Payoff: horn hook and Truce: horn in unison sit 1 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Payoff: brass (G#, low) and Truce: brass chord sit 3 semitones apart and overlap across 91% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Payoff: fiddle and Truce: synth in unison sit 3 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Payoff: fiddle and Truce: horn in unison sit 3 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "caution",
+      "area": "structure",
+      "observed": "Truce: synth in unison and Truce: horn in unison sit 0 semitones apart and overlap across 100% of their range.",
+      "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+    },
+    {
+      "severity": "fault",
+      "area": "intent",
+      "observed": "The plan reserves room for concentration, but the cue runs 101.6 notes per bar.",
+      "meaning": "The attention budget is meant to be a hard cap, not a preference. Something is busier than the brief allows and will compete with the thing it was supposed to stay under."
+    },
+    {
+      "severity": "caution",
+      "area": "intent",
+      "observed": "The plan describes low energy (0.30), but the cue places 101.6 notes per bar.",
+      "meaning": "Density and energy usually track together. A calm scene with this much movement tends to read as anxious rather than restful."
+    }
+  ],
+  "quality": {
+    "disclaimer": "SigmAudio can measure mechanics and compare the result with the plan. It cannot decide whether this cue is good. That part stays with the person listening.",
+    "predictions": [
+      {
+        "id": "activity",
+        "title": "Movement",
+        "expected": "The plan asks for low energy, so it predicts light movement.",
+        "observed": "The written cue has 101.6 note starts per bar. That is outside the rough 0-10 note starts per bar guide.",
+        "status": "different",
+        "evidence": [
+          {
+            "kind": "inferred",
+            "label": "Plan expectation",
+            "detail": "Energy usually changes how many musical events arrive, but it does not determine whether they feel exciting."
+          },
+          {
+            "kind": "symbolic",
+            "label": "Written note count",
+            "detail": "101.6 note starts per bar across the current loop."
+          }
+        ]
+      },
+      {
+        "id": "focus",
+        "title": "Room for the game",
+        "expected": "The plan protects concentration.",
+        "observed": "The cue has 101.6 note starts per bar against a conservative 14-note focus guide.",
+        "status": "different",
+        "evidence": [
+          {
+            "kind": "inferred",
+            "label": "Attention budget",
+            "detail": "The cue was planned as focusSafe."
+          },
+          {
+            "kind": "symbolic",
+            "label": "Written note count",
+            "detail": "Note density is a useful proxy for distraction, not a substitute for playing the game."
+          }
+        ]
+      },
+      {
+        "id": "render",
+        "title": "What the render actually did",
+        "expected": "The plan asked for a dreamy palette.",
+        "observed": "The measured peak is -16.5 dBFS.",
+        "status": "supported",
+        "evidence": [
+          {
+            "kind": "rendered",
+            "label": "Offline render measurement",
+            "detail": "Level and spectrum describe the audio file, but they cannot judge whether its mood is right."
+          }
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "id": "claim-0",
+        "severity": "caution",
+        "area": "level",
+        "observed": "Peak level is -16.5 dBFS, a little under the -6 to -1 a finished cue usually reaches.",
+        "interpretation": "Fine for a deliberately quiet bed. Worth raising if this is meant to sit at normal volume.",
+        "evidence": [
+          {
+            "kind": "rendered",
+            "label": "Level measurement",
+            "detail": "Measured from the render or its export manifest."
+          }
+        ]
+      },
+      {
+        "id": "claim-1",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Floor: machine pulse uses 2 distinct pitches across 132 notes.",
+        "interpretation": "That is a rhythm part rather than a melodic one. Deliberate for a pedal or an ostinato, static if this was meant to be the tune.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-2",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Argument: synth chords is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-3",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Argument: brass chords is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-4",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Payoff: synth stabs (G, high) is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-5",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Payoff: fiddle is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-6",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Truce: synth in unison is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-7",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Every note in Truce: horn in unison is played at exactly the same strength.",
+        "interpretation": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-8",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Truce: low E plays the identical bar 4 times with no variation.",
+        "interpretation": "Fine for a pulse or a drone, wearing for a melody. A loop is heard dozens of times in a session, so one changed bar in four buys a lot of patience.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-9",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Truce: timpani and cymbal plays the identical bar 4 times with no variation.",
+        "interpretation": "Fine for a pulse or a drone, wearing for a melody. A loop is heard dozens of times in a session, so one changed bar in four buys a lot of patience.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-10",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Floor: hurdy-gurdy pedal and Floor: hurdy-gurdy pedal, alternate sit 0 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-11",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Floor: hurdy-gurdy pedal and Engine: riff bass sit 3.5 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-12",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Floor: hurdy-gurdy pedal, alternate and Engine: riff bass sit 3.5 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-13",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Floor: machine pulse and Echoes: horn (G#) sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-14",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Floor: machine pulse and Argument: brass chords sit 1.5 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-15",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Floor: machine pulse and Payoff: brass (G#, low) sit 0.5 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-16",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Floor: machine pulse and Truce: brass chord sit 3.5 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-17",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Echoes: synth (G) and Argument: horn (G#) sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-18",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Echoes: synth (G) and Argument: synth chords sit 0 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-19",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Echoes: synth (G) and Payoff: horn hook sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-20",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Echoes: synth (G) and Payoff: fiddle sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-21",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Echoes: synth (G) and Truce: synth in unison sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-22",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Echoes: synth (G) and Truce: horn in unison sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-23",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Echoes: horn (G#) and Argument: brass chords sit 3.5 semitones apart and overlap across 83% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-24",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Echoes: horn (G#) and Payoff: brass (G#, low) sit 1.5 semitones apart and overlap across 91% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-25",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Echoes: horn (G#) and Truce: brass chord sit 1.5 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-26",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: synth lead (G) and Payoff: synth hook sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-27",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: synth lead (G) and Payoff: synth stabs (G, high) sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-28",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: horn (G#) and Argument: synth chords sit 1 semitones apart and overlap across 73% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-29",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: horn (G#) and Payoff: horn hook sit 0 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-30",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: horn (G#) and Payoff: fiddle sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-31",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: horn (G#) and Truce: synth in unison sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-32",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: horn (G#) and Truce: horn in unison sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-33",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: synth chords and Payoff: horn hook sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-34",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: synth chords and Payoff: fiddle sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-35",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: synth chords and Truce: synth in unison sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-36",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: synth chords and Truce: horn in unison sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-37",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: brass chords and Payoff: brass (G#, low) sit 2 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-38",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Argument: brass chords and Truce: brass chord sit 5 semitones apart and overlap across 83% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-39",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Payoff: synth hook and Payoff: synth stabs (G, high) sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-40",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Payoff: horn hook and Payoff: fiddle sit 2 semitones apart and overlap across 77% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-41",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Payoff: horn hook and Truce: synth in unison sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-42",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Payoff: horn hook and Truce: horn in unison sit 1 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-43",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Payoff: brass (G#, low) and Truce: brass chord sit 3 semitones apart and overlap across 91% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-44",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Payoff: fiddle and Truce: synth in unison sit 3 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-45",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Payoff: fiddle and Truce: horn in unison sit 3 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-46",
+        "severity": "caution",
+        "area": "structure",
+        "observed": "Truce: synth in unison and Truce: horn in unison sit 0 semitones apart and overlap across 100% of their range.",
+        "interpretation": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does.",
+        "evidence": [
+          {
+            "kind": "symbolic",
+            "label": "Note structure",
+            "detail": "Computed from the cue’s notes, timing, pitches, and velocities."
+          }
+        ]
+      },
+      {
+        "id": "claim-47",
+        "severity": "fault",
+        "area": "intent",
+        "observed": "The plan reserves room for concentration, but the cue runs 101.6 notes per bar.",
+        "interpretation": "The attention budget is meant to be a hard cap, not a preference. Something is busier than the brief allows and will compete with the thing it was supposed to stay under.",
+        "evidence": [
+          {
+            "kind": "inferred",
+            "label": "Plan expectation",
+            "detail": "The plan’s intended energy and attention budget are interpreted, not heard."
+          },
+          {
+            "kind": "symbolic",
+            "label": "Written note count",
+            "detail": "The result is compared with the cue’s actual note density."
+          }
+        ]
+      },
+      {
+        "id": "claim-48",
+        "severity": "caution",
+        "area": "intent",
+        "observed": "The plan describes low energy (0.30), but the cue places 101.6 notes per bar.",
+        "interpretation": "Density and energy usually track together. A calm scene with this much movement tends to read as anxious rather than restful.",
+        "evidence": [
+          {
+            "kind": "inferred",
+            "label": "Plan expectation",
+            "detail": "The plan’s intended energy and attention budget are interpreted, not heard."
+          },
+          {
+            "kind": "symbolic",
+            "label": "Written note count",
+            "detail": "The result is compared with the cue’s actual note density."
+          }
+        ]
+      }
+    ],
+    "listeningPrompts": [
+      {
+        "id": "motif",
+        "focus": "melody",
+        "question": "After hearing it twice, can you recognise or hum the main musical idea?",
+        "whyOnlyYouCanAnswer": "Pitch counts cannot tell whether an idea sticks in your head."
+      },
+      {
+        "id": "gameplay",
+        "focus": "gameplay",
+        "question": "While the game is busy, does this leave enough room for concentration?",
+        "whyOnlyYouCanAnswer": "The analyser cannot see your combat, UI, dialogue, or controller in the player’s hands."
+      },
+      {
+        "id": "loop",
+        "focus": "loop",
+        "question": "By the third loop, does it still feel intentional instead of tiring or annoying?",
+        "whyOnlyYouCanAnswer": "A repeated-bar check spots literal copies, not when a perfectly valid loop has worn out its welcome."
+      }
+    ],
+    "report": {
+      "findings": [
+        {
+          "severity": "caution",
+          "area": "level",
+          "observed": "Peak level is -16.5 dBFS, a little under the -6 to -1 a finished cue usually reaches.",
+          "meaning": "Fine for a deliberately quiet bed. Worth raising if this is meant to sit at normal volume."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Floor: machine pulse uses 2 distinct pitches across 132 notes.",
+          "meaning": "That is a rhythm part rather than a melodic one. Deliberate for a pedal or an ostinato, static if this was meant to be the tune."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Argument: synth chords is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Argument: brass chords is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Payoff: synth stabs (G, high) is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Payoff: fiddle is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Truce: synth in unison is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Every note in Truce: horn in unison is played at exactly the same strength.",
+          "meaning": "Uniform velocity is the clearest sign a machine wrote something. Even small differences on the strong beats make a part sound played rather than placed."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Truce: low E plays the identical bar 4 times with no variation.",
+          "meaning": "Fine for a pulse or a drone, wearing for a melody. A loop is heard dozens of times in a session, so one changed bar in four buys a lot of patience."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Truce: timpani and cymbal plays the identical bar 4 times with no variation.",
+          "meaning": "Fine for a pulse or a drone, wearing for a melody. A loop is heard dozens of times in a session, so one changed bar in four buys a lot of patience."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Floor: hurdy-gurdy pedal and Floor: hurdy-gurdy pedal, alternate sit 0 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Floor: hurdy-gurdy pedal and Engine: riff bass sit 3.5 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Floor: hurdy-gurdy pedal, alternate and Engine: riff bass sit 3.5 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Floor: machine pulse and Echoes: horn (G#) sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Floor: machine pulse and Argument: brass chords sit 1.5 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Floor: machine pulse and Payoff: brass (G#, low) sit 0.5 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Floor: machine pulse and Truce: brass chord sit 3.5 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Echoes: synth (G) and Argument: horn (G#) sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Echoes: synth (G) and Argument: synth chords sit 0 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Echoes: synth (G) and Payoff: horn hook sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Echoes: synth (G) and Payoff: fiddle sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Echoes: synth (G) and Truce: synth in unison sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Echoes: synth (G) and Truce: horn in unison sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Echoes: horn (G#) and Argument: brass chords sit 3.5 semitones apart and overlap across 83% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Echoes: horn (G#) and Payoff: brass (G#, low) sit 1.5 semitones apart and overlap across 91% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Echoes: horn (G#) and Truce: brass chord sit 1.5 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: synth lead (G) and Payoff: synth hook sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: synth lead (G) and Payoff: synth stabs (G, high) sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: horn (G#) and Argument: synth chords sit 1 semitones apart and overlap across 73% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: horn (G#) and Payoff: horn hook sit 0 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: horn (G#) and Payoff: fiddle sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: horn (G#) and Truce: synth in unison sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: horn (G#) and Truce: horn in unison sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: synth chords and Payoff: horn hook sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: synth chords and Payoff: fiddle sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: synth chords and Truce: synth in unison sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: synth chords and Truce: horn in unison sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: brass chords and Payoff: brass (G#, low) sit 2 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Argument: brass chords and Truce: brass chord sit 5 semitones apart and overlap across 83% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Payoff: synth hook and Payoff: synth stabs (G, high) sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Payoff: horn hook and Payoff: fiddle sit 2 semitones apart and overlap across 77% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Payoff: horn hook and Truce: synth in unison sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Payoff: horn hook and Truce: horn in unison sit 1 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Payoff: brass (G#, low) and Truce: brass chord sit 3 semitones apart and overlap across 91% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Payoff: fiddle and Truce: synth in unison sit 3 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Payoff: fiddle and Truce: horn in unison sit 3 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "caution",
+          "area": "structure",
+          "observed": "Truce: synth in unison and Truce: horn in unison sit 0 semitones apart and overlap across 100% of their range.",
+          "meaning": "Two parts in one octave mask each other however the levels are set. Moving one an octave apart separates them far more effectively than mixing does."
+        },
+        {
+          "severity": "fault",
+          "area": "intent",
+          "observed": "The plan reserves room for concentration, but the cue runs 101.6 notes per bar.",
+          "meaning": "The attention budget is meant to be a hard cap, not a preference. Something is busier than the brief allows and will compete with the thing it was supposed to stay under."
+        },
+        {
+          "severity": "caution",
+          "area": "intent",
+          "observed": "The plan describes low energy (0.30), but the cue places 101.6 notes per bar.",
+          "meaning": "Density and energy usually track together. A calm scene with this much movement tends to read as anxious rather than restful."
+        }
+      ],
+      "symbolic": {
+        "lengthBars": 16,
+        "audioClipCount": 0,
+        "scope": "written-notes-and-recording-placement",
+        "totalNotes": 1626,
+        "notesPerBar": 101.625,
+        "tracks": [
+          {
+            "trackId": "trk_000000000164g2hma9fste",
+            "name": "Floor: hurdy-gurdy pedal",
+            "role": "texture",
+            "instrumentId": "hurdyGurdy",
+            "noteCount": 4,
+            "audioClipCount": 0,
+            "notesPerBar": 0.25,
+            "distinctPitches": 2,
+            "pitchRangeSemitones": 7,
+            "medianPitch": 43.5,
+            "lowestPitch": 40,
+            "highestPitch": 47,
+            "distinctVelocities": 2,
+            "velocitySpread": 12,
+            "distinctOnsetsInBar": 1,
+            "distinctBars": 1,
+            "barsWithNotes": 2,
+            "occupancy": 0.0078125
+          },
+          {
+            "trackId": "trk_0000000008jxz7jsq4thjt",
+            "name": "Floor: hurdy-gurdy pedal, alternate",
+            "role": "texture",
+            "instrumentId": "hurdyGurdy",
+            "noteCount": 4,
+            "audioClipCount": 0,
+            "notesPerBar": 0.25,
+            "distinctPitches": 2,
+            "pitchRangeSemitones": 7,
+            "medianPitch": 43.5,
+            "lowestPitch": 40,
+            "highestPitch": 47,
+            "distinctVelocities": 2,
+            "velocitySpread": 12,
+            "distinctOnsetsInBar": 1,
+            "distinctBars": 2,
+            "barsWithNotes": 2,
+            "occupancy": 0.0078125
+          },
+          {
+            "trackId": "trk_000000000fb37xvf9e1q52",
+            "name": "Floor: machine pulse",
+            "role": "texture",
+            "instrumentId": "brightPluck",
+            "noteCount": 132,
+            "audioClipCount": 0,
+            "notesPerBar": 8.25,
+            "distinctPitches": 2,
+            "pitchRangeSemitones": 7,
+            "medianPitch": 55.5,
+            "lowestPitch": 52,
+            "highestPitch": 59,
+            "distinctVelocities": 10,
+            "velocitySpread": 35,
+            "distinctOnsetsInBar": 12,
+            "distinctBars": 2,
+            "barsWithNotes": 16,
+            "occupancy": 0.515625
+          },
+          {
+            "trackId": "trk_000000004pg4qsx5hhgcf5",
+            "name": "Echoes: synth (G)",
+            "role": "motif",
+            "instrumentId": "synthLead",
+            "noteCount": 9,
+            "audioClipCount": 0,
+            "notesPerBar": 0.5625,
+            "distinctPitches": 5,
+            "pitchRangeSemitones": 7,
+            "medianPitch": 67,
+            "lowestPitch": 64,
+            "highestPitch": 71,
+            "distinctVelocities": 3,
+            "velocitySpread": 12,
+            "distinctOnsetsInBar": 4,
+            "distinctBars": 3,
+            "barsWithNotes": 4,
+            "occupancy": 0.03515625
+          },
+          {
+            "trackId": "trk_0000000052cpkzmzv02rg8",
+            "name": "Echoes: horn (G#)",
+            "role": "motif",
+            "instrumentId": "orchBrass",
+            "noteCount": 10,
+            "audioClipCount": 0,
+            "notesPerBar": 0.625,
+            "distinctPitches": 8,
+            "pitchRangeSemitones": 12,
+            "medianPitch": 57.5,
+            "lowestPitch": 52,
+            "highestPitch": 64,
+            "distinctVelocities": 3,
+            "velocitySpread": 10,
+            "distinctOnsetsInBar": 4,
+            "distinctBars": 3,
+            "barsWithNotes": 4,
+            "occupancy": 0.0390625
+          },
+          {
+            "trackId": "trk_000000005fftgd2tf0qzme",
+            "name": "Engine: riff bass",
+            "role": "bass",
+            "instrumentId": "driveBass",
+            "noteCount": 128,
+            "audioClipCount": 0,
+            "notesPerBar": 8,
+            "distinctPitches": 15,
+            "pitchRangeSemitones": 19,
+            "medianPitch": 40,
+            "lowestPitch": 33,
+            "highestPitch": 52,
+            "distinctVelocities": 11,
+            "velocitySpread": 26,
+            "distinctOnsetsInBar": 8,
+            "distinctBars": 4,
+            "barsWithNotes": 16,
+            "occupancy": 0.5
+          },
+          {
+            "trackId": "trk_000000009jxrbkkpsbfdj6",
+            "name": "Drums: 808",
+            "role": "drums",
+            "instrumentId": "drums808",
+            "noteCount": 132,
+            "audioClipCount": 0,
+            "notesPerBar": 8.25,
+            "distinctPitches": 2,
+            "pitchRangeSemitones": 6,
+            "medianPitch": 36,
+            "lowestPitch": 36,
+            "highestPitch": 42,
+            "distinctVelocities": 3,
+            "velocitySpread": 76,
+            "distinctOnsetsInBar": 8,
+            "distinctBars": 2,
+            "barsWithNotes": 16,
+            "occupancy": 0.4375
+          },
+          {
+            "trackId": "trk_00000000dsa90yvakexm3t",
+            "name": "Drums: snare",
+            "role": "drums",
+            "instrumentId": "orchKit",
+            "noteCount": 44,
+            "audioClipCount": 0,
+            "notesPerBar": 2.75,
+            "distinctPitches": 1,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 38,
+            "lowestPitch": 38,
+            "highestPitch": 38,
+            "distinctVelocities": 2,
+            "velocitySpread": 54,
+            "distinctOnsetsInBar": 5,
+            "distinctBars": 2,
+            "barsWithNotes": 16,
+            "occupancy": 0.171875
+          },
+          {
+            "trackId": "trk_00000000f8z5vz910mrvzs",
+            "name": "Argument: synth lead (G)",
+            "role": "motif",
+            "instrumentId": "synthLead",
+            "noteCount": 52,
+            "audioClipCount": 0,
+            "notesPerBar": 3.25,
+            "distinctPitches": 15,
+            "pitchRangeSemitones": 20,
+            "medianPitch": 77,
+            "lowestPitch": 66,
+            "highestPitch": 86,
+            "distinctVelocities": 5,
+            "velocitySpread": 8,
+            "distinctOnsetsInBar": 11,
+            "distinctBars": 9,
+            "barsWithNotes": 9,
+            "occupancy": 0.203125
+          },
+          {
+            "trackId": "trk_00000000gzx63hrvk4mh21",
+            "name": "Argument: horn (G#)",
+            "role": "motif",
+            "instrumentId": "orchBrass",
+            "noteCount": 44,
+            "audioClipCount": 0,
+            "notesPerBar": 2.75,
+            "distinctPitches": 11,
+            "pitchRangeSemitones": 12,
+            "medianPitch": 66,
+            "lowestPitch": 59,
+            "highestPitch": 71,
+            "distinctVelocities": 5,
+            "velocitySpread": 10,
+            "distinctOnsetsInBar": 11,
+            "distinctBars": 9,
+            "barsWithNotes": 9,
+            "occupancy": 0.171875
+          },
+          {
+            "trackId": "trk_00000000je5hmp6qm4kbtq",
+            "name": "Argument: synth chords",
+            "role": "chords",
+            "instrumentId": "supersaw",
+            "noteCount": 108,
+            "audioClipCount": 0,
+            "notesPerBar": 6.75,
+            "distinctPitches": 8,
+            "pitchRangeSemitones": 11,
+            "medianPitch": 67,
+            "lowestPitch": 63,
+            "highestPitch": 74,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 4,
+            "distinctBars": 3,
+            "barsWithNotes": 7,
+            "occupancy": 0.109375
+          },
+          {
+            "trackId": "trk_00000000nxgw3n49q3qm42",
+            "name": "Argument: brass chords",
+            "role": "chords",
+            "instrumentId": "orchBrass",
+            "noteCount": 25,
+            "audioClipCount": 0,
+            "notesPerBar": 1.5625,
+            "distinctPitches": 9,
+            "pitchRangeSemitones": 15,
+            "medianPitch": 54,
+            "lowestPitch": 47,
+            "highestPitch": 62,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 1,
+            "distinctBars": 3,
+            "barsWithNotes": 7,
+            "occupancy": 0.02734375
+          },
+          {
+            "trackId": "trk_00000000psycwm1xdp0vcy",
+            "name": "Payoff: synth hook",
+            "role": "motif",
+            "instrumentId": "synthLead",
+            "noteCount": 81,
+            "audioClipCount": 0,
+            "notesPerBar": 5.0625,
+            "distinctPitches": 17,
+            "pitchRangeSemitones": 23,
+            "medianPitch": 78,
+            "lowestPitch": 63,
+            "highestPitch": 86,
+            "distinctVelocities": 4,
+            "velocitySpread": 6,
+            "distinctOnsetsInBar": 9,
+            "distinctBars": 12,
+            "barsWithNotes": 16,
+            "occupancy": 0.31640625
+          },
+          {
+            "trackId": "trk_00000000sdmf1z53gvhc9y",
+            "name": "Payoff: horn hook",
+            "role": "motif",
+            "instrumentId": "orchBrass",
+            "noteCount": 81,
+            "audioClipCount": 0,
+            "notesPerBar": 5.0625,
+            "distinctPitches": 17,
+            "pitchRangeSemitones": 23,
+            "medianPitch": 66,
+            "lowestPitch": 51,
+            "highestPitch": 74,
+            "distinctVelocities": 4,
+            "velocitySpread": 6,
+            "distinctOnsetsInBar": 9,
+            "distinctBars": 12,
+            "barsWithNotes": 16,
+            "occupancy": 0.31640625
+          },
+          {
+            "trackId": "trk_00000000w1azpe38gwd84c",
+            "name": "Payoff: brass (G#, low)",
+            "role": "chords",
+            "instrumentId": "orchBrass",
+            "noteCount": 192,
+            "audioClipCount": 0,
+            "notesPerBar": 12,
+            "distinctPitches": 8,
+            "pitchRangeSemitones": 11,
+            "medianPitch": 56,
+            "lowestPitch": 51,
+            "highestPitch": 62,
+            "distinctVelocities": 2,
+            "velocitySpread": 16,
+            "distinctOnsetsInBar": 4,
+            "distinctBars": 5,
+            "barsWithNotes": 16,
+            "occupancy": 0.25
+          },
+          {
+            "trackId": "trk_00000001245cxpnfdn90n7",
+            "name": "Payoff: synth stabs (G, high)",
+            "role": "chords",
+            "instrumentId": "supersaw",
+            "noteCount": 192,
+            "audioClipCount": 0,
+            "notesPerBar": 12,
+            "distinctPitches": 8,
+            "pitchRangeSemitones": 10,
+            "medianPitch": 79,
+            "lowestPitch": 74,
+            "highestPitch": 84,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 4,
+            "distinctBars": 4,
+            "barsWithNotes": 16,
+            "occupancy": 0.25
+          },
+          {
+            "trackId": "trk_0000000187kdxm8gmafged",
+            "name": "Payoff: fiddle",
+            "role": "motif",
+            "instrumentId": "fiddle",
+            "noteCount": 256,
+            "audioClipCount": 0,
+            "notesPerBar": 16,
+            "distinctPitches": 14,
+            "pitchRangeSemitones": 22,
+            "medianPitch": 68,
+            "lowestPitch": 57,
+            "highestPitch": 79,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 16,
+            "distinctBars": 4,
+            "barsWithNotes": 16,
+            "occupancy": 1
+          },
+          {
+            "trackId": "trk_00000001gafqga7t1devfs",
+            "name": "Payoff: timpani and cymbal",
+            "role": "drums",
+            "instrumentId": "orchKit",
+            "noteCount": 52,
+            "audioClipCount": 0,
+            "notesPerBar": 3.25,
+            "distinctPitches": 2,
+            "pitchRangeSemitones": 10,
+            "medianPitch": 36,
+            "lowestPitch": 36,
+            "highestPitch": 46,
+            "distinctVelocities": 2,
+            "velocitySpread": 22,
+            "distinctOnsetsInBar": 3,
+            "distinctBars": 2,
+            "barsWithNotes": 16,
+            "occupancy": 0.1875
+          },
+          {
+            "trackId": "trk_00000001j1g7980b4xeye7",
+            "name": "Truce: brass chord",
+            "role": "chords",
+            "instrumentId": "orchBrass",
+            "noteCount": 20,
+            "audioClipCount": 0,
+            "notesPerBar": 1.25,
+            "distinctPitches": 3,
+            "pitchRangeSemitones": 12,
+            "medianPitch": 59,
+            "lowestPitch": 52,
+            "highestPitch": 64,
+            "distinctVelocities": 2,
+            "velocitySpread": 52,
+            "distinctOnsetsInBar": 1,
+            "distinctBars": 2,
+            "barsWithNotes": 8,
+            "occupancy": 0.03125
+          },
+          {
+            "trackId": "trk_00000001jrasvdqt23kmf2",
+            "name": "Truce: synth in unison",
+            "role": "motif",
+            "instrumentId": "synthLead",
+            "noteCount": 24,
+            "audioClipCount": 0,
+            "notesPerBar": 1.5,
+            "distinctPitches": 4,
+            "pitchRangeSemitones": 7,
+            "medianPitch": 65,
+            "lowestPitch": 64,
+            "highestPitch": 71,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 4,
+            "distinctBars": 3,
+            "barsWithNotes": 12,
+            "occupancy": 0.09375
+          },
+          {
+            "trackId": "trk_00000001kkv5c5nyahegk4",
+            "name": "Truce: horn in unison",
+            "role": "motif",
+            "instrumentId": "orchBrass",
+            "noteCount": 24,
+            "audioClipCount": 0,
+            "notesPerBar": 1.5,
+            "distinctPitches": 4,
+            "pitchRangeSemitones": 7,
+            "medianPitch": 65,
+            "lowestPitch": 64,
+            "highestPitch": 71,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 4,
+            "distinctBars": 3,
+            "barsWithNotes": 12,
+            "occupancy": 0.09375
+          },
+          {
+            "trackId": "trk_00000001mefbjqzfszh95z",
+            "name": "Truce: low E",
+            "role": "bass",
+            "instrumentId": "roundBass",
+            "noteCount": 4,
+            "audioClipCount": 0,
+            "notesPerBar": 0.25,
+            "distinctPitches": 1,
+            "pitchRangeSemitones": 0,
+            "medianPitch": 28,
+            "lowestPitch": 28,
+            "highestPitch": 28,
+            "distinctVelocities": 1,
+            "velocitySpread": 0,
+            "distinctOnsetsInBar": 1,
+            "distinctBars": 1,
+            "barsWithNotes": 4,
+            "occupancy": 0.015625
+          },
+          {
+            "trackId": "trk_00000001mnkwbhhh8wh2fh",
+            "name": "Truce: timpani and cymbal",
+            "role": "drums",
+            "instrumentId": "orchKit",
+            "noteCount": 8,
+            "audioClipCount": 0,
+            "notesPerBar": 0.5,
+            "distinctPitches": 2,
+            "pitchRangeSemitones": 10,
+            "medianPitch": 41,
+            "lowestPitch": 36,
+            "highestPitch": 46,
+            "distinctVelocities": 2,
+            "velocitySpread": 22,
+            "distinctOnsetsInBar": 1,
+            "distinctBars": 1,
+            "barsWithNotes": 4,
+            "occupancy": 0.015625
+          }
+        ],
+        "clashes": [
+          {
+            "a": "Floor: hurdy-gurdy pedal",
+            "b": "Floor: hurdy-gurdy pedal, alternate",
+            "semitonesApart": 0,
+            "overlapShare": 1
+          },
+          {
+            "a": "Floor: hurdy-gurdy pedal",
+            "b": "Engine: riff bass",
+            "semitonesApart": 3.5,
+            "overlapShare": 1
+          },
+          {
+            "a": "Floor: hurdy-gurdy pedal, alternate",
+            "b": "Engine: riff bass",
+            "semitonesApart": 3.5,
+            "overlapShare": 1
+          },
+          {
+            "a": "Floor: machine pulse",
+            "b": "Echoes: horn (G#)",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Floor: machine pulse",
+            "b": "Argument: brass chords",
+            "semitonesApart": 1.5,
+            "overlapShare": 1
+          },
+          {
+            "a": "Floor: machine pulse",
+            "b": "Payoff: brass (G#, low)",
+            "semitonesApart": 0.5,
+            "overlapShare": 1
+          },
+          {
+            "a": "Floor: machine pulse",
+            "b": "Truce: brass chord",
+            "semitonesApart": 3.5,
+            "overlapShare": 1
+          },
+          {
+            "a": "Echoes: synth (G)",
+            "b": "Argument: horn (G#)",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Echoes: synth (G)",
+            "b": "Argument: synth chords",
+            "semitonesApart": 0,
+            "overlapShare": 1
+          },
+          {
+            "a": "Echoes: synth (G)",
+            "b": "Payoff: horn hook",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Echoes: synth (G)",
+            "b": "Payoff: fiddle",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Echoes: synth (G)",
+            "b": "Truce: synth in unison",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Echoes: synth (G)",
+            "b": "Truce: horn in unison",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Echoes: horn (G#)",
+            "b": "Argument: brass chords",
+            "semitonesApart": 3.5,
+            "overlapShare": 0.83
+          },
+          {
+            "a": "Echoes: horn (G#)",
+            "b": "Payoff: brass (G#, low)",
+            "semitonesApart": 1.5,
+            "overlapShare": 0.91
+          },
+          {
+            "a": "Echoes: horn (G#)",
+            "b": "Truce: brass chord",
+            "semitonesApart": 1.5,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: synth lead (G)",
+            "b": "Payoff: synth hook",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: synth lead (G)",
+            "b": "Payoff: synth stabs (G, high)",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: horn (G#)",
+            "b": "Argument: synth chords",
+            "semitonesApart": 1,
+            "overlapShare": 0.73
+          },
+          {
+            "a": "Argument: horn (G#)",
+            "b": "Payoff: horn hook",
+            "semitonesApart": 0,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: horn (G#)",
+            "b": "Payoff: fiddle",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: horn (G#)",
+            "b": "Truce: synth in unison",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: horn (G#)",
+            "b": "Truce: horn in unison",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: synth chords",
+            "b": "Payoff: horn hook",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: synth chords",
+            "b": "Payoff: fiddle",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: synth chords",
+            "b": "Truce: synth in unison",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: synth chords",
+            "b": "Truce: horn in unison",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: brass chords",
+            "b": "Payoff: brass (G#, low)",
+            "semitonesApart": 2,
+            "overlapShare": 1
+          },
+          {
+            "a": "Argument: brass chords",
+            "b": "Truce: brass chord",
+            "semitonesApart": 5,
+            "overlapShare": 0.83
+          },
+          {
+            "a": "Payoff: synth hook",
+            "b": "Payoff: synth stabs (G, high)",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Payoff: horn hook",
+            "b": "Payoff: fiddle",
+            "semitonesApart": 2,
+            "overlapShare": 0.77
+          },
+          {
+            "a": "Payoff: horn hook",
+            "b": "Truce: synth in unison",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Payoff: horn hook",
+            "b": "Truce: horn in unison",
+            "semitonesApart": 1,
+            "overlapShare": 1
+          },
+          {
+            "a": "Payoff: brass (G#, low)",
+            "b": "Truce: brass chord",
+            "semitonesApart": 3,
+            "overlapShare": 0.91
+          },
+          {
+            "a": "Payoff: fiddle",
+            "b": "Truce: synth in unison",
+            "semitonesApart": 3,
+            "overlapShare": 1
+          },
+          {
+            "a": "Payoff: fiddle",
+            "b": "Truce: horn in unison",
+            "semitonesApart": 3,
+            "overlapShare": 1
+          },
+          {
+            "a": "Truce: synth in unison",
+            "b": "Truce: horn in unison",
+            "semitonesApart": 0,
+            "overlapShare": 1
+          }
+        ],
+        "silentTracks": [],
+        "harmonicVariety": 48
+      },
+      "levels": {
+        "peakDb": -16.49,
+        "rmsDb": -31.81,
+        "crestDb": 15.32,
+        "dynamicRangeDb": null
+      },
+      "spectrum": null,
+      "stems": [],
+      "counts": {
+        "fault": 1,
+        "caution": 48,
+        "note": 0
+      }
+    }
+  },
+  "ok": true,
+  "warnings": [
+    "Argument: horn (G#) (motif): shortened 1 overlapping note of the same pitch (MIDI cannot hold two at once).",
+    "Payoff: horn hook (motif): shortened 2 overlapping notes of the same pitch (MIDI cannot hold two at once).",
+    "Payoff: brass (G#, low) (chords): shortened 67 overlapping notes of the same pitch (MIDI cannot hold two at once).",
+    "Truce: horn in unison (motif): shortened 4 overlapping notes of the same pitch (MIDI cannot hold two at once).",
+    "Track EQ, delay and compression are rendered into WAV and kept in the editable project. MIDI does not carry these effects.",
+    "Bus routing, pre/post sends and master processing are baked into WAV and stems and retained in the editable project. MIDI does not recreate this mixer. Native compressor lookahead is compensated at routing joins; intentional echo/reverb and unknown plugin latency are not compensated. Separately processed stems do not promise exact main-mix reconstruction.",
+    "Custom synth envelopes and tone are baked into WAV and stems and saved in the editable project. MIDI carries notes, not these patches.",
+    "This arrangement uses MIDI ports to keep parts independent. Import each track separately in software that ignores MIDI port metadata.",
+    "This cue is still a review draft. The export is usable for testing, but it is not marked as the approved version.",
+    "Godot 4.5+ is required. State fades and decisions run on engine frames, not sample-accurate automation callbacks.",
+    "Stems include their authored active gains and effects. The runtime switches unity/silence without applying those gains twice.",
+    "Stems are rendered separately through bus compression/effects. Their sum is not guaranteed to reconstruct the combined live or main mix exactly."
+  ],
+  "manifest": {
+    "schemaVersion": 3,
+    "cueId": "cue_000000001gsfsyz4334vqn",
+    "cueName": "One Note Apart: Crossing (adaptive)",
+    "bpm": 150,
+    "meter": "4/4",
+    "key": "E Dorian",
+    "loopBars": 16,
+    "phraseLengthBars": 4,
+    "sampleRate": 48000,
+    "loopStartSamples": 0,
+    "loopEndSamples": 1228799,
+    "loopSeconds": 25.6,
+    "loopMode": "loopLocked",
+    "loopJoinDb": -79.85,
+    "loopContinuationErrorDb": -91.16,
+    "loopContinuationFrames": 1200,
+    "loopWarmupIterations": 1,
+    "renderAttempts": 1,
+    "peakDb": -16.49,
+    "rmsDb": -31.81,
+    "sections": [
+      {
+        "id": "sec_00000001n4e31q3691k7vy",
+        "name": "Phrase 1 (E E C B)",
+        "kind": "loop",
+        "startBar": 0,
+        "lengthBars": 4
+      },
+      {
+        "id": "sec_00000001n52jthfzaz1nn3",
+        "name": "Phrase 2 (E E A B)",
+        "kind": "loop",
+        "startBar": 4,
+        "lengthBars": 4
+      },
+      {
+        "id": "sec_00000001n6bw05f98qtrcw",
+        "name": "Phrase 3 (E E C B)",
+        "kind": "loop",
+        "startBar": 8,
+        "lengthBars": 4
+      },
+      {
+        "id": "sec_00000001n7d4sdsd92d1zm",
+        "name": "Phrase 4 (A C B B)",
+        "kind": "loop",
+        "startBar": 12,
+        "lengthBars": 4
+      }
+    ],
+    "layers": [
+      {
+        "id": "lay_00000001n81yynq7xfgkm5",
+        "name": "Floor",
+        "purpose": "base",
+        "file": "audio/stems/one_note_apart_crossing_adaptive_floor.wav",
+        "gainDb": 0,
+        "fadeBeats": 4
+      },
+      {
+        "id": "lay_00000001n915kmnhv37815",
+        "name": "Echoes",
+        "purpose": "texture",
+        "file": "audio/stems/one_note_apart_crossing_adaptive_echoes.wav",
+        "gainDb": 0,
+        "fadeBeats": 4
+      },
+      {
+        "id": "lay_00000001nazfyd2sxmawbp",
+        "name": "Engine",
+        "purpose": "pulse",
+        "file": "audio/stems/one_note_apart_crossing_adaptive_engine.wav",
+        "gainDb": 0,
+        "fadeBeats": 1
+      },
+      {
+        "id": "lay_00000001nbf2g648jqrndb",
+        "name": "Drums",
+        "purpose": "combat",
+        "file": "audio/stems/one_note_apart_crossing_adaptive_drums.wav",
+        "gainDb": 0,
+        "fadeBeats": 1
+      },
+      {
+        "id": "lay_00000001ncrzekzg3atpf3",
+        "name": "Argument",
+        "purpose": "combat",
+        "file": "audio/stems/one_note_apart_crossing_adaptive_argument.wav",
+        "gainDb": 0,
+        "fadeBeats": 1
+      },
+      {
+        "id": "lay_00000001ndhyd7kx7bmpan",
+        "name": "Payoff",
+        "purpose": "magic",
+        "file": "audio/stems/one_note_apart_crossing_adaptive_payoff.wav",
+        "gainDb": 0,
+        "fadeBeats": 0
+      },
+      {
+        "id": "lay_00000001nesfmnwszxjb5m",
+        "name": "Truce",
+        "purpose": "harmony",
+        "file": "audio/stems/one_note_apart_crossing_adaptive_truce.wav",
+        "gainDb": 0,
+        "fadeBeats": 0
+      }
+    ],
+    "userSamples": [],
+    "baseStateId": "sta_00000001nf19qjpbwcg665",
+    "states": [
+      {
+        "id": "sta_00000001nf19qjpbwcg665",
+        "name": "Explore",
+        "activeLayerIds": [
+          "lay_00000001n81yynq7xfgkm5",
+          "lay_00000001n915kmnhv37815"
+        ],
+        "mixSnapshotId": null
+      },
+      {
+        "id": "sta_00000001nge9ms7ykxpgyg",
+        "name": "Combat",
+        "activeLayerIds": [
+          "lay_00000001n81yynq7xfgkm5",
+          "lay_00000001nazfyd2sxmawbp",
+          "lay_00000001nbf2g648jqrndb",
+          "lay_00000001ncrzekzg3atpf3"
+        ],
+        "mixSnapshotId": null
+      },
+      {
+        "id": "sta_00000001nhkpsfjr4k2rk2",
+        "name": "Climax",
+        "activeLayerIds": [
+          "lay_00000001n81yynq7xfgkm5",
+          "lay_00000001nazfyd2sxmawbp",
+          "lay_00000001nbf2g648jqrndb",
+          "lay_00000001ndhyd7kx7bmpan"
+        ],
+        "mixSnapshotId": null
+      },
+      {
+        "id": "sta_00000001njj83fk9vy44sj",
+        "name": "Resolution",
+        "activeLayerIds": [
+          "lay_00000001n81yynq7xfgkm5",
+          "lay_00000001nesfmnwszxjb5m"
+        ],
+        "mixSnapshotId": null
+      }
+    ],
+    "parameters": [
+      {
+        "id": "prm_00000001nkxz0sydtp7w11",
+        "name": "threat",
+        "min": 0,
+        "max": 1,
+        "defaultValue": 0,
+        "smoothingMs": 200,
+        "default": 0
+      },
+      {
+        "id": "prm_00000001nm8t1yfwcaqfbk",
+        "name": "style",
+        "min": 0,
+        "max": 1,
+        "defaultValue": 0,
+        "smoothingMs": 300,
+        "default": 0
+      }
+    ],
+    "transitions": [
+      {
+        "id": "trn_00000001nnfpvj9z52bhys",
+        "fromStateId": "sta_00000001nf19qjpbwcg665",
+        "toStateId": "sta_00000001nge9ms7ykxpgyg",
+        "when": {
+          "kind": "param",
+          "paramId": "prm_00000001nkxz0sydtp7w11",
+          "op": ">=",
+          "value": 0.5
+        },
+        "quantize": "bar",
+        "fadeBeats": 1,
+        "priority": 5,
+        "enterAbove": 0.5,
+        "exitBelow": null,
+        "dwellMs": 0,
+        "from": "sta_00000001nf19qjpbwcg665",
+        "to": "sta_00000001nge9ms7ykxpgyg"
+      },
+      {
+        "id": "trn_00000001npa6stshkqcyw6",
+        "fromStateId": "sta_00000001nge9ms7ykxpgyg",
+        "toStateId": "sta_00000001nhkpsfjr4k2rk2",
+        "when": {
+          "kind": "param",
+          "paramId": "prm_00000001nm8t1yfwcaqfbk",
+          "op": ">=",
+          "value": 0.8,
+          "holdMs": 1000
+        },
+        "quantize": "phrase",
+        "fadeBeats": 0,
+        "priority": 4,
+        "enterAbove": 0.8,
+        "exitBelow": null,
+        "dwellMs": 3200,
+        "from": "sta_00000001nge9ms7ykxpgyg",
+        "to": "sta_00000001nhkpsfjr4k2rk2"
+      },
+      {
+        "id": "trn_00000001nq7fqezkfh3e5n",
+        "fromStateId": "sta_00000001nhkpsfjr4k2rk2",
+        "toStateId": "sta_00000001nge9ms7ykxpgyg",
+        "when": {
+          "kind": "param",
+          "paramId": "prm_00000001nm8t1yfwcaqfbk",
+          "op": "<=",
+          "value": 0.5,
+          "holdMs": 2000
+        },
+        "quantize": "bar",
+        "fadeBeats": 2,
+        "priority": 3,
+        "enterAbove": null,
+        "exitBelow": 0.5,
+        "dwellMs": 6400,
+        "from": "sta_00000001nhkpsfjr4k2rk2",
+        "to": "sta_00000001nge9ms7ykxpgyg"
+      },
+      {
+        "id": "trn_00000001nrzzxsnzzdyaaz",
+        "fromStateId": "sta_00000001nge9ms7ykxpgyg",
+        "toStateId": "sta_00000001njj83fk9vy44sj",
+        "when": {
+          "kind": "param",
+          "paramId": "prm_00000001nkxz0sydtp7w11",
+          "op": "<=",
+          "value": 0.1,
+          "holdMs": 1500
+        },
+        "quantize": "phrase",
+        "fadeBeats": 0,
+        "priority": 6,
+        "enterAbove": null,
+        "exitBelow": 0.1,
+        "dwellMs": 1600,
+        "from": "sta_00000001nge9ms7ykxpgyg",
+        "to": "sta_00000001njj83fk9vy44sj"
+      },
+      {
+        "id": "trn_00000001nsehxk7j5ecakc",
+        "fromStateId": "sta_00000001nhkpsfjr4k2rk2",
+        "toStateId": "sta_00000001njj83fk9vy44sj",
+        "when": {
+          "kind": "param",
+          "paramId": "prm_00000001nkxz0sydtp7w11",
+          "op": "<=",
+          "value": 0.1,
+          "holdMs": 1500
+        },
+        "quantize": "phrase",
+        "fadeBeats": 0,
+        "priority": 6,
+        "enterAbove": null,
+        "exitBelow": 0.1,
+        "dwellMs": 1600,
+        "from": "sta_00000001nhkpsfjr4k2rk2",
+        "to": "sta_00000001njj83fk9vy44sj"
+      },
+      {
+        "id": "trn_00000001nt68eze2wp6na1",
+        "fromStateId": "sta_00000001njj83fk9vy44sj",
+        "toStateId": "sta_00000001nf19qjpbwcg665",
+        "when": {
+          "kind": "always"
+        },
+        "quantize": "bar",
+        "fadeBeats": 4,
+        "priority": 1,
+        "enterAbove": null,
+        "exitBelow": null,
+        "dwellMs": 3200,
+        "from": "sta_00000001njj83fk9vy44sj",
+        "to": "sta_00000001nf19qjpbwcg665"
+      },
+      {
+        "id": "trn_00000001nvynx0qar3krr9",
+        "fromStateId": "sta_00000001njj83fk9vy44sj",
+        "toStateId": "sta_00000001nge9ms7ykxpgyg",
+        "when": {
+          "kind": "param",
+          "paramId": "prm_00000001nkxz0sydtp7w11",
+          "op": ">=",
+          "value": 0.5
+        },
+        "quantize": "bar",
+        "fadeBeats": 1,
+        "priority": 5,
+        "enterAbove": 0.5,
+        "exitBelow": null,
+        "dwellMs": 0,
+        "from": "sta_00000001njj83fk9vy44sj",
+        "to": "sta_00000001nge9ms7ykxpgyg"
+      }
+    ],
+    "events": [],
+    "mixSnapshots": [],
+    "mixerRouting": {
+      "buses": [],
+      "master": {
+        "gainDb": -3,
+        "pan": 0,
+        "mute": false,
+        "effects": []
+      },
+      "tracks": [
+        {
+          "trackId": "trk_000000000164g2hma9fste"
+        },
+        {
+          "trackId": "trk_0000000008jxz7jsq4thjt"
+        },
+        {
+          "trackId": "trk_000000000fb37xvf9e1q52"
+        },
+        {
+          "trackId": "trk_000000004pg4qsx5hhgcf5"
+        },
+        {
+          "trackId": "trk_0000000052cpkzmzv02rg8"
+        },
+        {
+          "trackId": "trk_000000005fftgd2tf0qzme"
+        },
+        {
+          "trackId": "trk_000000009jxrbkkpsbfdj6"
+        },
+        {
+          "trackId": "trk_00000000dsa90yvakexm3t"
+        },
+        {
+          "trackId": "trk_00000000f8z5vz910mrvzs"
+        },
+        {
+          "trackId": "trk_00000000gzx63hrvk4mh21"
+        },
+        {
+          "trackId": "trk_00000000je5hmp6qm4kbtq"
+        },
+        {
+          "trackId": "trk_00000000nxgw3n49q3qm42"
+        },
+        {
+          "trackId": "trk_00000000psycwm1xdp0vcy"
+        },
+        {
+          "trackId": "trk_00000000sdmf1z53gvhc9y"
+        },
+        {
+          "trackId": "trk_00000000w1azpe38gwd84c"
+        },
+        {
+          "trackId": "trk_00000001245cxpnfdn90n7"
+        },
+        {
+          "trackId": "trk_0000000187kdxm8gmafged"
+        },
+        {
+          "trackId": "trk_00000001gafqga7t1devfs"
+        },
+        {
+          "trackId": "trk_00000001j1g7980b4xeye7"
+        },
+        {
+          "trackId": "trk_00000001jrasvdqt23kmf2"
+        },
+        {
+          "trackId": "trk_00000001kkv5c5nyahegk4"
+        },
+        {
+          "trackId": "trk_00000001mefbjqzfszh95z"
+        },
+        {
+          "trackId": "trk_00000001mnkwbhhh8wh2fh"
+        }
+      ],
+      "processingBaked": true,
+      "nativeLookaheadSeconds": 0,
+      "pluginLatencySupported": false,
+      "nativeLookaheadFrames": 0
+    },
+    "stingers": [],
+    "review": {
+      "status": "draft",
+      "openFeedback": 0,
+      "appliedRevisions": 0,
+      "approvedAt": null
+    },
+    "receipt": {
+      "engineVersion": "0.1.0-alpha.1",
+      "renderVersion": "sigmaudio-audio-12",
+      "generatorVersion": "sigmaudio-symbolic-4",
+      "rngSeed": "condi-One Note Apart: Crossing (adaptive)",
+      "planHash": "5d4ba267",
+      "attentionBudget": "focusSafe",
+      "harmonyStrategy": "modalPlaning",
+      "density": {
+        "requested": "sparse",
+        "resolved": "sparse",
+        "ceiling": "light",
+        "source": "inferred",
+        "clamped": false
+      },
+      "originalGenerationTrace": [
+        {
+          "rule": "phrase structure",
+          "because": "24 bars at 4 bars per phrase",
+          "resultedIn": "statement → answer → variation → turnaround → statement → turnaround"
+        },
+        {
+          "rule": "harmony strategy",
+          "because": "modalPlaning",
+          "resultedIn": "degrees 1-1-2-2-1-1-7-7-1-1-2-2-1-1-2-2-1-1-2-2-1-1-2-2"
+        },
+        {
+          "rule": "development harmony",
+          "because": "Keep bass and chord changes on one bar-indexed progression.",
+          "resultedIn": "Statements and returns revisit their harmonic home; later contrast phrases rotate the chosen progression unless parallel motion was requested. Held chord boundaries keep the style harmonic rhythm."
+        },
+        {
+          "rule": "development identity",
+          "because": "3-note seeded source; degree contour 0,1,2; onset grid 0,2,6",
+          "resultedIn": "Statement and return keep source order, intervals and one common rhythm scale. Answers change only the last degree. Fragments and sequences are confined to development; rests are not backfilled. Register fitting uses one octave shift for the whole theme. Symbolic evidence only."
+        },
+        {
+          "rule": "development phrase 1",
+          "because": "bars 1-4; cycle 1; statement",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 0:62,5:64,16:65. Rests 40-64"
+        },
+        {
+          "rule": "development phrase 2",
+          "because": "bars 5-8; cycle 1; answer",
+          "resultedIn": "{\"kind\":\"answer\",\"cadenceDegree\":1}+{\"kind\":\"augmentation\",\"factor\":2}: 3/3 notes, fit x1.3333; attacks 64:62,69:64,80:64. Rests 104-128"
+        },
+        {
+          "rule": "development phrase 3",
+          "because": "bars 9-12; cycle 1; contrast (variation)",
+          "resultedIn": "{\"kind\":\"fragment\",\"start\":0,\"count\":2}+{\"kind\":\"augmentation\",\"factor\":2}: 2/2 notes, fit x1; attacks 128:62,132:64. Rests 140-192"
+        },
+        {
+          "rule": "development phrase 4",
+          "because": "bars 13-16; cycle 1; return (turnaround)",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 192:62,197:64,208:65. Rests 232-256"
+        },
+        {
+          "rule": "development phrase 5",
+          "because": "bars 17-20; cycle 2; statement",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 256:62,261:64,272:65. Rests 296-320"
+        },
+        {
+          "rule": "development phrase 6",
+          "because": "bars 21-24; cycle 2; return (turnaround)",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 320:62,325:64,336:65. Rests 360-384"
+        },
+        {
+          "rule": "motif",
+          "because": "slowMedium tempo, dorian, register middle",
+          "resultedIn": "3-note source cell; the Quiet puzzle grammar chooses full statements and fragments"
+        },
+        {
+          "rule": "style grammar",
+          "because": "sigmaudio-symbolic-4. Selected for thinking with gentle pressure in dreamy. Gameplay context leads the background arrangement; instruments stay as chosen.",
+          "resultedIn": "Quiet puzzle: One held bass root per harmonic change; two soft chord tones answer on alternating bars, with no regular drum pulse."
+        },
+        {
+          "rule": "style phrase development",
+          "because": "A complete idea, a slower answer, a small fragment and a familiar return leave room for thinking.",
+          "resultedIn": "Replies, fills and extra texture are omitted for the attention budget."
+        },
+        {
+          "rule": "style harmony and performance",
+          "because": "Short separated chord tones and soft phrase markers keep space around the foreground.",
+          "resultedIn": "A chord step lasts 2 bars. Bass and harmony use the same progression; BPM and instruments are unchanged."
+        },
+        {
+          "rule": "style palette",
+          "because": "Keys, bells and muted plucks suit this grammar. Existing instrument choices stay unchanged.",
+          "resultedIn": "No patches were substituted by the grammar. These are symbolic decisions, not a listening verdict."
+        },
+        {
+          "rule": "development performance",
+          "because": "Microtiming must fit the written gate and the next same-pitch attack, including MIDI ticks.",
+          "resultedIn": "0 late offsets brought forward to avoid retrigger overlap. Written lengths and velocities retained; strum and melodic offsets remain wherever there is room."
+        },
+        {
+          "rule": "style density budget",
+          "because": "sparse; focusSafe",
+          "resultedIn": "75 of 75 candidate attacks retained. The style never raises the attention ceiling."
+        },
+        {
+          "rule": "development orchestration",
+          "because": "8 named parts share sparse; source phrase rests and 17 foreground attacks are retained.",
+          "resultedIn": "Complete gestures retain pitch, onset, gate, velocity and microtiming on their assigned lane. Bass/harmony and percussion are routed without rewriting them. 0 quieter counterline attacks use post-phrase gaps and remaining shared capacity; dialogue/focus forbids counterlines. 4 lanes have notes; unused color lanes stay silent."
+        },
+        {
+          "rule": "adaptive allocation",
+          "because": "sigmaudio-adaptive-parts-1; sigmaudio-symbolic-4; requested purposes base,harmony,magic. Only nonempty independent optional parts qualify for danger/combat/magic.",
+          "resultedIn": "8 tracks and 8 patterns retained unchanged. 2/5 candidate layers have notes. Omitted magic,pulse,texture: no independently allocated notes. Core theme, answers, all harmony and bass retain their existing role layers. No hidden tracks or generated replacement notes."
+        },
+        {
+          "rule": "adaptive layer base",
+          "because": "sigmaudio-adaptive-parts-1; lay_0000000000qmv54v75vwe3",
+          "resultedIn": "lead (trk_00000000056p8p7tv47srt): 14 notes; response (trk_000000000882j91zv4ztha): 3 notes; bass (trk_000000000hjx51xhw28sxa): 12 notes"
+        },
+        {
+          "rule": "adaptive layer harmony",
+          "because": "sigmaudio-adaptive-parts-1; lay_0000000001v3bemgy481eg",
+          "resultedIn": "harmony (trk_000000000b4ys6thvqssw2): 46 notes; arpeggio (trk_000000000ejeqw0c35d5mj): 0 notes"
+        },
+        {
+          "rule": "adaptive state Explore",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Distinct written-note selection; perceived contrast needs listening."
+        },
+        {
+          "rule": "adaptive state Tension",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Same written-note selection as Explore; retained state-name/transition alias, not added contrast."
+        },
+        {
+          "rule": "adaptive state Combat",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Same written-note selection as Explore; retained state-name/transition alias, not added contrast."
+        },
+        {
+          "rule": "adaptive state Magic",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Same written-note selection as Explore; retained state-name/transition alias, not added contrast."
+        }
+      ],
+      "privateUserSamples": [],
+      "note": "This receipt documents how SigmAudio generated and transformed the cue. It does not guarantee copyright clearance."
+    },
+    "audioBake": {
+      "renderVersion": "sigmaudio-audio-12",
+      "stateId": "sta_00000001nf19qjpbwcg665",
+      "appliedSnapshotIds": [],
+      "manualSnapshotIds": [],
+      "resolvedTracks": [
+        {
+          "trackId": "trk_000000000164g2hma9fste",
+          "offset": {
+            "trackId": "trk_000000000164g2hma9fste",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 0,
+          "lowpassHz": 3000,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_0000000008jxz7jsq4thjt",
+          "offset": {
+            "trackId": "trk_0000000008jxz7jsq4thjt",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 0,
+          "lowpassHz": 3000,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_000000000fb37xvf9e1q52",
+          "offset": {
+            "trackId": "trk_000000000fb37xvf9e1q52",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -5,
+          "lowpassHz": 1800,
+          "highpassHz": null,
+          "sendWet": 0.3,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_000000004pg4qsx5hhgcf5",
+          "offset": {
+            "trackId": "trk_000000004pg4qsx5hhgcf5",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 8,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.55,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_0000000052cpkzmzv02rg8",
+          "offset": {
+            "trackId": "trk_0000000052cpkzmzv02rg8",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 9,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.8,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_000000005fftgd2tf0qzme",
+          "offset": {
+            "trackId": "trk_000000005fftgd2tf0qzme",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -7,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_000000009jxrbkkpsbfdj6",
+          "offset": {
+            "trackId": "trk_000000009jxrbkkpsbfdj6",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -5,
+          "lowpassHz": 7000,
+          "highpassHz": null,
+          "sendWet": 0.08,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000dsa90yvakexm3t",
+          "offset": {
+            "trackId": "trk_00000000dsa90yvakexm3t",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -8,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.3,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000f8z5vz910mrvzs",
+          "offset": {
+            "trackId": "trk_00000000f8z5vz910mrvzs",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 3,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.2,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000gzx63hrvk4mh21",
+          "offset": {
+            "trackId": "trk_00000000gzx63hrvk4mh21",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 3,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000je5hmp6qm4kbtq",
+          "offset": {
+            "trackId": "trk_00000000je5hmp6qm4kbtq",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -2,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.2,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000nxgw3n49q3qm42",
+          "offset": {
+            "trackId": "trk_00000000nxgw3n49q3qm42",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -2,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.4,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000psycwm1xdp0vcy",
+          "offset": {
+            "trackId": "trk_00000000psycwm1xdp0vcy",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 4,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.22,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000sdmf1z53gvhc9y",
+          "offset": {
+            "trackId": "trk_00000000sdmf1z53gvhc9y",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 4,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000000w1azpe38gwd84c",
+          "offset": {
+            "trackId": "trk_00000000w1azpe38gwd84c",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 0,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001245cxpnfdn90n7",
+          "offset": {
+            "trackId": "trk_00000001245cxpnfdn90n7",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -4,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.2,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_0000000187kdxm8gmafged",
+          "offset": {
+            "trackId": "trk_0000000187kdxm8gmafged",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -6,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.3,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001gafqga7t1devfs",
+          "offset": {
+            "trackId": "trk_00000001gafqga7t1devfs",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -6,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.35,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001j1g7980b4xeye7",
+          "offset": {
+            "trackId": "trk_00000001j1g7980b4xeye7",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 5,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.45,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001jrasvdqt23kmf2",
+          "offset": {
+            "trackId": "trk_00000001jrasvdqt23kmf2",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 1,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.5,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001kkv5c5nyahegk4",
+          "offset": {
+            "trackId": "trk_00000001kkv5c5nyahegk4",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": 3,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.5,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001mefbjqzfszh95z",
+          "offset": {
+            "trackId": "trk_00000001mefbjqzfszh95z",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -3,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.1,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        },
+        {
+          "trackId": "trk_00000001mnkwbhhh8wh2fh",
+          "offset": {
+            "trackId": "trk_00000001mnkwbhhh8wh2fh",
+            "gainDb": 0,
+            "lowpassHz": null,
+            "highpassHz": null,
+            "sendWet": null
+          },
+          "gainDb": -2,
+          "lowpassHz": 20000,
+          "highpassHz": null,
+          "sendWet": 0.4,
+          "interpolationMs": 0,
+          "snapshotIds": []
+        }
+      ],
+      "conflicts": [],
+      "snapshotProcessingBaked": true,
+      "layerActiveGainsBaked": true,
+      "trackEffectsBaked": true,
+      "gainAutomationBaked": true
+    },
+    "godot": {
+      "minimumGodot": "4.5",
+      "capabilities": {
+        "synchronizedLayers": true,
+        "layerStateSwitching": true,
+        "parameterTransitions": true,
+        "eventTransitions": true,
+        "sampleAccurateTransitions": false,
+        "stateSnapshotSwitching": false,
+        "stingerAudio": false,
+        "gameplayInputCapture": true,
+        "savedScenarioReplay": false,
+        "stingerDucking": false,
+        "crossCueSequencing": false,
+        "exactMainMixReconstruction": false,
+        "maximumLayers": 32
+      },
+      "supportedStateIds": [
+        "sta_00000001nf19qjpbwcg665",
+        "sta_00000001nge9ms7ykxpgyg",
+        "sta_00000001nhkpsfjr4k2rk2",
+        "sta_00000001njj83fk9vy44sj"
+      ],
+      "unsupportedStateIds": [],
+      "warnings": [
+        "Godot 4.5+ is required. State fades and decisions run on engine frames, not sample-accurate automation callbacks.",
+        "Stems include their authored active gains and effects. The runtime switches unity/silence without applying those gains twice.",
+        "Stems are rendered separately through bus compression/effects. Their sum is not guaranteed to reconstruct the combined live or main mix exactly."
+      ],
+      "runtimeFile": "godot/sigmaudio_cue.gd",
+      "configurationFile": "godot/runtime.json"
+    }
+  },
+  "fileName": "one_note_apart_crossing_adaptive_sigmaudio.zip",
+  "source": {
+    "path": "/tmp/claude-0/-home-user/6c39e66c-08db-5341-8747-12c34ce6c2e7/scratchpad/comp/crossing-v2.sigmaudio.json",
+    "sha256": "1d141351f17c053730eefb6f1105fe9316dc9c75a575b0cf381920032bfe270d",
+    "bytes": 427692
+  },
+  "delivery": {
+    "schemaVersion": 1,
+    "status": "complete",
+    "transactionId": "1d16fd6b-02bb-4fd6-bea9-3a8924bb80bf",
+    "mp4": {
+      "status": "not-requested"
+    },
+    "ogg": {
+      "status": "not-requested"
+    },
+    "backupDir": null,
+    "files": [
+      {
+        "path": "audio/one_note_apart_crossing_adaptive_loop.wav",
+        "bytes": 4915800,
+        "sha256": "454fd9775292a51a709f8b964bb5c13e19edac84388fe8ac7b4b8f9f45a4574c"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_floor.wav",
+        "bytes": 4915312,
+        "sha256": "7bd27ea2885830bd162cbed24cc36365f50b86c92791d3339bc7f9ba659e7506"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_echoes.wav",
+        "bytes": 4915312,
+        "sha256": "a10f42866794e9187c03e4d519224fcb2f5dfdc350319273ed58c670be577562"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_engine.wav",
+        "bytes": 4915312,
+        "sha256": "97deeddf0d6bf82e1cfff7d1f1c72990797b6f779095cde15f5b48fbad57621c"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_drums.wav",
+        "bytes": 4915312,
+        "sha256": "4571c84789a925051b298ca61fbf4dda6cc0c203a690c6fd24d9e14b17eebcc0"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_argument.wav",
+        "bytes": 4915312,
+        "sha256": "855f0e9e928210bfc23c5d09935d31b54912863748088c1ab99918613efe243d"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_payoff.wav",
+        "bytes": 4915312,
+        "sha256": "ca3eb5ccbbc078104027f41b5e55a5af51dbca1f58afac2d334485d0a317f9c6"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_truce.wav",
+        "bytes": 4915312,
+        "sha256": "79afc92318e8fb143d4bf86817ac6052074d809932e04b4013003d682b3a2b6f"
+      },
+      {
+        "path": "midi/one_note_apart_crossing_adaptive.mid",
+        "bytes": 15576,
+        "sha256": "5f19c8584ab665ef020031789b5aa0446ebd1b170539d7dce5c699135a94c29b"
+      },
+      {
+        "path": "manifest.json",
+        "bytes": 28993,
+        "sha256": "3d6b99a1ece8a6e5090eec7ea53e76ea52aa5202f986467a026a43310036d7fd"
+      },
+      {
+        "path": "project.sigmaudio.json",
+        "bytes": 427691,
+        "sha256": "e592ec04547266a209c2cc028316636d2232fea2d6bcf8cc6a6915dc2910a815"
+      },
+      {
+        "path": "godot/sigmaudio_cue.gd",
+        "bytes": 50184,
+        "sha256": "f03ecd0d2160b836d807dcbee9fbc9deaff434b125afb8e288cbb428a2eef8c0"
+      },
+      {
+        "path": "godot/runtime.json",
+        "bytes": 18496,
+        "sha256": "968a5d20bbc70b5c2f53cf58720406374ac7a99850002a7c29fe2358cc437d17"
+      },
+      {
+        "path": "audio/one_note_apart_crossing_adaptive_loop.wav.import",
+        "bytes": 253,
+        "sha256": "39fcf48a110cf79131f602a85b1f993599ec28ef4ce380263543a8fee4305a92"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_floor.wav.import",
+        "bytes": 253,
+        "sha256": "39fcf48a110cf79131f602a85b1f993599ec28ef4ce380263543a8fee4305a92"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_echoes.wav.import",
+        "bytes": 253,
+        "sha256": "39fcf48a110cf79131f602a85b1f993599ec28ef4ce380263543a8fee4305a92"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_engine.wav.import",
+        "bytes": 253,
+        "sha256": "39fcf48a110cf79131f602a85b1f993599ec28ef4ce380263543a8fee4305a92"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_drums.wav.import",
+        "bytes": 253,
+        "sha256": "39fcf48a110cf79131f602a85b1f993599ec28ef4ce380263543a8fee4305a92"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_argument.wav.import",
+        "bytes": 253,
+        "sha256": "39fcf48a110cf79131f602a85b1f993599ec28ef4ce380263543a8fee4305a92"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_payoff.wav.import",
+        "bytes": 253,
+        "sha256": "39fcf48a110cf79131f602a85b1f993599ec28ef4ce380263543a8fee4305a92"
+      },
+      {
+        "path": "audio/stems/one_note_apart_crossing_adaptive_truce.wav.import",
+        "bytes": 253,
+        "sha256": "39fcf48a110cf79131f602a85b1f993599ec28ef4ce380263543a8fee4305a92"
+      },
+      {
+        "path": "godot/one_note_apart_crossing_adaptive_loop.wav.import",
+        "bytes": 253,
+        "sha256": "39fcf48a110cf79131f602a85b1f993599ec28ef4ce380263543a8fee4305a92"
+      },
+      {
+        "path": "README.md",
+        "bytes": 11040,
+        "sha256": "ff658f04aac09463715c26be2ca4ef956cdb6fbb6516a3d06eb5dbe823db8329"
+      }
+    ]
+  }
+}

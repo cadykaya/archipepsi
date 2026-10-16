@@ -1,0 +1,1333 @@
+{
+  "schemaVersion": 33,
+  "id": "prj_0000000000xfrxvnjh9cd6",
+  "name": "Lantern puzzle",
+  "appVersion": "0.1.0-alpha.1",
+  "seed": "lantern-puzzle-v4-1",
+  "gameContext": {
+    "gameName": "",
+    "genre": "",
+    "sceneName": "Lantern puzzle",
+    "targetEngine": "godot",
+    "notes": ""
+  },
+  "cues": [
+    {
+      "id": "cue_000000001gsfsyz4334vqn",
+      "name": "Lantern puzzle",
+      "sceneId": "custom",
+      "seed": "lantern-puzzle-v4-1",
+      "transport": {
+        "bpm": 88,
+        "meter": {
+          "beatsPerBar": 4,
+          "beatUnit": 4,
+          "subdivisionTree": [
+            2,
+            2,
+            2,
+            2
+          ]
+        },
+        "key": {
+          "tonic": 2,
+          "mode": "dorian"
+        },
+        "lengthBars": 24,
+        "phraseLengthBars": 4
+      },
+      "plan": {
+        "affect": {
+          "valence": 0.12659633756331304,
+          "energy": 0.2974102200913071,
+          "tension": 0.24,
+          "groove": 0.15,
+          "attentionBudget": 0.35
+        },
+        "attentionBudget": "focusSafe",
+        "loopExposure": "normalLoop",
+        "tempoRange": [
+          89,
+          109
+        ],
+        "modePalette": [],
+        "timbrePalette": [
+          "dreamy"
+        ],
+        "articulation": "legato",
+        "harmonyStrategy": "modalPlaning",
+        "chordExtension": "seventh",
+        "intensityCurve": "steady",
+        "requestedLayers": [
+          "base",
+          "harmony",
+          "magic"
+        ],
+        "requestedEvents": [],
+        "explanation": "This cue tends to feel relaxed, somewhere between bright and dark, and stays settled. Because thinking or choosing needs room, it stays sparse on purpose.",
+        "confidence": {
+          "energy": "high",
+          "tension": "high",
+          "valence": "low",
+          "palette": "high"
+        },
+        "answers": {
+          "world": [
+            "dreamy"
+          ],
+          "playerAction": "thinking",
+          "pressure": "gentle",
+          "sfxRoom": "ui",
+          "busyness": "light"
+        },
+        "generatorVersion": "sigmaudio-symbolic-4",
+        "orchestration": "ensemble",
+        "targetDurationSeconds": 60
+      },
+      "tracks": [
+        {
+          "id": "trk_00000000056p8p7tv47srt",
+          "name": "Theme lead",
+          "generationPart": "lead",
+          "role": "motif",
+          "instrumentId": "magicBells",
+          "layerId": "lay_0000000000qmv54v75vwe3",
+          "mix": {
+            "gainDb": -6,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 12000,
+            "spaceAmount": 0.28
+          }
+        },
+        {
+          "id": "trk_000000000882j91zv4ztha",
+          "name": "Theme response",
+          "generationPart": "response",
+          "role": "motif",
+          "instrumentId": "magicBells",
+          "layerId": "lay_0000000000qmv54v75vwe3",
+          "mix": {
+            "gainDb": -9,
+            "pan": 0.2,
+            "mute": false,
+            "solo": false,
+            "toneHz": 12000,
+            "spaceAmount": 0.28
+          }
+        },
+        {
+          "id": "trk_000000000b4ys6thvqssw2",
+          "name": "Opening harmony",
+          "generationPart": "harmony",
+          "role": "chords",
+          "instrumentId": "cozyKeysReal",
+          "layerId": "lay_0000000001v3bemgy481eg",
+          "mix": {
+            "gainDb": -12,
+            "pan": -0.12,
+            "mute": false,
+            "solo": false,
+            "toneHz": 7000,
+            "spaceAmount": 0.42
+          }
+        },
+        {
+          "id": "trk_000000000ejeqw0c35d5mj",
+          "name": "Answer harmony",
+          "generationPart": "arpeggio",
+          "role": "chords",
+          "instrumentId": "cozyKeysReal",
+          "layerId": "lay_0000000001v3bemgy481eg",
+          "mix": {
+            "gainDb": -15,
+            "pan": 0.2,
+            "mute": false,
+            "solo": false,
+            "toneHz": 7000,
+            "spaceAmount": 0.42
+          }
+        },
+        {
+          "id": "trk_000000000hjx51xhw28sxa",
+          "name": "Bass foundation",
+          "generationPart": "bass",
+          "role": "bass",
+          "instrumentId": "roundBass",
+          "layerId": "lay_0000000000qmv54v75vwe3",
+          "mix": {
+            "gainDb": -4,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 4000,
+            "spaceAmount": 0.08
+          }
+        },
+        {
+          "id": "trk_000000000m6epq5jjjjcsd",
+          "name": "Main rhythm",
+          "generationPart": "kit",
+          "role": "drums",
+          "instrumentId": "softHands",
+          "layerId": null,
+          "mix": {
+            "gainDb": -14,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "toneHz": 16000,
+            "spaceAmount": 0.14
+          }
+        },
+        {
+          "id": "trk_000000000q5dz22xm71wyz",
+          "name": "Background color",
+          "generationPart": "pad",
+          "role": "texture",
+          "instrumentId": "glassBell",
+          "layerId": null,
+          "mix": {
+            "gainDb": -14,
+            "pan": 0.18,
+            "mute": false,
+            "solo": false,
+            "toneHz": 14000,
+            "spaceAmount": 0.6
+          }
+        },
+        {
+          "id": "trk_000000000tks7rb6f7g65v",
+          "name": "Return color",
+          "generationPart": "accent",
+          "role": "texture",
+          "instrumentId": "glassBell",
+          "layerId": null,
+          "mix": {
+            "gainDb": -17,
+            "pan": 0.2,
+            "mute": false,
+            "solo": false,
+            "toneHz": 14000,
+            "spaceAmount": 0.6
+          }
+        }
+      ],
+      "patterns": [
+        {
+          "id": "pat_0000000006xr9s7fnf0dne",
+          "lengthSteps": 384,
+          "notes": [
+            {
+              "id": "nte_d0",
+              "startStep": 0,
+              "lengthSteps": 5,
+              "pitch": 62,
+              "velocity": 56,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1",
+              "startStep": 5,
+              "lengthSteps": 11,
+              "pitch": 64,
+              "velocity": 50,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_d2",
+              "startStep": 16,
+              "lengthSteps": 24,
+              "pitch": 65,
+              "velocity": 45,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_d6",
+              "startStep": 128,
+              "lengthSteps": 4,
+              "pitch": 62,
+              "velocity": 56,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d7",
+              "startStep": 132,
+              "lengthSteps": 8,
+              "pitch": 64,
+              "velocity": 45,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_d8",
+              "startStep": 192,
+              "lengthSteps": 5,
+              "pitch": 62,
+              "velocity": 52,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d9",
+              "startStep": 197,
+              "lengthSteps": 11,
+              "pitch": 64,
+              "velocity": 46,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_da",
+              "startStep": 208,
+              "lengthSteps": 24,
+              "pitch": 65,
+              "velocity": 41,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_db",
+              "startStep": 256,
+              "lengthSteps": 5,
+              "pitch": 62,
+              "velocity": 56,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dc",
+              "startStep": 261,
+              "lengthSteps": 11,
+              "pitch": 64,
+              "velocity": 50,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_dd",
+              "startStep": 272,
+              "lengthSteps": 24,
+              "pitch": 65,
+              "velocity": 45,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_de",
+              "startStep": 320,
+              "lengthSteps": 5,
+              "pitch": 62,
+              "velocity": 52,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_df",
+              "startStep": 325,
+              "lengthSteps": 11,
+              "pitch": 64,
+              "velocity": 46,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_dg",
+              "startStep": 336,
+              "lengthSteps": 24,
+              "pitch": 65,
+              "velocity": 41,
+              "microOffsetTicks": 4
+            }
+          ]
+        },
+        {
+          "id": "pat_0000000009qdz7h2mhzjcg",
+          "lengthSteps": 384,
+          "notes": [
+            {
+              "id": "nte_d3",
+              "startStep": 64,
+              "lengthSteps": 5,
+              "pitch": 62,
+              "velocity": 49,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d4",
+              "startStep": 69,
+              "lengthSteps": 11,
+              "pitch": 64,
+              "velocity": 43,
+              "microOffsetTicks": 4
+            },
+            {
+              "id": "nte_d5",
+              "startStep": 80,
+              "lengthSteps": 24,
+              "pitch": 64,
+              "velocity": 38,
+              "microOffsetTicks": 4
+            }
+          ]
+        },
+        {
+          "id": "pat_000000000c85cc71t2mb34",
+          "lengthSteps": 384,
+          "notes": [
+            {
+              "id": "nte_dh",
+              "startStep": 4,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 27,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_di",
+              "startStep": 8,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dj",
+              "startStep": 24,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dk",
+              "startStep": 28,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dl",
+              "startStep": 36,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dm",
+              "startStep": 40,
+              "lengthSteps": 2,
+              "pitch": 74,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dn",
+              "startStep": 56,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 18,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_do",
+              "startStep": 60,
+              "lengthSteps": 2,
+              "pitch": 74,
+              "velocity": 14,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dp",
+              "startStep": 68,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 27,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dq",
+              "startStep": 72,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dr",
+              "startStep": 88,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_ds",
+              "startStep": 92,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dt",
+              "startStep": 100,
+              "lengthSteps": 2,
+              "pitch": 67,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_du",
+              "startStep": 104,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_dv",
+              "startStep": 120,
+              "lengthSteps": 2,
+              "pitch": 67,
+              "velocity": 18,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d10",
+              "startStep": 124,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 14,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d11",
+              "startStep": 132,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 27,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d12",
+              "startStep": 136,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d13",
+              "startStep": 152,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d14",
+              "startStep": 156,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d15",
+              "startStep": 164,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d16",
+              "startStep": 168,
+              "lengthSteps": 2,
+              "pitch": 74,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d17",
+              "startStep": 184,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 18,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d18",
+              "startStep": 188,
+              "lengthSteps": 2,
+              "pitch": 74,
+              "velocity": 14,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d19",
+              "startStep": 196,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 27,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1a",
+              "startStep": 200,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1b",
+              "startStep": 216,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1c",
+              "startStep": 220,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1d",
+              "startStep": 228,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1e",
+              "startStep": 232,
+              "lengthSteps": 2,
+              "pitch": 74,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1f",
+              "startStep": 248,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 18,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1g",
+              "startStep": 260,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 27,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1h",
+              "startStep": 264,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1i",
+              "startStep": 280,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1j",
+              "startStep": 284,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1k",
+              "startStep": 292,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1l",
+              "startStep": 296,
+              "lengthSteps": 2,
+              "pitch": 74,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1m",
+              "startStep": 312,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 18,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1n",
+              "startStep": 316,
+              "lengthSteps": 2,
+              "pitch": 74,
+              "velocity": 14,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1o",
+              "startStep": 324,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 27,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1p",
+              "startStep": 328,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1q",
+              "startStep": 344,
+              "lengthSteps": 2,
+              "pitch": 69,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1r",
+              "startStep": 348,
+              "lengthSteps": 2,
+              "pitch": 72,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1s",
+              "startStep": 356,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 23,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1t",
+              "startStep": 360,
+              "lengthSteps": 2,
+              "pitch": 74,
+              "velocity": 19,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d1u",
+              "startStep": 376,
+              "lengthSteps": 2,
+              "pitch": 71,
+              "velocity": 18,
+              "microOffsetTicks": 0
+            }
+          ]
+        },
+        {
+          "id": "pat_000000000fz36z485frgyy",
+          "lengthSteps": 384,
+          "notes": []
+        },
+        {
+          "id": "pat_000000000j0s0vws1b2yyw",
+          "lengthSteps": 384,
+          "notes": [
+            {
+              "id": "nte_d1v",
+              "startStep": 0,
+              "lengthSteps": 28,
+              "pitch": 38,
+              "velocity": 35,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d20",
+              "startStep": 32,
+              "lengthSteps": 28,
+              "pitch": 40,
+              "velocity": 31,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d21",
+              "startStep": 64,
+              "lengthSteps": 28,
+              "pitch": 38,
+              "velocity": 35,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d22",
+              "startStep": 96,
+              "lengthSteps": 28,
+              "pitch": 48,
+              "velocity": 31,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d23",
+              "startStep": 128,
+              "lengthSteps": 28,
+              "pitch": 38,
+              "velocity": 35,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d24",
+              "startStep": 160,
+              "lengthSteps": 28,
+              "pitch": 40,
+              "velocity": 31,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d25",
+              "startStep": 192,
+              "lengthSteps": 28,
+              "pitch": 38,
+              "velocity": 35,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d26",
+              "startStep": 224,
+              "lengthSteps": 28,
+              "pitch": 40,
+              "velocity": 31,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d27",
+              "startStep": 256,
+              "lengthSteps": 28,
+              "pitch": 38,
+              "velocity": 35,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d28",
+              "startStep": 288,
+              "lengthSteps": 28,
+              "pitch": 40,
+              "velocity": 31,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d29",
+              "startStep": 320,
+              "lengthSteps": 28,
+              "pitch": 38,
+              "velocity": 35,
+              "microOffsetTicks": 0
+            },
+            {
+              "id": "nte_d2a",
+              "startStep": 352,
+              "lengthSteps": 28,
+              "pitch": 40,
+              "velocity": 31,
+              "microOffsetTicks": 0
+            }
+          ]
+        },
+        {
+          "id": "pat_000000000nden6373yf7ta",
+          "lengthSteps": 384,
+          "notes": []
+        },
+        {
+          "id": "pat_000000000rvj10pmba0wy6",
+          "lengthSteps": 384,
+          "notes": []
+        },
+        {
+          "id": "pat_000000000vs6nk0dmca762",
+          "lengthSteps": 384,
+          "notes": []
+        }
+      ],
+      "clips": [
+        {
+          "id": "clp_0000000007a5adgknzw11c",
+          "trackId": "trk_00000000056p8p7tv47srt",
+          "patternId": "pat_0000000006xr9s7fnf0dne",
+          "startStep": 0,
+          "lengthSteps": 384,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000a4rtktw91nf9c",
+          "trackId": "trk_000000000882j91zv4ztha",
+          "patternId": "pat_0000000009qdz7h2mhzjcg",
+          "startStep": 0,
+          "lengthSteps": 384,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000dwdmmxvnnr7g2",
+          "trackId": "trk_000000000b4ys6thvqssw2",
+          "patternId": "pat_000000000c85cc71t2mb34",
+          "startStep": 0,
+          "lengthSteps": 384,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000gf0aqdbxv4r1k",
+          "trackId": "trk_000000000ejeqw0c35d5mj",
+          "patternId": "pat_000000000fz36z485frgyy",
+          "startStep": 0,
+          "lengthSteps": 384,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000kwqmsfrg4akex",
+          "trackId": "trk_000000000hjx51xhw28sxa",
+          "patternId": "pat_000000000j0s0vws1b2yyw",
+          "startStep": 0,
+          "lengthSteps": 384,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000p5gxm14yezpn1",
+          "trackId": "trk_000000000m6epq5jjjjcsd",
+          "patternId": "pat_000000000nden6373yf7ta",
+          "startStep": 0,
+          "lengthSteps": 384,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000srtp7pekp5xat",
+          "trackId": "trk_000000000q5dz22xm71wyz",
+          "patternId": "pat_000000000rvj10pmba0wy6",
+          "startStep": 0,
+          "lengthSteps": 384,
+          "transposeSteps": 0,
+          "mute": false
+        },
+        {
+          "id": "clp_000000000wpea2n0hw0ns1",
+          "trackId": "trk_000000000tks7rb6f7g65v",
+          "patternId": "pat_000000000vs6nk0dmca762",
+          "startStep": 0,
+          "lengthSteps": 384,
+          "transposeSteps": 0,
+          "mute": false
+        }
+      ],
+      "phrases": [
+        {
+          "id": "phr_000000000xm22cya7xkbkz",
+          "startBar": 0,
+          "lengthBars": 4,
+          "role": "statement"
+        },
+        {
+          "id": "phr_000000000ynky6y8qn5smn",
+          "startBar": 4,
+          "lengthBars": 4,
+          "role": "answer"
+        },
+        {
+          "id": "phr_000000000zz2492rapb8sn",
+          "startBar": 8,
+          "lengthBars": 4,
+          "role": "variation"
+        },
+        {
+          "id": "phr_000000001007e5qb4h5mpb",
+          "startBar": 12,
+          "lengthBars": 4,
+          "role": "turnaround"
+        },
+        {
+          "id": "phr_0000000011bpcjym1e2g0t",
+          "startBar": 16,
+          "lengthBars": 4,
+          "role": "statement"
+        },
+        {
+          "id": "phr_0000000012r8jtwcnzrqn7",
+          "startBar": 20,
+          "lengthBars": 4,
+          "role": "turnaround"
+        }
+      ],
+      "arrangement": [
+        {
+          "id": "sec_00000000130dv3wk12mzxk",
+          "name": "Loop body",
+          "kind": "loop",
+          "startBar": 0,
+          "lengthBars": 24,
+          "repeat": 0
+        }
+      ],
+      "adaptive": {
+        "baseStateId": "sta_00000000147d75n7hgd94q",
+        "layers": [
+          {
+            "id": "lay_0000000000qmv54v75vwe3",
+            "name": "Base",
+            "purpose": "base",
+            "trackIds": [
+              "trk_00000000056p8p7tv47srt",
+              "trk_000000000882j91zv4ztha",
+              "trk_000000000hjx51xhw28sxa"
+            ],
+            "activeGainDb": 0,
+            "fadeBeats": 0
+          },
+          {
+            "id": "lay_0000000001v3bemgy481eg",
+            "name": "Harmony",
+            "purpose": "harmony",
+            "trackIds": [
+              "trk_000000000b4ys6thvqssw2",
+              "trk_000000000ejeqw0c35d5mj"
+            ],
+            "activeGainDb": 0,
+            "fadeBeats": 4
+          }
+        ],
+        "states": [
+          {
+            "id": "sta_00000000147d75n7hgd94q",
+            "name": "Explore",
+            "activeLayerIds": [
+              "lay_0000000000qmv54v75vwe3",
+              "lay_0000000001v3bemgy481eg"
+            ],
+            "mixSnapshotId": null
+          },
+          {
+            "id": "sta_0000000015amh6c56e8qwd",
+            "name": "Tension",
+            "activeLayerIds": [
+              "lay_0000000000qmv54v75vwe3",
+              "lay_0000000001v3bemgy481eg"
+            ],
+            "mixSnapshotId": null
+          },
+          {
+            "id": "sta_0000000016f6zw4gk0wqg5",
+            "name": "Combat",
+            "activeLayerIds": [
+              "lay_0000000000qmv54v75vwe3",
+              "lay_0000000001v3bemgy481eg"
+            ],
+            "mixSnapshotId": null
+          },
+          {
+            "id": "sta_0000000017pyvw88jm4cn4",
+            "name": "Magic",
+            "activeLayerIds": [
+              "lay_0000000000qmv54v75vwe3",
+              "lay_0000000001v3bemgy481eg"
+            ],
+            "mixSnapshotId": null
+          }
+        ],
+        "parameters": [
+          {
+            "id": "prm_000000001834qnhwapp02r",
+            "name": "danger",
+            "min": 0,
+            "max": 1,
+            "defaultValue": 0,
+            "smoothingMs": 250
+          },
+          {
+            "id": "prm_0000000019hn9ff9bbdcem",
+            "name": "magic",
+            "min": 0,
+            "max": 1,
+            "defaultValue": 0,
+            "smoothingMs": 400
+          }
+        ],
+        "events": [],
+        "transitions": [
+          {
+            "id": "trn_000000001a78njb4t6j5dr",
+            "fromStateId": "sta_00000000147d75n7hgd94q",
+            "toStateId": "sta_0000000015amh6c56e8qwd",
+            "when": {
+              "kind": "param",
+              "paramId": "prm_000000001834qnhwapp02r",
+              "op": ">=",
+              "value": 0.4
+            },
+            "quantize": "bar",
+            "fadeBeats": 4,
+            "priority": 1,
+            "enterAbove": 0.4,
+            "exitBelow": null,
+            "dwellMs": 1500
+          },
+          {
+            "id": "trn_000000001brahf22r2xhg6",
+            "fromStateId": "sta_0000000015amh6c56e8qwd",
+            "toStateId": "sta_00000000147d75n7hgd94q",
+            "when": {
+              "kind": "param",
+              "paramId": "prm_000000001834qnhwapp02r",
+              "op": "<=",
+              "value": 0.2,
+              "holdMs": 4000
+            },
+            "quantize": "phrase",
+            "fadeBeats": 8,
+            "priority": 1,
+            "enterAbove": null,
+            "exitBelow": 0.2,
+            "dwellMs": 4000
+          },
+          {
+            "id": "trn_000000001cdzc163gd1kg9",
+            "fromStateId": "sta_0000000015amh6c56e8qwd",
+            "toStateId": "sta_0000000016f6zw4gk0wqg5",
+            "when": {
+              "kind": "param",
+              "paramId": "prm_000000001834qnhwapp02r",
+              "op": ">=",
+              "value": 0.8
+            },
+            "quantize": "beat",
+            "fadeBeats": 1,
+            "priority": 5,
+            "enterAbove": 0.8,
+            "exitBelow": null,
+            "dwellMs": 500
+          },
+          {
+            "id": "trn_000000001d2dn4spw3xt94",
+            "fromStateId": "sta_0000000016f6zw4gk0wqg5",
+            "toStateId": "sta_0000000015amh6c56e8qwd",
+            "when": {
+              "kind": "param",
+              "paramId": "prm_000000001834qnhwapp02r",
+              "op": "<=",
+              "value": 0.55,
+              "holdMs": 3000
+            },
+            "quantize": "bar",
+            "fadeBeats": 4,
+            "priority": 2,
+            "enterAbove": null,
+            "exitBelow": 0.55,
+            "dwellMs": 3000
+          },
+          {
+            "id": "trn_000000001ehp0259psw5n4",
+            "fromStateId": "sta_00000000147d75n7hgd94q",
+            "toStateId": "sta_0000000017pyvw88jm4cn4",
+            "when": {
+              "kind": "param",
+              "paramId": "prm_0000000019hn9ff9bbdcem",
+              "op": ">=",
+              "value": 0.5
+            },
+            "quantize": "phrase",
+            "fadeBeats": 8,
+            "priority": 3,
+            "enterAbove": 0.5,
+            "exitBelow": null,
+            "dwellMs": 1000
+          },
+          {
+            "id": "trn_000000001f0qwhxxmqmbyv",
+            "fromStateId": "sta_0000000017pyvw88jm4cn4",
+            "toStateId": "sta_00000000147d75n7hgd94q",
+            "when": {
+              "kind": "param",
+              "paramId": "prm_0000000019hn9ff9bbdcem",
+              "op": "<=",
+              "value": 0.25,
+              "holdMs": 3000
+            },
+            "quantize": "phrase",
+            "fadeBeats": 8,
+            "priority": 3,
+            "enterAbove": null,
+            "exitBelow": 0.25,
+            "dwellMs": 3000
+          }
+        ],
+        "stingers": [],
+        "mixSnapshots": []
+      },
+      "generationTrace": [
+        {
+          "rule": "phrase structure",
+          "because": "24 bars at 4 bars per phrase",
+          "resultedIn": "statement → answer → variation → turnaround → statement → turnaround"
+        },
+        {
+          "rule": "harmony strategy",
+          "because": "modalPlaning",
+          "resultedIn": "degrees 1-1-2-2-1-1-7-7-1-1-2-2-1-1-2-2-1-1-2-2-1-1-2-2"
+        },
+        {
+          "rule": "development harmony",
+          "because": "Keep bass and chord changes on one bar-indexed progression.",
+          "resultedIn": "Statements and returns revisit their harmonic home; later contrast phrases rotate the chosen progression unless parallel motion was requested. Held chord boundaries keep the style harmonic rhythm."
+        },
+        {
+          "rule": "development identity",
+          "because": "3-note seeded source; degree contour 0,1,2; onset grid 0,2,6",
+          "resultedIn": "Statement and return keep source order, intervals and one common rhythm scale. Answers change only the last degree. Fragments and sequences are confined to development; rests are not backfilled. Register fitting uses one octave shift for the whole theme. Symbolic evidence only."
+        },
+        {
+          "rule": "development phrase 1",
+          "because": "bars 1-4; cycle 1; statement",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 0:62,5:64,16:65. Rests 40-64"
+        },
+        {
+          "rule": "development phrase 2",
+          "because": "bars 5-8; cycle 1; answer",
+          "resultedIn": "{\"kind\":\"answer\",\"cadenceDegree\":1}+{\"kind\":\"augmentation\",\"factor\":2}: 3/3 notes, fit x1.3333; attacks 64:62,69:64,80:64. Rests 104-128"
+        },
+        {
+          "rule": "development phrase 3",
+          "because": "bars 9-12; cycle 1; contrast (variation)",
+          "resultedIn": "{\"kind\":\"fragment\",\"start\":0,\"count\":2}+{\"kind\":\"augmentation\",\"factor\":2}: 2/2 notes, fit x1; attacks 128:62,132:64. Rests 140-192"
+        },
+        {
+          "rule": "development phrase 4",
+          "because": "bars 13-16; cycle 1; return (turnaround)",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 192:62,197:64,208:65. Rests 232-256"
+        },
+        {
+          "rule": "development phrase 5",
+          "because": "bars 17-20; cycle 2; statement",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 256:62,261:64,272:65. Rests 296-320"
+        },
+        {
+          "rule": "development phrase 6",
+          "because": "bars 21-24; cycle 2; return (turnaround)",
+          "resultedIn": "{\"kind\":\"repeat\"}: 3/3 notes, fit x2.6667; attacks 320:62,325:64,336:65. Rests 360-384"
+        },
+        {
+          "rule": "motif",
+          "because": "slowMedium tempo, dorian, register middle",
+          "resultedIn": "3-note source cell; the Quiet puzzle grammar chooses full statements and fragments"
+        },
+        {
+          "rule": "style grammar",
+          "because": "sigmaudio-symbolic-4. Selected for thinking with gentle pressure in dreamy. Gameplay context leads the background arrangement; instruments stay as chosen.",
+          "resultedIn": "Quiet puzzle: One held bass root per harmonic change; two soft chord tones answer on alternating bars, with no regular drum pulse."
+        },
+        {
+          "rule": "style phrase development",
+          "because": "A complete idea, a slower answer, a small fragment and a familiar return leave room for thinking.",
+          "resultedIn": "Replies, fills and extra texture are omitted for the attention budget."
+        },
+        {
+          "rule": "style harmony and performance",
+          "because": "Short separated chord tones and soft phrase markers keep space around the foreground.",
+          "resultedIn": "A chord step lasts 2 bars. Bass and harmony use the same progression; BPM and instruments are unchanged."
+        },
+        {
+          "rule": "style palette",
+          "because": "Keys, bells and muted plucks suit this grammar. Existing instrument choices stay unchanged.",
+          "resultedIn": "No patches were substituted by the grammar. These are symbolic decisions, not a listening verdict."
+        },
+        {
+          "rule": "development performance",
+          "because": "Microtiming must fit the written gate and the next same-pitch attack, including MIDI ticks.",
+          "resultedIn": "0 late offsets brought forward to avoid retrigger overlap. Written lengths and velocities retained; strum and melodic offsets remain wherever there is room."
+        },
+        {
+          "rule": "style density budget",
+          "because": "sparse; focusSafe",
+          "resultedIn": "75 of 75 candidate attacks retained. The style never raises the attention ceiling."
+        },
+        {
+          "rule": "development orchestration",
+          "because": "8 named parts share sparse; source phrase rests and 17 foreground attacks are retained.",
+          "resultedIn": "Complete gestures retain pitch, onset, gate, velocity and microtiming on their assigned lane. Bass/harmony and percussion are routed without rewriting them. 0 quieter counterline attacks use post-phrase gaps and remaining shared capacity; dialogue/focus forbids counterlines. 4 lanes have notes; unused color lanes stay silent."
+        },
+        {
+          "rule": "adaptive allocation",
+          "because": "sigmaudio-adaptive-parts-1; sigmaudio-symbolic-4; requested purposes base,harmony,magic. Only nonempty independent optional parts qualify for danger/combat/magic.",
+          "resultedIn": "8 tracks and 8 patterns retained unchanged. 2/5 candidate layers have notes. Omitted magic,pulse,texture: no independently allocated notes. Core theme, answers, all harmony and bass retain their existing role layers. No hidden tracks or generated replacement notes."
+        },
+        {
+          "rule": "adaptive layer base",
+          "because": "sigmaudio-adaptive-parts-1; lay_0000000000qmv54v75vwe3",
+          "resultedIn": "lead (trk_00000000056p8p7tv47srt): 14 notes; response (trk_000000000882j91zv4ztha): 3 notes; bass (trk_000000000hjx51xhw28sxa): 12 notes"
+        },
+        {
+          "rule": "adaptive layer harmony",
+          "because": "sigmaudio-adaptive-parts-1; lay_0000000001v3bemgy481eg",
+          "resultedIn": "harmony (trk_000000000b4ys6thvqssw2): 46 notes; arpeggio (trk_000000000ejeqw0c35d5mj): 0 notes"
+        },
+        {
+          "rule": "adaptive state Explore",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Distinct written-note selection; perceived contrast needs listening."
+        },
+        {
+          "rule": "adaptive state Tension",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Same written-note selection as Explore; retained state-name/transition alias, not added contrast."
+        },
+        {
+          "rule": "adaptive state Combat",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Same written-note selection as Explore; retained state-name/transition alias, not added contrast."
+        },
+        {
+          "rule": "adaptive state Magic",
+          "because": "Active layers: base,harmony",
+          "resultedIn": "4 nonempty parts, 75 written note events. Same written-note selection as Explore; retained state-name/transition alias, not added contrast."
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "feedback": [],
+        "proposals": [],
+        "revisions": [],
+        "approvedAt": null
+      },
+      "updatedAt": "1970-01-01T00:00:00.000Z"
+    }
+  ],
+  "defaults": {
+    "bpm": 88,
+    "meter": {
+      "beatsPerBar": 4,
+      "beatUnit": 4,
+      "subdivisionTree": [
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    "key": {
+      "tonic": 2,
+      "mode": "dorian"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+config_version=5
+[application]
+config/name="handoff-check"
+run/main_scene="res://main.tscn"
+[autoload]
+StationMusic="*res://music/station/godot/sigmaudio_cue.gd"
+FreightBayMusic="*res://music/freight_bay/godot/sigmaudio_cue.gd"
