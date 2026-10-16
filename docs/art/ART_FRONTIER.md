@@ -3560,6 +3560,17 @@ played G1. Support only Prod's specific fit, collision and state issues.
   requires it. Keep the worn, welded, richly textured sci-fi identity.
   Otherwise, rest.
 * As of 2026-10-16, no issue is open: Prod's `review/d22-slice` names none.
+* Later on 2026-10-16, Prod integrated the package on
+  `integration/unified-1` (`86f26f11`); the art check passes 29/29.
+  * His reply (`docs/art-requests/2026-10-16-unified-weapon-integration-reply.md`
+    on that branch) answers all four questions.
+  * The Driver impact fix is in, as proposed.
+  * The adapter is adopted with two shipped-build changes: importer loading,
+    and parenting to the player's world.
+  * Learned: `Image.load_from_file` does not find assets in an exported
+    game. Anything the art lane hands over for runtime use loads through
+    the importer.
+  * Nothing is open. The Shunter is a graybox for now, not a commission.
 
 ### Delivered, 2026-10-14 — the five weapons as an integration candidate. STOPPED for the owner's in-game review.
 

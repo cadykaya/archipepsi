@@ -206,6 +206,27 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
   * Keep the worn, welded, richly textured identity.
   * Checked 2026-10-16: Prod's newest branch (`review/d22-slice`, `7ab7526f`)
     names no weapon or art issue. Nothing is open for the art lane.
+  * Later on 2026-10-16: Prod integrated the five weapons and Batch 068 on
+    `integration/unified-1` (`86f26f11`, behind `--unified`; nothing merged
+    into the campaign). His reply,
+    `docs/art-requests/2026-10-16-unified-weapon-integration-reply.md` on
+    that branch, was verified read-only and answers all four questions:
+    * the core-glow contract stands as built;
+    * Bore0-3 are accepted as effect-only points;
+    * the import settings are as in the note;
+    * the adapter is adopted, with two `# UNIFIED` changes.
+    He reproduced the Driver impact bug and fixed it with the proposed
+    one-line `CONNECT_DEFERRED`. His `art` check passes 29/29.
+  * His two adapter changes:
+    * loading goes through Godot's importer, because `Image.load_from_file`
+      finds nothing in an exported game;
+    * impact layers are parented to the player's world, not
+      `current_scene`.
+    The art lane's reference copy, `tools/crossing_capture/glyph_fx_layer.gd`,
+    is capture-only and stays as is; his is the shipped one.
+  * Relayed via Condi's session, the playtest's point of contact: nothing is
+    needed from the art lane. The Shunter appears as Prod's graybox of pose
+    variant B. That is not a commission.
 * **2026-10-14 (delivered): the five weapons as an integration candidate.
   STOP for the owner's in-game review.** Branch
   `claude/archipepsi-art-weapon-integration-2026-10-14`.
