@@ -320,7 +320,9 @@ func _ready() -> void:
 	# the save that `Main` drives.
 	# Unified build: its seams, beside the real `Main` for the same reason.
 	if UnifiedCheck.phase_from_cmdline() != "":
-		var unified_driver := UnifiedCheck.new()
+		var unified_driver: Node = ShunterCheck.new() \
+				if UnifiedCheck.phase_from_cmdline() == "shunter" \
+				else UnifiedCheck.new()
 		unified_driver.main = self
 		add_child(unified_driver)
 	elif D22SliceDriver.phase_from_cmdline() != "":

@@ -42,6 +42,8 @@ var _working_line := 0
 var lab: EchoLab
 ## D-22 slice: station area 2, or null outside a slice run.
 var area_two: StationAreaTwo = null
+## Unified build: the Freight Bay annex, or null.
+var freight_bay: FreightBay = null
 
 # --- Epsilon between Zones -------------------------------------------------
 #
@@ -219,6 +221,10 @@ func _build_room() -> void:
 	var slice := D22Slice.active()
 	var cut := {"entry": false, "exit": false, "side_right": true,
 			"side_right_z": StationAreaTwo.DOOR_Z} if slice else {}
+	# Unified build: Station 1's front wall opens onto the Freight Bay annex
+	# (owner, 2026-10-16: optional, no Checks, no progression).
+	if slice and Unified.active():
+		cut["entry"] = true
 	b._perimeter(root, W, D, H, THEME, false, false, 0.0,
 			HubAnchors.LAB_DOOR_Z, HubAnchors.LAB_DOOR_WIDTH,
 			HubAnchors.LAB_DOOR_HEIGHT, false, cut)
@@ -227,6 +233,9 @@ func _build_room() -> void:
 		add_child(area_two)
 		area_two.forge_used.connect(
 				func() -> void: forge_requested.emit(2))
+		if Unified.active():
+			freight_bay = FreightBay.new()
+			add_child(freight_bay)
 	b._box(root, Vector3(W, 0.4, D), Vector3(0, H, D / 2.0),
 			ThemeMaterials.trim_mat(THEME))
 	for at in [Vector3(-W / 4.0, H - 0.4, D / 2.0),
