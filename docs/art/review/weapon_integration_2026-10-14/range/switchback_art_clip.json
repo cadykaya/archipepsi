@@ -1,0 +1,4450 @@
+{
+ "art": true,
+ "frames": [
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 1
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 2
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 3
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 4
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 5
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 6
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 7
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 8
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 9
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 10
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.468,
+   "clocks": {
+
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 11
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.468,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 12
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.479,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 13
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.479,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 14
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 15
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.0833333333333333
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 16
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.0833333333333333
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 17
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.0833333333333333
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 18
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.0833333333333333
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 19
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 2,
+   "t": 20
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 2,
+   "t": 21
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 2,
+   "t": 22
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 2,
+   "t": 23
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 2,
+   "t": 24
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 2,
+   "t": 25
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 2,
+   "t": 26
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 2,
+   "t": 27
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 2,
+   "t": 28
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 2,
+   "t": 29
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 3,
+   "t": 30
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 3,
+   "t": 31
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 3,
+   "t": 32
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 3,
+   "t": 33
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 3,
+   "t": 34
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 3,
+   "t": 35
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 3,
+   "t": 36
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 3,
+   "t": 37
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 3,
+   "t": 38
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 3,
+   "t": 39
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 4,
+   "t": 40
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 4,
+   "t": 41
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 4,
+   "t": 42
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 4,
+   "t": 43
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 4,
+   "t": 44
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 4,
+   "t": 45
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 4,
+   "t": 46
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 4,
+   "t": 47
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 4,
+   "t": 48
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 4,
+   "t": 49
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 5,
+   "t": 50
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 5,
+   "t": 51
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 5,
+   "t": 52
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 5,
+   "t": 53
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 5,
+   "t": 54
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 5,
+   "t": 55
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 5,
+   "t": 56
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 5,
+   "t": 57
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 5,
+   "t": 58
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 5,
+   "t": 59
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 6,
+   "t": 60
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 6,
+   "t": 61
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 6,
+   "t": 62
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 6,
+   "t": 63
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 6,
+   "t": 64
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 6,
+   "t": 65
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 6,
+   "t": 66
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 6,
+   "t": 67
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 6,
+   "t": 68
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 6,
+   "t": 69
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 7,
+   "t": 70
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 7,
+   "t": 71
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 7,
+   "t": 72
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 7,
+   "t": 73
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 7,
+   "t": 74
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 7,
+   "t": 75
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 7,
+   "t": 76
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 7,
+   "t": 77
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 7,
+   "t": 78
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 7,
+   "t": 79
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 8,
+   "t": 80
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 8,
+   "t": 81
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 8,
+   "t": 82
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 8,
+   "t": 83
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 8,
+   "t": 84
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 8,
+   "t": 85
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 8,
+   "t": 86
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 8,
+   "t": 87
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 8,
+   "t": 88
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 8,
+   "t": 89
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 9,
+   "t": 90
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 9,
+   "t": 91
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 9,
+   "t": 92
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 9,
+   "t": 93
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 9,
+   "t": 94
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 9,
+   "t": 95
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 9,
+   "t": 96
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 9,
+   "t": 97
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 9,
+   "t": 98
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 9,
+   "t": 99
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 10,
+   "t": 100
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 10,
+   "t": 101
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 10,
+   "t": 102
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 10,
+   "t": 103
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 10,
+   "t": 104
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 10,
+   "t": 105
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 10,
+   "t": 106
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 10,
+   "t": 107
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 10,
+   "t": 108
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 10,
+   "t": 109
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 11,
+   "t": 110
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 11,
+   "t": 111
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 11,
+   "t": 112
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 11,
+   "t": 113
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 11,
+   "t": 114
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 11,
+   "t": 115
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 11,
+   "t": 116
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 11,
+   "t": 117
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 11,
+   "t": 118
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 11,
+   "t": 119
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 12,
+   "t": 120
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 12,
+   "t": 121
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 12,
+   "t": 122
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 12,
+   "t": 123
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 12,
+   "t": 124
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 12,
+   "t": 125
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 12,
+   "t": 126
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 12,
+   "t": 127
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 12,
+   "t": 128
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 12,
+   "t": 129
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "cooldown": 0.135,
+   "gun_at_rest": false,
+   "shots": 13,
+   "t": 130
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 13,
+   "t": 131
+  },
+  {
+   "bolt": [
+    -0.0802,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.469,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.102,
+   "gun_at_rest": false,
+   "shots": 13,
+   "t": 132
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 13,
+   "t": 133
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.478,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.068,
+   "gun_at_rest": false,
+   "shots": 13,
+   "t": 134
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 135
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.035,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 136
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 137
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.471,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.002,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 138
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 139
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 140
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 141
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 142
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 143
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 144
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 145
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 146
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 147
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 148
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 149
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.472,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 150
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 151
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 152
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 153
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 154
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 155
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 156
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 157
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 158
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 159
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 160
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 161
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 162
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 163
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 164
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 165
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 166
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 167
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 168
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 169
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 170
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 171
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 172
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 173
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 174
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 175
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 176
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 177
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 178
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 179
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 180
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 181
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 182
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 183
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 184
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 185
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 186
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 187
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 188
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 189
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 190
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 191
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 192
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 193
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 194
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 195
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 196
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 197
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 198
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 199
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 200
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 201
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 202
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 203
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 204
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 205
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 206
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 207
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 208
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 209
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 210
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 211
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 212
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 213
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 214
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 215
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 216
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 217
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 218
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 219
+  },
+  {
+   "bolt": [
+    -0.112,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "clearance": 0.473,
+   "clocks": {
+    "aim": 0.0166666666666667,
+    "gun": 0.1,
+    "owed_at_ready": 0.0,
+    "ready": 0.166666666666667
+   },
+   "cooldown": 0.0,
+   "gun_at_rest": true,
+   "shots": 13,
+   "t": 220
+  }
+ ],
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 67,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 1,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 67,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "Impact_metal",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 67,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 76,
+   "layers": [
+    "switchback_flash_b"
+   ],
+   "shot": 2,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 76,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "@Node3D@342",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 76,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 86,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 3,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 86,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "@Node3D@350",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 86,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 96,
+   "layers": [
+    "switchback_flash_b"
+   ],
+   "shot": 4,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 96,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "@Node3D@358",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 96,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 106,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 5,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 106,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "Impact_metal",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 106,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 116,
+   "layers": [
+    "switchback_flash_b"
+   ],
+   "shot": 6,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 116,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "@Node3D@373",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 116,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 126,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 7,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 126,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "@Node3D@380",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 126,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 136,
+   "layers": [
+    "switchback_flash_b"
+   ],
+   "shot": 8,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 136,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "@Node3D@388",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 136,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 146,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 9,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 146,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "Impact_metal",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 146,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 156,
+   "layers": [
+    "switchback_flash_b"
+   ],
+   "shot": 10,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 156,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "@Node3D@403",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 156,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 166,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 11,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 166,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "@Node3D@411",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 166,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 176,
+   "layers": [
+    "switchback_flash_b"
+   ],
+   "shot": 12,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 176,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "@Node3D@418",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 176,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  },
+  {
+   "event": "fired",
+   "frame": 186,
+   "layers": [
+    "switchback_flash_a"
+   ],
+   "shot": 13,
+   "weapon": "switchback"
+  },
+  {
+   "event": "impact",
+   "frame": 186,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "node": "Impact_metal",
+   "orphan": false,
+   "weapon": "switchback"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 186,
+   "material": "metal",
+   "sheet": "switchback_pock",
+   "size": 0.0799999982118607,
+   "variant": 0,
+   "weapon": "switchback"
+  }
+ ],
+ "glyph_fx": true,
+ "normal": "rg",
+ "tag": "switchback_art",
+ "variant": "",
+ "weapon": "switchback"
+}

@@ -1,0 +1,37 @@
+{
+ "art": false,
+ "glyph_fx": false,
+ "impacts": {
+  "gel": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.254999995231628,
+   "mark_texture": "",
+   "marks_added": 1,
+   "material": "organic"
+  },
+  "metal": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.170000001788139,
+   "mark_texture": "",
+   "marks_added": 1,
+   "material": "metal"
+  },
+  "stone": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.254999995231628,
+   "mark_texture": "",
+   "marks_added": 1,
+   "material": "stone"
+  },
+  "wood": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.203999996185303,
+   "mark_texture": "",
+   "marks_added": 1,
+   "material": "wood"
+  }
+ },
+ "tag": "sightline_placeholder",
+ "variant": "",
+ "weapon": "sightline"
+}

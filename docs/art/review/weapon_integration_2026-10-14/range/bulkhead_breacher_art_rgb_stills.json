@@ -1,0 +1,55 @@
+{
+ "art": true,
+ "cost": {
+  "draw_calls": 2,
+  "materials": 1,
+  "primitives": 2952,
+  "surfaces": 2,
+  "texture_mem_added_bytes": 24074240,
+  "triangles": 2952
+ },
+ "fire_peak": {
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.152
+ },
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 91,
+   "layers": [
+    "bulkhead_flash"
+   ],
+   "shot": 1,
+   "weapon": "bulkhead"
+  },
+  {
+   "event": "impact",
+   "frame": 91,
+   "layers": [
+    "bulkhead_blast"
+   ],
+   "material": "metal",
+   "weapon": "bulkhead"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 91,
+   "material": "metal",
+   "sheet": "bulkhead_mark",
+   "size": 0.219999998807907,
+   "variant": 0,
+   "weapon": "bulkhead"
+  }
+ ],
+ "glyph_fx": true,
+ "rest": {
+  "covers_crosshair": false,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.46,
+  "screen_share": 0.0133
+ },
+ "tag": "bulkhead_breacher_art",
+ "variant": "breacher",
+ "weapon": "bulkhead"
+}

@@ -1,0 +1,41 @@
+{
+ "bytes_with_mips": {
+  "glb_rgba8_x4": 22369621,
+  "lean": 12582912
+ },
+ "emission_colour_srgb": [
+  0.2901960784313726,
+  0.8509803921568627,
+  0.10196078431372549
+ ],
+ "emission_lit_share": 0.001347,
+ "godot_material": {
+  "albedo_texture": "albedo.png",
+  "emission_colour_srgb": [
+   0.2901960784313726,
+   0.8509803921568627,
+   0.10196078431372549
+  ],
+  "emission_enabled": true,
+  "emission_energy_multiplier": 1.0,
+  "emission_operator": "MULTIPLY (the default, ADD, lights the whole model in the lamp's colour)",
+  "emission_texture": "emission.png",
+  "import": "Compress Mode: Lossless, Mipmaps: on (Godot keeps L8 as it is; RGB8 is padded to RGBA8 on the GPU)",
+  "metallic": 1.0,
+  "metallic_texture": "metallic.png",
+  "metallic_texture_channel": "GRAYSCALE",
+  "normal_enabled": true,
+  "normal_texture": "normal.png, loaded as RG8 (Image.convert(Image.FORMAT_RG8)): the shader rebuilds Z; pixel-identical, 2 bytes not 4",
+  "roughness": 1.0,
+  "roughness_texture": "roughness.png",
+  "roughness_texture_channel": "GRAYSCALE",
+  "shading": "per-pixel, cull back",
+  "texture_filter": "NEAREST_WITH_MIPMAPS (the art bible)"
+ },
+ "maps": {},
+ "size": [
+  1024,
+  1024
+ ],
+ "weapon": "foundry"
+}

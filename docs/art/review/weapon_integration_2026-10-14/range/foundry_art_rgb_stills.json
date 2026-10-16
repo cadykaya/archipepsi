@@ -1,0 +1,57 @@
+{
+ "art": true,
+ "cost": {
+  "draw_calls": 3,
+  "materials": 1,
+  "primitives": 2748,
+  "surfaces": 3,
+  "texture_mem_added_bytes": 15389952,
+  "triangles": 2748
+ },
+ "fire_peak": {
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.171
+ },
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 91,
+   "layers": [
+    "foundry_flash_flare",
+    "foundry_flash_core",
+    "foundry_afterglow"
+   ],
+   "shot": 1,
+   "weapon": "foundry"
+  },
+  {
+   "event": "impact",
+   "frame": 91,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "weapon": "foundry"
+  },
+  {
+   "event": "mark",
+   "frame": 91,
+   "material": "metal",
+   "sheet": "decal_metal_hole",
+   "size": 0.230000004172325,
+   "variant": 0,
+   "weapon": "foundry"
+  }
+ ],
+ "glyph_fx": true,
+ "rest": {
+  "covers_crosshair": false,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.464,
+  "screen_share": 0.0156
+ },
+ "tag": "foundry_art",
+ "variant": "",
+ "weapon": "foundry"
+}

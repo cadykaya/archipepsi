@@ -1,0 +1,42 @@
+{
+ "art": false,
+ "glyph_fx": false,
+ "impacts": {
+  "gel": {
+   "fired_from_m": 3.16,
+   "frames_to_hit": 0,
+   "mark_size_m": 0.239999994635582,
+   "mark_texture": "",
+   "marks_added": 4,
+   "material": "organic"
+  },
+  "metal": {
+   "fired_from_m": 3.33,
+   "frames_to_hit": 0,
+   "mark_size_m": 0.159999996423721,
+   "mark_texture": "",
+   "marks_added": 4,
+   "material": "metal"
+  },
+  "stone": {
+   "fired_from_m": 3.01,
+   "frames_to_hit": 0,
+   "mark_size_m": 0.239999994635582,
+   "mark_texture": "",
+   "marks_added": 4,
+   "material": "stone"
+  },
+  "wood": {
+   "fired_from_m": 3.18,
+   "frames_to_hit": 0,
+   "mark_size_m": 0.19200000166893,
+   "mark_texture": "",
+   "marks_added": 4,
+   "material": "wood"
+  }
+ },
+ "normal": "",
+ "tag": "bulkhead_sweeper_placeholder",
+ "variant": "sweeper",
+ "weapon": "bulkhead"
+}

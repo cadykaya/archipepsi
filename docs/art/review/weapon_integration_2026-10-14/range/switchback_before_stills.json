@@ -1,0 +1,31 @@
+{
+ "ads": {
+  "covers_crosshair": true,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.231,
+  "screen_share": 0.042
+ },
+ "art": true,
+ "cost": {
+  "draw_calls": 2,
+  "materials": 1,
+  "primitives": 2520,
+  "surfaces": 2,
+  "texture_mem_added_bytes": 16777216,
+  "triangles": 2520
+ },
+ "fire_peak": {
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.468
+ },
+ "glyph_fx": false,
+ "rest": {
+  "covers_crosshair": false,
+  "near_plane_m": 0.0500000007450581,
+  "nearest_m": 0.473,
+  "screen_share": 0.0122
+ },
+ "tag": "switchback_before",
+ "variant": "",
+ "weapon": "switchback"
+}

@@ -57,6 +57,7 @@ var _weapon := ""
 var _variant := ""
 var _tag := ""
 var _mode := "stills"
+var _lean := ""
 var _tex_before := 0
 var _host: Node = null
 var _body: Node3D = null
@@ -78,6 +79,8 @@ func _initialize() -> void:
 			_tag = arg.trim_prefix("--tag=")
 		elif arg.begins_with("--mode="):
 			_mode = arg.trim_prefix("--mode=")
+		elif arg.begins_with("--lean="):
+			_lean = arg.trim_prefix("--lean=")
 	if _tag == "":
 		_tag = _weapon
 	DirAccess.make_dir_recursive_absolute(_out)
@@ -168,6 +171,8 @@ func _swap() -> void:
 	var scene := doc.generate_scene(state) as Node3D
 	scene.name = "WeaponForm"
 	model.add_child(scene)
+	if _lean != "":
+		_apply_lean(scene)
 	var parts: Dictionary = _rig.get("_parts")
 	var names: Dictionary = PARTS.get(_weapon, {})
 	for key in names:
@@ -194,6 +199,46 @@ func _swap() -> void:
 		glow.emission = Color(0.85, 0.85, 1.0)        # Prod's own glow colour
 		glow.emission_energy_multiplier = 0.0
 		core.material_override = glow
+
+
+## The integration maps (`lean_maps.py`): one StandardMaterial3D on every
+## surface of the geometry GLB, built the way an import would: RGB albedo
+## and normal, grey roughness, metallic and emission mask (L8, one byte a
+## texel, read through the GRAYSCALE channel), the lamp's colour on the
+## material, NEAREST with mipmaps.
+func _apply_lean(scene: Node) -> void:
+	var rec = JSON.parse_string(FileAccess.get_file_as_string(
+			_lean.path_join("lean.json")))
+	var m := StandardMaterial3D.new()
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.albedo_texture = _lean_tex("albedo.png")
+	m.normal_enabled = true
+	m.normal_texture = _lean_tex("normal.png")
+	m.roughness = 1.0
+	m.roughness_texture = _lean_tex("roughness.png")
+	m.roughness_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_GRAYSCALE
+	m.metallic = 1.0
+	m.metallic_texture = _lean_tex("metallic.png")
+	m.metallic_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_GRAYSCALE
+	m.emission_enabled = true
+	m.emission_texture = _lean_tex("emission.png")
+	# the mask MULTIPLIES the lamp colour (Godot's default, ADD, would light
+	# the whole gun the lamp's colour)
+	m.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
+	var c: Array = rec["emission_colour_srgb"]
+	m.emission = Color(c[0], c[1], c[2])
+	m.emission_energy_multiplier = 1.0
+	for mi in scene.find_children("*", "MeshInstance3D", true, false):
+		var mesh := (mi as MeshInstance3D).mesh
+		for s in mesh.get_surface_count():
+			mesh.surface_set_material(s, m)
+	print("[forms] lean material from ", _lean)
+
+
+func _lean_tex(file: String) -> ImageTexture:
+	var img := Image.load_from_file(_lean.path_join(file))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
 
 
 ## The bible's filter: NEAREST, with mipmaps (made here, as a runtime-read

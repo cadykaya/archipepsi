@@ -1,0 +1,160 @@
+{
+ "art": true,
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 157,
+   "layers": [
+    "massdriver_release"
+   ],
+   "shot": 1,
+   "weapon": "driver"
+  },
+  {
+   "event": "impact",
+   "frame": 167,
+   "layers": [
+    "massdriver_impact"
+   ],
+   "material": "metal",
+   "node": "Impact_metal",
+   "orphan": true,
+   "weapon": "driver"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 167,
+   "material": "metal",
+   "sheet": "massdriver_mark",
+   "size": 0.265416651964188,
+   "variant": 0,
+   "weapon": "driver"
+  },
+  {
+   "event": "fired",
+   "frame": 373,
+   "layers": [
+    "massdriver_release"
+   ],
+   "shot": 2,
+   "weapon": "driver"
+  },
+  {
+   "event": "impact",
+   "frame": 388,
+   "layers": [
+    "massdriver_impact"
+   ],
+   "material": "stone",
+   "node": "Impact_stone",
+   "orphan": true,
+   "weapon": "driver"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 388,
+   "material": "stone",
+   "sheet": "massdriver_mark",
+   "size": 0.398124992847443,
+   "variant": 0,
+   "weapon": "driver"
+  },
+  {
+   "event": "fired",
+   "frame": 594,
+   "layers": [
+    "massdriver_release"
+   ],
+   "shot": 3,
+   "weapon": "driver"
+  },
+  {
+   "event": "impact",
+   "frame": 608,
+   "layers": [
+    "massdriver_impact"
+   ],
+   "material": "wood",
+   "node": "Impact_wood",
+   "orphan": true,
+   "weapon": "driver"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 608,
+   "material": "wood",
+   "sheet": "massdriver_mark",
+   "size": 0.318500012159348,
+   "variant": 0,
+   "weapon": "driver"
+  },
+  {
+   "event": "fired",
+   "frame": 814,
+   "layers": [
+    "massdriver_release"
+   ],
+   "shot": 4,
+   "weapon": "driver"
+  },
+  {
+   "event": "impact",
+   "frame": 821,
+   "layers": [
+    "massdriver_impact"
+   ],
+   "material": "organic",
+   "node": "Impact_organic",
+   "orphan": true,
+   "weapon": "driver"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 821,
+   "material": "organic",
+   "sheet": "massdriver_mark",
+   "size": 0.398124992847443,
+   "variant": 0,
+   "weapon": "driver"
+  }
+ ],
+ "glyph_fx": true,
+ "impacts": {
+  "gel": {
+   "frames_to_hit": 8,
+   "mark_size_m": 0.398124992847443,
+   "mark_texture": "massdriver_mark#0",
+   "marks_added": 1,
+   "material": "organic"
+  },
+  "metal": {
+   "frames_to_hit": 11,
+   "mark_size_m": 0.265416651964188,
+   "mark_texture": "massdriver_mark#0",
+   "marks_added": 1,
+   "material": "metal"
+  },
+  "stone": {
+   "frames_to_hit": 16,
+   "mark_size_m": 0.398124992847443,
+   "mark_texture": "massdriver_mark#0",
+   "marks_added": 1,
+   "material": "stone"
+  },
+  "wood": {
+   "frames_to_hit": 15,
+   "mark_size_m": 0.318500012159348,
+   "mark_texture": "massdriver_mark#0",
+   "marks_added": 1,
+   "material": "wood"
+  }
+ },
+ "normal": "rg",
+ "tag": "driver_art",
+ "variant": "",
+ "weapon": "driver"
+}

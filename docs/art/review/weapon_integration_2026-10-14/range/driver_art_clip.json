@@ -1,0 +1,5781 @@
+{
+ "art": true,
+ "frames": [
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 1
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 2
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 3
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 4
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 5
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 6
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 7
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 8
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 9
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 10
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 11
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1.91,
+    true
+   ],
+   "cooldown": 1.8,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 12
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    4.11,
+    true
+   ],
+   "cooldown": 1.767,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.06,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 13
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    6.6,
+    true
+   ],
+   "cooldown": 1.767,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.11,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 14
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    9.39,
+    true
+   ],
+   "cooldown": 1.733,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.17,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 15
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    12.47,
+    true
+   ],
+   "cooldown": 1.733,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.22,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 16
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    15.84,
+    true
+   ],
+   "cooldown": 1.7,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.28,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 17
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    19.5,
+    true
+   ],
+   "cooldown": 1.7,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.33,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 18
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    23.45,
+    true
+   ],
+   "cooldown": 1.667,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.39,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 19
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    27.69,
+    true
+   ],
+   "cooldown": 1.667,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.44,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 20
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    32.23,
+    true
+   ],
+   "cooldown": 1.633,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.5,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 21
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    37.06,
+    true
+   ],
+   "cooldown": 1.633,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.56,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 22
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    42.18,
+    true
+   ],
+   "cooldown": 1.6,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.61,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 23
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    47.59,
+    true
+   ],
+   "cooldown": 1.6,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.67,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 24
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    53.29,
+    true
+   ],
+   "cooldown": 1.567,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.72,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 25
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    59.29,
+    true
+   ],
+   "cooldown": 1.567,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.78,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 26
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    65.57,
+    true
+   ],
+   "cooldown": 1.533,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.83,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 27
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    72.15,
+    true
+   ],
+   "cooldown": 1.533,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.89,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 28
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    79.02,
+    true
+   ],
+   "cooldown": 1.5,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.94,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 29
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    86.18,
+    true
+   ],
+   "cooldown": 1.5,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 30
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    93.64,
+    true
+   ],
+   "cooldown": 1.467,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.06,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 31
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    101.38,
+    true
+   ],
+   "cooldown": 1.467,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.11,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 32
+  },
+  {
+   "clearance": 0.449,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    109.42,
+    true
+   ],
+   "cooldown": 1.433,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.17,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 33
+  },
+  {
+   "clearance": 0.449,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    117.75,
+    true
+   ],
+   "cooldown": 1.433,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.22,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 34
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    126.37,
+    true
+   ],
+   "cooldown": 1.4,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.28,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 35
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    135.28,
+    true
+   ],
+   "cooldown": 1.4,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.33,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 36
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    144.49,
+    true
+   ],
+   "cooldown": 1.367,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.39,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 37
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    153.98,
+    true
+   ],
+   "cooldown": 1.367,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.44,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 38
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    163.77,
+    true
+   ],
+   "cooldown": 1.333,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.5,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 39
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    173.85,
+    true
+   ],
+   "cooldown": 1.333,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.56,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 40
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    184.22,
+    true
+   ],
+   "cooldown": 1.3,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.61,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 41
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    194.89,
+    true
+   ],
+   "cooldown": 1.3,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.67,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 42
+  },
+  {
+   "clearance": 0.449,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    205.84,
+    true
+   ],
+   "cooldown": 1.267,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.72,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 43
+  },
+  {
+   "clearance": 0.449,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    217.09,
+    true
+   ],
+   "cooldown": 1.267,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.78,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 44
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    228.63,
+    true
+   ],
+   "cooldown": 1.233,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.83,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 45
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    240.46,
+    true
+   ],
+   "cooldown": 1.233,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.89,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 46
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    252.58,
+    true
+   ],
+   "cooldown": 1.2,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.94,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 47
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    264.99,
+    true
+   ],
+   "cooldown": 1.2,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 48
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    277.7,
+    true
+   ],
+   "cooldown": 1.167,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.06,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 49
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    290.7,
+    true
+   ],
+   "cooldown": 1.167,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.11,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 50
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    303.99,
+    true
+   ],
+   "cooldown": 1.133,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.17,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 51
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    317.57,
+    true
+   ],
+   "cooldown": 1.133,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.22,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 52
+  },
+  {
+   "clearance": 0.45,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    331.44,
+    true
+   ],
+   "cooldown": 1.1,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.28,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 53
+  },
+  {
+   "clearance": 0.45,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    345.6,
+    true
+   ],
+   "cooldown": 1.1,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.33,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 54
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    360.06,
+    true
+   ],
+   "cooldown": 1.067,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.39,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 55
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    374.81,
+    true
+   ],
+   "cooldown": 1.067,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.44,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 56
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    389.85,
+    true
+   ],
+   "cooldown": 1.033,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.5,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 57
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    405.18,
+    true
+   ],
+   "cooldown": 1.033,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.56,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 58
+  },
+  {
+   "clearance": 0.445,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    420.81,
+    true
+   ],
+   "cooldown": 1.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.61,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 59
+  },
+  {
+   "clearance": 0.445,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    436.72,
+    true
+   ],
+   "cooldown": 1.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.67,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 60
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    452.93,
+    true
+   ],
+   "cooldown": 0.967,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.72,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 61
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    469.43,
+    true
+   ],
+   "cooldown": 0.967,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.78,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 62
+  },
+  {
+   "clearance": 0.45,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    486.22,
+    true
+   ],
+   "cooldown": 0.933,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.83,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 63
+  },
+  {
+   "clearance": 0.45,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    503.3,
+    true
+   ],
+   "cooldown": 0.933,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.89,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 64
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    520.68,
+    true
+   ],
+   "cooldown": 0.9,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.94,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 65
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    538.34,
+    true
+   ],
+   "cooldown": 0.9,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 66
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    556.3,
+    true
+   ],
+   "cooldown": 0.867,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.06,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 67
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    574.55,
+    true
+   ],
+   "cooldown": 0.867,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.11,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 68
+  },
+  {
+   "clearance": 0.445,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    593.09,
+    true
+   ],
+   "cooldown": 0.833,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.17,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 69
+  },
+  {
+   "clearance": 0.445,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    611.92,
+    true
+   ],
+   "cooldown": 0.833,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.22,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 70
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    631.05,
+    true
+   ],
+   "cooldown": 0.8,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.28,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 71
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    650.47,
+    true
+   ],
+   "cooldown": 0.8,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.33,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 72
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    670.17,
+    true
+   ],
+   "cooldown": 0.767,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.39,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 73
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    690.18,
+    true
+   ],
+   "cooldown": 0.767,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.44,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 74
+  },
+  {
+   "clearance": 0.45,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    710.47,
+    true
+   ],
+   "cooldown": 0.733,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.5,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 75
+  },
+  {
+   "clearance": 0.45,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    731.05,
+    true
+   ],
+   "cooldown": 0.733,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.56,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 76
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    751.93,
+    true
+   ],
+   "cooldown": 0.7,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.61,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 77
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    773.1,
+    true
+   ],
+   "cooldown": 0.7,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.67,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 78
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    794.55,
+    true
+   ],
+   "cooldown": 0.667,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.72,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 79
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    816.31,
+    true
+   ],
+   "cooldown": 0.667,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.78,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 80
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    838.35,
+    true
+   ],
+   "cooldown": 0.633,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.83,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 81
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    860.68,
+    true
+   ],
+   "cooldown": 0.633,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.89,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 82
+  },
+  {
+   "clearance": 0.451,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    883.31,
+    true
+   ],
+   "cooldown": 0.6,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.94,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 83
+  },
+  {
+   "clearance": 0.451,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    906.23,
+    true
+   ],
+   "cooldown": 0.6,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 84
+  },
+  {
+   "clearance": 0.444,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    929.15,
+    true
+   ],
+   "cooldown": 0.567,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 85
+  },
+  {
+   "clearance": 0.444,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    952.06,
+    true
+   ],
+   "cooldown": 0.567,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 86
+  },
+  {
+   "clearance": 0.444,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    974.98,
+    true
+   ],
+   "cooldown": 0.533,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 87
+  },
+  {
+   "clearance": 0.444,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    997.9,
+    true
+   ],
+   "cooldown": 0.533,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 88
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1020.82,
+    true
+   ],
+   "cooldown": 0.5,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 89
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1043.74,
+    true
+   ],
+   "cooldown": 0.5,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 90
+  },
+  {
+   "clearance": 0.45,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1066.66,
+    true
+   ],
+   "cooldown": 0.467,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 91
+  },
+  {
+   "clearance": 0.45,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1089.57,
+    true
+   ],
+   "cooldown": 0.467,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 92
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1112.49,
+    true
+   ],
+   "cooldown": 0.433,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 93
+  },
+  {
+   "clearance": 0.446,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1135.41,
+    true
+   ],
+   "cooldown": 0.433,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 94
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1158.33,
+    true
+   ],
+   "cooldown": 0.4,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 95
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1181.25,
+    true
+   ],
+   "cooldown": 0.4,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 96
+  },
+  {
+   "clearance": 0.445,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1204.17,
+    true
+   ],
+   "cooldown": 0.367,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 97
+  },
+  {
+   "clearance": 0.445,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1227.08,
+    true
+   ],
+   "cooldown": 0.367,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 98
+  },
+  {
+   "clearance": 0.451,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1250.0,
+    true
+   ],
+   "cooldown": 0.333,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 99
+  },
+  {
+   "clearance": 0.451,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1272.92,
+    true
+   ],
+   "cooldown": 0.333,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 100
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1295.84,
+    true
+   ],
+   "cooldown": 0.3,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 101
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1318.76,
+    true
+   ],
+   "cooldown": 0.3,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 102
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1341.68,
+    true
+   ],
+   "cooldown": 0.267,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 103
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1364.59,
+    true
+   ],
+   "cooldown": 0.267,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 104
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1387.51,
+    true
+   ],
+   "cooldown": 0.233,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 105
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1410.43,
+    true
+   ],
+   "cooldown": 0.233,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 106
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1433.35,
+    true
+   ],
+   "cooldown": 0.2,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 107
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1456.27,
+    true
+   ],
+   "cooldown": 0.2,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 108
+  },
+  {
+   "clearance": 0.444,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1479.19,
+    true
+   ],
+   "cooldown": 0.167,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 109
+  },
+  {
+   "clearance": 0.444,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1502.1,
+    true
+   ],
+   "cooldown": 0.167,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 4.0,
+   "gun_at_rest": true,
+   "shots": 0,
+   "t": 110
+  },
+  {
+   "clearance": 0.302,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.133,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 5.03,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 111
+  },
+  {
+   "clearance": 0.302,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.133,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 5.03,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 112
+  },
+  {
+   "clearance": 0.312,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.1,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.61,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 113
+  },
+  {
+   "clearance": 0.312,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.1,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 3.61,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 114
+  },
+  {
+   "clearance": 0.324,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.067,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.6,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 115
+  },
+  {
+   "clearance": 0.324,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.067,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 2.6,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 116
+  },
+  {
+   "clearance": 0.328,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.033,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.86,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 117
+  },
+  {
+   "clearance": 0.328,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.033,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.86,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 118
+  },
+  {
+   "clearance": 0.329,
+   "clocks": {
+
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.34,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 119
+  },
+  {
+   "clearance": 0.329,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 1.34,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 120
+  },
+  {
+   "clearance": 0.334,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.96,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 121
+  },
+  {
+   "clearance": 0.334,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.96,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 122
+  },
+  {
+   "clearance": 0.344,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.69,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 123
+  },
+  {
+   "clearance": 0.344,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.69,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 124
+  },
+  {
+   "clearance": 0.357,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.49,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 125
+  },
+  {
+   "clearance": 0.357,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.49,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 126
+  },
+  {
+   "clearance": 0.372,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.35,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 127
+  },
+  {
+   "clearance": 0.372,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.35,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 128
+  },
+  {
+   "clearance": 0.389,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.25,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 129
+  },
+  {
+   "clearance": 0.389,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.25,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 130
+  },
+  {
+   "clearance": 0.405,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.18,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 131
+  },
+  {
+   "clearance": 0.405,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.18,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 132
+  },
+  {
+   "clearance": 0.421,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.13,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 133
+  },
+  {
+   "clearance": 0.421,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.13,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 134
+  },
+  {
+   "clearance": 0.435,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.09,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 135
+  },
+  {
+   "clearance": 0.435,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.09,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 136
+  },
+  {
+   "clearance": 0.444,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.06,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 137
+  },
+  {
+   "clearance": 0.444,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.06,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 138
+  },
+  {
+   "clearance": 0.451,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.04,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 139
+  },
+  {
+   "clearance": 0.451,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.04,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 140
+  },
+  {
+   "clearance": 0.453,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.03,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 141
+  },
+  {
+   "clearance": 0.453,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.03,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 142
+  },
+  {
+   "clearance": 0.451,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.02,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 143
+  },
+  {
+   "clearance": 0.451,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.02,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 144
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.01,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 145
+  },
+  {
+   "clearance": 0.448,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.01,
+   "gun_at_rest": false,
+   "shots": 1,
+   "t": 146
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.01,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 147
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.01,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 148
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 149
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 150
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 151
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 152
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 153
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 154
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 155
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 156
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 157
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 158
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 159
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 160
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 161
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 162
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 163
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 164
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 165
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 166
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 167
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 168
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 169
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 170
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 171
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 172
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 173
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 174
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 175
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 176
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 177
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 178
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 179
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 180
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 181
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 182
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 183
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 184
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 185
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 186
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 187
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 188
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 189
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 190
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 191
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 192
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 193
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 194
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 195
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 196
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 197
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 198
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 199
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 200
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 201
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 202
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 203
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 204
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 205
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 206
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 207
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 208
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 209
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 210
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 211
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 212
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 213
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 214
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 215
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 216
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 217
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 218
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 219
+  },
+  {
+   "clearance": 0.447,
+   "clocks": {
+    "aim": 0.75,
+    "gun": 0.616666666666667,
+    "owed_at_ready": 0.699999988079071,
+    "ready": 0.15
+   },
+   "coils": [
+    -0.15,
+    0.0,
+    0.0,
+    1525.02,
+    true
+   ],
+   "cooldown": 0.0,
+   "core": [
+    -0.055,
+    0.0,
+    0.0,
+    0.0,
+    true
+   ],
+   "core_energy": 0.0,
+   "gun_at_rest": true,
+   "shots": 1,
+   "t": 220
+  }
+ ],
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 167,
+   "layers": [
+    "massdriver_release"
+   ],
+   "shot": 1,
+   "weapon": "driver"
+  },
+  {
+   "event": "impact",
+   "frame": 177,
+   "layers": [
+    "massdriver_impact"
+   ],
+   "material": "metal",
+   "node": "Impact_metal",
+   "orphan": true,
+   "weapon": "driver"
+  },
+  {
+   "centre": true,
+   "event": "mark",
+   "frame": 177,
+   "material": "metal",
+   "sheet": "massdriver_mark",
+   "size": 0.270000010728836,
+   "variant": 0,
+   "weapon": "driver"
+  }
+ ],
+ "glyph_fx": true,
+ "normal": "rg",
+ "tag": "driver_art",
+ "variant": "",
+ "weapon": "driver"
+}

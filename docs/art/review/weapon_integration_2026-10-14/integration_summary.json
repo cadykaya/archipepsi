@@ -1,0 +1,1336 @@
+{
+ "bulkhead_breacher": {
+  "art": {
+   "clearance_min_m": 0.096,
+   "core_energy_peak": null,
+   "fx_fired_frames": [
+    68,
+    148
+   ],
+   "gun_at_rest": [
+    53,
+    145
+   ],
+   "parts": {
+    "feed": {
+     "moving_ticks": [],
+     "rest": [
+      -0.12,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": false
+    },
+    "pump": {
+     "moving_ticks": [
+      [
+       55,
+       69
+      ],
+      [
+       135,
+       149
+      ]
+     ],
+     "rest": [
+      -0.303,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    71,
+    151
+   ],
+   "shots": [
+    12,
+    92
+   ]
+  },
+  "art_cost": {
+   "draw_calls": 2,
+   "materials": 1,
+   "primitives": 2952,
+   "surfaces": 2,
+   "texture_mem_added_bytes": 19708160,
+   "triangles": 2952
+  },
+  "art_impacts": {
+   "gel": {
+    "fired_from_m": 3.16,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.330000013113022,
+    "mark_texture": "bulkhead_mark#0",
+    "marks_added": 4,
+    "material": "organic"
+   },
+   "metal": {
+    "fired_from_m": 3.33,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.219999998807907,
+    "mark_texture": "bulkhead_mark#0",
+    "marks_added": 4,
+    "material": "metal"
+   },
+   "stone": {
+    "fired_from_m": 3.01,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.330000013113022,
+    "mark_texture": "bulkhead_mark#0",
+    "marks_added": 4,
+    "material": "stone"
+   },
+   "wood": {
+    "fired_from_m": 3.18,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.263999998569489,
+    "mark_texture": "bulkhead_mark#0",
+    "marks_added": 4,
+    "material": "wood"
+   }
+  },
+  "clearance": {
+   "ads": null,
+   "crosshair": false,
+   "fire": 0.096,
+   "rest": 0.46,
+   "screen": 0.0133
+  },
+  "lean_bytes_with_mips": {
+   "glb_rgba8_x4": 34952533,
+   "lean": 19660800
+  },
+  "model_triangles": 3200,
+  "name": "Bulkhead D (Fan): Breacher",
+  "placeholder": {
+   "clearance_min_m": 0.152,
+   "core_energy_peak": null,
+   "fx_fired_frames": [],
+   "gun_at_rest": [
+    53,
+    145
+   ],
+   "parts": {
+    "feed": {
+     "moving_ticks": [],
+     "rest": [
+      -0.15,
+      8.0,
+      0.0,
+      0.0
+     ],
+     "visible": false
+    },
+    "pump": {
+     "moving_ticks": [
+      [
+       55,
+       69
+      ],
+      [
+       135,
+       149
+      ]
+     ],
+     "rest": [
+      -0.3,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    71,
+    151
+   ],
+   "shots": [
+    12,
+    92
+   ]
+  },
+  "placeholder_cost": {
+   "draw_calls": 5,
+   "materials": 2,
+   "primitives": 372,
+   "surfaces": 5,
+   "texture_mem_added_bytes": 0,
+   "triangles": 372
+  },
+  "placeholder_impacts": {
+   "gel": {
+    "fired_from_m": 3.16,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.330000013113022,
+    "mark_texture": "",
+    "marks_added": 4,
+    "material": "organic"
+   },
+   "metal": {
+    "fired_from_m": 3.33,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.219999998807907,
+    "mark_texture": "",
+    "marks_added": 4,
+    "material": "metal"
+   },
+   "stone": {
+    "fired_from_m": 3.01,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.330000013113022,
+    "mark_texture": "",
+    "marks_added": 4,
+    "material": "stone"
+   },
+   "wood": {
+    "fired_from_m": 3.18,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.263999998569489,
+    "mark_texture": "",
+    "marks_added": 4,
+    "material": "wood"
+   }
+  },
+  "size": 1280,
+  "texels_per_metre": 1457.9
+ },
+ "bulkhead_sweeper": {
+  "art": {
+   "clearance_min_m": 0.252,
+   "core_energy_peak": null,
+   "fx_fired_frames": [
+    68,
+    148
+   ],
+   "gun_at_rest": [
+    37,
+    117
+   ],
+   "parts": {
+    "feed": {
+     "moving_ticks": [],
+     "rest": [
+      -0.12,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    },
+    "pump": {
+     "moving_ticks": [],
+     "rest": [
+      -0.303,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    41,
+    121
+   ],
+   "shots": [
+    12,
+    92
+   ]
+  },
+  "art_cost": {
+   "draw_calls": 3,
+   "materials": 1,
+   "primitives": 3200,
+   "surfaces": 3,
+   "texture_mem_added_bytes": 19708160,
+   "triangles": 3200
+  },
+  "art_impacts": {
+   "gel": {
+    "fired_from_m": 3.16,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.239999994635582,
+    "mark_texture": "bulkhead_mark#0",
+    "marks_added": 4,
+    "material": "organic"
+   },
+   "metal": {
+    "fired_from_m": 3.33,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.159999996423721,
+    "mark_texture": "bulkhead_mark#0",
+    "marks_added": 4,
+    "material": "metal"
+   },
+   "stone": {
+    "fired_from_m": 3.01,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.239999994635582,
+    "mark_texture": "bulkhead_mark#0",
+    "marks_added": 4,
+    "material": "stone"
+   },
+   "wood": {
+    "fired_from_m": 3.18,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.19200000166893,
+    "mark_texture": "bulkhead_mark#0",
+    "marks_added": 4,
+    "material": "wood"
+   }
+  },
+  "clearance": {
+   "ads": null,
+   "crosshair": false,
+   "fire": 0.252,
+   "rest": 0.46,
+   "screen": 0.0146
+  },
+  "lean_bytes_with_mips": {
+   "glb_rgba8_x4": 34952533,
+   "lean": 19660800
+  },
+  "model_triangles": 3200,
+  "name": "Bulkhead D (Fan): Sweeper",
+  "placeholder": {
+   "clearance_min_m": 0.276,
+   "core_energy_peak": null,
+   "fx_fired_frames": [],
+   "gun_at_rest": [
+    37,
+    117
+   ],
+   "parts": {
+    "feed": {
+     "moving_ticks": [],
+     "rest": [
+      -0.15,
+      8.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    },
+    "pump": {
+     "moving_ticks": [],
+     "rest": [
+      -0.3,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    41,
+    121
+   ],
+   "shots": [
+    12,
+    92
+   ]
+  },
+  "placeholder_cost": {
+   "draw_calls": 6,
+   "materials": 3,
+   "primitives": 384,
+   "surfaces": 6,
+   "texture_mem_added_bytes": 0,
+   "triangles": 384
+  },
+  "placeholder_impacts": {
+   "gel": {
+    "fired_from_m": 3.16,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.239999994635582,
+    "mark_texture": "",
+    "marks_added": 4,
+    "material": "organic"
+   },
+   "metal": {
+    "fired_from_m": 3.33,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.159999996423721,
+    "mark_texture": "",
+    "marks_added": 4,
+    "material": "metal"
+   },
+   "stone": {
+    "fired_from_m": 3.01,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.239999994635582,
+    "mark_texture": "",
+    "marks_added": 4,
+    "material": "stone"
+   },
+   "wood": {
+    "fired_from_m": 3.18,
+    "frames_to_hit": 0,
+    "mark_size_m": 0.19200000166893,
+    "mark_texture": "",
+    "marks_added": 4,
+    "material": "wood"
+   }
+  },
+  "size": 1280,
+  "texels_per_metre": 1457.9
+ },
+ "driver": {
+  "art": {
+   "clearance_min_m": 0.302,
+   "core_energy_peak": 5.03,
+   "fx_fired_frames": [
+    167
+   ],
+   "gun_at_rest": [
+    147
+   ],
+   "parts": {
+    "coils": {
+     "moving_ticks": [
+      [
+       12,
+       111
+      ]
+     ],
+     "rest": [
+      -0.15,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    },
+    "core": {
+     "moving_ticks": [],
+     "rest": [
+      -0.055,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    119
+   ],
+   "shots": [
+    111
+   ]
+  },
+  "art_cost": {
+   "draw_calls": 3,
+   "materials": 2,
+   "primitives": 3312,
+   "surfaces": 3,
+   "texture_mem_added_bytes": 44324608,
+   "triangles": 3312
+  },
+  "art_impacts": {
+   "gel": {
+    "frames_to_hit": 8,
+    "mark_size_m": 0.398124992847443,
+    "mark_texture": "massdriver_mark#0",
+    "marks_added": 1,
+    "material": "organic"
+   },
+   "metal": {
+    "frames_to_hit": 11,
+    "mark_size_m": 0.265416651964188,
+    "mark_texture": "massdriver_mark#0",
+    "marks_added": 1,
+    "material": "metal"
+   },
+   "stone": {
+    "frames_to_hit": 16,
+    "mark_size_m": 0.398124992847443,
+    "mark_texture": "massdriver_mark#0",
+    "marks_added": 1,
+    "material": "stone"
+   },
+   "wood": {
+    "frames_to_hit": 15,
+    "mark_size_m": 0.318500012159348,
+    "mark_texture": "massdriver_mark#0",
+    "marks_added": 1,
+    "material": "wood"
+   }
+  },
+  "before_cost": {
+   "draw_calls": 3,
+   "materials": 2,
+   "primitives": 3312,
+   "surfaces": 3,
+   "texture_mem_added_bytes": 67108864,
+   "triangles": 3312
+  },
+  "before_source": "this run, the 10-13 GLB",
+  "clearance": {
+   "ads": 0.284,
+   "crosshair": false,
+   "fire": 0.302,
+   "rest": 0.447,
+   "screen": 0.0175
+  },
+  "lean_bytes_with_mips": {
+   "glb_rgba8_x4": 78643200,
+   "lean": 44236800
+  },
+  "model_triangles": 3312,
+  "name": "Mass Driver",
+  "placeholder": {
+   "clearance_min_m": 0.309,
+   "core_energy_peak": 5.03,
+   "fx_fired_frames": [],
+   "gun_at_rest": [
+    147
+   ],
+   "parts": {
+    "coils": {
+     "moving_ticks": [
+      [
+       12,
+       111
+      ]
+     ],
+     "rest": [
+      -0.36,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    },
+    "core": {
+     "moving_ticks": [],
+     "rest": [
+      -0.08,
+      90.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    119
+   ],
+   "shots": [
+    111
+   ]
+  },
+  "placeholder_cost": {
+   "draw_calls": 11,
+   "materials": 5,
+   "primitives": 19912,
+   "surfaces": 11,
+   "texture_mem_added_bytes": 0,
+   "triangles": 19912
+  },
+  "placeholder_impacts": {
+   "gel": {
+    "frames_to_hit": 8,
+    "mark_size_m": 0.398124992847443,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "organic"
+   },
+   "metal": {
+    "frames_to_hit": 11,
+    "mark_size_m": 0.265416651964188,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "metal"
+   },
+   "stone": {
+    "frames_to_hit": 16,
+    "mark_size_m": 0.398124992847443,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "stone"
+   },
+   "wood": {
+    "frames_to_hit": 15,
+    "mark_size_m": 0.318500012159348,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "wood"
+   }
+  },
+  "size": 1920,
+  "tex_before_mb": 64.0,
+  "texels_per_metre": 1951.4
+ },
+ "foundry": {
+  "art": {
+   "clearance_min_m": 0.142,
+   "core_energy_peak": null,
+   "fx_fired_frames": [
+    68,
+    138
+   ],
+   "gun_at_rest": [
+    41,
+    113
+   ],
+   "parts": {
+    "cylinder": {
+     "moving_ticks": [
+      [
+       31,
+       41
+      ],
+      [
+       101,
+       111
+      ]
+     ],
+     "rest": [
+      -0.061,
+      90.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    },
+    "hammer": {
+     "moving_ticks": [
+      [
+       12,
+       12
+      ],
+      [
+       49,
+       53
+      ],
+      [
+       82,
+       82
+      ],
+      [
+       119,
+       123
+      ]
+     ],
+     "rest": [
+      -0.022,
+      -38.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    55,
+    125
+   ],
+   "shots": [
+    12,
+    82
+   ]
+  },
+  "art_cost": {
+   "draw_calls": 3,
+   "materials": 1,
+   "primitives": 2748,
+   "surfaces": 3,
+   "texture_mem_added_bytes": 12594432,
+   "triangles": 2748
+  },
+  "art_impacts": {
+   "gel": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.344999998807907,
+    "mark_texture": "decal_flesh_mark#0",
+    "marks_added": 1,
+    "material": "organic"
+   },
+   "metal": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.230000004172325,
+    "mark_texture": "decal_metal_hole#0",
+    "marks_added": 1,
+    "material": "metal"
+   },
+   "stone": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.344999998807907,
+    "mark_texture": "decal_stone_crater#0",
+    "marks_added": 1,
+    "material": "stone"
+   },
+   "wood": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.275999993085861,
+    "mark_texture": "decal_wood_mark#0",
+    "marks_added": 1,
+    "material": "wood"
+   }
+  },
+  "before_cost": {
+   "draw_calls": 3,
+   "materials": 1,
+   "primitives": 2748,
+   "surfaces": 3,
+   "texture_mem_added_bytes": 16777216,
+   "triangles": 2748
+  },
+  "before_source": "this run, the 10-13 GLB",
+  "clearance": {
+   "ads": null,
+   "crosshair": false,
+   "fire": 0.142,
+   "rest": 0.464,
+   "screen": 0.0156
+  },
+  "lean_bytes_with_mips": {
+   "glb_rgba8_x4": 22369621,
+   "lean": 12582912
+  },
+  "model_triangles": 2748,
+  "name": "Foundry",
+  "placeholder": {
+   "clearance_min_m": 0.2,
+   "core_energy_peak": null,
+   "fx_fired_frames": [],
+   "gun_at_rest": [
+    41,
+    113
+   ],
+   "parts": {
+    "cylinder": {
+     "moving_ticks": [
+      [
+       31,
+       41
+      ],
+      [
+       101,
+       111
+      ]
+     ],
+     "rest": [
+      -0.06,
+      90.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    },
+    "hammer": {
+     "moving_ticks": [
+      [
+       12,
+       12
+      ],
+      [
+       49,
+       53
+      ],
+      [
+       82,
+       82
+      ],
+      [
+       119,
+       123
+      ]
+     ],
+     "rest": [
+      0.0,
+      -38.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    55,
+    125
+   ],
+   "shots": [
+    12,
+    82
+   ]
+  },
+  "placeholder_cost": {
+   "draw_calls": 8,
+   "materials": 3,
+   "primitives": 564,
+   "surfaces": 8,
+   "texture_mem_added_bytes": 0,
+   "triangles": 564
+  },
+  "placeholder_impacts": {
+   "gel": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.344999998807907,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "organic"
+   },
+   "metal": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.230000004172325,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "metal"
+   },
+   "stone": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.344999998807907,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "stone"
+   },
+   "wood": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.275999993085861,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "wood"
+   }
+  },
+  "size": 1024,
+  "tex_before_mb": 16.0,
+  "texels_per_metre": 1154.3
+ },
+ "sightline": {
+  "art": {
+   "clearance_min_m": 0.341,
+   "core_energy_peak": null,
+   "fx_fired_frames": [
+    68,
+    138
+   ],
+   "gun_at_rest": [
+    33,
+    103
+   ],
+   "parts": {
+    "handle": {
+     "moving_ticks": [
+      [
+       17,
+       23
+      ],
+      [
+       87,
+       93
+      ]
+     ],
+     "rest": [
+      -0.08,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    41,
+    111
+   ],
+   "shots": [
+    12,
+    82
+   ]
+  },
+  "art_cost": {
+   "draw_calls": 2,
+   "materials": 1,
+   "primitives": 4992,
+   "surfaces": 2,
+   "texture_mem_added_bytes": 44324608,
+   "triangles": 4992
+  },
+  "art_impacts": {
+   "gel": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.254999995231628,
+    "mark_texture": "decal_flesh_mark#0",
+    "marks_added": 1,
+    "material": "organic"
+   },
+   "metal": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.170000001788139,
+    "mark_texture": "sightline_mark#0",
+    "marks_added": 1,
+    "material": "metal"
+   },
+   "stone": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.254999995231628,
+    "mark_texture": "decal_stone_crater#0",
+    "marks_added": 1,
+    "material": "stone"
+   },
+   "wood": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.203999996185303,
+    "mark_texture": "decal_wood_mark#0",
+    "marks_added": 1,
+    "material": "wood"
+   }
+  },
+  "before_cost": {
+   "draw_calls": 2,
+   "materials": 1,
+   "primitives": 4992,
+   "surfaces": 2,
+   "texture_mem_added_bytes": 67108864,
+   "triangles": 4992
+  },
+  "before_source": "this run, the 10-13 GLB",
+  "clearance": {
+   "ads": 0.208,
+   "crosshair": false,
+   "fire": 0.335,
+   "rest": 0.453,
+   "screen": 0.0136
+  },
+  "lean_bytes_with_mips": {
+   "glb_rgba8_x4": 78643200,
+   "lean": 44236800
+  },
+  "model_triangles": 4992,
+  "name": "Sightline",
+  "placeholder": {
+   "clearance_min_m": 0.269,
+   "core_energy_peak": null,
+   "fx_fired_frames": [],
+   "gun_at_rest": [
+    33,
+    103
+   ],
+   "parts": {
+    "handle": {
+     "moving_ticks": [
+      [
+       17,
+       23
+      ],
+      [
+       87,
+       93
+      ]
+     ],
+     "rest": [
+      -0.08,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    41,
+    111
+   ],
+   "shots": [
+    12,
+    82
+   ]
+  },
+  "placeholder_cost": {
+   "draw_calls": 10,
+   "materials": 3,
+   "primitives": 8444,
+   "surfaces": 10,
+   "texture_mem_added_bytes": 0,
+   "triangles": 8444
+  },
+  "placeholder_impacts": {
+   "gel": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.254999995231628,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "organic"
+   },
+   "metal": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.170000001788139,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "metal"
+   },
+   "stone": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.254999995231628,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "stone"
+   },
+   "wood": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.203999996185303,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "wood"
+   }
+  },
+  "size": 1920,
+  "tex_before_mb": 64.0,
+  "texels_per_metre": 1967.2
+ },
+ "switchback": {
+  "art": {
+   "clearance_min_m": 0.447,
+   "core_energy_peak": null,
+   "fx_fired_frames": [
+    67,
+    76,
+    86,
+    96,
+    106,
+    116,
+    126,
+    136,
+    146,
+    156,
+    166,
+    176,
+    186
+   ],
+   "gun_at_rest": [
+    15,
+    25,
+    35,
+    45,
+    55,
+    65,
+    75,
+    85,
+    95,
+    105,
+    115,
+    125,
+    135
+   ],
+   "parts": {
+    "bolt": {
+     "moving_ticks": [
+      [
+       11,
+       13
+      ],
+      [
+       21,
+       23
+      ],
+      [
+       31,
+       33
+      ],
+      [
+       41,
+       43
+      ],
+      [
+       51,
+       53
+      ],
+      [
+       61,
+       63
+      ],
+      [
+       71,
+       73
+      ],
+      [
+       81,
+       83
+      ],
+      [
+       91,
+       93
+      ],
+      [
+       101,
+       103
+      ],
+      [
+       111,
+       113
+      ],
+      [
+       121,
+       123
+      ],
+      [
+       131,
+       133
+      ]
+     ],
+     "rest": [
+      -0.112,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    19,
+    29,
+    39,
+    49,
+    59,
+    69,
+    79,
+    89,
+    99,
+    109,
+    119,
+    129,
+    139
+   ],
+   "shots": [
+    11,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100,
+    110,
+    120,
+    130
+   ]
+  },
+  "art_cost": {
+   "draw_calls": 2,
+   "materials": 1,
+   "primitives": 2520,
+   "surfaces": 2,
+   "texture_mem_added_bytes": 12594432,
+   "triangles": 2520
+  },
+  "art_impacts": {
+   "gel": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.119999997317791,
+    "mark_texture": "switchback_pock#0",
+    "marks_added": 1,
+    "material": "organic"
+   },
+   "metal": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.0799999982118607,
+    "mark_texture": "switchback_pock#0",
+    "marks_added": 1,
+    "material": "metal"
+   },
+   "stone": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.119999997317791,
+    "mark_texture": "switchback_pock#0",
+    "marks_added": 1,
+    "material": "stone"
+   },
+   "wood": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.096000000834465,
+    "mark_texture": "switchback_pock#0",
+    "marks_added": 1,
+    "material": "wood"
+   }
+  },
+  "before_cost": {
+   "draw_calls": 2,
+   "materials": 1,
+   "primitives": 2520,
+   "surfaces": 2,
+   "texture_mem_added_bytes": 16777216,
+   "triangles": 2520
+  },
+  "before_source": "this run, the 10-13 GLB",
+  "clearance": {
+   "ads": 0.231,
+   "crosshair": false,
+   "fire": 0.447,
+   "rest": 0.473,
+   "screen": 0.0122
+  },
+  "lean_bytes_with_mips": {
+   "glb_rgba8_x4": 22369621,
+   "lean": 12582912
+  },
+  "model_triangles": 2520,
+  "name": "Switchback",
+  "placeholder": {
+   "clearance_min_m": 0.461,
+   "core_energy_peak": null,
+   "fx_fired_frames": [],
+   "gun_at_rest": [
+    15,
+    25,
+    35,
+    45,
+    55,
+    65,
+    75,
+    85,
+    95,
+    105,
+    115,
+    125,
+    135
+   ],
+   "parts": {
+    "bolt": {
+     "moving_ticks": [
+      [
+       11,
+       13
+      ],
+      [
+       21,
+       23
+      ],
+      [
+       31,
+       33
+      ],
+      [
+       41,
+       43
+      ],
+      [
+       51,
+       53
+      ],
+      [
+       61,
+       63
+      ],
+      [
+       71,
+       73
+      ],
+      [
+       81,
+       83
+      ],
+      [
+       91,
+       93
+      ],
+      [
+       101,
+       103
+      ],
+      [
+       111,
+       113
+      ],
+      [
+       121,
+       123
+      ],
+      [
+       131,
+       133
+      ]
+     ],
+     "rest": [
+      -0.1,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "visible": true
+    }
+   },
+   "ready": [
+    19,
+    29,
+    39,
+    49,
+    59,
+    69,
+    79,
+    89,
+    99,
+    109,
+    119,
+    129,
+    139
+   ],
+   "shots": [
+    11,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100,
+    110,
+    120,
+    130
+   ]
+  },
+  "placeholder_cost": {
+   "draw_calls": 9,
+   "materials": 3,
+   "primitives": 4348,
+   "surfaces": 9,
+   "texture_mem_added_bytes": 0,
+   "triangles": 4348
+  },
+  "placeholder_impacts": {
+   "gel": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.119999997317791,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "organic"
+   },
+   "metal": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.0799999982118607,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "metal"
+   },
+   "stone": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.119999997317791,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "stone"
+   },
+   "wood": {
+    "frames_to_hit": 0,
+    "mark_size_m": 0.096000000834465,
+    "mark_texture": "",
+    "marks_added": 1,
+    "material": "wood"
+   }
+  },
+  "size": 1024,
+  "tex_before_mb": 16.0,
+  "texels_per_metre": 1402.0
+ }
+}

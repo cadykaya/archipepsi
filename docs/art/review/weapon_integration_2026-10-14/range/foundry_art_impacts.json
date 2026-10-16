@@ -1,0 +1,156 @@
+{
+ "art": true,
+ "fx_events": [
+  {
+   "event": "fired",
+   "frame": 88,
+   "layers": [
+    "foundry_flash_flare",
+    "foundry_flash_core",
+    "foundry_afterglow"
+   ],
+   "shot": 1,
+   "weapon": "foundry"
+  },
+  {
+   "event": "impact",
+   "frame": 88,
+   "layers": [
+    "impact_metal_flash",
+    "impact_metal_smoke"
+   ],
+   "material": "metal",
+   "weapon": "foundry"
+  },
+  {
+   "event": "mark",
+   "frame": 88,
+   "material": "metal",
+   "sheet": "decal_metal_hole",
+   "size": 0.230000004172325,
+   "variant": 0,
+   "weapon": "foundry"
+  },
+  {
+   "event": "fired",
+   "frame": 225,
+   "layers": [
+    "foundry_flash_flare",
+    "foundry_flash_core",
+    "foundry_afterglow"
+   ],
+   "shot": 2,
+   "weapon": "foundry"
+  },
+  {
+   "event": "impact",
+   "frame": 225,
+   "layers": [
+    "impact_stone_dust"
+   ],
+   "material": "stone",
+   "weapon": "foundry"
+  },
+  {
+   "event": "mark",
+   "frame": 225,
+   "material": "stone",
+   "sheet": "decal_stone_crater",
+   "size": 0.344999998807907,
+   "variant": 0,
+   "weapon": "foundry"
+  },
+  {
+   "event": "fired",
+   "frame": 362,
+   "layers": [
+    "foundry_flash_flare",
+    "foundry_flash_core",
+    "foundry_afterglow"
+   ],
+   "shot": 3,
+   "weapon": "foundry"
+  },
+  {
+   "event": "impact",
+   "frame": 362,
+   "layers": [
+    "impact_stone_dust"
+   ],
+   "material": "wood",
+   "weapon": "foundry"
+  },
+  {
+   "event": "mark",
+   "frame": 362,
+   "material": "wood",
+   "sheet": "decal_wood_mark",
+   "size": 0.275999993085861,
+   "variant": 0,
+   "weapon": "foundry"
+  },
+  {
+   "event": "fired",
+   "frame": 499,
+   "layers": [
+    "foundry_flash_flare",
+    "foundry_flash_core",
+    "foundry_afterglow"
+   ],
+   "shot": 4,
+   "weapon": "foundry"
+  },
+  {
+   "event": "impact",
+   "frame": 499,
+   "layers": [
+    "impact_flesh_splash"
+   ],
+   "material": "organic",
+   "weapon": "foundry"
+  },
+  {
+   "event": "mark",
+   "frame": 499,
+   "material": "organic",
+   "sheet": "decal_flesh_mark",
+   "size": 0.344999998807907,
+   "variant": 0,
+   "weapon": "foundry"
+  }
+ ],
+ "glyph_fx": true,
+ "impacts": {
+  "gel": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.344999998807907,
+   "mark_texture": "decal_flesh_mark#0",
+   "marks_added": 1,
+   "material": "organic"
+  },
+  "metal": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.230000004172325,
+   "mark_texture": "decal_metal_hole#0",
+   "marks_added": 1,
+   "material": "metal"
+  },
+  "stone": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.344999998807907,
+   "mark_texture": "decal_stone_crater#0",
+   "marks_added": 1,
+   "material": "stone"
+  },
+  "wood": {
+   "frames_to_hit": 0,
+   "mark_size_m": 0.275999993085861,
+   "mark_texture": "decal_wood_mark#0",
+   "marks_added": 1,
+   "material": "wood"
+  }
+ },
+ "tag": "foundry_art",
+ "variant": "",
+ "weapon": "foundry"
+}

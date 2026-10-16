@@ -1,0 +1,47 @@
+{
+ "frame": "Godot viewmodel space (RangeRig model origin), -Z forward",
+ "label": "Mass Driver (A, Rotor)",
+ "metrics": {
+  "atlas_fill": 0.461,
+  "draw_calls_expected": 3,
+  "materials": 1,
+  "meshes": 3,
+  "note": "Triangle counts are provisional (the owner, 2026-10-13); measured in the game separately.",
+  "texels_per_metre": 1951.4,
+  "texture_size": 1920,
+  "textures": [
+   "albedo (RGB8)",
+   "normal (RGB8)",
+   "roughness (L8)",
+   "metallic (L8)",
+   "emission mask (L8)"
+  ],
+  "triangles": 3312
+ },
+ "muzzle": [
+  0,
+  0.0,
+  -0.62
+ ],
+ "nodes": {
+  "Coils": {
+   "pivot": [
+    0.0,
+    0.0,
+    -0.15
+   ]
+  },
+  "Core": {
+   "pivot": [
+    0.0,
+    -0.062,
+    -0.055
+   ]
+  }
+ },
+ "sight_lines_y": [
+  0.13
+ ],
+ "status": "INTEGRATION CANDIDATE (Arty, 2026-10-14): an approved direction at the Foundry's fidelity, prepared for Prod's runtime. Not registered, not merged.",
+ "weapon": "driver"
+}

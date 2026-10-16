@@ -3549,6 +3549,68 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Ruling, 2026-10-16 — the five-weapon package goes into the first unified review build
+
+* The owner: the approved five-weapon art package is Prod's starting point
+  for the first unified Archipepsi review build.
+* The art lane supports him only with specific integration issues: weapon
+  models, Glyph VFX, animation, muzzle attachment, materials. The fix is
+  the smallest necessary, with a precise handoff.
+* No redesign and no new asset batch unless a genuine integration problem
+  requires it. Keep the worn, welded, richly textured sci-fi identity.
+  Otherwise, rest.
+* As of 2026-10-16, no issue is open: Prod's `review/d22-slice` names none.
+* Later on 2026-10-16, Prod integrated the package on
+  `integration/unified-1` (`86f26f11`); the art check passes 29/29.
+  * His reply (`docs/art-requests/2026-10-16-unified-weapon-integration-reply.md`
+    on that branch) answers all four questions.
+  * The Driver impact fix is in, as proposed.
+  * The adapter is adopted with two shipped-build changes: importer loading,
+    and parenting to the player's world.
+  * Learned: `Image.load_from_file` does not find assets in an exported
+    game. Anything the art lane hands over for runtime use loads through
+    the importer.
+  * Nothing is open. The Shunter is a graybox for now, not a commission.
+
+### Delivered, 2026-10-14 — the five weapons as an integration candidate. STOPPED for the owner's in-game review.
+
+* Bulkhead D (Fan) developed: tie strap and collars across the bores,
+  distributor outlets, breech knuckles, a shell clip with two spares; wear
+  by construction and use (heat-straw per bore, the crack on the receiver's
+  left flank welded and ground, BH-6). 3,200 tris; 1280² at 1,458 texels/m.
+  Breacher and Sweeper on one model.
+* In Prod's range (v3 `ef157061`, read-only), Forward+: placeholder against
+  art for all five (the Bulkhead per variant): rest, ADS, the shot, the hit
+  on metal, stone, wood and gel from a same-frame second eye, and the mark
+  1.7 s later; per-tick clip logs; costs. Art timing identical to the
+  placeholder's; nothing clips (nearest 0.096 m, the Breacher's kick; its
+  placeholder 0.152); the Glyph flash on the shot's tick, every shot.
+* Memory (Forward+): 64 -> 42.3 MB (Sightline, Mass Driver), 16 -> 12.0
+  (Foundry, Switchback), Bulkhead 18.8; lossless (see the report). The
+  normal loaded as RG8 is pixel-identical; a Lossless import keeps it RGB8,
+  so it is converted at load.
+* Pipeline: `lean_maps.py`, `foundry_geometry.py` (gated on the approved UV
+  fingerprint), geometry-only GLBs, cardinal packing with density floors;
+  `tools/five_integration.sh` (a parse pre-flight, Forward+), the adapter
+  `glyph_fx_layer.gd`, `five_integration_sheets.py`,
+  `tools/five_integration_package.sh`.
+* Fixed on the way: the adapter matched effect nodes by name (Godot renames
+  repeats) and told Bulkhead chips by size; a duplicate declaration once left
+  it unparsed for a whole batch (discarded and re-run; the pre-flight now
+  refuses to run).
+
+### Ruling, 2026-10-14 — Bulkhead D; all five toward playable integration
+
+* Bulkhead: D (Fan) chosen. Develop to the shared fidelity standard, keep
+  the four-barrel arrangement and its mechanical personality, and carry
+  both variants on one design (any gameplay change is a proposal).
+* Sightline, Switchback and Mass Driver: current directions approved for
+  the next stage. Foundry remains the benchmark. No redesigns, no
+  decorative sci-fi clutter; keep the station/Epsilon/Echo identity.
+* Next: integration-ready art for all five plus the layered Glyph
+  effects, checked in Prod's runtime; metrics recorded; the 2048 maps'
+  memory investigated and reduced without losing visible detail.
+
 ### Delivered, 2026-10-13 — weapon development pass. STOPPED for review.
 
 * Bulkhead: three new concepts (C Spreader, D Fan, E Hatch Ram), each one

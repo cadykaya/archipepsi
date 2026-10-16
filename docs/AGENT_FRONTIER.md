@@ -194,6 +194,91 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-16 (owner): the five-weapon art package is approved as the
+  starting point for Prod's first unified review build. The art lane is on
+  call, not working.**
+  * Support Prod only with specific integration problems that appear:
+    weapon models, Glyph VFX, animation, muzzle attachment, materials.
+  * Each fix is the smallest that solves it, with a precise written
+    handoff.
+  * No visual redesign and no new asset batch unless a real integration
+    problem requires one.
+  * Keep the worn, welded, richly textured identity.
+  * Checked 2026-10-16: Prod's newest branch (`review/d22-slice`, `7ab7526f`)
+    names no weapon or art issue. Nothing is open for the art lane.
+  * Later on 2026-10-16: Prod integrated the five weapons and Batch 068 on
+    `integration/unified-1` (`86f26f11`, behind `--unified`; nothing merged
+    into the campaign). His reply,
+    `docs/art-requests/2026-10-16-unified-weapon-integration-reply.md` on
+    that branch, was verified read-only and answers all four questions:
+    * the core-glow contract stands as built;
+    * Bore0-3 are accepted as effect-only points;
+    * the import settings are as in the note;
+    * the adapter is adopted, with two `# UNIFIED` changes.
+    He reproduced the Driver impact bug and fixed it with the proposed
+    one-line `CONNECT_DEFERRED`. His `art` check passes 29/29.
+  * His two adapter changes:
+    * loading goes through Godot's importer, because `Image.load_from_file`
+      finds nothing in an exported game;
+    * impact layers are parented to the player's world, not
+      `current_scene`.
+    The art lane's reference copy, `tools/crossing_capture/glyph_fx_layer.gd`,
+    is capture-only and stays as is; his is the shipped one.
+  * Relayed via Condi's session, the playtest's point of contact: nothing is
+    needed from the art lane. The Shunter appears as Prod's graybox of pose
+    variant B. That is not a commission.
+* **2026-10-14 (delivered): the five weapons as an integration candidate.
+  STOP for the owner's in-game review.** Branch
+  `claude/archipepsi-art-weapon-integration-2026-10-14`.
+  * Bulkhead D (Fan) developed to the shared standard: 3,200 tris, 1280²
+    maps at 1,458 texels/m, BH-6 wear spec. One model for both variants
+    (Breacher works the Pump, Sweeper shows the Feed; Prod's runtime already
+    does both). `Bore0`-`Bore3` effect points; gameplay ideas are proposals.
+  * All five, plus the Glyph effects, run on Prod's v3 runtime in his range
+    (read-only checkout), Forward+ on software Vulkan (Compatibility does not
+    draw Decals; earlier art-lane captures could not show marks).
+    Clearance: nothing clips (near plane 0.05 m); nearest 0.096 m on the
+    Breacher's kick (placeholder 0.152), 0.142 on the Foundry's (0.200);
+    screen share 1.2-1.8% at rest, crosshair clear. Bulkhead impacts fired
+    from 3 m. Timing: the art's shots, readiness,
+    rest and part motion match his placeholder tick for tick.
+  * Memory, measured in Forward+: Sightline and Mass Driver 64.0 -> 42.3 MB
+    (the 10-13 GLB loads without mipmaps; with them, ~85 MB), Foundry and
+    Switchback 16.0 -> 12.0, Bulkhead 18.8. Same texels: L8 grey maps, an L8
+    lamp mask, the normal loaded as RG8 (pixel-identical), geometry-only
+    GLBs, cardinal packing at the reviewed density (2048 -> 1920). The
+    "96 MB" was the Compatibility renderer's count. VRAM compression is not
+    used; it is a separate decision for the owner and Prod.
+  * Found in Prod's runtime, reported in the note, not patched: the Driver's
+    impact root is added during the slug's `tree_exiting`, so his sparks,
+    light and impact sound never play; Godot renames repeat `Impact_`/`Mark_`
+    nodes. The adapter goes by his lists and plays the Driver impact from
+    the mark.
+  * Note for Prod: `docs/art-requests/2026-10-14-five-weapon-integration-note.md`.
+    Report: `docs/art/reports/2026-10-14-five-weapon-integration.md`.
+    Package: `docs/art/review/weapon_integration_2026-10-14/`.
+  * Waiting on: the owner's in-game review (a build Prod makes from the
+    note); Prod's answers (core-glow contract, Bore points, import route,
+    the adapter, the Driver bug).
+* **2026-10-14 (ruling and assignment): Bulkhead D chosen; prepare all
+  five weapons for playable integration.** Branch
+  `claude/archipepsi-art-weapon-integration-2026-10-14`.
+  * The owner chose Bulkhead D (Fan): develop it to the same fidelity,
+    keeping the four-barrel arrangement and its mechanical personality;
+    Breacher and Sweeper stay on one design (gameplay changes are
+    proposals only). Sightline, Switchback and Mass Driver directions are
+    approved for the next stage. The Foundry stays the benchmark.
+  * Assignment: prepare the five models and the layered Glyph effects for
+    integration against Prod's latest runtime (still v3 `ef157061`;
+    `8002d457` only adds a CLAUDE.md line): readiness/recoil timing,
+    muzzles, moving parts, ADS, firing events; verify first-person
+    clearance, timing, impacts and bullet marks. Record triangles,
+    materials, draw calls, texture memory; investigate the 96 MB maps and
+    cut unnecessary memory without losing detail (no global quality drop,
+    no new rendering system). No redesigns, no decorative clutter.
+  * Deliver the art package, integration instructions and comparison
+    captures; coordinate with Prod in writing; merge nothing; stop for the
+    owner's in-game review.
 * **2026-10-13 (delivered): weapon development pass. STOP for the owner's
   review.** Branch `claude/archipepsi-art-weapon-development-2026-10-13`.
   * Bulkhead revisited: three new clay concepts (C Spreader, D Fan, E Hatch
