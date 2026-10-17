@@ -80,6 +80,8 @@ PROTOTYPE DECISIONS (for this playtest only, not campaign rules)
     aside while a weapon is out.
   - When the Shunter loses interest, the music stays in combat (Condi's
     default; her open point 1).
+  - Consumables work only inside a Crossing. In the station, area 2 and
+    the Freight Bay the key says so and nothing is spent.
 
 STILL MISSING OR PLACEHOLDER
   - The Shunter has no art model: a graybox blockout (body, plough, brow

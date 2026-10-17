@@ -15,6 +15,10 @@ Prod, 2026-10-17, for Skyiah, with notes for Dess, Condi and Arty.
   - The Shunter is 0.9 × 1.9 m: it can't fit side-on and can't turn in the vestibule. Its turns are now refused where they'd overlap a wall.
   - The LEAVE THE BAY lever is outside the vestibule.
   - The check now holds: neither rush gets through, and the player keeps 100 HP.
+- **Consumables work only inside a Crossing** (your call, made by Condi on 2026-10-17, behind `--unified`).
+  - In the station, area 2 and the Freight Bay the consumable key is refused before anything is asked of the bridge.
+  - The HUD says "Consumables only work inside a Crossing."
+  - Checked in the station and in a Crossing. The ordinary consumable and bomb suites are unchanged.
 - Everything else in that build is CI and tests (see `docs/reports/2026-10-17-night-shift-prod.md`).
 
 ## Play it

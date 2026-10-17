@@ -118,6 +118,20 @@ func _phase_weapons() -> void:
 	_check(str(echo_b.equipped.get("component_id", "")) == "range_foundry",
 			"a snapshot's re-equip leaves the weapon out")
 
+	# Consumables work only inside a Crossing (the unified build's rule).
+	var refusals: Array = []
+	var on_refused := func(why: String) -> void: refusals.append(why)
+	hub.player.consumable_refused.connect(on_refused)
+	var intents_before := BridgeClient.sent_intents.size()
+	hub.player.press_slot("consumable")
+	await _settle(4)
+	_check(refusals == [Player.NOT_IN_A_CROSSING]
+			and BridgeClient.sent_intents.size() == intents_before
+			and _toast_says("Consumables only work inside a Crossing."),
+			"in the station the consumable key is refused, said, and "
+			+ "nothing is asked of the bridge (%s)" % str(refusals))
+	hub.player.consumable_refused.disconnect(on_refused)
+
 	# Into a Crossing with the Foundry out.
 	var forge := await _open_forge(hub, 1)
 	if forge == null:
@@ -131,6 +145,14 @@ func _phase_weapons() -> void:
 	if crossing == null:
 		return
 	armory = main.armory
+	var inside: Array = []
+	crossing.player.consumable_refused.connect(
+			func(why: String) -> void: inside.append(why))
+	crossing.player.press_slot("consumable")
+	await _settle(4)
+	_check(not Player.NOT_IN_A_CROSSING in inside and crossing.player.in_crossing(),
+			"inside a Crossing the station rule does not refuse the key (%s)"
+			% str(inside))
 	_check(armory != null and armory.player == crossing.player
 			and armory.out() == "foundry",
 			"through the door the Foundry is still out, on the new player")
@@ -315,6 +337,14 @@ func _impact_sounds(_hub: Node) -> Array:
 				and sound.stream.resource_path.get_file().contains("impact"):
 			out.append(sound)
 	return out
+
+
+## A toast on the HUD with exactly this text.
+func _toast_says(text: String) -> bool:
+	for child: Node in main.hud._toast_box.get_children():
+		if child is Label and (child as Label).text == text:
+			return true
+	return false
 
 
 func _key(key: int) -> void:
