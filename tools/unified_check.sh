@@ -4,12 +4,22 @@
 # exactly as the unified launcher starts them, on a fresh save folder.
 #
 #   tools/unified_check.sh [OUT_DIR] [phase ...]
+#   BUILD=<unpacked review build> tools/unified_check.sh OUT_DIR [phase ...]
+#       the same checks against the exported executable and the bridge
+#       source packed beside it (the clean-unpack verification)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
 OUT="$(realpath -m "${1:-$ROOT/.unified-check}")"; shift || true
 PHASES=("$@"); [ ${#PHASES[@]} -eq 0 ] && PHASES=(weapons)
 GODOT="${GODOT:-$ROOT/godot-bin/godot}"
+BRIDGE_DIR="$ROOT/bridge"
+PROJECT=(--path godot)
+if [ -n "${BUILD:-}" ]; then
+  GODOT="$BUILD/${BUILD_EXE:-Archipepsi-Unified-1.x86_64}"
+  BRIDGE_DIR="$BUILD/bridge"
+  PROJECT=()
+fi
 PY="${PY:-python3}"
 rm -rf "$OUT"; mkdir -p "$OUT"
 STATUS=0
@@ -21,14 +31,14 @@ for phase in "${PHASES[@]}"; do
     echo "FAIL: port 38290 is already in use (a bridge left running?)"
     STATUS=1; continue
   fi
-  (cd bridge && exec "$PY" -m archipepsi_bridge --ap=mock \
+  (cd "$BRIDGE_DIR" && exec "$PY" -m archipepsi_bridge --ap=mock \
       --mock-scale prototype --epsilon=fallback --d22-slice \
       --save-dir "$SAVES") > "$OUT/bridge-$phase.log" 2>&1 &
   BRIDGE=$!
   for _ in $(seq 50); do
     (exec 3<>/dev/tcp/127.0.0.1/38290) 2>/dev/null && break; sleep 0.2
   done
-  timeout "${PHASE_TIMEOUT:-600}" "$GODOT" --headless --path godot -- --d22-slice --unified \
+  timeout "${PHASE_TIMEOUT:-600}" "$GODOT" --headless "${PROJECT[@]}" -- --d22-slice --unified \
       --unified-live=$phase --d22-notes="$OUT/notes-$phase.json" \
       > "$OUT/godot-$phase.log" 2>&1
   RC=$?
