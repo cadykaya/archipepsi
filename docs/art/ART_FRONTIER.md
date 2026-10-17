@@ -3549,6 +3549,23 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Ruling, 2026-10-17 — rest lifted; the Shunter look sheet; Condi co-directs
+
+* The owner confirmed in this session (2026-10-17): start the Shunter look
+  sheet and the unfinished-art list. Condi co-directs with her, and the art
+  lane's questions go to Condi's session.
+* Shunter look sheet:
+  * a variant sheet, NOT a production model (the 2026-10-09 rule stands:
+    no model until the combat is proven fun);
+  * about seven variants plus a labelled control, one variable at a time,
+    same scale and camera, gameplay distances, numbers beside each;
+  * losing options kept in the source;
+  * inside D-20 rev 2's silhouette and telegraph needs: the horn, the brace
+    with the plough down, the lit lane, the vents; with the larger plough
+    and the upward vent;
+  * the identity and pale livery approved 2026-10-08 stand.
+  * Nothing is approved until she has played the fight.
+
 ### Ruling, 2026-10-16 — the five-weapon package goes into the first unified review build
 
 * The owner: the approved five-weapon art package is Prod's starting point

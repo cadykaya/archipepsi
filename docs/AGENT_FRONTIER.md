@@ -194,6 +194,28 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-17 (owner, confirmed in Arty's session): rest lifted. Shunter
+  look sheet first, then the unfinished-art list.** Branch
+  `claude/archipepsi-art-shunter-look-2026-10-17`.
+  * Relayed by Condi first, then confirmed by Skyiah directly in this
+    session's question. She added: "Condi is co directing with me, please
+    ask her if you have any questions"; questions go to Condi's session.
+  * Release direction (as relayed by Condi): the smallest fun, completable,
+    Crossing-focused campaign. Rooms and exploration first, then enemies,
+    then Echo gear.
+  * Shunter: a variant LOOK SHEET only, no production model.
+    * About seven variants plus the current graybox / pose-study B as a
+      labelled control.
+    * One variable at a time, at the same scale and camera, at gameplay
+      distances, with numbers beside each.
+    * Losing options stay in the source.
+    * Stay inside D-20 rev 2's silhouette and telegraph needs: the horn,
+      the brace with the plough down, the lit lane, the vents. Include the
+      larger plough and the upward vent flagged 10-08.
+    * Nothing approved: she picks after playing the fight.
+  * Also: list the unfinished, planned, unblocked art, sorted by release
+    need. Batch 023 and 024 are not to be treated as approved.
+  * Never on `integration/unified-1`. No watchers, no merges.
 * **2026-10-16 (owner): the five-weapon art package is approved as the
   starting point for Prod's first unified review build. The art lane is on
   call, not working.**
