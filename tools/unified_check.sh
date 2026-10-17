@@ -22,7 +22,7 @@ for phase in "${PHASES[@]}"; do
   for _ in $(seq 50); do
     (exec 3<>/dev/tcp/127.0.0.1/38290) 2>/dev/null && break; sleep 0.2
   done
-  "$GODOT" --headless --path godot -- --d22-slice --unified \
+  timeout "${PHASE_TIMEOUT:-600}" "$GODOT" --headless --path godot -- --d22-slice --unified \
       --unified-live=$phase --d22-notes="$OUT/notes-$phase.json" \
       > "$OUT/godot-$phase.log" 2>&1
   RC=$?

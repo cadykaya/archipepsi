@@ -61,6 +61,8 @@ var kills := 0
 var restarts := 0
 
 var _gate_closing_since := -1.0
+## A pull wants the gate shut; held open while the Shunter stands in it.
+var _gate_wants_closed := false
 var _watching: Player = null
 var _gate_reopen := 0.0
 var _steel: StandardMaterial3D
@@ -102,13 +104,18 @@ func _physics_process(delta: float) -> void:
 				annex_entered.emit()
 			else:
 				annex_left.emit()
-		var local := to_local(player.global_position)
-		var floor_now := local.x < -0.6 and local.y < 0.6 \
-				and absf(local.z) < D / 2.0
-		if floor_now and not on_bay_floor:
+		var floor_now := _on_floor(player)
+		if floor_now and not on_bay_floor and not player._dead:
 			# One way: the booth door closes behind you (D-20 §6).
 			booth_door.command(false)
 		on_bay_floor = floor_now
+	# D-20: it never closes on somebody. The shutter's own interlock
+	# watches the player; the Shunter is watched here, the same way: in
+	# the opening, the gate goes back up and closes again once it is clear.
+	if _gate_wants_closed and shunter != null and is_instance_valid(shunter):
+		var at := to_local(shunter.global_position) - GATE_AT
+		var in_opening := absf(at.x) < 2.0 and absf(at.z) < 1.3
+		gate.command(in_opening)          # up while it stands there, else down
 	if _gate_reopen > 0.0:
 		_gate_reopen -= delta
 		if _gate_reopen <= 0.0:
@@ -328,14 +335,29 @@ func _spawn() -> void:
 		lever.locked = false
 		lever.label = "CLOSE THE GATE"
 	booth_door.settle(true)
+	_gate_closing_since = -1.0
+	_gate_wants_closed = false
 
 
 func restart() -> void:
 	restarts += 1
 	_clear_marks()
 	_spawn()
-	on_bay_floor = false
+	# The door opens with everything else; it shuts again only when you
+	# next step down onto the floor, never on whoever is already there
+	# (a death in the bay restarts it with the body still on the floor).
+	var player := _player()
+	on_bay_floor = player != null and _on_floor(player)
 	restarted.emit()
+
+
+## The bay floor: anywhere in the bay at floor level except the booth's
+## corner and the ramp channel behind the booth door.
+func _on_floor(player: Node3D) -> bool:
+	var local := to_local(player.global_position)
+	var booth_side := local.z > 11.9 and local.x > -0.3
+	return local.y < 0.6 and absf(local.x) < W / 2.0 \
+			and absf(local.z) < D / 2.0 and not booth_side
 
 
 func _on_shunter_down() -> void:
@@ -349,7 +371,7 @@ func _clear_marks() -> void:
 	if armory == null:
 		return
 	for mark: Variant in armory.weapons.impacts.marks:
-		if mark is Node and is_instance_valid(mark) \
+		if is_instance_valid(mark) and mark is Node \
 				and is_ancestor_of(mark as Node):
 			(mark as Node).queue_free()
 
@@ -357,7 +379,10 @@ func _clear_marks() -> void:
 func _on_gate_lever(_lever: CallLever) -> void:
 	if not gate.is_open() or _gate_reopen > 0.0 or _gate_closing_since >= 0.0:
 		return
-	_gate_closing_since = Time.get_ticks_msec() / 1000.0
+	# Game time, in physics frames: wall-clock would count a slow frame.
+	_gate_closing_since = Engine.get_physics_frames() / float(
+			Engine.physics_ticks_per_second)
+	_gate_wants_closed = true
 	gate.command(false)
 	for lever in gate_levers:
 		lever.lock("GATE CLOSING")
@@ -365,10 +390,12 @@ func _on_gate_lever(_lever: CallLever) -> void:
 
 func _on_gate_closed() -> void:
 	if _gate_closing_since >= 0.0:
-		var took := Time.get_ticks_msec() / 1000.0 - _gate_closing_since
+		var took := Engine.get_physics_frames() / float(
+				Engine.physics_ticks_per_second) - _gate_closing_since
 		gate_log.append({"closed_in": took})
 		_gate_closing_since = -1.0
 	_gate_reopen = GATE_HELD
+	_gate_wants_closed = false
 	for lever in gate_levers:
 		lever.label = "GATE CLOSED"
 

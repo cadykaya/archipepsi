@@ -114,6 +114,13 @@ var _pending_state := ""
 var _was_hit := false
 var _rush_rest := Vector3.ZERO
 var _heavy_notice := false
+## The speed it meant to move at this frame (0 when holding), for the
+## base enemy's displacement test that turns a block into a sidestep.
+var _intended := 0.0
+## The longest it has pushed against something without moving (D-20
+## §8.A10: never more than 2 s against a pillar or the gate).
+var grind := 0.0
+var grind_max := 0.0
 var _reaim_min := 0.15
 ## Telemetry (D-20 §7.6): every state change and hit, and per-window damage.
 var events_log: Array = []
@@ -135,6 +142,8 @@ var _flash := 0.0
 var _jolt := Vector3.ZERO
 var _audio: AudioStreamPlayer3D
 var _horn: AudioStreamPlayer3D
+## Seconds a sidestep keeps its side while the way stays blocked.
+var _blocked_streak := 0.0
 
 const HORN_STREAM := "res://audio/sfx/shunter/shunter-horn-tuned.wav"
 
@@ -257,9 +266,12 @@ func _physics_process(delta: float) -> void:
 				_enter("reaim")
 		"reaim":
 			_do_reaim(delta, player)
+	_intended = 0.0 if state != "close" or velocity.length() < 0.5 \
+			else Vector2(velocity.x, velocity.z).length()
 	move_and_slide()
 	if state == "rush":
 		_rush_contacts(player)
+	_unstick(before, delta, player)
 	distance_moved += Vector2(global_position.x - before.x,
 			global_position.z - before.z).length()
 	_present(delta)
@@ -285,9 +297,19 @@ func _enter(next: String) -> void:
 			horned.emit()
 		"brace":
 			_cooldown_left = COOLDOWN
-			_brace_dir = -global_transform.basis.z
-			_brace_dir.y = 0.0
-			_brace_dir = _brace_dir.normalized()
+			# LOCKED ON WHERE THE PLAYER WAS when the wind-up starts, as the
+			# charger's rush always has been ([E] :839-849) -- not on its own
+			# facing, which may still be a few degrees off: at 11 m, 6 degrees
+			# is 1.15 m, outside the 1.0 m hit band.
+			var target := _find_player()
+			if target != null:
+				var to := target.global_position - global_position
+				_brace_dir = Vector3(to.x, 0.0, to.z).normalized()
+				rotation.y = atan2(-_brace_dir.x, -_brace_dir.z)
+			else:
+				_brace_dir = -global_transform.basis.z
+				_brace_dir.y = 0.0
+				_brace_dir = _brace_dir.normalized()
 			_show_lane()
 			_begin_telegraph("charge", BRACE_SECONDS)
 			_placeholder("windup")          # PLACEHOLDER: the plough scrape
@@ -405,8 +427,15 @@ func _do_close(delta: float, player: Player) -> void:
 			and _facing(flat) and _has_line_of_sight(player):
 		_enter("brace")
 		return
-	if distance > STOP_AT:
+	# NEVER A PERMANENT HIDING PLACE (D-20 §6): without a clear line it does
+	# not stop at its stand-off -- it keeps coming, and the unstick carries
+	# it round the gate or a pillar until it can see the player again.
+	var sees := _has_line_of_sight(player)
+	if distance > STOP_AT or not sees:
 		var dir := flat.normalized()
+		_sidestep_timer = maxf(0.0, _sidestep_timer - delta)
+		if _sidestep_timer > 0.0:
+			dir = _sidestep_dir
 		velocity.x = lerpf(velocity.x, dir.x * CLOSE_SPEED, 0.2)
 		velocity.z = lerpf(velocity.z, dir.z * CLOSE_SPEED, 0.2)
 	else:
@@ -438,6 +467,19 @@ func _rush_contacts(player: Player) -> void:
 			continue                        # the floor
 		var other := hit.get_collider()
 		if other is Player:
+			# THE BODY TOUCHED THEM. Capsule and box meet at a centre
+			# distance of exactly 0.95 + 0.4 = 1.35 m, D-20's contact
+			# length, so rounding can leave `_contact` a hair outside while
+			# the bodies are pressed together. Touching is contact -- unless
+			# their feet are above the plough (the jump).
+			if (other as Player).global_position.y - global_position.y \
+					< HIT_FEET:
+				(other as Player).take_damage(RUSH_DAMAGE, global_position)
+				(other as Player).receive_knockback(_brace_dir * SHOVE)
+				rushes_taken += 1
+				_log("rush_hit", {"damage": RUSH_DAMAGE, "by": "touch"})
+				_end_rush("hit")
+				return
 			continue
 		if other is DestructibleCover:
 			(other as DestructibleCover).take_damage(
@@ -494,6 +536,42 @@ func _do_reaim(delta: float, player: Player) -> void:
 			_enter("brace")
 		else:
 			_enter("close")
+
+
+## THE BASE ENEMY'S UNSTICK ([E] ~770-785): meant to move, barely did, so
+## slide sideways for a beat, alternating sides -- which is how it walks
+## round the closed freight gate rather than grinding into it.
+func _unstick(before: Vector3, delta: float, player: Player) -> void:
+	if _intended <= 0.0 or player == null:
+		grind = 0.0
+		return
+	var moved := Vector2(global_position.x - before.x,
+			global_position.z - before.z).length()
+	_blocked_streak = maxf(0.0, _blocked_streak - delta)
+	if moved < _intended * delta * 0.35:
+		grind += delta
+		grind_max = maxf(grind_max, grind)
+		if _sidestep_timer <= 0.0:
+			var toward := player.global_position - global_position
+			var side := Vector3(toward.z, 0.0, -toward.x).normalized()
+			if _blocked_streak > 0.0:
+				# Still blocked by the same thing: keep going the same way,
+				# so the 6 m gate frame is walked round rather than rocked
+				# against (alternating only clears something narrower than
+				# one step).
+				var was := Vector3(_sidestep_dir.x, 0.0, _sidestep_dir.z)
+				_sidestep_dir = side if side.dot(was) >= 0.0 else -side
+			else:
+				_sidestep_flip = not _sidestep_flip
+				_sidestep_dir = -side if _sidestep_flip else side
+			# Edging off a little as it steps, so its plough's corner does
+			# not stay wedged on a frame post or a pillar.
+			_sidestep_dir = (_sidestep_dir - toward.normalized() * 0.45).normalized()
+			# A second step the same way is a longer one: it is going round.
+			_sidestep_timer = 1.0 if _blocked_streak > 0.0 else 0.55
+			_blocked_streak = _sidestep_timer + 1.2
+	else:
+		grind = 0.0
 
 
 ## Out of mind: more than 18 m away for 4 s, back to work (the existing
