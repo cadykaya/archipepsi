@@ -1,0 +1,233 @@
+{
+ "route_walk": {
+  "all": {
+   "terminus entry to the prize": {
+    "completed": true,
+    "jumps": 0
+   },
+   "terminus entry to the west door": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to exit": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the east branch": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the west bay": {
+    "completed": true,
+    "jumps": 0
+   }
+  },
+  "base": {
+   "terminus entry to the prize": {
+    "completed": true,
+    "jumps": 0
+   },
+   "terminus entry to the west door": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to exit": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the east branch": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the west bay": {
+    "completed": true,
+    "jumps": 0
+   }
+  },
+  "board": {
+   "terminus entry to the prize": {
+    "completed": true,
+    "jumps": 0
+   },
+   "terminus entry to the west door": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to exit": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the east branch": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the west bay": {
+    "completed": true,
+    "jumps": 0
+   }
+  },
+  "control": {
+   "terminus entry to the prize": {
+    "completed": true,
+    "jumps": 0
+   },
+   "terminus entry to the west door": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to exit": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the east branch": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the west bay": {
+    "completed": true,
+    "jumps": 0
+   }
+  },
+  "face": {
+   "terminus entry to the prize": {
+    "completed": true,
+    "jumps": 0
+   },
+   "terminus entry to the west door": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to exit": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the east branch": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the west bay": {
+    "completed": true,
+    "jumps": 0
+   }
+  },
+  "skin": {
+   "terminus entry to the prize": {
+    "completed": true,
+    "jumps": 0
+   },
+   "terminus entry to the west door": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to exit": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the east branch": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the west bay": {
+    "completed": true,
+    "jumps": 0
+   }
+  },
+  "top": {
+   "terminus entry to the prize": {
+    "completed": true,
+    "jumps": 0
+   },
+   "terminus entry to the west door": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to exit": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the east branch": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the west bay": {
+    "completed": true,
+    "jumps": 0
+   }
+  },
+  "trunks": {
+   "terminus entry to the prize": {
+    "completed": true,
+    "jumps": 0
+   },
+   "terminus entry to the west door": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to exit": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the east branch": {
+    "completed": true,
+    "jumps": 0
+   },
+   "triad entry to the west bay": {
+    "completed": true,
+    "jumps": 0
+   }
+  }
+ },
+ "threshold_grey": 24,
+ "view_changed_share": {
+  "BAY_TERMINUS_1_one_neighbour_both_branches_sealed": {
+   "all": 0.382,
+   "base": 0.0378,
+   "board": 0.0026,
+   "control": 0.0,
+   "face": 0.1289,
+   "skin": 0.3809,
+   "top": 0.0466,
+   "trunks": 0.0086
+  },
+  "BAY_TERMINUS_2_same_view_one_branch_open": {
+   "all": 0.382,
+   "base": 0.0378,
+   "board": 0.0026,
+   "control": 0.0,
+   "face": 0.1289,
+   "skin": 0.3809,
+   "top": 0.0466,
+   "trunks": 0.0086
+  },
+  "BAY_TERMINUS_3_the_open_branch": {
+   "all": 0.117,
+   "base": 0.0009,
+   "board": 0.0473,
+   "control": 0.0,
+   "face": 0.0,
+   "skin": 0.0864,
+   "top": 0.0108,
+   "trunks": 0.0
+  },
+  "JUNCTION_TRIAD_1_the_approach": {
+   "all": 0.2868,
+   "base": 0.0202,
+   "board": 0.008,
+   "control": 0.0,
+   "face": 0.0323,
+   "skin": 0.2768,
+   "top": 0.0385,
+   "trunks": 0.029
+  },
+  "JUNCTION_TRIAD_2_the_decision_point": {
+   "all": 0.2853,
+   "base": 0.0172,
+   "board": 0.0067,
+   "control": 0.0,
+   "face": 0.0403,
+   "skin": 0.306,
+   "top": 0.0504,
+   "trunks": 0.0
+  }
+ }
+}

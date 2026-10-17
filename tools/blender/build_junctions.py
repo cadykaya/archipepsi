@@ -90,6 +90,27 @@ GROOVE_W, GROOVE_D = 0.40, 0.06
 #: A closure is the aperture + 0.6 m, so the collar clears it by 0.30 m.
 COLLAR = 0.30
 
+#: THE PRESENTATION PASS ON THE TRIAD AND THE TERMINUS, AS VARIANTS.
+#: (Arty, 2026-10-17.) Empty by default, and empty builds exactly what
+#: shipped: the committed GLBs and manifest do not move until the owner
+#: picks. A variant build names its parts and a SCRATCH directory --
+#:
+#:   blender -b --python build_junctions.py -- \
+#:       --presentation=skin,base --out=/scratch/x --only=shell_bay_terminus
+#:
+#: -- and refuses to write under `assets/`. Each part is one of the cross's
+#: stage-3 changes, re-fitted to a room whose mass is its corner fills
+#: rather than a free-standing plant (see 2026-09-13-presentation-study):
+#:
+#:   skin    the fills in `trim` plating instead of `wall`
+#:   base    a 0.30 m bund along every face the fills turn to the floor
+#:   top     the fills step back above a head course
+#:   face    the cross's desk, hatch and pipe heads on one side of the way in
+#:   board   gauge boards where the decision point and the arrival look
+#:   trunks  overhead lines that do what the room does: split, or stop
+PRESENT = frozenset()
+PRESENT_PARTS = ("skin", "base", "top", "face", "board", "trunks")
+
 _IMAGES = {}
 #: ONE material object per role, shared by every block that wears it.
 #: Making a fresh material called `floor` for each of a hundred blocks gets
@@ -446,6 +467,66 @@ def _groove_floor(room, spine_x, spine_z, arms):
     return in_x, z0, z1
 
 
+def _mass(r, tag, x0, x1, za, zb, ox, oz, top):
+    """A corner fill, carrying whichever presentation parts are on.
+
+    `ox` and `oz` are the x and the z of the fill's faces onto the floor;
+    `top` is the (height, inset) of its head course. With no parts on it
+    is `r.fill`, called exactly as before.
+    """
+    if not PRESENT:
+        r.fill(tag, x0, x1, za, zb)
+        return
+    role = "trim" if "skin" in PRESENT else "wall"
+    cx, cz = (x0 + x1) / 2.0, (za + zb) / 2.0
+    if "top" not in PRESENT:
+        r.block(tag, (x1 - x0, zb - za, r.h), (cx, roomkit.y(cz), r.h / 2.0),
+                role, "wall")
+    else:
+        h, inset = top
+        r.block(tag, (x1 - x0, zb - za, h), (cx, roomkit.y(cz), h / 2.0),
+                role, "wall")
+        ux0, ux1, uz0, uz1 = x0, x1, za, zb
+        if ox == x0:
+            ux0 += inset
+        elif ox == x1:
+            ux1 -= inset
+        if oz == za:
+            uz0 += inset
+        elif oz == zb:
+            uz1 -= inset
+        r.block(tag + "_head", (ux1 - ux0, uz1 - uz0, r.h - h),
+                ((ux0 + ux1) / 2.0, roomkit.y((uz0 + uz1) / 2.0),
+                 (h + r.h) / 2.0), role, "wall")
+    if "base" in PRESENT:
+        # The cross's bund: 0.30 m proud, 0.40 m tall, round the corner.
+        b, bh = 0.30, 0.40
+        bz0, bz1 = za, zb
+        if oz == zb:
+            bz1 += b
+        elif oz == za:
+            bz0 -= b
+        bx = ox - b / 2.0 if ox == x0 else ox + b / 2.0
+        r.block(tag + "_bund_x", (b, bz1 - bz0, bh),
+                (bx, roomkit.y((bz0 + bz1) / 2.0), bh / 2.0), "trim", "wall")
+        bz = oz - b / 2.0 if oz == za else oz + b / 2.0
+        r.block(tag + "_bund_z", (x1 - x0, b, bh),
+                (cx, roomkit.y(bz), bh / 2.0), "trim", "wall")
+
+
+def _working_face(r, desk, hatch, pipes):
+    """The cross's working face -- desk, hatch, pipe heads -- on a fill's
+    x-face. Each is an (x, z) centre, already set off the face the way
+    the cross sets them: desk 0.95, hatch 0.18, pipe heads 0.55."""
+    r.block("desk", (2.6, 0.9, 1.05),
+            (desk[0], roomkit.y(desk[1]), 0.525), "accent", "wall")
+    r.block("hatch", (0.35, 2.6, 2.6),
+            (hatch[0], roomkit.y(hatch[1]), 1.3), "accent", "wall")
+    for j, (px, cz) in enumerate(pipes):
+        r.block("pipe_head_%d" % j, (0.9, 0.9, 3.2),
+                (px, roomkit.y(cz), 1.6), "wall", "wall")
+
+
 def triad():
     """`shell_junction_triad` -- three ways out of a sorting floor.
 
@@ -482,12 +563,14 @@ def triad():
            -GROOVE_D + 0.001, 0.20, declare=False)
 
     # The four corners are mass, and that is what makes this a junction.
-    for tag, x0, x1, za, zb in (
-            ("fill_sw", -in_x, -spine, z0, arm_z0),
-            ("fill_se", spine, in_x, z0, arm_z0),
-            ("fill_nw", -in_x, -spine, arm_z1, z1),
-            ("fill_ne", spine, in_x, arm_z1, z1)):
-        r.fill(tag, x0, x1, za, zb)
+    for tag, x0, x1, za, zb, ox, oz in (
+            ("fill_sw", -in_x, -spine, z0, arm_z0, -spine, arm_z0),
+            ("fill_se", spine, in_x, z0, arm_z0, spine, arm_z0),
+            ("fill_nw", -in_x, -spine, arm_z1, z1, -spine, arm_z1),
+            ("fill_ne", spine, in_x, arm_z1, z1, spine, arm_z1)):
+        # Head course at 4.8 m, above the 4.6 m arm headers; set back
+        # 0.9 m, the cross's hood.
+        _mass(r, tag, x0, x1, za, zb, ox, oz, (4.8, 0.9))
 
     r.ceiling_relief(beams_z=(5.0, 21.0), soffit=1.2, band=3.2)
 
@@ -520,6 +603,33 @@ def triad():
             (0.0, roomkit.y(22.6), DOOR_H + 0.9), "accent", "wall")
     r.block("east_shutter", (0.5, 3.4, 0.8),
             (11.9, roomkit.y(13.0), DOOR_H + 0.5), "accent", "wall")
+
+    # --- presentation variants (off unless asked for; see PRESENT) -----
+    if "face" in PRESENT:
+        # The west side of the way in is the worked side, as the cross's
+        # bay side is: desk and pipe head before the bay, hatch after.
+        _working_face(r, (-spine + 0.95, 6.5), (-spine + 0.18, 20.0),
+                      ((-spine + 0.55, 8.6), (-spine + 0.55, 17.4)))
+    if "board" in PRESENT:
+        # On the north fills' south faces: one closes the view into the
+        # bay from the decision point, one reads through the east arm
+        # from the approach.
+        for j, cx in enumerate((-9.2, 9.2)):
+            r.block("gauge_board_%d" % j, (3.2, 0.22, 1.5),
+                    (cx, roomkit.y(arm_z1 - 0.11), 2.05), "accent", "wall",
+                    readable=True)
+    if "trunks" in PRESENT:
+        # THE LINE SPLITS HERE, overhead. Two lines come in over the
+        # entry; one runs on to the north door, the other turns east down
+        # the arm to the branch. 4.9-5.5 m: over the 4.6 m headers, under
+        # the 5.8 m soffit and beams.
+        r.block("trunk_0", (0.6, z1 - z0, 0.6),
+                (-1.2, roomkit.y((z0 + z1) / 2.0), 5.2), "wall", "wall")
+        r.block("trunk_1", (0.6, mid_z + 0.3 - z0, 0.6),
+                (1.2, roomkit.y((z0 + mid_z + 0.3) / 2.0), 5.2),
+                "wall", "wall")
+        r.block("trunk_1_east", (in_x - 0.9, 0.6, 0.6),
+                ((0.9 + in_x) / 2.0, roomkit.y(mid_z), 5.2), "wall", "wall")
 
     r.socket_at("entry", "south", mid_x, "spine_ws")
     r.socket_at("exit", "north", mid_x, "spine_wn")
@@ -795,8 +905,11 @@ def terminus():
     r.slab("approach_e", half, arm, z0, mouth, 0.0, 0.20)
     r.slab("chamber_w", -in_x, -half, mouth, z1, 0.0, 0.20)
     r.slab("chamber_e", half, in_x, mouth, z1, 0.0, 0.20)
-    for tag, x0, x1 in (("fill_sw", -in_x, -arm), ("fill_se", arm, in_x)):
-        r.fill(tag, x0, x1, z0, mouth)
+    for tag, x0, x1, ox in (("fill_sw", -in_x, -arm, -arm),
+                            ("fill_se", arm, in_x, arm)):
+        # Head course at 4.0 m. Set back 0.5, not the cross's 0.9: the
+        # mouth header ends at x +-4.5 and has to meet the face above it.
+        _mass(r, tag, x0, x1, z0, mouth, ox, mouth, (4.0, 0.5))
 
     r.ceiling_relief(beams_z=(5.0, 18.0), soffit=1.0, band=2.8)
     r.block("mouth_header", (9.0, 0.6, 1.0),
@@ -818,6 +931,30 @@ def terminus():
     for j, cx in enumerate((-6.6, 6.6)):
         r.block("drum_%d" % j, (1.2, 1.2, 1.4),
                 (cx, roomkit.y(19.6), 0.7), "trim", "wall")
+
+    # --- presentation variants (off unless asked for; see PRESENT) -----
+    if "face" in PRESENT:
+        # The way in is a working approach: desk and a pipe head on the
+        # west face, the hatch and the other pipe head on the east.
+        _working_face(r, (-arm + 0.95, 4.0), (arm - 0.18, 6.0),
+                      ((-arm + 0.55, 8.0), (arm - 0.55, 9.2)))
+    if "board" in PRESENT:
+        # One on the end wall, met from the door; one on the chamber face
+        # of the east fill, met on the way out.
+        r.block("gauge_board_0", (3.2, 0.22, 1.5),
+                (5.6, roomkit.y(z1 - 0.11), 2.05), "accent", "wall",
+                readable=True)
+        r.block("gauge_board_1", (3.2, 0.22, 1.5),
+                (6.2, roomkit.y(mouth + 0.11), 2.05), "accent", "wall",
+                readable=True)
+    if "trunks" in PRESENT:
+        # THE LINE STOPS HERE, overhead. Two lines come in over the
+        # approach and end in the recess head. 4.625-4.975 m: over the
+        # 4.6 m mouth header, under the 5.0 m soffit and beams.
+        for j, side in enumerate((-1.0, 1.0)):
+            r.block("trunk_%d" % j, (0.35, z1 - 0.5 - z0, 0.35),
+                    (side * 1.2, roomkit.y((z0 + z1 - 0.5) / 2.0), 4.8),
+                    "wall", "wall")
 
     r.socket_at("entry", "south", 0.0, "approach_w")
     r.socket_at("branch_east", "east", side_z, "chamber_e")
@@ -848,16 +985,72 @@ SHELLS = (("shell_junction_triad", triad),
           ("shell_bay_terminus", terminus))
 
 
+def _options():
+    """`--key=value` after Blender's `--`. None at all is the shipped build."""
+    argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    opts = {}
+    for arg in argv:
+        if not (arg.startswith("--") and "=" in arg):
+            raise SystemExit("[art] unknown argument %r" % arg)
+        key, value = arg[2:].split("=", 1)
+        if key not in ("presentation", "out", "only"):
+            raise SystemExit("[art] unknown option --%s" % key)
+        opts[key] = value
+    return opts
+
+
+def _variant_build(opts):
+    """Point this run at a SCRATCH tree, and switch the parts on.
+
+    Refuses anything under `assets/`: a variant is a picture for the owner
+    to choose from, and the shipped rooms change only when she has.
+    """
+    global PRESENT
+    if "out" not in opts:
+        raise SystemExit("[art] a variant build needs --out=<scratch dir>")
+    scratch = os.path.abspath(opts["out"])
+    assets = os.path.abspath(os.path.join(common.REPO_ROOT, "assets"))
+    if (scratch + os.sep).startswith(assets + os.sep):
+        raise SystemExit("[art] refusing to write a variant under %s"
+                         % assets)
+    asked = opts.get("presentation", "control")
+    if asked == "control":
+        PRESENT = frozenset()
+    elif asked == "all":
+        PRESENT = frozenset(PRESENT_PARTS)
+    else:
+        PRESENT = frozenset(asked.split(","))
+    unknown = PRESENT - set(PRESENT_PARTS)
+    if unknown:
+        raise SystemExit("[art] unknown presentation part(s): %s"
+                         % ", ".join(sorted(unknown)))
+    common.MODEL_DIR = scratch
+    shells = SHELLS
+    if opts.get("only"):
+        wanted = opts["only"].split(",")
+        shells = tuple(s for s in SHELLS if s[0] in wanted)
+        if len(shells) != len(wanted):
+            raise SystemExit("[art] --only names an unknown shell")
+    common.log("variant build: %s -> %s"
+               % (",".join(sorted(PRESENT)) or "control", scratch))
+    return os.path.join(scratch, OUT, "manifest.json"), shells
+
+
 def main():
     report = {}
-    out = os.path.join(common.REPO_ROOT, "assets", "models", "batch044",
-                       "shells", "manifest.json")
+    opts = _options()
+    if opts:
+        out, shells = _variant_build(opts)
+    else:
+        out = os.path.join(common.REPO_ROOT, "assets", "models", "batch044",
+                           "shells", "manifest.json")
+        shells = SHELLS
     os.makedirs(os.path.dirname(out), exist_ok=True)
     manifest = {}
     if os.path.exists(out):
         with open(out, encoding="utf-8") as handle:
             manifest = json.load(handle)
-    for cid, builder in SHELLS:
+    for cid, builder in shells:
         common.reset_scene()
         _IMAGES.clear()
         _MATERIALS.clear()

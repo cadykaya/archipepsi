@@ -194,6 +194,25 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-17 (delivered): Batch 044's triad and terminus presentation
+  pass, as seven variants and a control. STOP for Skyiah's pick.** Branch
+  `claude/archipepsi-art-shunter-look-2026-10-17`. The committed rooms are
+  unchanged.
+  * `build_junctions.py --presentation=<parts> --out=<scratch>` builds any
+    combination of skin, base, top, face, board and trunks into scratch,
+    and refuses `assets/`. The plain build is byte-identical to the
+    committed GLBs (checked).
+  * All 16 builds pass the collision asserts. Every triad and terminus
+    route walks with zero jumps in every variant.
+  * Findings: skin is the named fix and the loudest (28-38% of the view);
+    top costs about 4-5% and gives the masses a top; trunks draw the
+    triad's split overhead; face squeezes the terminus approach to 5.75 m;
+    the boards barely register from the door.
+  * Report: `docs/art/reports/2026-10-17-batch044-presentation-variants.md`.
+    Numbers and README: `docs/art/review/batch044_presentation_2026-10-17/`.
+    The sheets were sent in chat and are not committed. Regenerate with
+    `tools/batch044_presentation.sh`.
+  * Still open (Condi, Q3): are these rooms in the release's Crossings?
 * **2026-10-17 (delivered): the Shunter look sheet, disposable. STOP; it
   waits for Skyiah to play the fight.** Branch
   `claude/archipepsi-art-shunter-look-2026-10-17`.

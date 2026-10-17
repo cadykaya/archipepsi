@@ -3549,6 +3549,34 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-17 — Batch 044's triad and terminus presentation pass, as variants. STOPPED for the owner's pick.
+
+* This is AF 163-168's "next Art task", done as seven single-variable
+  variants plus the control. **Nothing shipped changed.**
+  `assets/models/batch044/shells/` is byte-identical, and the variants
+  were built into scratch by `build_junctions.py --presentation=… --out=…`,
+  which refuses `assets/`.
+* Parts (`PRESENT_PARTS`), each the cross's stage-3 change refitted to the
+  corner fills:
+  * skin: `trim` plating;
+  * base: a 0.30 m bund;
+  * top: a head course, stepped back;
+  * face: desk, hatch and pipe heads;
+  * board: gauge boards;
+  * trunks: overhead lines that split in the triad and stop in the
+    terminus.
+* Checks: collision asserts pass on all 16 builds; the route walk shows
+  zero jumps on every triad and terminus route in every variant; triangles
+  rise from 672 to 924 (triad, all) and from 516 to 684 (terminus, all).
+* Readings (proposal only): top + base + trunks for both rooms, with skin
+  if its noise is acceptable; face for the triad only (in the terminus it
+  narrows the 8 m approach to 5.75 m); boards optional.
+* Report: `docs/art/reports/2026-10-17-batch044-presentation-variants.md`.
+  The sheets were sent in chat and are not committed.
+* Still open: are these rooms in the release's Crossings (Condi, Q3)?
+  When a pick comes back, build it into `assets/` with the normal build
+  and check it again.
+
 ### Delivered, 2026-10-17 — the Shunter look sheet (disposable). STOPPED for the owner's pick after she plays the fight.
 
 * `tools/blender/study_shunter_looks.py` builds the looks: C0 control

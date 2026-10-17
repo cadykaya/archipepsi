@@ -86,3 +86,27 @@ Nothing is approved; it waits for Skyiah to play the fight.
 **In one line:** L2 (a bright lip band) and L4 (a lifting vent stack) make the telegraphs louder at no cost; L1 (a V-prow) is an identity option; L5 (a low hull) hides the horn lamps at 20 m and L7 (two-tone) loses a quarter of the side silhouette; L3 and L6 are taste.
 
 Question 3, Batch 044, is still open.
+
+## Update, 2026-10-17 (later still): Batch 044's presentation pass is done, as variants
+
+I went ahead with it while question 3 is open, because it changes nothing shipped:
+- Every variant was built into scratch.
+- The committed rooms are byte-identical.
+- If the answer to question 3 is "not in the release", nothing needs undoing.
+
+- **What:** the triad and the terminus, the control plus seven variants, one variable each:
+  1. skin
+  2. base
+  3. top
+  4. face
+  5. board
+  6. trunks
+  7. all together
+
+  The views are the existing staged-preview cameras.
+- **Checks:** the collision asserts pass on every build, and every route in both rooms walks with no jumps in every variant.
+- **The sheets:** sent to Skyiah in chat (start with `B44_0_overview`); not committed. README and numbers: `docs/art/review/batch044_presentation_2026-10-17/`. Report: `docs/art/reports/2026-10-17-batch044-presentation-variants.md`.
+
+**In one line:** skin is the named fix and the loudest change (about a third of every view becomes plating); top + base + trunks is the cheap structural read; face suits the triad but squeezes the terminus approach to 5.75 m; boards barely register from the door.
+
+**Question 4:** which combination, if any, should go into the shipped rooms? It is one build either way.
