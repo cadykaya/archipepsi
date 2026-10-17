@@ -12,7 +12,7 @@ Prod, for Condi (co-directing) and Skyiah. This covers the queue Condi relayed a
 | # | Item | State |
 |---|---|---|
 | 1 | Dess and Vera's pre-playtest findings on `349ef77f` | **Nothing received yet.** Nothing to fix until findings arrive. |
-| 2 | The CI blocker: Integration cancelled at its 30-minute cap | **Fixed** (`50fee713`, with a follow-up). On GitHub all seven Godot shards passed in 12.5 to 14 minutes each. |
+| 2 | The CI blocker: Integration cancelled at its 30-minute cap | **Fixed: Integration is green on GitHub** (run 39004900974, `72f0cc43`). The Python job and all seven Godot shards passed, about 13 minutes each. It's the first Integration run on this lineage to finish. |
 | 3 | S21 settings/input/a11y and S22 packaging/first-run | **Audited.** Both are marked done in the frontier. Each remaining piece of the plan needs a design call, listed below for Skyiah or the menu lane. Nothing was built. |
 | 4 | Dess's per-game Crossing family table | **Not received yet.** |
 

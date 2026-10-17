@@ -29,6 +29,19 @@ Report: `docs/reports/2026-10-17-unified-integration-1.md`.
 - **Next:** none authorised. Wait for the owner's play. Nothing is
   promoted to the campaign without their approval.
 - **Still held, do not start:** HB-F4g, HB-F4f, the CK9-F1 sweep.
+- **Night shift 2026-10-17 (Condi's queue; report
+  `docs/reports/2026-10-17-night-shift-prod.md`):**
+  - **CI fixed:** Integration runs as `python` + seven Godot shards
+    (`tools/ci/godot_shards.txt`, `run_shard.sh`); green on `72f0cc43`.
+    `test_ci_coverage.py` / `test_ci_shards.py` guard the lists.
+    Re-balance from the per-target times each shard prints.
+  - **PR gate:** only "Packet prose against the models" is red. That's
+    D-22 slice drift in `schemas/protocol.py` / `transitions.py`; the
+    packet is Dess's to reconcile.
+  - **S21/S22:** audited. The remaining pieces need design calls (the
+    Settings face re-layout, controller scope, first-run flows).
+  - **Waiting:** Dess and Vera's findings on 349ef77f; Dess's family table.
+  - **Off limits tonight:** the Amalgam paths (Dess).
 
 ## PROD LANE (previous) — D-22 slice delivered for play; STOPPED (2026-10-16)
 
