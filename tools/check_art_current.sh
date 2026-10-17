@@ -513,10 +513,38 @@ SCRIPTS="build_materials build_architecture build_props
 # name that happens to sit at the end of a line is still delimited by spaces.
 # (The first version quoted it, and flagged all six line-terminal builders.)
 listed=" $(echo $SCRIPTS) "
+
+# STUDY PIPELINES, NOT ASSET BUILDERS. (2026-10-17.) The weapon studies of
+# 10-13/10-14 are multi-stage pipelines (`tools/foundry_study.sh`,
+# `tools/weapon_model.sh`, the forms and Bulkhead sheets) that write ONLY to
+# an OUT folder they are given -- each says "written outside `assets/`" --
+# and their committed record is review images. There is nothing in
+# `assets/` for a rebuild to compare, so they cannot be in SCRIPTS; they
+# were simply never named, and this guard has failed on them since. An
+# exemption is not a pass: an exempt builder that can reach a shipped
+# writer (`common.export_*`, MODEL_DIR, TEXTURE_DIR, REPO_ROOT) FAILS, and
+# so does a name here that no longer exists. New scratch-only work should
+# be named `study_*.py`, which this loop does not see.
+STUDIES="build_bulkhead_concepts build_foundry_study build_weapon_forms
+  build_weapon_model"
+studies=" $(echo $STUDIES) "
+for name in $STUDIES; do
+  [ -f "tools/blender/$name.py" ] || fail "$name is exempted as a study in
+  tools/check_art_current.sh and no longer exists. Remove it from STUDIES."
+done
 for f in tools/blender/build_*.py; do
   name=$(basename "$f" .py)
   case "$listed" in
-    *" $name "*) ;;
+    *" $name "*) continue ;;
+  esac
+  case "$studies" in
+    *" $name "*)
+      if grep -qE 'common\.export_|MODEL_DIR|TEXTURE_DIR|REPO_ROOT' "$f"; then
+        fail "$name is exempted as a study, but it can reach a shipped
+  writer (common.export_*, MODEL_DIR, TEXTURE_DIR or REPO_ROOT). A study
+  writes only to the folder it is given; move it to SCRIPTS if it builds
+  assets."
+      fi ;;
     *) fail "$name is not in this script's rebuild list, so nothing proves
   the art it writes came from its source. Add it to SCRIPTS in
   tools/check_art_current.sh." ;;
