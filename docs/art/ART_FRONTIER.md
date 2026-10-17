@@ -3549,6 +3549,33 @@ played G1. Support only Prod's specific fit, collision and state issues.
 
 **Next: STOP.** No production model until the combat is proven fun.
 
+### Delivered, 2026-10-17 — the Shunter look sheet (disposable). STOPPED for the owner's pick after she plays the fight.
+
+* `tools/blender/study_shunter_looks.py` builds the looks: C0 control
+  (pose-study B), L1 V-prow, L2 lip band, L3 one lamp bar, L4 lifting
+  stack, L5 low hull, L6 reverse-knee, L7 two-tone, and R (a replica of
+  Prod's graybox). Each look is shot in four states: work, notice, brace
+  (with the lit lane) and recover.
+* `tools/shunter_looks.sh`: each pose alone in Crossing D's yard, read-only
+  checkout, Forward+, four cameras (F20 1.2 m east of 10-09's
+  column-blocked spot). Sheets SL0-SL4 and `shunter_look_numbers.json`.
+* Readings (proposal only): L2 and L4 add telegraph read at no silhouette
+  cost; L1 is an identity option; avoid L5 (it hides the horn lamps at
+  20 m) and L7 (side silhouette -25%); L3 and L6 are taste. The pale livery
+  out-telegraphs the dark graybox.
+* Unfinished-art list for Condi:
+  `docs/art-requests/2026-10-17-art-lane-open-work-for-condi.md`. Open
+  question: are Batch 044's rooms in the release's Crossings?
+* **Git space (owner, via Condi, 2026-10-17):**
+  * review renders, sheets, GIFs, PDFs and zips stay OUT of git, and go
+    to the owner in chat;
+  * commit scripts, source and the final picked asset only; small images,
+    once;
+  * one working art branch (`claude/archipepsi-art-shunter-look-2026-10-17`).
+  * The look sheets were therefore dropped from this branch before it was
+    used by anyone: they had been pushed for about ten minutes, and the
+    rewrite touched only this branch.
+
 ### Ruling, 2026-10-17 — rest lifted; the Shunter look sheet; Condi co-directs
 
 * The owner confirmed in this session (2026-10-17): start the Shunter look

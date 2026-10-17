@@ -69,3 +69,20 @@ Nothing is unblocked:
    - The Freight Bay is the real arena, but it lives on `unified-1`, which is being rebuilt, and I stay off it.
    - If you'd rather have the Freight Bay later, it can be re-shot from the same source.
 3. **Batch 044's presentation pass.** Are Batch 044's triad and terminus rooms part of the release's Crossings? If yes, that pass is my next room job after the Shunter sheet. If not, the next room work waits on the Crossing brief and the palette decisions above.
+
+## Update, 2026-10-17 (later): the Shunter look sheet is done
+
+I went ahead with questions 1 and 2 as planned:
+- **Control and reference:** C0 is pose-study B, with Prod's graybox as reference row R.
+- **Arena:** Crossing D's yard and the 10-09 cameras. F20 is moved 1.2 m east, because a yard column hid half the pose there.
+
+If either should be different, it is one re-run.
+
+- **The sheet:** `docs/art/review/shunter_look_2026-10-17/`. Start with `SL0_overview_DISPOSABLE.jpg`.
+- **The report:** `docs/art/reports/2026-10-17-shunter-look-sheet.md`.
+
+Nothing is approved; it waits for Skyiah to play the fight.
+
+**In one line:** L2 (a bright lip band) and L4 (a lifting vent stack) make the telegraphs louder at no cost; L1 (a V-prow) is an identity option; L5 (a low hull) hides the horn lamps at 20 m and L7 (two-tone) loses a quarter of the side silhouette; L3 and L6 are taste.
+
+Question 3, Batch 044, is still open.

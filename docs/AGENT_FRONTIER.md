@@ -194,6 +194,35 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-17 (delivered): the Shunter look sheet, disposable. STOP; it
+  waits for Skyiah to play the fight.** Branch
+  `claude/archipepsi-art-shunter-look-2026-10-17`.
+  * Seven looks, each one variable against C0 (pose-study B), plus R, a
+    replica of Prod's graybox. Crossing D's yard, Forward+, at the 10-09
+    cameras (F20 moved 1.2 m east past a yard column), numbers beside
+    every cell.
+  * Findings: L2 (bright lip band) gives horn +27-31% and brace +27%; L4
+    (lifting stack) gives vents +4-9% round the back and side; L1 (V-prow)
+    gives front recover +31%. L5 (low hull) hides the horn lamps at 20 m.
+    L7 (two-tone) costs 25% of the side silhouette. R, the dark graybox,
+    has a bigger silhouette but weaker telegraphs (horn -29%, vents
+    -31%).
+  * Report: `docs/art/reports/2026-10-17-shunter-look-sheet.md`. Numbers
+    and README: `docs/art/review/shunter_look_2026-10-17/`. The sheets
+    were sent in chat and are not committed.
+  * **Overnight rules** (Skyiah via Condi, 02:57Z; git space is limited):
+    * no review renders, contact sheets, GIFs, PDFs or package zips in
+      git; variant sheets go to Skyiah in chat;
+    * commit only build scripts, source and the final picked asset;
+    * an image that must live in git is small and committed once;
+    * ONE working art branch. From now on it is
+      `claude/archipepsi-art-shunter-look-2026-10-17`; no new branch per
+      batch.
+    * Questions for Skyiah go to Condi in writing, and work continues on
+      something else meanwhile. Unfinished-art list and
+    questions for Condi:
+    `docs/art-requests/2026-10-17-art-lane-open-work-for-condi.md`. It is
+    a file because this session has no tool that reaches her session.
 * **2026-10-17 (owner, confirmed in Arty's session): rest lifted. Shunter
   look sheet first, then the unfinished-art list.** Branch
   `claude/archipepsi-art-shunter-look-2026-10-17`.
