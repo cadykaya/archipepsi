@@ -1,0 +1,692 @@
+{
+  "schemaVersion": 1,
+  "minimumGodot": "4.5",
+  "semantics": "sigmaudio-godot-layer-runtime-v1",
+  "bpm": 150,
+  "beatsPerBar": 4,
+  "beatUnit": 4,
+  "loopBars": 16,
+  "phraseLengthBars": 4,
+  "sampleRate": 48000,
+  "loopStartSamples": 0,
+  "loopEndSamples": 1228799,
+  "loopFrames": 1228800,
+  "mainFile": "audio/one_note_apart_crossing_adaptive_loop.wav",
+  "adaptive": true,
+  "gameplayInputCapture": {
+    "version": 1,
+    "available": true,
+    "cueId": "cue_000000001gsfsyz4334vqn",
+    "cueRevisionFormat": "cue-v1",
+    "cueSha256": "953b6e2d245559935410f7f4081686d74f634a07ead05cb1872d0a547c348b6e",
+    "meter": {
+      "beatsPerBar": 4,
+      "beatUnit": 4,
+      "subdivisionTree": [
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    "maximumSeconds": 300,
+    "maximumInputs": 1024,
+    "maximumBytes": 262144,
+    "acceptedKinds": [
+      "parameter",
+      "state",
+      "event"
+    ],
+    "clock": "elapsed-seconds",
+    "scope": "Accepted controls from fresh Play. Pause/restart/overflow/multi-event batches invalidate capture. Selected stinger packs refuse capture; inputs are not decisions or PCM."
+  },
+  "scenarioReplay": {
+    "version": 1,
+    "mode": "music-only",
+    "available": false,
+    "scenarios": [],
+    "maximumInputLatenessSeconds": 0.12,
+    "maximumReceiptRecords": 256,
+    "controller": "Authored BPM/meter and shared 120ms lookahead commit policy; scheduled state is distinct from native audible state. Layer gains and Stop apply on observed engine frames.",
+    "scope": "Explicit saved inputs, ramps and retained-state repeats on the native playback clock. No reference recordings, inferred stinger/duck audio, cold seek or sample-accurate transition/endpoint promise."
+  },
+  "audioBake": {
+    "renderVersion": "sigmaudio-audio-12",
+    "stateId": "sta_00000001nf19qjpbwcg665",
+    "appliedSnapshotIds": [],
+    "manualSnapshotIds": [],
+    "resolvedTracks": [
+      {
+        "trackId": "trk_000000000164g2hma9fste",
+        "offset": {
+          "trackId": "trk_000000000164g2hma9fste",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 0,
+        "lowpassHz": 3000,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_0000000008jxz7jsq4thjt",
+        "offset": {
+          "trackId": "trk_0000000008jxz7jsq4thjt",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 0,
+        "lowpassHz": 3000,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_000000000fb37xvf9e1q52",
+        "offset": {
+          "trackId": "trk_000000000fb37xvf9e1q52",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -5,
+        "lowpassHz": 1800,
+        "highpassHz": null,
+        "sendWet": 0.3,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_000000004pg4qsx5hhgcf5",
+        "offset": {
+          "trackId": "trk_000000004pg4qsx5hhgcf5",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 8,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.55,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_0000000052cpkzmzv02rg8",
+        "offset": {
+          "trackId": "trk_0000000052cpkzmzv02rg8",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 9,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.8,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_000000005fftgd2tf0qzme",
+        "offset": {
+          "trackId": "trk_000000005fftgd2tf0qzme",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -7,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_000000009jxrbkkpsbfdj6",
+        "offset": {
+          "trackId": "trk_000000009jxrbkkpsbfdj6",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -5,
+        "lowpassHz": 7000,
+        "highpassHz": null,
+        "sendWet": 0.08,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000dsa90yvakexm3t",
+        "offset": {
+          "trackId": "trk_00000000dsa90yvakexm3t",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -8,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.3,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000f8z5vz910mrvzs",
+        "offset": {
+          "trackId": "trk_00000000f8z5vz910mrvzs",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 3,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.2,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000gzx63hrvk4mh21",
+        "offset": {
+          "trackId": "trk_00000000gzx63hrvk4mh21",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 3,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000je5hmp6qm4kbtq",
+        "offset": {
+          "trackId": "trk_00000000je5hmp6qm4kbtq",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -2,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.2,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000nxgw3n49q3qm42",
+        "offset": {
+          "trackId": "trk_00000000nxgw3n49q3qm42",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -2,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.4,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000psycwm1xdp0vcy",
+        "offset": {
+          "trackId": "trk_00000000psycwm1xdp0vcy",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 4,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.22,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000sdmf1z53gvhc9y",
+        "offset": {
+          "trackId": "trk_00000000sdmf1z53gvhc9y",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 4,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000000w1azpe38gwd84c",
+        "offset": {
+          "trackId": "trk_00000000w1azpe38gwd84c",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 0,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001245cxpnfdn90n7",
+        "offset": {
+          "trackId": "trk_00000001245cxpnfdn90n7",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -4,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.2,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_0000000187kdxm8gmafged",
+        "offset": {
+          "trackId": "trk_0000000187kdxm8gmafged",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -6,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.3,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001gafqga7t1devfs",
+        "offset": {
+          "trackId": "trk_00000001gafqga7t1devfs",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -6,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.35,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001j1g7980b4xeye7",
+        "offset": {
+          "trackId": "trk_00000001j1g7980b4xeye7",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 5,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.45,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001jrasvdqt23kmf2",
+        "offset": {
+          "trackId": "trk_00000001jrasvdqt23kmf2",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 1,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.5,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001kkv5c5nyahegk4",
+        "offset": {
+          "trackId": "trk_00000001kkv5c5nyahegk4",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": 3,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.5,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001mefbjqzfszh95z",
+        "offset": {
+          "trackId": "trk_00000001mefbjqzfszh95z",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -3,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.1,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      },
+      {
+        "trackId": "trk_00000001mnkwbhhh8wh2fh",
+        "offset": {
+          "trackId": "trk_00000001mnkwbhhh8wh2fh",
+          "gainDb": 0,
+          "lowpassHz": null,
+          "highpassHz": null,
+          "sendWet": null
+        },
+        "gainDb": -2,
+        "lowpassHz": 20000,
+        "highpassHz": null,
+        "sendWet": 0.4,
+        "interpolationMs": 0,
+        "snapshotIds": []
+      }
+    ],
+    "conflicts": [],
+    "snapshotProcessingBaked": true,
+    "layerActiveGainsBaked": true,
+    "trackEffectsBaked": true,
+    "gainAutomationBaked": true
+  },
+  "supportedStateIds": [
+    "sta_00000001nf19qjpbwcg665",
+    "sta_00000001nge9ms7ykxpgyg",
+    "sta_00000001nhkpsfjr4k2rk2",
+    "sta_00000001njj83fk9vy44sj"
+  ],
+  "unsupportedStateIds": [],
+  "capabilities": {
+    "synchronizedLayers": true,
+    "layerStateSwitching": true,
+    "parameterTransitions": true,
+    "eventTransitions": true,
+    "sampleAccurateTransitions": false,
+    "stateSnapshotSwitching": false,
+    "stingerAudio": false,
+    "gameplayInputCapture": true,
+    "savedScenarioReplay": false,
+    "stingerDucking": false,
+    "crossCueSequencing": false,
+    "exactMainMixReconstruction": false,
+    "maximumLayers": 32
+  },
+  "baseStateId": "sta_00000001nf19qjpbwcg665",
+  "layers": [
+    {
+      "id": "lay_00000001n81yynq7xfgkm5",
+      "name": "Floor",
+      "file": "audio/stems/one_note_apart_crossing_adaptive_floor.wav",
+      "fadeBeats": 4
+    },
+    {
+      "id": "lay_00000001n915kmnhv37815",
+      "name": "Echoes",
+      "file": "audio/stems/one_note_apart_crossing_adaptive_echoes.wav",
+      "fadeBeats": 4
+    },
+    {
+      "id": "lay_00000001nazfyd2sxmawbp",
+      "name": "Engine",
+      "file": "audio/stems/one_note_apart_crossing_adaptive_engine.wav",
+      "fadeBeats": 1
+    },
+    {
+      "id": "lay_00000001nbf2g648jqrndb",
+      "name": "Drums",
+      "file": "audio/stems/one_note_apart_crossing_adaptive_drums.wav",
+      "fadeBeats": 1
+    },
+    {
+      "id": "lay_00000001ncrzekzg3atpf3",
+      "name": "Argument",
+      "file": "audio/stems/one_note_apart_crossing_adaptive_argument.wav",
+      "fadeBeats": 1
+    },
+    {
+      "id": "lay_00000001ndhyd7kx7bmpan",
+      "name": "Payoff",
+      "file": "audio/stems/one_note_apart_crossing_adaptive_payoff.wav",
+      "fadeBeats": 0
+    },
+    {
+      "id": "lay_00000001nesfmnwszxjb5m",
+      "name": "Truce",
+      "file": "audio/stems/one_note_apart_crossing_adaptive_truce.wav",
+      "fadeBeats": 0
+    }
+  ],
+  "states": [
+    {
+      "id": "sta_00000001nf19qjpbwcg665",
+      "name": "Explore",
+      "activeLayerIds": [
+        "lay_00000001n81yynq7xfgkm5",
+        "lay_00000001n915kmnhv37815"
+      ],
+      "mixSnapshotId": null
+    },
+    {
+      "id": "sta_00000001nge9ms7ykxpgyg",
+      "name": "Combat",
+      "activeLayerIds": [
+        "lay_00000001n81yynq7xfgkm5",
+        "lay_00000001nazfyd2sxmawbp",
+        "lay_00000001nbf2g648jqrndb",
+        "lay_00000001ncrzekzg3atpf3"
+      ],
+      "mixSnapshotId": null
+    },
+    {
+      "id": "sta_00000001nhkpsfjr4k2rk2",
+      "name": "Climax",
+      "activeLayerIds": [
+        "lay_00000001n81yynq7xfgkm5",
+        "lay_00000001nazfyd2sxmawbp",
+        "lay_00000001nbf2g648jqrndb",
+        "lay_00000001ndhyd7kx7bmpan"
+      ],
+      "mixSnapshotId": null
+    },
+    {
+      "id": "sta_00000001njj83fk9vy44sj",
+      "name": "Resolution",
+      "activeLayerIds": [
+        "lay_00000001n81yynq7xfgkm5",
+        "lay_00000001nesfmnwszxjb5m"
+      ],
+      "mixSnapshotId": null
+    }
+  ],
+  "parameters": [
+    {
+      "id": "prm_00000001nkxz0sydtp7w11",
+      "name": "threat",
+      "min": 0,
+      "max": 1,
+      "defaultValue": 0,
+      "smoothingMs": 200
+    },
+    {
+      "id": "prm_00000001nm8t1yfwcaqfbk",
+      "name": "style",
+      "min": 0,
+      "max": 1,
+      "defaultValue": 0,
+      "smoothingMs": 300
+    }
+  ],
+  "events": [],
+  "transitions": [
+    {
+      "id": "trn_00000001nnfpvj9z52bhys",
+      "fromStateId": "sta_00000001nf19qjpbwcg665",
+      "toStateId": "sta_00000001nge9ms7ykxpgyg",
+      "when": {
+        "kind": "param",
+        "paramId": "prm_00000001nkxz0sydtp7w11",
+        "op": ">=",
+        "value": 0.5
+      },
+      "quantize": "bar",
+      "fadeBeats": 1,
+      "priority": 5,
+      "enterAbove": 0.5,
+      "exitBelow": null,
+      "dwellMs": 0
+    },
+    {
+      "id": "trn_00000001npa6stshkqcyw6",
+      "fromStateId": "sta_00000001nge9ms7ykxpgyg",
+      "toStateId": "sta_00000001nhkpsfjr4k2rk2",
+      "when": {
+        "kind": "param",
+        "paramId": "prm_00000001nm8t1yfwcaqfbk",
+        "op": ">=",
+        "value": 0.8,
+        "holdMs": 1000
+      },
+      "quantize": "phrase",
+      "fadeBeats": 0,
+      "priority": 4,
+      "enterAbove": 0.8,
+      "exitBelow": null,
+      "dwellMs": 3200
+    },
+    {
+      "id": "trn_00000001nq7fqezkfh3e5n",
+      "fromStateId": "sta_00000001nhkpsfjr4k2rk2",
+      "toStateId": "sta_00000001nge9ms7ykxpgyg",
+      "when": {
+        "kind": "param",
+        "paramId": "prm_00000001nm8t1yfwcaqfbk",
+        "op": "<=",
+        "value": 0.5,
+        "holdMs": 2000
+      },
+      "quantize": "bar",
+      "fadeBeats": 2,
+      "priority": 3,
+      "enterAbove": null,
+      "exitBelow": 0.5,
+      "dwellMs": 6400
+    },
+    {
+      "id": "trn_00000001nrzzxsnzzdyaaz",
+      "fromStateId": "sta_00000001nge9ms7ykxpgyg",
+      "toStateId": "sta_00000001njj83fk9vy44sj",
+      "when": {
+        "kind": "param",
+        "paramId": "prm_00000001nkxz0sydtp7w11",
+        "op": "<=",
+        "value": 0.1,
+        "holdMs": 1500
+      },
+      "quantize": "phrase",
+      "fadeBeats": 0,
+      "priority": 6,
+      "enterAbove": null,
+      "exitBelow": 0.1,
+      "dwellMs": 1600
+    },
+    {
+      "id": "trn_00000001nsehxk7j5ecakc",
+      "fromStateId": "sta_00000001nhkpsfjr4k2rk2",
+      "toStateId": "sta_00000001njj83fk9vy44sj",
+      "when": {
+        "kind": "param",
+        "paramId": "prm_00000001nkxz0sydtp7w11",
+        "op": "<=",
+        "value": 0.1,
+        "holdMs": 1500
+      },
+      "quantize": "phrase",
+      "fadeBeats": 0,
+      "priority": 6,
+      "enterAbove": null,
+      "exitBelow": 0.1,
+      "dwellMs": 1600
+    },
+    {
+      "id": "trn_00000001nt68eze2wp6na1",
+      "fromStateId": "sta_00000001njj83fk9vy44sj",
+      "toStateId": "sta_00000001nf19qjpbwcg665",
+      "when": {
+        "kind": "always"
+      },
+      "quantize": "bar",
+      "fadeBeats": 4,
+      "priority": 1,
+      "enterAbove": null,
+      "exitBelow": null,
+      "dwellMs": 3200
+    },
+    {
+      "id": "trn_00000001nvynx0qar3krr9",
+      "fromStateId": "sta_00000001njj83fk9vy44sj",
+      "toStateId": "sta_00000001nge9ms7ykxpgyg",
+      "when": {
+        "kind": "param",
+        "paramId": "prm_00000001nkxz0sydtp7w11",
+        "op": ">=",
+        "value": 0.5
+      },
+      "quantize": "bar",
+      "fadeBeats": 1,
+      "priority": 5,
+      "enterAbove": 0.5,
+      "exitBelow": null,
+      "dwellMs": 0
+    }
+  ],
+  "mixSnapshots": [],
+  "stingers": [],
+  "stingerAudio": false,
+  "warnings": [
+    "Godot 4.5+ is required. State fades and decisions run on engine frames, not sample-accurate automation callbacks.",
+    "Stems include their authored active gains and effects. The runtime switches unity/silence without applying those gains twice.",
+    "Stems are rendered separately through bus compression/effects. Their sum is not guaranteed to reconstruct the combined live or main mix exactly."
+  ]
+}

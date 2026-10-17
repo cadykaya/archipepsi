@@ -11,6 +11,8 @@ var hub: HubController
 ## Unified build: the five weapons on the current player (one per Hub,
 ## Crossing or annex player), or null.
 var armory: UnifiedArmory = null
+## Unified build: Condi's approved music (null in every other build).
+var music: UnifiedMusic = null
 var zone: ZoneController
 var menu: MainMenu
 var hud: Hud
@@ -320,9 +322,9 @@ func _ready() -> void:
 	# the save that `Main` drives.
 	# Unified build: its seams, beside the real `Main` for the same reason.
 	if UnifiedCheck.phase_from_cmdline() != "":
-		var unified_driver: Node = ShunterCheck.new() \
-				if UnifiedCheck.phase_from_cmdline() == "shunter" \
-				else UnifiedCheck.new()
+		# Each driver extends the one before and hands it the phases it
+		# does not run itself: music -> shunter -> weapons, art.
+		var unified_driver: Node = MusicCheck.new()
 		unified_driver.main = self
 		add_child(unified_driver)
 	elif D22SliceDriver.phase_from_cmdline() != "":
@@ -762,6 +764,8 @@ func _to_menu() -> void:
 	hud.clear_waypoint()
 	hud.set_objective_text("")
 	tones.stop_ambience()
+	if music != null:
+		music.silence()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	menu.refresh()
 
@@ -796,8 +800,18 @@ func _to_hub() -> void:
 	_equip_all_slots(hub.player)
 	_bind_rule_runtime(hub.player, null)
 	_arm(hub.player, hub)
+	if _music() != null:
+		music.enter_station(hub)
 	tones.play_ambience(1.0)
 	_update_modal()
+
+## Unified build: the music director, made once and kept across worlds.
+func _music() -> UnifiedMusic:
+	if music == null and Unified.active():
+		music = UnifiedMusic.new()
+		music.name = "UnifiedMusic"
+		add_child(music)
+	return music
 
 ## Unified build: the five weapons on `target`, parented to the world node
 ## that owns it so they go when it goes. Outside the unified build, nothing.
@@ -1017,6 +1031,8 @@ func _to_zone(zone_dict: Dictionary) -> void:
 			tones.play("confirm"))
 	_bind_rule_runtime(zone.player, zone)
 	_arm(zone.player, zone)
+	if _music() != null:
+		music.silence()
 	rule_runtime.notify("zone_enter")
 	var theme := str(zone_dict.get("theme", "void_glitch"))
 	# The last transmission gets a lower, heavier room tone than any Zone

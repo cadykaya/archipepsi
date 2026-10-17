@@ -15,6 +15,12 @@ rm -rf "$OUT"; mkdir -p "$OUT"
 STATUS=0
 for phase in "${PHASES[@]}"; do
   SAVES="$OUT/saves-$phase"; mkdir -p "$SAVES"
+  # A bridge left running would answer instead of this phase's own, with
+  # some other save: refuse rather than check against the wrong campaign.
+  if (exec 3<>/dev/tcp/127.0.0.1/38290) 2>/dev/null; then
+    echo "FAIL: port 38290 is already in use (a bridge left running?)"
+    STATUS=1; continue
+  fi
   (cd bridge && exec "$PY" -m archipepsi_bridge --ap=mock \
       --mock-scale prototype --epsilon=fallback --d22-slice \
       --save-dir "$SAVES") > "$OUT/bridge-$phase.log" 2>&1 &
