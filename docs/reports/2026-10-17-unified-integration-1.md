@@ -7,9 +7,9 @@ Prod, 2026-10-17, for Skyiah, with notes for Dess, Condi and Arty.
 - **The switch:** everything new sits behind `--unified` on Godot's command line, which only this build's launcher passes. Without it, the campaign, the D-22 slice and the five-weapon range run exactly as before.
 - **Promotion:** none. Nothing goes to the main campaign until you have played this and approved it.
 
-## Since `349ef77f`: the next build, `Archipepsi-Unified-1-32bcf77f`
+## Since `349ef77f`: the next build, `Archipepsi-Unified-1-3acbbec2`
 
-`349ef77f` is the build you have, unchanged. The next build adds one gameplay fix and nothing else you'd see:
+`349ef77f` is the build you have, unchanged. The next build adds two gameplay changes and nothing else you'd see:
 - **The booth is now a personnel dogleg** (Dess's pre-playtest check, `f320b47b`). On `349ef77f` a Shunter rush could beat the door's 5 m interlock and reach a player standing inside the booth channel. A new check reproduced it: 100 → 58 HP.
   - The door is now a 1.2 m personnel door in the side of a small vestibule entered from the north.
   - The Shunter is 0.9 × 1.9 m: it can't fit side-on and can't turn in the vestibule. Its turns are now refused where they'd overlap a wall.

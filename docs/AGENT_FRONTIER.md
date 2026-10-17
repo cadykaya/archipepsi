@@ -40,7 +40,10 @@ Report: `docs/reports/2026-10-17-unified-integration-1.md`.
     packet is Dess's to reconcile.
   - **S21/S22:** audited. The remaining pieces need design calls (the
     Settings face re-layout, controller scope, first-run flows).
-  - **Waiting:** Dess and Vera's findings on 349ef77f; Dess's family table.
+  - **Next build `Archipepsi-Unified-1-3acbbec2`:** Dess's doorway blocker
+    fixed physically (personnel dogleg + Shunter turn guard,
+    `_doorway_rush`); consumables only inside Crossings (--unified).
+  - **Waiting:** Dess's 81-game family table (queue item 4).
   - **Off limits tonight:** the Amalgam paths (Dess).
 
 ## PROD LANE (previous) — D-22 slice delivered for play; STOPPED (2026-10-16)
