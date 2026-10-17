@@ -78,7 +78,7 @@ I went ahead with questions 1 and 2 as planned:
 
 If either should be different, it is one re-run.
 
-- **The sheet:** `docs/art/review/shunter_look_2026-10-17/`. Start with `SL0_overview_DISPOSABLE.jpg`.
+- **The sheet:** sent to Skyiah in chat (start with `SL0_overview`); not committed, per her git-space rule. README and numbers: `docs/art/review/shunter_look_2026-10-17/`; regenerate with `tools/shunter_looks.sh`.
 - **The report:** `docs/art/reports/2026-10-17-shunter-look-sheet.md`.
 
 Nothing is approved; it waits for Skyiah to play the fight.
