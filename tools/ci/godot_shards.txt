@@ -1,0 +1,23 @@
+# The Integration gate's headless Godot targets, in seven shards that run
+# in parallel (.github/workflows/integration.yml, job `godot`). One line per
+# shard: `<n>: target target ...`, each target in the order the old serial
+# job ran it. Balanced on timings measured 2026-10-17 (seconds, a
+# container about as fast as a GitHub runner): the serial job had
+# outgrown its 30-minute cap at about 91 minutes. Every target appears
+# exactly once -- bridge/tests/test_ci_shards.py holds the list of the 81
+# the serial job ran, so a suite cannot drop out of the gate by accident.
+# Re-balance from the per-target times each shard prints.
+# shard 1: about 13 min
+1: godot-room godot-return-placement godot-exit-reach godot-rail-gantry godot-theme-pack godot-transport godot-equipment-face godot-map-face godot-reversible-live godot-integration-quiet
+# shard 2: about 13 min
+2: godot-lab godot-rail-carrier godot-rail-zone godot-bombs godot-roster godot-constraints godot-signal-graph godot-reversible godot-status-kinetic godot-minimap godot-candidate-live
+# shard 3: about 13 min
+3: godot-rules godot-blink godot-activity godot-rail-junction godot-counterfire-hosted godot-rail-network godot-actuator godot-flyer-room godot-resume godot-import godot-lever-route-live godot-bombs-live
+# shard 4: about 13 min
+4: godot-stats godot-content godot-legible godot-encounter godot-latched-route godot-carry godot-held-route godot-verb-runtime godot-combat-fairness godot-journal-face godot-consumable-live godot-integration-variant-live
+# shard 5: about 13 min
+5: godot-boot godot-verbs godot-room-contract godot-physics godot-traverse godot-zone-state godot-archive godot-consumable godot-minor-claim godot-consumable-restart godot-resume-live godot-reload
+# shard 6: about 13 min
+6: godot-hud godot-graphs godot-movement godot-zone-audit godot-passenger-carry godot-passing-platforms godot-mass-class godot-unweighted godot-target-facing godot-latched-route-live godot-transport-live godot-ordinary-live
+# shard 7: about 13 min
+7: godot-test godot-affordance godot-build-failure godot-counterfire godot-gantry-census godot-enemy-footing godot-machine-life godot-enemy-art godot-signal-verbs godot-status-family godot-menu-shell godot-integration

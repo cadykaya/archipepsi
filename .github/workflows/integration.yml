@@ -2,7 +2,15 @@
 #
 # Everything Tier 1 skips: the real Archipelago checkout, the APWorld
 # generating real seeds, and every headless Godot suite including the
-# whole-campaign run. Budget about six minutes.
+# whole-campaign run.
+#
+# SHARDED (2026-10-17): the headless Godot targets had grown to about 91
+# minutes run one after another, and the single job hit its 30-minute cap
+# and was cancelled on every run of this lineage -- a gate that never
+# finishes means nothing. They now run as seven parallel shards of about
+# 13 minutes each (tools/ci/godot_shards.txt, run by tools/ci/run_shard.sh),
+# every target still run, each shard still capped at 30 minutes.
+# bridge/tests/test_ci_shards.py fails if a target drops out.
 #
 # This is the gate that proves the game still plays, so it runs on every
 # PR as well — it is affordable, and a Godot regression that only nightly
@@ -28,8 +36,8 @@ env:
   ARCHIPELAGO_TAG: 0.6.7
 
 jobs:
-  full:
-    name: full suite + headless Godot
+  python:
+    name: full Python suite + preflight
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -71,6 +79,55 @@ jobs:
       - name: Headless bridge smoke
         run: make smoke
 
+      - name: Preflight
+        run: make doctor
+
+      - name: Build metadata
+        if: always()
+        run: make version
+
+  godot:
+    name: headless Godot, shard ${{ matrix.shard }} of 7
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      # Every shard reports, so one red run names every failing target.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install the bridge
+        run: python -m pip install -e './bridge[dev]'
+
+      # The checkout is keyed on the PINNED TAG, so bumping the pin
+      # invalidates the cache rather than silently reusing the old one.
+      - name: Cache the Archipelago checkout
+        id: ap-cache
+        uses: actions/cache@v4
+        with:
+          path: .archipelago
+          key: archipelago-${{ env.ARCHIPELAGO_TAG }}-${{ runner.os }}
+
+      - name: Obtain Archipelago ${{ env.ARCHIPELAGO_TAG }}
+        if: steps.ap-cache.outputs.cache-hit != 'true'
+        run: make setup
+
+      - name: Install Archipelago's requirements
+        # Always, cache hit or not: the checkout is cached, the site-packages
+        # are not, and a cached tree with no installed requirements is
+        # exactly the "cache hides a missing dependency" failure.
+        run: python -m pip install -r .archipelago/requirements.txt
+
+      - name: Link the APWorld
+        run: make world-install
+
       - name: Cache the Godot binary
         id: godot-cache
         uses: actions/cache@v4
@@ -107,124 +164,8 @@ jobs:
       - name: Godot project imports
         run: make godot-import
 
-      - name: Preflight
-        run: make doctor
-
-      - name: Headless Godot suites
-        run: |
-          make godot-boot
-          make godot-test
-          make godot-hud
-          make godot-rules
-          make godot-stats
-          make godot-lab
-          make godot-affordance
-          make godot-verbs
-          make godot-blink
-          make godot-content
-          make godot-activity
-          make godot-room
-          make godot-room-contract
-          make godot-graphs
-          make godot-movement
-          make godot-zone-audit
-          make godot-legible
-          make godot-physics
-          make godot-traverse
-          make godot-return-placement
-          make godot-build-failure
-          make godot-exit-reach
-          make godot-passenger-carry
-          make godot-rail-carrier
-          make godot-rail-junction
-          make godot-passing-platforms
-          make godot-counterfire
-          make godot-counterfire-hosted
-          make godot-mass-class
-          make godot-unweighted
-          make godot-target-facing
-          make godot-rail-zone
-          make godot-rail-gantry
-          make godot-rail-network
-          make godot-gantry-census
-          make godot-enemy-footing
-          make godot-machine-life
-          make godot-bombs
-          make godot-zone-state
-          make godot-roster
-          make godot-enemy-art
-          make godot-actuator
-          make godot-constraints
-          make godot-archive
-          make godot-consumable
-          make godot-encounter
-          make godot-signal-graph
-          make godot-signal-verbs
-          make godot-latched-route
-          make godot-theme-pack
-          make godot-carry
-          make godot-transport
-          make godot-held-route
-          make godot-reversible
-          make godot-verb-runtime
-          make godot-status-family
-          make godot-status-kinetic
-          make godot-combat-fairness
-          make godot-flyer-room
-          make godot-resume
-          make godot-minor-claim
-          make godot-menu-shell
-          make godot-equipment-face
-          make godot-minimap
-          make godot-map-face
-          make godot-journal-face
-
-      - name: One consumable charge, from a keypress to the save
-        run: make godot-consumable-live
-
-      - name: A charge spent by a process that then dies
-        run: make godot-consumable-restart
-
-      - name: The latch route through a real bridge and a restart
-        run: make godot-latched-route-live
-
-      - name: The lever route (D-07) through a real bridge and a restart
-        run: make godot-lever-route-live
-
-      - name: A carried cell through a real bridge and two restarts
-        run: make godot-transport-live
-
-      - name: A reversible lever through a real bridge and a restart
-        run: make godot-reversible-live
-
-      - name: The whole candidate profile in one Zone, and a restart
-        run: make godot-candidate-live
-
-      - name: The Bomb Bag the campaign gives, claimed, carried and thrown, live
-        run: make godot-bombs-live
-
-      - name: An encounter resumed as it was left, through a real bridge and restarts
-        run: make godot-resume-live
-
-      - name: One ordinary Zone at default scale, played
-        run: make godot-ordinary-live
-
-      - name: Whole campaign, headlessly
-        run: make godot-integration
-
-      - name: The same campaign with the lower-budget variant selected
-        run: make godot-integration-quiet
-
-      # PARKED, AND WATCHED. This probe passes by REPORTING the router
-      # dead end rather than by hiding it, so running it in CI is what
-      # keeps the parking honest: if the blocker is ever fixed the
-      # output changes here, and if the band ever starts clamping the
-      # target fails outright.
-      - name: The lower-budget variant at the scale it is for
-        run: make godot-integration-variant-live
-
-      - name: A campaign reopened in a second process
-        run: make godot-reload
+      - name: Headless Godot targets, shard ${{ matrix.shard }}
+        run: tools/ci/run_shard.sh ${{ matrix.shard }}
 
       - name: Build metadata
         if: always()
