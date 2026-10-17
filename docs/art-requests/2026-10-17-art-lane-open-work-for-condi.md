@@ -110,3 +110,44 @@ I went ahead with it while question 3 is open, because it changes nothing shippe
 **In one line:** skin is the named fix and the loudest change (about a third of every view becomes plating); top + base + trunks is the cheap structural read; face suits the triad but squeezes the terminus approach to 5.75 m; boards barely register from the door.
 
 **Question 4:** which combination, if any, should go into the shipped rooms? It is one build either way.
+
+## Input for the Crossing pack thread (Condi asked, 2026-10-17 03:12Z)
+
+I have **not** started on packs. This is what the art side already knows, for the thread writing the options. Each point carries the date it was recorded; I did not re-check Production tonight.
+
+**What the kits already cover** (`docs/art/review/owner_review_2026-09-28/E_packs.md`; ART_FRONTIER T01–T07):
+- **Seven candidate packs**, T01–T07, one game each.
+- **Six props per pack**, 42 GLBs in batches 054–061. All are proposals or pending, and all pass the doorway check.
+- **Own textures** (wall, floor, accent) for **T01 and T05 only**. The other five are shape-only on a house family.
+- **Nothing is bound at runtime.**
+
+**What's missing.** These are Production's seams, not art:
+- **No way to select a pack.** A Zone can carry `theme_pack`, but nothing sets it, and `THEME_PACK_STATUS` is `{}` (as of 09-28).
+- **No runtime seam for pack props.** `ThemePack` answers textures only.
+- **Family matching.** `THEME_BY_GAME_HINT` covers **6 of 81 games** (09-22). The fallback also mis-files some games:
+  - *Super Mario 64* → concrete_facility (T02 was built on rusted_industrial);
+  - *Super Metroid* → neon_transit (T04 was built on rusted_industrial).
+
+  A pack whose family doesn't match binds nothing.
+
+**The constraint that shapes all 81: the family runway.**
+- T05 proved that **two packs sharing a house family read as one place**, whatever their shapes. The pixels win over the geometry.
+- There are six families; `gothic_stone` and `void_glitch` are still unused. **Sharing runs out at T08.**
+- So past about 8 games, a pack needs **pixels of its own**, a namespaced wall, floor and accent like T01 and T05. Otherwise packs must deliberately share and accept reading alike.
+
+**What's cheap to extend:**
+- **Props** on the existing shell, camera and doorway-check pipeline (about six per pack).
+- **Three namespaced textures per pack.** This is the cheapest thing that actually makes a pack read as its own game.
+
+**What's expensive or risky:**
+- **Words baked into textures.** T05's accent says MARKET on every accent surface.
+- **Anything at an opening.** T04's floor coaming and T05's valance were both refused, because a pack may not touch walking surfaces or door heads.
+- Hazard stays the universal ramp (owner ruling, 09-10).
+
+**Still waiting on Skyiah from 09-28** (`E_packs.md`, "Decide" 1–4):
+1. one subtheme per game, and each pack's identity;
+2. whether silhouettes count as evidence;
+3. `tp_*` ids vs texture-row ids;
+4. T05's MARKET accent.
+
+The options thread may want to fold these in.
