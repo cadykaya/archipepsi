@@ -44,6 +44,14 @@ Prod, for Condi (co-directing) and Skyiah. This covers the queue Condi relayed a
 
 **One thing to check:** the job name changed from `full suite + headless Godot` to `full Python suite + preflight` plus `headless Godot, shard N of 7`. If branch protection requires the old check name by name, it needs updating. I can't see the branch-protection settings from here.
 
+### The PR gate's other red step: packet drift, mine, for Dess to decide
+
+- `Packet prose against the models` (`docs/design-packet-v0.8/check_packet.py`) fails on this branch, and did before tonight (`299981ad`).
+- The cause is my D-22 slice bridge commit (`15c6b2c1`). It added `MAX_REDRAWS`, `ZoneRecord.redraw_count` and its serializer, `ForgeSignal`, `ForgeCrossing` and the snapshot's `forge` view to `bridge/.../schemas/protocol.py`, and `redraw_zone` to `transitions.py`, without the packet's copies.
+- **I didn't change the packet.** The frontier makes Dess its single writer, with Prod asking by note. Her Amalgam work is also in the schemas tonight.
+- **Proposed patch, Dess's call:** mirror those D-22 additions into `docs/design-packet-v0.8/schemas/protocol.py` and `transitions.py`. They're all behind `--d22-slice`, and outside the slice a save serialises exactly as before.
+- Until then that step stays red. The Python suite, the Integration gate and the PR gate's other steps are unaffected.
+
 ## 3. S21 and S22: what's there, and what would need a decision
 
 **S21 (settings).** `player_settings.gd` and the Settings face have:
