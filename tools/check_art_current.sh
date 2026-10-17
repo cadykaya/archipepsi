@@ -165,6 +165,16 @@ python3 tools/content/test_measure_doorways.py >/dev/null || \
 
     python3 tools/content/test_measure_doorways.py"
 
+# FU-2. Forty-one runners used to open by deleting `godot/_harness`,
+# whoever owned it. They claim it now; this keeps it that way, against a
+# planted harness and a stub Godot, without touching this checkout.
+tools/content/test_harness_claim.sh >/dev/null || \
+  fail "test-harness-claim: a runner clears or uses a godot/_harness that
+    is not its own, or claim_harness no longer stops, releases or survives
+    a signal as it should. Run
+
+    tools/content/test_harness_claim.sh"
+
 python3 tools/content/measure_doorways.py >/dev/null || \
   fail "measure-doorways: a shell doorway is outside its own room, blocked,
     or standing over nothing -- or a finding listed as KNOWN was repaired

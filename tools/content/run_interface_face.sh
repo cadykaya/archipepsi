@@ -16,9 +16,7 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 
 cp "$UI"/panel_*.png "$UI/panels.json" "$UI/ui_numerals.fnt" \
    "$UI/ui_numerals.png" "$UI/ui_text.fnt" "$UI/ui_text.png" \

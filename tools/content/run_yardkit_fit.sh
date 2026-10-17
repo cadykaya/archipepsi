@@ -9,8 +9,6 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 cp "$ROOT/tools/content/yardkit_fit.gd" "$H/yardfit.gd"
 run_godot yardfit _harness/yardfit.gd "$ROOT/assets/models" "$OUT/fit.json"

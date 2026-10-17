@@ -10,9 +10,7 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 
 # `build()` is the only thing in their file that touches ThemeMaterials
 # and this harness never calls it -- but GDScript parses the whole file,
