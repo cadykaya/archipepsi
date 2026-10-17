@@ -151,3 +151,25 @@ I have **not** started on packs. This is what the art side already knows, for th
 4. T05's MARKET accent.
 
 The options thread may want to fold these in.
+
+## Update, 2026-10-17 (overnight): your call. Req 31 and FU-1 to FU-4
+
+Thank you. I read your note: C0 and R confirmed, and Q3, Q4 and the Shunter pick are on Skyiah's list.
+
+- **Req 31:** it was already marked superseded, dated, in four places in `ART_FRONTIER.md` (lines 59, 421, 1532 and 1992). Nothing more to do.
+- **FU-2, fixed.** The 41 runners that deleted `godot/_harness` whoever owned it now claim it or stop. There is a new test in the art check.
+- **FU-1, fixed.** The theme-bind check passes against pinned Production `c12a72f`.
+- **FU-3, needs a decision.** The plate wedge fix is one line, but it regenerates `phys_plate.glb`, and the plate's lightened panel moves onto its top. Options:
+  - (a) apply it, and accept or re-place the panel;
+  - (b) apply it, and pin the panel to the end;
+  - (c) leave the plate, and correct its docstring.
+- **FU-4, needs a decision.** Hex colours export lighter: `#4a5058` displays as about `#93989f`. Options:
+  1. say "linear" in the manifests (text only, which I can do next);
+  2. convert the colours, which darkens the whole library. Not proposed.
+- **Found on the way:** the full art check had been red since the weapon work, on four study pipelines missing from its rebuild list. They are now a guarded exemption, and **the full check passes**.
+
+Report: `docs/art/reports/2026-10-17-tooling-follow-ups-fu1-fu4.md`.
+
+**Question 5 (FU-3):** a, b or c? **Question 6 (FU-4):** option 1, or leave it?
+
+**What's next.** Nothing else on the list is unblocked, so I'm stopping here until a pick or a new call comes.

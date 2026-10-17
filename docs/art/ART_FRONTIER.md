@@ -3400,7 +3400,9 @@ Four follow-ups, each its own commit on the same repair branch.
 
   This is **not** a current-Production compatibility pass.
 * **Named follow-ups,** recorded and not started (details in the repair
-  handoff):
+  handoff): **[Status, dated 2026-10-17: FU-1 and FU-2 fixed; FU-3 and
+  FU-4 written up as decisions. See
+  `docs/art/reports/2026-10-17-tooling-follow-ups-fu1-fu4.md`.]**
   * **FU-1:** the theme-bind harness against pinned Production;
   * **FU-2:** the 42 remaining unsafe runners that clear `godot/_harness`;
   * **FU-3:** the plate's `pl_nose` wedge, which slopes across the
@@ -3548,6 +3550,27 @@ played G1. Support only Prod's specific fit, collision and state issues.
 * Report: `docs/art/reports/2026-10-09-shunter-pose-study.md`.
 
 **Next: STOP.** No production model until the combat is proven fun.
+
+### Delivered, 2026-10-17 — the tooling follow-ups FU-1 to FU-4 (Condi's call). FU-3 and FU-4 STOP for a decision.
+
+* **FU-2, fixed:** `claim_harness` in `tools/content/godot_run.sh`; all 41
+  runners that cleared `godot/_harness` now claim it or stop.
+  `tools/content/test_harness_claim.sh` is in the art check and fails
+  when a runner is put back to the old opening.
+* **FU-1, fixed:** `run_theme_bind.sh` binds `theme_pack.gd`'s
+  `Constants.*` to the preloaded `constants.gd`. It now PASSES at the pin
+  `c12a72f` (it used to fail and hang to the 300 s deadline) and at the
+  default ref, byte-identical to the committed evidence.
+* **FU-3, a decision:** the plate fix is one line, but it regenerates
+  `phys_plate.glb`, and the auto-placed lightened panel moves from the +X
+  end onto the top. Options (a) to (c) are in the report.
+* **FU-4, a decision:** hex values export lighter (`#4a5058` displays as
+  about `#93989f`). Option 1 changes wording only; option 2, converting,
+  is not proposed.
+* **Found on the way:** the art check had been red since 10-13/10-14 on
+  four weapon study pipelines missing from its rebuild list. They are now
+  a guarded `STUDIES` exemption. `check_art_current.sh` PASSES at this
+  head (594 s).
 
 ### Delivered, 2026-10-17 — Batch 044's triad and terminus presentation pass, as variants. STOPPED for the owner's pick.
 

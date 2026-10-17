@@ -194,6 +194,18 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-17 (delivered): the tooling follow-ups FU-1 to FU-4**,
+  assigned by Condi. Branch `claude/archipepsi-art-shunter-look-2026-10-17`.
+  * FU-1 fixed: theme-bind passes at pinned Production `c12a72f`.
+  * FU-2 fixed: 41 runners claim `godot/_harness`; the new test is in the
+    art check.
+  * FU-3 (the plate wedge) and FU-4 (the hex convention) are written up
+    as decisions.
+  * The art check's rebuild-list guard was red on four weapon study
+    pipelines; they are now a guarded exemption. `check_art_current.sh`
+    PASSES.
+  * Report: `docs/art/reports/2026-10-17-tooling-follow-ups-fu1-fu4.md`.
+  * The req-31 lines were already marked superseded, dated 2026-10-17.
 * **2026-10-17 (delivered): Batch 044's triad and terminus presentation
   pass, as seven variants and a control. STOP for Skyiah's pick.** Branch
   `claude/archipepsi-art-shunter-look-2026-10-17`. The committed rooms are
