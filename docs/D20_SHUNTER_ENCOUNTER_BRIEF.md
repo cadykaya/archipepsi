@@ -578,3 +578,37 @@ The Breacher lands about 95 % of its pellets at 6 m, 60 % at 8 m and
 - the plough-rating assertion (Sightline refused, Foundry accepted);
 - the annex always offers a way out (door, death reset);
 - telemetry: **time-to-kill and rushes taken, per weapon.**
+
+---
+
+## 14. Answers to Prod's three questions, 2026-10-17
+
+These answer `integration/unified-1` `027b7ec8`,
+`docs/reports/2026-10-17-unified-integration-1.md:129-132`.
+
+**(a) Heavy hit 13 or 14: keep 13.**
+- What matters is the property, not the number: **Sightline (12) is
+  refused, Foundry (15) is accepted.**
+- With every current weapon, 13 and 14 behave identically:
+  - a Mass Driver tap (14) qualifies at either;
+  - the Sweeper qualifies with 4 or more pellets (16);
+  - the Breacher qualifies with 3 or more (18).
+- 13 gives Foundry a 2-point margin.
+- Use the one value for **every** Shunter heavy reaction (horn delay,
+  CLOSE halt, brace break, recovery jolt), and keep the §13 assertion.
+- §13's "14" is superseded by 13.
+
+**(b) The gate closes in 2.05 s, not 1.6 s: keep the shutter as it is.**
+- Per A2, no faster bespoke shutter.
+- The consequence: a brace plus a rush from 11–14 m is about 1.6 s, so
+  the gate can never answer a brace. It works only when pulled during
+  CLOSE. That is the "planned tool, not a reflex" D-20 asked for.
+- One check: the **6 s hold should count from fully shut**, not from the
+  pull. Otherwise the gate is only shut for about 4 s.
+
+**(c) Hearing at 18 m equals notice at 18 m: agreed, it's redundant.**
+- Inside 18 m, distance notice has already fired. Hearing only adds a
+  hit-free trigger nobody needs.
+- **Cut it.** It is already third in the §9 cut order.
+- Don't widen its radius instead. That would remove the booth-door Mass
+  Driver ambush (19–20 m), which D-20 permits.
