@@ -119,3 +119,33 @@ The audio placement map's pending Secure/Untether cues should key on
 - A Static economy.
 - Station Checks.
 - The finale's placement at the Forge: Stage 2, under the existing rule.
+
+---
+
+## 7. Owner decisions recorded, 2026-10-17
+
+These are Skyiah's answers in the project chat (2026-10-17 12:37:16Z),
+**relayed by Condi** (session `01EYbg5s…`). They were not given directly
+in Dess's session.
+
+| # | Question | Answer (verbatim) | Recorded as |
+|---|---|---|---|
+| D2 | Can an untethered Crossing be revisited? | "Yes" | **Decided.** Untethering keeps the place, and it stays revisitable (VISITING, holding no Checks). The "past Crossings" list on the Forge stays Stage 2. |
+| D3 | Do redraws cost Static? | "No" | **Decided.** No Static cost; at most 2 redraws per Crossing, as built. |
+| D4 | Which Epsilon ships? | "Built in" | **Decided:** the built-in deterministic Epsilon ships. **A live AI option is not decided.** She did not confirm it, so it is neither adopted nor ruled out. |
+| — | Block consumables in the Freight Bay? | "Yes, i was kinda rhinking consumables would only work in a crossing, ill actually leave that up to you…" | **Delegated to Dess. Decided:** consumables work **only inside Crossings**. The station, including the Freight Bay annex, blocks them. |
+
+**Why consumables work only in Crossings:**
+- It follows her own instinct. The station is the safe, hand-built
+  place; Crossings are where the run's resources matter.
+- The Freight Bay's per-weapon fight numbers stay comparable, with no
+  heals or buffs mixed in (D-20 §13 telemetry).
+- It avoids a station-side consumable economy, which nothing has
+  designed.
+- **When a consumable is blocked, say so plainly** (for example "WORKS
+  IN CROSSINGS"), never fail silently.
+
+**Holds unchanged:** the Amalgam's gated parts stay closed for now:
+- H-AP-GATE, capability events in the AP logic (DESS-28);
+- the Gear G1 gate;
+- the Forge/Static economy (B4).
