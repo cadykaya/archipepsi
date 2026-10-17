@@ -12,7 +12,7 @@ Prod, for Condi (co-directing) and Skyiah. This covers the queue Condi relayed a
 | # | Item | State |
 |---|---|---|
 | 1 | Dess and Vera's pre-playtest findings on `349ef77f` | **Nothing received yet.** Nothing to fix until findings arrive. |
-| 2 | The CI blocker: Integration cancelled at its 30-minute cap | **Fixed in `50fee713`**: seven parallel shards, nothing dropped. See below for the GitHub result. |
+| 2 | The CI blocker: Integration cancelled at its 30-minute cap | **Fixed** (`50fee713`, with a follow-up). On GitHub all seven Godot shards passed in 12.5 to 14 minutes each. |
 | 3 | S21 settings/input/a11y and S22 packaging/first-run | **Audited.** Both are marked done in the frontier. Each remaining piece of the plan needs a design call, listed below for Skyiah or the menu lane. Nothing was built. |
 | 4 | Dess's per-game Crossing family table | **Not received yet.** |
 
@@ -30,6 +30,12 @@ Prod, for Condi (co-directing) and Skyiah. This covers the queue Condi relayed a
 - `tools/ci/godot_shards.txt` holds the shards, balanced on the measured times. Each keeps the serial order.
 - `tools/ci/run_shard.sh` runs one shard: every target in its own log group with its time. A failure doesn't stop the rest, and the shard fails if any target failed.
 - `bridge/tests/test_ci_shards.py` holds the 81 targets the serial job ran. It fails if a target is in no shard, in two, misspelled, or if a shard isn't in the matrix. I checked that it can fail by dropping `godot-reload`; it failed.
+
+**On GitHub (run 39003218765, `78fbdebd`):**
+- All seven Godot shards passed, each in 12.5 to 14 minutes.
+- The Python job failed 2 tests. The existing guard `test_ci_coverage.py` (every Makefile Godot suite must run in CI) reads CI's list from `integration.yml`, and the suites had moved to the shard file.
+- I ran only my new test before pushing, not the whole Python suite. That was my miss.
+- **Fixed:** the guard now reads the shard file whenever the workflow calls `run_shard.sh`, and its message points there. I checked that it fails when `godot-boot` is dropped from the shards. The full Python suite passes locally: 2324.
 
 **One real intermittent failure found while timing: `godot-affordance`, 1 run of 3.**
 - `_readouts_change_nothing` built a pickup at the origin, inside the player. The awaited frame sometimes collected it before the test froze it ("previously freed").

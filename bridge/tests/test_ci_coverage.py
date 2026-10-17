@@ -97,8 +97,20 @@ def _makefile_suites() -> set[str]:
     return targets - NOT_A_SUITE
 
 
+#: Since 2026-10-17 the headless targets run in parallel shards: the
+#: workflow calls `tools/ci/run_shard.sh`, which runs this file's lists.
+SHARDS = REPO / "tools" / "ci" / "godot_shards.txt"
+
+
 def _suites_ci_runs() -> set[str]:
-    return set(re.findall(rf"make ({_TARGET})", WORKFLOW.read_text()))
+    workflow = WORKFLOW.read_text()
+    runs = set(re.findall(rf"make ({_TARGET})", workflow))
+    if "tools/ci/run_shard.sh" in workflow:
+        for line in SHARDS.read_text().splitlines():
+            if line.strip() and not line.startswith("#"):
+                runs |= set(re.findall(rf"\b({_TARGET})\b",
+                                       line.partition(":")[2]))
+    return runs
 
 
 def test_ci_runs_every_godot_suite_the_makefile_defines():
@@ -107,8 +119,9 @@ def test_ci_runs_every_godot_suite_the_makefile_defines():
         "these Godot suites exist but CI never runs them, so they can go red "
         "for weeks without anyone finding out: "
         + ", ".join(missing)
-        + ". Add them to the 'Headless Godot suites' step in "
-        "integration.yml, or -- if one genuinely should not run there -- "
+        + ". Add them to a shard in "
+        "tools/ci/godot_shards.txt (and SERIAL_JOB_TARGETS in "
+        "test_ci_shards.py), or -- if one genuinely should not run there -- "
         "say so in NOT_A_SUITE with the reason."
     )
 
