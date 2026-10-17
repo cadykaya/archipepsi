@@ -64,6 +64,7 @@ func _phase_shunter() -> void:
 	await _gate_checks()
 	await _down_and_restart()
 	await _way_out()
+	await _doorway_rush()
 	await _sounds()
 	var sent: Array = BridgeClient.sent_intents.slice(intents_before)
 	_check(sent.is_empty(),
@@ -686,6 +687,66 @@ func _way_out() -> void:
 			and bay.shunter_at_door(),
 			"way out: the lever refuses while the Shunter is at the door")
 	await _reset()
+
+
+## Dess's pre-playtest check (f320b47b): the booth doorway must stop the
+## Shunter PHYSICALLY. A rush covers the door's 5 m interlock in about
+## 0.4 s and the door takes about 1.5 s to shut, so a timing rule cannot.
+## Two scripted rushes at it, with the player just inside the channel and
+## the door open: one from the floor in line with the door, and one braced
+## from the doorway's own mouth, aimed straight at the door. Neither may
+## carry it past the door's plane.
+func _doorway_rush() -> void:
+	var p := hub_now.player
+	for start: Array in [[Vector3(-9.0, 0.0, 13.4), "from the floor, in line"],
+			[Vector3(-0.6, 0.0, 10.6), "from the doorway's mouth"]]:
+		await _reset()
+		var inside := bay.to_global(Vector3(1.0, 0.5, 13.4))
+		p.global_position = inside
+		p.velocity = Vector3.ZERO
+		await _settle(30)
+		sh.global_position = bay.to_global(start[0])
+		sh.velocity = Vector3.ZERO
+		var door := bay.to_global(FreightBay.BOOTH_DOOR_AT + Vector3(0, 0, 0.4))
+		var to := door - sh.global_position
+		to.y = 0.0
+		sh.rotation.y = atan2(-to.x, -to.z)
+		# Straight into the brace, aimed at the door (the harness step:
+		# whatever the encounter would decide, this is the worst case).
+		sh._has_noticed = true
+		sh._enter("brace")
+		sh._brace_dir = to.normalized()
+		sh.rotation.y = atan2(-to.x, -to.z)
+		var furthest := -INF
+		var corner := -INF
+		var hp0 := p.hp
+		# The rush, its recovery, and the walk at the door after it.
+		for _i in 60 * 8:
+			await get_tree().physics_frame
+			p.global_position = inside
+			furthest = maxf(furthest, bay.to_local(sh.global_position).x)
+			corner = maxf(corner, _footprint_max_x())
+		# Through the doorway means its middle reaches the door (a corner
+		# jammed in the frame is not through) or its rush reaches the
+		# player standing a metre inside.
+		_check(furthest < -0.2 and p.hp == hp0,
+				"doorway: a rush %s cannot get through the booth door "
+				% start[1] + "(centre x %.2f, furthest corner %.2f, player "
+				% [furthest, corner] + "%d -> %d HP)" % [hp0, p.hp])
+	await _reset()
+
+
+## The furthest the Shunter's body reaches toward the booth (bay x): the
+## corners of its collider's footprint, not its centre.
+func _footprint_max_x() -> float:
+	var size: Vector3 = sh.envelope["size"]
+	var most := -INF
+	for cx: float in [-0.5, 0.5]:
+		for cz: float in [-0.5, 0.5]:
+			var corner := sh.global_transform * Vector3(cx * size.x, 0.0,
+					cz * size.z)
+			most = maxf(most, bay.to_local(corner).x)
+	return most
 
 
 ## Condi's Shunter set (PR #45): the seven candidates and the approved horn

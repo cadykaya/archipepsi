@@ -43,11 +43,12 @@ WHERE THINGS ARE
   The Freight Bay: turn round at the start. The doorway behind you, signed
   FREIGHT BAY, leads up a short corridor to a glazed booth over the bay.
   Watch the Shunter work from the booth; take the ramp down when you are
-  ready. The booth door shuts behind you on the bay floor. To leave, pull
-  the green LEAVE THE BAY lever beside it: the door opens unless the
-  Shunter is at the door (it would fit through), and it always shuts
-  while the Shunter is that close. It opens for good when the Shunter is
-  down. Die in the bay and you wake in Station 1 with the bay reset. The
+  ready. The ramp ends at a narrow PERSONNEL ONLY door in the side of a
+  small vestibule: a dogleg the Shunter cannot charge or squeeze through.
+  The door shuts behind you on the bay floor. To leave, pull the green
+  LEAVE THE BAY lever outside the vestibule: the door opens unless the
+  Shunter is near it, and it shuts while the Shunter is that close. It
+  opens for good when the Shunter is down. Die in the bay and you wake in Station 1 with the bay reset. The
   RESTART THE BAY lever and the LAST FIGHT board are in the booth. The bay
   has no Checks and saves nothing.
 

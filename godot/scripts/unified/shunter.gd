@@ -611,7 +611,33 @@ func _turn_toward(flat: Vector3, delta: float) -> void:
 		return
 	var want := atan2(-flat.x, -flat.z)
 	var diff := wrapf(want - rotation.y, -PI, PI)
-	rotation.y += clampf(diff, -TURN_RATE * delta, TURN_RATE * delta)
+	var next := rotation.y + clampf(diff, -TURN_RATE * delta, TURN_RATE * delta)
+	if _turn_fits(next):
+		rotation.y = next
+
+
+## A turn is set, not simulated, so the engine would let the 1.9 m body
+## swing straight through a wall it has no room to turn beside. Refused
+## when the turned body would overlap static geometry -- the booth's
+## personnel dogleg is built on exactly this (a 1.2 m vestibule) -- with a
+## few centimetres shaved off so resting against a wall never freezes it.
+func _turn_fits(yaw: float) -> bool:
+	if not is_inside_tree():
+		return true
+	var size: Vector3 = envelope["size"]
+	var box := BoxShape3D.new()
+	box.size = size - Vector3(0.08, 0.08, 0.08)
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = box
+	query.transform = Transform3D(Basis(Vector3.UP, yaw),
+			global_position + Vector3(0, float(envelope["centre_y"]) + 0.04, 0))
+	query.exclude = [get_rid()]
+	query.collide_with_areas = false
+	for hit: Dictionary in get_world_3d().direct_space_state.intersect_shape(
+			query, 4):
+		if hit.get("collider") is StaticBody3D:
+			return false
+	return true
 
 
 func _facing(flat: Vector3) -> bool:

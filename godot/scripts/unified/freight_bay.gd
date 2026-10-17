@@ -50,7 +50,15 @@ const GATE_AT := Vector3(0.0, 0.0, 1.0)
 ## (its 0.9 m body would fit the doorway), and from the floor a LEAVE lever
 ## opens it while the Shunter is farther off. The glazed ramp channel
 ## behind it is the dogleg: no line of fire from safety.
-const BOOTH_DOOR_AT := Vector3(0.0, 0.0, 13.0)
+const BOOTH_DOOR_AT := Vector3(0.0, 0.0, 13.4)
+## The personnel door (Dess's pre-playtest check, f320b47b): 1.2 m wide, in
+## the side of a small vestibule entered from the north -- a dogleg. The
+## Shunter is 0.9 x 1.9 m: side-on it cannot fit 1.2 m, and the vestibule
+## (1.2 m deep) gives it no room to turn, so it cannot pass however fast
+## it comes; no straight line from the floor reaches the door at all.
+const PERSONNEL_WIDTH := 1.2
+const VESTIBULE_DEPTH := 1.2
+const VESTIBULE_FROM_Z := 11.4
 const DOOR_CLEAR := 5.0
 const EXIT_HELD := 4.0
 
@@ -185,8 +193,25 @@ func _build_booth() -> void:
 	b._box(self, Vector3(4.0, 0.3, 2.0), Vector3(2.0, 4.15, 13.0),
 			ThemeMaterials.trim_mat(THEME))
 	b._box(self, Vector3(0.3, 0.8, 2.0), Vector3(0.0, 3.6, 13.0), _wall)
-	booth_door = ServiceShutter.create(Vector3(0.0, 1.6, 13.0),
-			Vector3(2.0, 3.2, 0.3), 3.4, THEME)
+	# The jamb that narrows the old 2 m opening to a personnel door, and
+	# the vestibule's outer wall: the dogleg.
+	var door_from := D / 2.0 - PERSONNEL_WIDTH
+	b._box(self, Vector3(0.3, 3.2, door_from - 12.0),
+			Vector3(0.0, 1.6, (12.0 + door_from) / 2.0), _wall)
+	var vest_len := D / 2.0 - VESTIBULE_FROM_Z
+	b._box(self, Vector3(0.3, 4.0, vest_len),
+			Vector3(-VESTIBULE_DEPTH - 0.15, 2.0, VESTIBULE_FROM_Z + vest_len / 2.0),
+			_wall)
+	var sign_plate := Label3D.new()
+	sign_plate.text = "PERSONNEL ONLY"
+	sign_plate.font_size = 24
+	sign_plate.pixel_size = 0.006
+	sign_plate.modulate = Color(0.45, 1.0, 0.55)
+	sign_plate.position = Vector3(-VESTIBULE_DEPTH / 2.0, 3.0, VESTIBULE_FROM_Z - 0.05)
+	sign_plate.rotation.y = PI
+	add_child(sign_plate)
+	booth_door = ServiceShutter.create(Vector3(0.0, 1.6, BOOTH_DOOR_AT.z),
+			Vector3(PERSONNEL_WIDTH, 3.2, 0.3), 3.4, THEME)
 	booth_door.rotation.y = PI / 2.0
 	add_child(booth_door)
 	booth_door.settle(true)
@@ -339,7 +364,8 @@ func _build_restart() -> void:
 	# The way out, on the floor side beside the booth door.
 	exit_lever = CallLever.make("LEAVE THE BAY", Color(0.45, 1.0, 0.55), THEME)
 	add_child(exit_lever)
-	exit_lever.position = Vector3(-1.0, CallLever.BASE.y / 2.0, 11.4)
+	exit_lever.position = Vector3(-VESTIBULE_DEPTH - 0.8, CallLever.BASE.y / 2.0,
+			VESTIBULE_FROM_Z - 0.5)
 	exit_lever.pulled.connect(_on_exit_lever)
 	# The last fight, on the booth's back wall (Dess's telemetry).
 	fight_board = Label3D.new()
