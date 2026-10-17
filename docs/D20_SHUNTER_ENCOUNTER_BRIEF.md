@@ -596,7 +596,9 @@ These answer `integration/unified-1` `027b7ec8`,
 - 13 gives Foundry a 2-point margin.
 - Use the one value for **every** Shunter heavy reaction (horn delay,
   CLOSE halt, brace break, recovery jolt), and keep the §13 assertion.
-- §13's "14" is superseded by 13.
+- §13's "14" is superseded by 13. **Correction (later the same day):**
+  Unified-1 `349ef77f` built 14, and it behaves identically, so **keep
+  14**. No churn.
 
 **(b) The gate closes in 2.05 s, not 1.6 s: keep the shutter as it is.**
 - Per A2, no faster bespoke shutter.
