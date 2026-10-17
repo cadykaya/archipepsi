@@ -39,9 +39,16 @@
       "godot/candidate/crossing_kit/",
       "godot/tests/fixtures/sigmaudio_loader/",
       "godot/audio/sigmaudio/five_weapons/",
-      "handoff/five_weapon_audio/"
+      "handoff/five_weapon_audio/",
+      "godot/audio/music/",
+      "godot/content/weapons/",
+      "godot/content/fx/weapons/",
+      "godot/audio/sigmaudio/shunter/"
     ],
-    "_comment_sigmaudio": "Condi's five-weapon SigmAudio set (handoff/five_weapon_audio/, copied unchanged into godot/audio/sigmaudio/five_weapons/ by tools/five_weapons/import_sigmaudio.py) is authored in SigmAudio from its own synthesis and its bundled public-domain and CC0 recordings: Salamander drum kit (public domain, Alexander Holm), TR-808 (CC0, Michael Fischer), VSCO 2 Community Edition percussion (CC0, Versilian Studios), Kenney interface sounds (CC0). No recorded firearms; no attribution is required. Candidate audio, not approved; see the handoff README."
+    "_comment_sigmaudio": "Condi's five-weapon SigmAudio set (handoff/five_weapon_audio/, copied unchanged into godot/audio/sigmaudio/five_weapons/ by tools/five_weapons/import_sigmaudio.py) is authored in SigmAudio from its own synthesis and its bundled public-domain and CC0 recordings: Salamander drum kit (public domain, Alexander Holm), TR-808 (CC0, Michael Fischer), VSCO 2 Community Edition percussion (CC0, Versilian Studios), Kenney interface sounds (CC0). No recorded firearms; no attribution is required. Candidate audio, not approved; see the handoff README.",
+    "_comment_music": "Condi's approved music for the unified build (handoff/approved_music_v1/ on PR #44, 124d9467, copied unchanged into godot/audio/music/; see its PROVENANCE.json). Authored in SigmAudio: the station cue from SigmAudio's own synthesis and bundled instruments (no recorded samples); the Freight Bay cue and stingers from 14 Freesound recordings, each CC0 1.0, Karoryfer Samples' Black And Green Guitars (CC0 1.0) and SigmAudio's bundled public-domain rockKit. Each recording's link, creator and edits are in the handoff's freight_bay/SOURCES.md and sample-manifest.json. No attribution is required.",
+    "_comment_weapon_art": "Arty's five weapon models, lean maps and Glyph effect sheets (branch claude/archipepsi-art-weapon-integration-2026-10-14, a5d322f9; see godot/content/weapons/PROVENANCE.json), authored by the project's art lane with Claude and approved by the owner for the unified build.",
+    "_comment_shunter_sfx": "Condi's Shunter sound set v1 (handoff/shunter_sfx_v1/ on draft PR #45, b1235032, copied unchanged into godot/audio/sigmaudio/shunter/; see its PROVENANCE.json): seven candidate sounds cut and layered by Condi from CC0 1.0 Freesound recordings (each listed with link, creator and edits in the handoff's SOURCES.md and sample-manifest.json), plus shunter_horn.wav, a byte-identical copy of the horn recorded under third_party below. No attribution is required."
   },
   "approved_licenses": {
     "_comment": "Safe by default per D2. Anything not here needs an explicit owner decision.",
@@ -86,7 +93,20 @@
     "ai-service-unclear": "third-party AI output with unclear terms",
     "marketplace-no-redistribution": "usable in a compiled build, but the raw asset may not live in a public repository"
   },
-  "third_party": [],
+  "third_party": [
+    {
+      "path": "godot/audio/sfx/shunter/shunter-horn-tuned.wav",
+      "name": "freight train horn and approach pass near (the horn chord, each tone tuned to D#, F# and B)",
+      "author": "kyles",
+      "source_url": "https://freesound.org/people/kyles/sounds/454025/",
+      "license": "CC0-1.0",
+      "redistribution": true,
+      "modification": true,
+      "attribution_required": false,
+      "attribution_location": "",
+      "_comment": "Condi's tuned edit (handoff/approved_music_v1/freight_bay/shunter_horn_reference/), the Shunter's horn by the owner's decision for the unified build; licence checked on its own page on 2026-10-13 per her SOURCES.md."
+    }
+  ],
   "_third_party_record_shape": {
     "_comment": "Every entry in `third_party` must carry all of these (D2).",
     "path": "repo-relative path of the asset",

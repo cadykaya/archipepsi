@@ -43,7 +43,8 @@ from __future__ import annotations
 from typing import Annotated, Literal, Union, get_args
 
 from pydantic import (
-    BaseModel, ConfigDict, Field, computed_field, model_validator,
+    BaseModel, ConfigDict, Field, computed_field, model_serializer,
+    model_validator,
 )
 
 try:
@@ -552,6 +553,11 @@ def categorise_save_field(name: str, category: str) -> str | None:
     return None
 
 
+#: D-22 slice: how many times a Crossing's draft may be redrawn before it is
+#: first entered (D-22 §3.1). A redraw re-proves the SAME allocated ids.
+MAX_REDRAWS = 2
+
+
 class ZoneRecord(Strict):
     """A Zone across its whole lifecycle.
 
@@ -598,6 +604,22 @@ class ZoneRecord(Strict):
     #: not stuck -- but a Zone that cannot be composed soundly must stop
     #: trying, or a client that refuses every layout spins forever.
     layout_refusals: int = Field(default=0, ge=0, le=99)
+    #: D-22 slice: how many times the player asked Epsilon to redraw this
+    #: Crossing's draft before first entering it. Each redraw composes
+    #: again against the SAME `allocated_location_ids`; the count reaches
+    #: the provider as variation. Defaults to 0, so every older save
+    #: loads unchanged.
+    redraw_count: int = Field(default=0, ge=0, le=MAX_REDRAWS)
+
+    @model_serializer(mode="wrap")
+    def _omit_unused_redraws(self, handler):
+        """A Zone never redrawn writes exactly what it wrote before the
+        D-22 slice existed, so every save, fixture and baseline produced
+        outside the slice stays byte-identical. Loading puts the 0 back."""
+        data = handler(self)
+        if isinstance(data, dict) and data.get("redraw_count") == 0:
+            data.pop("redraw_count")
+        return data
 
     #: Rooms the engine measured and could not stand this Zone's
     #: required return device in.
@@ -1845,7 +1867,47 @@ class HubStatus(Strict):
 # Snapshot
 # ---------------------------------------------------------------------------
 
+class ForgeSignal(Strict):
+    """D-22 slice: one signal the Forge can follow, and how many of its
+    Checks are eligible right now."""
+    track: _AP_STR
+    eligible: int = Field(ge=0)
+
+
+class ForgeCrossing(Strict):
+    """D-22 slice: a Crossing the Forge names (to resume, or untethered)."""
+    zone_id: str = _ID
+    display_name: str = Field(max_length=C.MAX_TEXT_LEN)
+    target_game: _AP_STR = ""
+    #: Allocated Checks not yet AP-confirmed.
+    remaining: int = Field(default=0, ge=0)
+
+
+class ForgeView(Strict):
+    """D-22 slice: what the Forge console shows. DERIVED on every send,
+    never saved.
+
+    `signals` lists only tracks that still have eligible Checks, so the
+    console cannot offer an empty one; `default_track` is the round-robin
+    cursor's own pick, pre-selected. `untethered` is every COMPLETE
+    Crossing, in order: the count that opens station areas
+    (`completed_zone_count`) is its length.
+    """
+    signals: tuple[ForgeSignal, ...] = ()
+    default_track: _AP_STR = ""
+    redraws_left: int = Field(default=0, ge=0, le=MAX_REDRAWS)
+    resume: ForgeCrossing | None = None
+    untethered: tuple[ForgeCrossing, ...] = ()
+
+
 class CampaignSnapshot(Strict):
+    @model_serializer(mode="wrap")
+    def _omit_absent_forge(self, handler):
+        data = handler(self)
+        if isinstance(data, dict) and data.get("forge") is None:
+            data.pop("forge", None)
+        return data
+
     type: Literal["campaign_snapshot"] = "campaign_snapshot"
     protocol_version: Literal[8] = 8
 
@@ -1957,6 +2019,10 @@ class CampaignSnapshot(Strict):
     #: cannot disagree. `""` when no Zone is held.
     active_proposal_id: str = Field(default="", max_length=16)
     completed_zone_count: int = Field(default=0, ge=0)
+    #: D-22 slice: the Forge console's view. Derived, never saved, and
+    #: only sent by a bridge started with `--d22-slice`: absent otherwise,
+    #: so every snapshot outside the slice is byte-identical to before.
+    forge: ForgeView | None = None
     shop: ShopState = Field(default_factory=ShopState)
     pending_checks: tuple[PendingCheck, ...] = ()
 
@@ -2174,6 +2240,13 @@ class RequestNextZone(Strict):
     """
     type: Literal["request_next_zone"]
     finale: bool = False
+    #: D-22 slice: the signal (track) the player chose at the Forge. Only
+    #: steers WHICH PART of the eligible pool is drawn from first; the
+    #: allocation is otherwise unchanged (the shuffle, the top-up from
+    #: other tracks, and the cursor, which still advances only on
+    #: completion). A track with nothing eligible is refused. `None` is
+    #: today's round-robin.
+    track: _AP_STR | None = None
 
 
 class EnterZone(Strict):
@@ -2211,6 +2284,19 @@ class AbandonZone(Strict):
     pause menu to reach.
     """
     type: Literal["abandon_zone"]
+    zone_id: str = _ID
+
+
+class RedrawZone(Strict):
+    """D-22 slice: ask Epsilon for a different draft of this Crossing.
+
+    Accepted only while the Zone is GENERATED and has never been entered,
+    at most `MAX_REDRAWS` times. The Zone goes back to PENDING_GENERATION
+    against the ids it already holds -- the same recovery a refused
+    layout gets -- so nothing is re-allocated and composition, proof and
+    validation all run again.
+    """
+    type: Literal["redraw_zone"]
     zone_id: str = _ID
 
 
@@ -2795,7 +2881,8 @@ class DebugCommand(Strict):
 ClientMessage = Annotated[
     Union[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
-        EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
+        EnterZone, LeaveZone, ExitZone, AbandonZone, RedrawZone, ClaimCheck,
+        BuyShopStock,
         SlotAction, GearAction, AuthorizeConsumable,
         ReleaseConsumableAuthorization,
         UseConsumable, GrantLocalReward, SetCreativity,

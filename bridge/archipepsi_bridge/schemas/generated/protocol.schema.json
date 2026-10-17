@@ -990,6 +990,30 @@
         "title": "ObjectTransported",
         "type": "object"
       },
+      "RedrawZone": {
+        "additionalProperties": false,
+        "description": "D-22 slice: ask Epsilon for a different draft of this Crossing.\n\nAccepted only while the Zone is GENERATED and has never been entered,\nat most `MAX_REDRAWS` times. The Zone goes back to PENDING_GENERATION\nagainst the ids it already holds -- the same recovery a refused\nlayout gets -- so nothing is re-allocated and composition, proof and\nvalidation all run again.",
+        "properties": {
+          "type": {
+            "const": "redraw_zone",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id"
+        ],
+        "title": "RedrawZone",
+        "type": "object"
+      },
       "ReleaseConsumableAuthorization": {
         "additionalProperties": false,
         "description": "Cancel an authorized attempt that **never launched**.\n\nOnly the process that authorized can know that, so the claim is the\nclient's. What the bridge enforces is that the attempt being\ncancelled is the newest one \u2014 which is also why a client that has\njust relaunched cannot refund a dead process's expenditure.",
@@ -1039,6 +1063,19 @@
             "default": false,
             "title": "Finale",
             "type": "boolean"
+          },
+          "track": {
+            "anyOf": [
+              {
+                "maxLength": 96,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Track"
           }
         },
         "required": [
@@ -1372,6 +1409,7 @@
         "object_recovered": "#/$defs/ObjectRecovered",
         "object_settled": "#/$defs/ObjectSettled",
         "object_transported": "#/$defs/ObjectTransported",
+        "redraw_zone": "#/$defs/RedrawZone",
         "release_consumable_authorization": "#/$defs/ReleaseConsumableAuthorization",
         "request_next_zone": "#/$defs/RequestNextZone",
         "room_entered": "#/$defs/RoomEntered",
@@ -1412,6 +1450,9 @@
       },
       {
         "$ref": "#/$defs/AbandonZone"
+      },
+      {
+        "$ref": "#/$defs/RedrawZone"
       },
       {
         "$ref": "#/$defs/ClaimCheck"
@@ -2690,6 +2731,17 @@
             "title": "Completed Zone Count",
             "type": "integer"
           },
+          "forge": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ForgeView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "shop": {
             "$ref": "#/$defs/ShopState"
           },
@@ -3743,6 +3795,112 @@
           "room_id"
         ],
         "title": "FeaturedAcquisition",
+        "type": "object"
+      },
+      "ForgeCrossing": {
+        "additionalProperties": false,
+        "description": "D-22 slice: a Crossing the Forge names (to resume, or untethered).",
+        "properties": {
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "target_game": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Target Game",
+            "type": "string"
+          },
+          "remaining": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Remaining",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "zone_id",
+          "display_name"
+        ],
+        "title": "ForgeCrossing",
+        "type": "object"
+      },
+      "ForgeSignal": {
+        "additionalProperties": false,
+        "description": "D-22 slice: one signal the Forge can follow, and how many of its\nChecks are eligible right now.",
+        "properties": {
+          "track": {
+            "maxLength": 96,
+            "title": "Track",
+            "type": "string"
+          },
+          "eligible": {
+            "minimum": 0,
+            "title": "Eligible",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "track",
+          "eligible"
+        ],
+        "title": "ForgeSignal",
+        "type": "object"
+      },
+      "ForgeView": {
+        "additionalProperties": false,
+        "description": "D-22 slice: what the Forge console shows. DERIVED on every send,\nnever saved.\n\n`signals` lists only tracks that still have eligible Checks, so the\nconsole cannot offer an empty one; `default_track` is the round-robin\ncursor's own pick, pre-selected. `untethered` is every COMPLETE\nCrossing, in order: the count that opens station areas\n(`completed_zone_count`) is its length.",
+        "properties": {
+          "signals": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ForgeSignal"
+            },
+            "title": "Signals",
+            "type": "array"
+          },
+          "default_track": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Default Track",
+            "type": "string"
+          },
+          "redraws_left": {
+            "default": 0,
+            "maximum": 2,
+            "minimum": 0,
+            "title": "Redraws Left",
+            "type": "integer"
+          },
+          "resume": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ForgeCrossing"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "untethered": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ForgeCrossing"
+            },
+            "title": "Untethered",
+            "type": "array"
+          }
+        },
+        "title": "ForgeView",
         "type": "object"
       },
       "GearComponent": {
@@ -8087,6 +8245,13 @@
             "title": "Layout Refusals",
             "type": "integer"
           },
+          "redraw_count": {
+            "default": 0,
+            "maximum": 2,
+            "minimum": 0,
+            "title": "Redraw Count",
+            "type": "integer"
+          },
           "unhostable_rooms": {
             "default": [],
             "items": {
@@ -10219,6 +10384,112 @@
           "room_id"
         ],
         "title": "FeaturedAcquisition",
+        "type": "object"
+      },
+      "ForgeCrossing": {
+        "additionalProperties": false,
+        "description": "D-22 slice: a Crossing the Forge names (to resume, or untethered).",
+        "properties": {
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "target_game": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Target Game",
+            "type": "string"
+          },
+          "remaining": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Remaining",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "zone_id",
+          "display_name"
+        ],
+        "title": "ForgeCrossing",
+        "type": "object"
+      },
+      "ForgeSignal": {
+        "additionalProperties": false,
+        "description": "D-22 slice: one signal the Forge can follow, and how many of its\nChecks are eligible right now.",
+        "properties": {
+          "track": {
+            "maxLength": 96,
+            "title": "Track",
+            "type": "string"
+          },
+          "eligible": {
+            "minimum": 0,
+            "title": "Eligible",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "track",
+          "eligible"
+        ],
+        "title": "ForgeSignal",
+        "type": "object"
+      },
+      "ForgeView": {
+        "additionalProperties": false,
+        "description": "D-22 slice: what the Forge console shows. DERIVED on every send,\nnever saved.\n\n`signals` lists only tracks that still have eligible Checks, so the\nconsole cannot offer an empty one; `default_track` is the round-robin\ncursor's own pick, pre-selected. `untethered` is every COMPLETE\nCrossing, in order: the count that opens station areas\n(`completed_zone_count`) is its length.",
+        "properties": {
+          "signals": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ForgeSignal"
+            },
+            "title": "Signals",
+            "type": "array"
+          },
+          "default_track": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Default Track",
+            "type": "string"
+          },
+          "redraws_left": {
+            "default": 0,
+            "maximum": 2,
+            "minimum": 0,
+            "title": "Redraws Left",
+            "type": "integer"
+          },
+          "resume": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ForgeCrossing"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "untethered": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ForgeCrossing"
+            },
+            "title": "Untethered",
+            "type": "array"
+          }
+        },
+        "title": "ForgeView",
         "type": "object"
       },
       "GearComponent": {
@@ -14435,6 +14706,13 @@
             "title": "Layout Refusals",
             "type": "integer"
           },
+          "redraw_count": {
+            "default": 0,
+            "maximum": 2,
+            "minimum": 0,
+            "title": "Redraw Count",
+            "type": "integer"
+          },
           "unhostable_rooms": {
             "default": [],
             "items": {
@@ -14863,6 +15141,17 @@
         "minimum": 0,
         "title": "Completed Zone Count",
         "type": "integer"
+      },
+      "forge": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ForgeView"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
       },
       "shop": {
         "$ref": "#/$defs/ShopState"

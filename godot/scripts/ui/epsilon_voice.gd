@@ -29,6 +29,11 @@ const LINES := {
 		"Cleared. Take the thing. It is not mine to give, but take it.",
 		"Nothing left standing. This is the part I am good at.",
 	],
+	# D-22 slice: the one line at the untether, when the bridge has
+	# confirmed the Crossing's last Check. One line, never a pool.
+	"untethered": [
+		"Tether's off. This one stands on its own now -- go home.",
+	],
 	"portal_open": [
 		"The way out is open. It was always going to be.",
 		"Portal live. Go on, before I redecorate.",
@@ -137,7 +142,9 @@ const PRIORITY := ["died", "revived", "secret_found",
 		# D3: both fire once per campaign, at the two moments the player
 		# most deserves an answer. Losing either to an ambient bark's
 		# throttle would silently delete the ending.
-		"goal_sent", "campaign_complete"]
+		"goal_sent", "campaign_complete",
+		# D-22 slice: the untether is the moment; a bark must not eat it.
+		"untethered"]
 
 #: Hub lines are ambient rather than reactive: nothing is trying to kill
 #: you, so a bark every six seconds would be pestering rather than

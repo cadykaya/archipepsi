@@ -667,6 +667,13 @@ func press_slot(slot: String) -> void:
 	# conditions, gates, link costs -- is `activate()`'s to refuse, and
 	# it refuses on the far side of the authorisation, which is what
 	# `release_authorization` is for.
+	# THE UNIFIED BUILD'S PROTOTYPE RULE (owner, via Condi, 2026-10-17):
+	# consumables work only inside a Crossing. The station, its area 2 and
+	# the Freight Bay refuse the press before anything is reserved, through
+	# the same refusal the HUD already words. Outside `--unified`, nothing.
+	if Unified.active() and not in_crossing():
+		_say_refused(NOT_IN_A_CROSSING)
+		return
 	var component_id := str(BridgeClient.slotted_action(
 			"consumable").get("component_id", ""))
 	if BridgeClient.reserve_consumable(component_id).is_empty():
@@ -757,6 +764,21 @@ func _has_a_charge() -> bool:
 ## anything when nothing was on the key, so a player who owned no
 ## consumable -- or owned one and had not put it on the key -- pressed
 ## it and got silence, the same silence as a key that does not exist.
+## The refusal's reason when a consumable is pressed outside a Crossing
+## in the unified build (the HUD words it).
+const NOT_IN_A_CROSSING := "not_in_a_crossing"
+
+
+## Inside a Crossing: the player belongs to a Zone, not the station.
+func in_crossing() -> bool:
+	var at := get_parent()
+	while at != null:
+		if at is ZoneController:
+			return true
+		at = at.get_parent()
+	return false
+
+
 func _say_refused(why := "") -> void:
 	consumable_refused.emit(why)
 	var action: Dictionary = BridgeClient.slotted_action("consumable")

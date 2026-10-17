@@ -1,5 +1,74 @@
 # AGENT FRONTIER
 
+## PROD LANE — Unified integration 1 delivered for play; STOPPED (2026-10-17)
+
+**Owner-authorised review candidate. Branch `integration/unified-1`, not
+merged; `review/d22-slice` and `review/five-weapons-v3` untouched.**
+Report: `docs/reports/2026-10-17-unified-integration-1.md`.
+
+- **What:** the D-22 loop + the five weapons (keys 1-5 everywhere, Arty's
+  models and Glyph effects, Condi's weapon audio) + the Freight Bay annex
+  off Station 1 with one Shunter (D-20 rev 2) + Condi's approved music.
+  All behind `--unified` (Godot); the slice bridge as before.
+- **Checks:** `tools/unified_check.sh OUT weapons art shunter music`
+  (127) and `UNIFIED=1 tools/d22_slice_check.sh` (76): green from source,
+  the exported Linux build and the Windows exe under Wine. `make test`
+  2321 passed.
+- **Build:** `tools/unified/package.sh` -> `Archipepsi-Unified-1-349ef77f`.
+- **Prototype decisions, NOT policy:** heavy hit = the plough's rating 14
+  (D-20 §13.3); no Mass Driver cap (owner 2026-10-17, D-20 §13.5); 40 HP;
+  the annex's way out (interlocked booth door + LEAVE lever, §13.1);
+  Condi's approved horn + 7 CANDIDATE Shunter sounds (PR #45); music
+  stays in Combat on lapse.
+- **Coordination:** Condi co-directs with the owner (2026-10-17); route
+  questions to her session (session_01EYbg5sEDsFgevX44LVWz7m). This
+  session has no tool that reaches a cloud session; say so to the owner.
+- **Open for Dess:** gate close 2.05 s vs A2's 1.6 s; hearing radius =
+  notice radius. **For Condi:** Music bus +3 dB pending a listen; armour
+  clang still a placeholder (not one of D-20's seven).
+- **Next:** none authorised. Wait for the owner's play. Nothing is
+  promoted to the campaign without their approval.
+- **Still held, do not start:** HB-F4g, HB-F4f, the CK9-F1 sweep.
+- **Night shift 2026-10-17 (Condi's queue; report
+  `docs/reports/2026-10-17-night-shift-prod.md`):**
+  - **CI fixed:** Integration runs as `python` + seven Godot shards
+    (`tools/ci/godot_shards.txt`, `run_shard.sh`); green on `72f0cc43`.
+    `test_ci_coverage.py` / `test_ci_shards.py` guard the lists.
+    Re-balance from the per-target times each shard prints.
+  - **PR gate:** only "Packet prose against the models" is red. That's
+    D-22 slice drift in `schemas/protocol.py` / `transitions.py`; the
+    packet is Dess's to reconcile.
+  - **S21/S22:** audited. The remaining pieces need design calls (the
+    Settings face re-layout, controller scope, first-run flows).
+  - **Next build `Archipepsi-Unified-1-3acbbec2`:** Dess's doorway blocker
+    fixed physically (personnel dogleg + Shunter turn guard,
+    `_doorway_rush`); consumables only inside Crossings (--unified).
+  - **Waiting:** Dess's 81-game family table (queue item 4).
+  - **Off limits tonight:** the Amalgam paths (Dess).
+
+## PROD LANE (previous) — D-22 slice delivered for play; STOPPED (2026-10-16)
+
+**Isolated experiment, owner-authorised. Branch `review/d22-slice`, not
+merged.** Report: `docs/reports/2026-10-16-d22-slice.md`.
+
+- **What was built:** Station 1 → the Forge with Epsilon → Crossing 1 →
+  leave and resume → untether → area 2 → Forge → Crossing 2, stopping at
+  Crossing 2's first committed layout.
+- **The switch:** all of it is gated on a `--d22-slice` bridge, so an
+  ordinary run is unchanged.
+- **The check:** `make godot-d22-slice` passes all 76 checks from source,
+  from the exported build and under Wine. The bridge suite passes in full.
+- **Build:** `tools/d22_slice/package.sh` produces
+  `Archipepsi-D22-Slice-446270eb`.
+- **Prototype rule, NOT policy:** a Crossing untethers when all of its
+  allocated Checks are confirmed. How station progress stays possible when
+  Checks need remote items or other Crossings is **open**, and it is the
+  owner's and Dess's to decide before any real-AP extension.
+- **Next:** none authorised. Wait for the owner's play of the loop.
+  Stage 2, which covers the return anchor (A7: 52 m) and the re-sent
+  layout toast, is not started.
+- **Still held, do not start:** HB-F4g, HB-F4f, the CK9-F1 sweep.
+
 ## BRIDGE LANE — HOLDING at the Wave 3 checkpoint (owner, 2026-09-25)
 
 **Hold.** Wave 3 is complete on the Dess side (owner, 2026-09-25). The
@@ -80,7 +149,14 @@ under the owner's hand-back rule.
 - DESS-29 was found and fixed while landing it: a player past the claim
   holds the tool.
 
-**Waiting on the owner:** CI (Prod's N-6).
+**Delivered for review, 2026-10-02: D-17, Crossing D's room brief**
+(`docs/D17_CROSSING_D_ROOM_BRIEF.md`). It is a proposal: not approved
+for building, and no production change. Prod builds and Arty supplies
+the visual kit only once the owner approves. It records DESS-30 (the
+bridge still says a rail needs dash; the fix waits for approval).
+Prod's N-17 to N-21 wait, untouched this round.
+
+**Waiting on the owner:** the D-17 review; CI (Prod's N-6).
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for

@@ -1,0 +1,14 @@
+{
+  "what": "Condi's approved music for the unified build, v1: the station cue (One Note Apart: Crossing, Explore only), the Freight Bay cue (four parts) and its two mixed stingers.",
+  "source_branch": "claude/project-thread-pyisq7",
+  "source_commit": "124d9467",
+  "source_folder": "handoff/approved_music_v1/",
+  "source_pr": 44,
+  "installed": {
+    "station/": "station/sigmaudio_pack/*",
+    "freight_bay/": "freight_bay/sigmaudio_pack/*",
+    "freight_bay_stingers/": "freight_bay/stingers/*.wav and *.wav.import (top level only)"
+  },
+  "verified": "Every installed file matched CHECKSUMS.sha256 as copied. Godot's import pass then added its uid and path lines to the 15 .wav.import sidecars; their [params] are hers, unchanged. The WAVs are byte for byte hers.",
+  "rule": "Never re-render, normalise, trim, resample or re-encode these. Changes come from Condi's side and are re-installed from her handoff, never edited here."
+}

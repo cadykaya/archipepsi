@@ -1,5 +1,55 @@
 # Archipepsi — build state
 
+## 2026-10-17 (Prod) — Unified integration 1: the systems as one game, for review
+
+**STOPPED for the owner's play.** Branch `integration/unified-1`
+(`review/five-weapons-v3` + `review/d22-slice`), not merged.
+
+- **Weapons (`3af11fe1`, `86f26f11`):** `UnifiedArmory` binds the v3
+  runtime to the game's player (keys 1-5, 0 = Pulse, slot B set aside);
+  Arty's models, lean materials and Glyph adapter (`WeaponArt`,
+  `GlyphFxLayer`); her Mass Driver impact issue fixed in
+  `range_weapons.gd`.
+- **Shunter and Freight Bay (`4f0755e2`, `5105e25d`):** `Shunter extends
+  Enemy` (D-20 rev 2 + the owner's prototype decisions) in `FreightBay`,
+  an annex behind Station 1's front wall; 44 scripted D-20 checks.
+- **Music (`5fb73625`):** Condi's PR #44 packs in `godot/audio/music/`,
+  `UnifiedMusic` on her hooks, `default_bus_layout.tres` (Music +3 dB,
+  SFX).
+- **Owner's 2026-10-17 calls (`349ef77f`):** no Driver cap, plough
+  rating 14, Condi's PR #45 Shunter sounds (candidates), the annex's way
+  out, fight telemetry (D-20 §13, Dess `a4b58a41`).
+- **Build (`9cd30f8d`, `e1b50717`, `349ef77f`):** `tools/unified_launch.py`
+  (`saves-unified-1`), presets "Unified 1 (Windows/Linux)",
+  `tools/unified/package.sh`.
+- **Evidence, decisions, missing list:**
+  `docs/reports/2026-10-17-unified-integration-1.md`.
+
+## 2026-10-16 (Prod) — D-22 slice: the first playable Crossing loop, for review
+
+**STOPPED for the owner's play.** Branch `review/d22-slice`, not merged.
+
+- **Bridge (`15c6b2c1`):**
+  - `RequestNextZone.track`;
+  - `redraw_zone` (at most 2, only while GENERATED and before the first
+    entry, same ids, the variation reaching the providers);
+  - the snapshot's `forge` view;
+  - all of it behind `--d22-slice`, so non-slice serialisation is
+    unchanged.
+- **Godot (`446270eb`):**
+  - the Forge screen;
+  - an exit that is always usable;
+  - the untether moment;
+  - station area 2, with its count-gated door, lever, ServiceShutter and
+    second Forge;
+  - the `--d22-slice` auto-start;
+  - the launchers and the review-build packaging.
+- **Evidence and known issues:** `docs/reports/2026-10-16-d22-slice.md`.
+  It covers §6.A A1–A11, A7 = 52.27 m, the pre-existing re-sent-layout
+  toast, and the 2-Check Crossings at prototype scale.
+- **Open, not decided:** station progression when Checks need remote
+  items or other Crossings. The all-Checks untether is prototype-only.
+
 ## 2026-09-23 (engine) — Overnight 05: physical carry to a consumer, a reversible lever, three minors in Zones, twelve verbs and two Statuses in the engine
 
 **HANDED OFF.** This was the owner's Overnight 05 work order

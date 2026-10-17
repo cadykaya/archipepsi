@@ -841,11 +841,18 @@ func _readouts_only_show_what_is_owned() -> void:
 ## about the world and never touches it. Run over a live frame with an
 ## enemy, a pickup and a player, then compare everything either side.
 func _readouts_change_nothing() -> void:
+	# Placed BEFORE they enter the tree: built at the origin, the pickup
+	# sat inside the player for the frame awaited below and was, now and
+	# then, collected -- freed before it could be frozen (a run-order race,
+	# seen on 2026-10-17 in one run of three).
 	var player := Player.create()
+	player.position = Vector3.ZERO
 	add_child(player)
 	var enemy := Enemy.create("melee", "concrete_facility")
+	enemy.position = Vector3(0, 0, 6)
 	add_child(enemy)
 	var pickup := LocalRewardPickup.create("flavor_log", "c1_watch", "Note")
+	pickup.position = Vector3(2, 0.5, 3)
 	add_child(pickup)
 	var readouts := Readouts.new()
 	add_child(readouts)

@@ -100,7 +100,12 @@ def fallback_zone_attempt(request: ZoneGenerationRequest) -> tuple[dict, int]:
     theme = _theme_for(request.campaign.target_game)
     n = request.campaign.zone_index
     budget = request.campaign.zone_budget
-    rng = random.Random(f"archipepsi/fallback/zone/{n}/{budget}")
+    # D-22 slice: a REDRAW is variation in both seeds. Empty for a first
+    # draft, so every Zone composed before redraws existed composes
+    # exactly as it did.
+    redraw = request.campaign.redraw
+    varied = f"/redraw{redraw}" if redraw else ""
+    rng = random.Random(f"archipepsi/fallback/zone/{n}/{budget}{varied}")
 
     # The finale is a Zone. It holds one Check -- the goal -- so it is a
     # SHORT level rather than a full-length one, but a campaign that ends
@@ -117,7 +122,7 @@ def fallback_zone_attempt(request: ZoneGenerationRequest) -> tuple[dict, int]:
 
     def attempt(salt: int) -> dict:
         seeded = random.Random(
-            f"archipepsi/fallback/zone/{n}/{budget}/{salt}")
+            f"archipepsi/fallback/zone/{n}/{budget}{varied}/{salt}")
         chambers = _build_to_budget(
             seeded, locations, budget, request.unlocked_affordances,
             zone_index=n,

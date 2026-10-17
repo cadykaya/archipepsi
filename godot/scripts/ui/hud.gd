@@ -708,7 +708,11 @@ func say_once(text: String, color := Color.WHITE, seconds := 3.5) -> void:
 ## A key that has no sentence to say -- one with charges, online, nothing
 ## waiting -- was refused by the engine, and the engine's refusal is
 ## already on screen (`Main._on_bridge_error`), so nothing is added.
-func _on_consumable_refused(_why: String) -> void:
+func _on_consumable_refused(why: String) -> void:
+	if why == Player.NOT_IN_A_CROSSING:
+		say_once("Consumables only work inside a Crossing.",
+				Color(1.0, 0.75, 0.4))
+		return
 	var state := EquipmentQuery.live_consumable_state()
 	var text := str(state.get("text", ""))
 	if text == "":
