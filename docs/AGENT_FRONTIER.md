@@ -11,16 +11,21 @@ Report: `docs/reports/2026-10-17-unified-integration-1.md`.
   off Station 1 with one Shunter (D-20 rev 2) + Condi's approved music.
   All behind `--unified` (Godot); the slice bridge as before.
 - **Checks:** `tools/unified_check.sh OUT weapons art shunter music`
-  (117) and `UNIFIED=1 tools/d22_slice_check.sh` (76): green from source,
+  (127) and `UNIFIED=1 tools/d22_slice_check.sh` (76): green from source,
   the exported Linux build and the Windows exe under Wine. `make test`
   2321 passed.
-- **Build:** `tools/unified/package.sh` -> `Archipepsi-Unified-1-e1b50717`.
-- **Prototype decisions, NOT policy:** heavy hit >= 13 (Dess to confirm);
-  Mass Driver capped at 30 vs the Shunter in the Freight Bay only; 40 HP;
-  Condi's tuned horn; music stays in Combat on lapse.
-- **Open for Dess:** heavy threshold; gate close 2.05 s vs A2's 1.6 s;
-  hearing radius = notice radius. **For Condi:** Music bus +3 dB pending
-  a listen.
+- **Build:** `tools/unified/package.sh` -> `Archipepsi-Unified-1-349ef77f`.
+- **Prototype decisions, NOT policy:** heavy hit = the plough's rating 14
+  (D-20 §13.3); no Mass Driver cap (owner 2026-10-17, D-20 §13.5); 40 HP;
+  the annex's way out (interlocked booth door + LEAVE lever, §13.1);
+  Condi's approved horn + 7 CANDIDATE Shunter sounds (PR #45); music
+  stays in Combat on lapse.
+- **Coordination:** Condi co-directs with the owner (2026-10-17); route
+  questions to her session (session_01EYbg5sEDsFgevX44LVWz7m). This
+  session has no tool that reaches a cloud session; say so to the owner.
+- **Open for Dess:** gate close 2.05 s vs A2's 1.6 s; hearing radius =
+  notice radius. **For Condi:** Music bus +3 dB pending a listen; armour
+  clang still a placeholder (not one of D-20's seven).
 - **Next:** none authorised. Wait for the owner's play. Nothing is
   promoted to the campaign without their approval.
 - **Still held, do not start:** HB-F4g, HB-F4f, the CK9-F1 sweep.

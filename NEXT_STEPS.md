@@ -16,7 +16,10 @@
 - **Music (`5fb73625`):** Condi's PR #44 packs in `godot/audio/music/`,
   `UnifiedMusic` on her hooks, `default_bus_layout.tres` (Music +3 dB,
   SFX).
-- **Build (`9cd30f8d`, `e1b50717`):** `tools/unified_launch.py`
+- **Owner's 2026-10-17 calls (`349ef77f`):** no Driver cap, plough
+  rating 14, Condi's PR #45 Shunter sounds (candidates), the annex's way
+  out, fight telemetry (D-20 §13, Dess `a4b58a41`).
+- **Build (`9cd30f8d`, `e1b50717`, `349ef77f`):** `tools/unified_launch.py`
   (`saves-unified-1`), presets "Unified 1 (Windows/Linux)",
   `tools/unified/package.sh`.
 - **Evidence, decisions, missing list:**
