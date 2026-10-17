@@ -7,7 +7,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
-OUT="${1:-$ROOT/.unified-check}"; shift || true
+OUT="$(realpath -m "${1:-$ROOT/.unified-check}")"; shift || true
 PHASES=("$@"); [ ${#PHASES[@]} -eq 0 ] && PHASES=(weapons)
 GODOT="${GODOT:-$ROOT/godot-bin/godot}"
 PY="${PY:-python3}"

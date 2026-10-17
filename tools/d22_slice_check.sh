@@ -13,19 +13,26 @@
 #   BUILD=<unpacked review build> tools/d22_slice_check.sh OUT_DIR
 #       the same check against the exported executable and the bridge
 #       source packed beside it (the clean-unpack verification)
+#   UNIFIED=1 tools/d22_slice_check.sh OUT_DIR
+#       the same check with the unified build switched on (--unified):
+#       the weapons, the Freight Bay and the music all present, and the
+#       loop's saves and progression exactly as without them
+#   BUILD_EXE=<file name> picks the executable inside BUILD
 set -uo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
-OUT="${1:-$ROOT/.d22-slice-check}"
+OUT="$(realpath -m "${1:-$ROOT/.d22-slice-check}")"  # absolute: Godot runs from godot/
 GODOT="${GODOT:-$ROOT/godot-bin/godot}"
 BRIDGE_DIR="$ROOT/bridge"
 PROJECT=(--path godot)
 if [ -n "${BUILD:-}" ]; then
-  GODOT="$BUILD/Archipepsi-D22-Slice.x86_64"
+  GODOT="$BUILD/${BUILD_EXE:-Archipepsi-D22-Slice.x86_64}"
   BRIDGE_DIR="$BUILD/bridge"
   PROJECT=()
 fi
 PY="${PY:-python3}"
+EXTRA=()
+[ -n "${UNIFIED:-}" ] && EXTRA=(--unified)
 SAVES="$OUT/saves"
 NOTES="$OUT/notes.json"
 rm -rf "$OUT"; mkdir -p "$SAVES"
@@ -62,10 +69,11 @@ for phase in forge draft crossing area_two; do
     xvfb-run -a -s "-screen 0 1280x720x24" "$GODOT" "${PROJECT[@]}" \
         --rendering-driver opengl3 --resolution 1280x720 \
         --write-movie "$OUT/clip-$phase.avi" --fixed-fps 30 \
-        -- --d22-slice --d22-live=$phase --d22-demo \
+        -- --d22-slice "${EXTRA[@]}" --d22-live=$phase --d22-demo \
         --d22-notes="$NOTES" > "$OUT/godot-$phase.log" 2>&1
   else
-    "$GODOT" --headless "${PROJECT[@]}" -- --d22-slice --d22-live=$phase \
+    "$GODOT" --headless "${PROJECT[@]}" -- --d22-slice "${EXTRA[@]}" \
+        --d22-live=$phase \
         --d22-notes="$NOTES" > "$OUT/godot-$phase.log" 2>&1
   fi
   RC=$?

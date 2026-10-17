@@ -3,12 +3,12 @@
 **Generated from `assets/LICENSES.json` — do not edit.**
 Regenerate with `make notices`.
 
-Archipepsi currently bundles **no third-party assets**.
+Archipepsi bundles 1 third-party asset(s).
 
-Everything shipped is first-party, which includes assets a
-developer authored with Claude and then reviewed, approved,
-committed and registered under a stable id
-(`docs/design-packet-v0.9/OWNER_DECISIONS.md` D2).
+## freight train horn and approach pass near (the horn chord, each tone tuned to D#, F# and B)
 
-This file exists and is checked so that the first
-third-party asset to arrive cannot arrive unattributed.
+- **File:** `godot/audio/sfx/shunter/shunter-horn-tuned.wav`
+- **Author:** kyles
+- **Licence:** CC0-1.0
+- **Source:** https://freesound.org/people/kyles/sounds/454025/
+
