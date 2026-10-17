@@ -66,9 +66,11 @@ func setup(p: Player, tones: Tones) -> bool:
 	layer.layer = 2
 	add_child(layer)
 	_label = Label.new()
+	# Above the HP line: below it are the HUD's own Echo rows (LMB, RMB,
+	# MMB), which the first version of this label sat on top of.
 	_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_label.position = Vector2(20, -64)
-	_label.offset_top = -64
+	_label.position = Vector2(20, -150)
+	_label.offset_top = -150
 	_label.add_theme_font_size_override("font_size", 15)
 	_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_label.add_theme_constant_override("outline_size", 4)

@@ -182,6 +182,36 @@ func _looks() -> void:
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png(
 				dir.path_join(String(v[0]) + ".png"))
+	# The weapons and the Shunter: Arty's Foundry in the station, the
+	# Shunter braced with its lane lit, Arty's Driver in the bay.
+	main.armory.select("foundry")
+	p.global_position = Vector3(1.0, 0.0, 6.0)
+	for _i in 40:
+		_look_at(p, Vector3(1.0, 1.4, 14.0))
+		await get_tree().physics_frame
+	await _still(dir, "09_station_foundry")
+	main.armory.select("switchback")
+	await _arena_pose(FreightBay.DOCK, PI, Vector3(7.5, 0.0, -3.0))
+	if await _await_live("the brace, for the still",
+			func() -> bool: return sh.state == "brace", 8.0):
+		p.global_position = bay.to_global(Vector3(10.5 - 1.2, 0.0, -2.0))
+		_look_at(p, sh.global_position + Vector3(0, 0.8, 0))
+		await _still(dir, "10_shunter_brace")
+	await _reset()
+	main.armory.select("driver")
+	p.global_position = bay.to_global(Vector3(-2.0, 0.0, 6.0))
+	for _i in 30:
+		_look_at(p, sh.global_position + Vector3(0, 1.0, 0))
+		await get_tree().physics_frame
+	await _still(dir, "11_bay_driver")
+	main.armory.select("")
+	await _reset()
+
+
+func _still(dir: String, still_name: String) -> void:
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(
+			dir.path_join(still_name + ".png"))
 
 
 # ============================================================ scenarios
