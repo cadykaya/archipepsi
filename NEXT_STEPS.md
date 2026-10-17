@@ -1,5 +1,27 @@
 # Archipepsi — build state
 
+## 2026-10-17 (Prod) — Unified integration 1: the systems as one game, for review
+
+**STOPPED for the owner's play.** Branch `integration/unified-1`
+(`review/five-weapons-v3` + `review/d22-slice`), not merged.
+
+- **Weapons (`3af11fe1`, `86f26f11`):** `UnifiedArmory` binds the v3
+  runtime to the game's player (keys 1-5, 0 = Pulse, slot B set aside);
+  Arty's models, lean materials and Glyph adapter (`WeaponArt`,
+  `GlyphFxLayer`); her Mass Driver impact issue fixed in
+  `range_weapons.gd`.
+- **Shunter and Freight Bay (`4f0755e2`, `5105e25d`):** `Shunter extends
+  Enemy` (D-20 rev 2 + the owner's prototype decisions) in `FreightBay`,
+  an annex behind Station 1's front wall; 44 scripted D-20 checks.
+- **Music (`5fb73625`):** Condi's PR #44 packs in `godot/audio/music/`,
+  `UnifiedMusic` on her hooks, `default_bus_layout.tres` (Music +3 dB,
+  SFX).
+- **Build (`9cd30f8d`, `e1b50717`):** `tools/unified_launch.py`
+  (`saves-unified-1`), presets "Unified 1 (Windows/Linux)",
+  `tools/unified/package.sh`.
+- **Evidence, decisions, missing list:**
+  `docs/reports/2026-10-17-unified-integration-1.md`.
+
 ## 2026-10-16 (Prod) — D-22 slice: the first playable Crossing loop, for review
 
 **STOPPED for the owner's play.** Branch `review/d22-slice`, not merged.

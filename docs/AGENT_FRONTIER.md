@@ -1,6 +1,31 @@
 # AGENT FRONTIER
 
-## PROD LANE — D-22 slice delivered for play; STOPPED (2026-10-16)
+## PROD LANE — Unified integration 1 delivered for play; STOPPED (2026-10-17)
+
+**Owner-authorised review candidate. Branch `integration/unified-1`, not
+merged; `review/d22-slice` and `review/five-weapons-v3` untouched.**
+Report: `docs/reports/2026-10-17-unified-integration-1.md`.
+
+- **What:** the D-22 loop + the five weapons (keys 1-5 everywhere, Arty's
+  models and Glyph effects, Condi's weapon audio) + the Freight Bay annex
+  off Station 1 with one Shunter (D-20 rev 2) + Condi's approved music.
+  All behind `--unified` (Godot); the slice bridge as before.
+- **Checks:** `tools/unified_check.sh OUT weapons art shunter music`
+  (117) and `UNIFIED=1 tools/d22_slice_check.sh` (76): green from source,
+  the exported Linux build and the Windows exe under Wine. `make test`
+  2321 passed.
+- **Build:** `tools/unified/package.sh` -> `Archipepsi-Unified-1-e1b50717`.
+- **Prototype decisions, NOT policy:** heavy hit >= 13 (Dess to confirm);
+  Mass Driver capped at 30 vs the Shunter in the Freight Bay only; 40 HP;
+  Condi's tuned horn; music stays in Combat on lapse.
+- **Open for Dess:** heavy threshold; gate close 2.05 s vs A2's 1.6 s;
+  hearing radius = notice radius. **For Condi:** Music bus +3 dB pending
+  a listen.
+- **Next:** none authorised. Wait for the owner's play. Nothing is
+  promoted to the campaign without their approval.
+- **Still held, do not start:** HB-F4g, HB-F4f, the CK9-F1 sweep.
+
+## PROD LANE (previous) — D-22 slice delivered for play; STOPPED (2026-10-16)
 
 **Isolated experiment, owner-authorised. Branch `review/d22-slice`, not
 merged.** Report: `docs/reports/2026-10-16-d22-slice.md`.
