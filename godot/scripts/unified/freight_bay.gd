@@ -45,12 +45,23 @@ const PILLARS := [Vector3(-5, 0, -3), Vector3(5, 0, -3), Vector3(-5, 0, 7),
 		Vector3(5, 0, 7)]
 const CRATES := [Vector3(-7.0, 0.0, 3.0), Vector3(2.0, 0.0, 9.0)]
 const GATE_AT := Vector3(0.0, 0.0, 1.0)
+## The booth door's foot, and the way out (D-20 §13.1, Dess; owner
+## 2026-10-17): the door is shut whenever the Shunter is this close to it
+## (its 0.9 m body would fit the doorway), and from the floor a LEAVE lever
+## opens it while the Shunter is farther off. The glazed ramp channel
+## behind it is the dogleg: no line of fire from safety.
+const BOOTH_DOOR_AT := Vector3(0.0, 0.0, 13.0)
+const DOOR_CLEAR := 5.0
+const EXIT_HELD := 4.0
 
 var shunter: Shunter
 var gate: ServiceShutter
 var gate_levers: Array[CallLever] = []
 var booth_door: ServiceShutter
 var restart_lever: CallLever
+var exit_lever: CallLever
+## The last fight's numbers on the booth's wall board (telemetry).
+var fight_board: Label3D
 var crates: Array[DestructibleCover] = []
 var tote: ManipulableBody
 var in_annex := false
@@ -65,6 +76,7 @@ var _gate_closing_since := -1.0
 var _gate_wants_closed := false
 var _watching: Player = null
 var _gate_reopen := 0.0
+var _exit_left := 0.0
 var _steel: StandardMaterial3D
 var _wall: Material
 var _floor: Material
@@ -104,11 +116,8 @@ func _physics_process(delta: float) -> void:
 				annex_entered.emit()
 			else:
 				annex_left.emit()
-		var floor_now := _on_floor(player)
-		if floor_now and not on_bay_floor and not player._dead:
-			# One way: the booth door closes behind you (D-20 §6).
-			booth_door.command(false)
-		on_bay_floor = floor_now
+		on_bay_floor = _on_floor(player)
+		_drive_booth_door(delta, player)
 	# D-20: it never closes on somebody. The shutter's own interlock
 	# watches the player; the Shunter is watched here, the same way: in
 	# the opening, the gate goes back up and closes again once it is clear.
@@ -276,6 +285,43 @@ func _build_gate() -> void:
 		gate_levers.append(lever)
 
 
+## The booth door: open while you are off the floor, shut behind you on
+## it, open again with the LEAVE lever -- and shut, whatever else, while
+## the Shunter is within DOOR_CLEAR of it (never on you: the shutter's own
+## interlock). Down, it stays open.
+func _drive_booth_door(delta: float, player: Player) -> void:
+	var alive := shunter != null and is_instance_valid(shunter) \
+			and not shunter._dead
+	var near := alive and shunter_at_door()
+	if _exit_left > 0.0:
+		_exit_left = EXIT_HELD if booth_door.doorway_occupied() \
+				else _exit_left - delta
+	if not alive:
+		booth_door.command(true)
+	elif near:
+		booth_door.command(false)
+		_exit_left = 0.0
+	elif not on_bay_floor or player._dead:
+		booth_door.command(true)
+	else:
+		booth_door.command(_exit_left > 0.0)
+	exit_lever.locked = near
+	exit_lever.label = "NOT WITH THE SHUNTER AT THE DOOR" if near \
+			else "LEAVE THE BAY"
+
+
+func shunter_at_door() -> bool:
+	var at := to_local(shunter.global_position) - BOOTH_DOOR_AT
+	return Vector2(at.x, at.z).length() < DOOR_CLEAR
+
+
+func _on_exit_lever(_lever: CallLever) -> void:
+	if shunter != null and is_instance_valid(shunter) and not shunter._dead \
+			and shunter_at_door():
+		return
+	_exit_left = EXIT_HELD
+
+
 func _build_restart() -> void:
 	restart_lever = CallLever.make("RESTART THE BAY", Color(0.5, 0.8, 1.0),
 			THEME)
@@ -290,6 +336,20 @@ func _build_restart() -> void:
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.position = restart_lever.position + Vector3(0, 1.4, 0)
 	add_child(label)
+	# The way out, on the floor side beside the booth door.
+	exit_lever = CallLever.make("LEAVE THE BAY", Color(0.45, 1.0, 0.55), THEME)
+	add_child(exit_lever)
+	exit_lever.position = Vector3(-1.0, CallLever.BASE.y / 2.0, 11.4)
+	exit_lever.pulled.connect(_on_exit_lever)
+	# The last fight, on the booth's back wall (Dess's telemetry).
+	fight_board = Label3D.new()
+	fight_board.text = "LAST FIGHT: none yet"
+	fight_board.font_size = 24
+	fight_board.pixel_size = 0.005
+	fight_board.modulate = Color(0.8, 0.95, 1.0)
+	fight_board.position = Vector3(7.0, BOOTH_FLOOR + 2.0, 13.85)
+	fight_board.rotation.y = PI
+	add_child(fight_board)
 
 
 # ============================================================ the encounter
@@ -327,8 +387,9 @@ func _spawn() -> void:
 	shunter.rotation.y = 0.0                        # facing the wall: back to the booth
 	shunter.set_lane(to_global(STACK), to_global(DOCK), tote)
 	shunter.charge_source = _charge_source
-	shunter.driver_firing = _driver_out
+	shunter.weapon_out = _weapon_out
 	shunter.powered_down.connect(_on_shunter_down)
+	shunter.fight_recorded.connect(_on_fight_recorded)
 	gate.settle(true)
 	_gate_reopen = 0.0
 	for lever in gate_levers:
@@ -337,6 +398,7 @@ func _spawn() -> void:
 	booth_door.settle(true)
 	_gate_closing_since = -1.0
 	_gate_wants_closed = false
+	_exit_left = 0.0
 
 
 func restart() -> void:
@@ -363,6 +425,18 @@ func _on_floor(player: Node3D) -> bool:
 func _on_shunter_down() -> void:
 	kills += 1
 	booth_door.command(true)
+
+
+## The last fight on the booth's board.
+func _on_fight_recorded(f: Dictionary) -> void:
+	var rows: Array[String] = []
+	for w: String in f.get("weapons", {}):
+		var r: Dictionary = f["weapons"][w]
+		rows.append("%s %d dmg / %d hits / %d rushes" % [w.to_upper(),
+				roundi(float(r["damage"])), int(r["hits"]), int(r["rushes"])])
+	fight_board.text = "LAST FIGHT: down in %.1f s, %d rushes\n%s" % [
+			float(f.get("time_to_kill", -1.0)), int(f.get("rushes", 0)),
+			"\n".join(rows)]
 
 
 ## Your marks on the bay's walls go with a restart (the weapons' own list).
@@ -420,8 +494,7 @@ func _charge_source() -> Vector3:
 	return armory.player.global_position
 
 
-## The Mass Driver's cap applies while it is the weapon out (its slug is
-## the only projectile among the five).
-func _driver_out() -> bool:
+## The weapon out, for the fight telemetry ("pulse" when none).
+func _weapon_out() -> String:
 	var armory := _armory()
-	return armory != null and armory.out() == "driver"
+	return armory.out() if armory != null and armory.out() != "" else "pulse"

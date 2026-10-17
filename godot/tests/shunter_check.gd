@@ -10,8 +10,8 @@ extends "res://tests/unified_check.gd"
 ## the Shunter's state; a hit whose REACTION is under test is delivered
 ## through `take_damage`, the same call every weapon's hit makes, with the
 ## weapon's real numbers -- and the weapons themselves are fired live where
-## the weapon is the point (a Foundry shot, a Sightline shot, a capped
-## Mass Driver release).
+## the weapon is the point (a Foundry shot, a Sightline shot, a full Mass
+## Driver release).
 
 var bay: FreightBay
 var sh: Shunter
@@ -60,9 +60,11 @@ func _phase_shunter() -> void:
 	await _jumps()
 	await _crate_and_pillar()
 	await _heavy_hits()
-	await _driver_cap()
+	await _driver_full()
 	await _gate_checks()
 	await _down_and_restart()
+	await _way_out()
+	await _sounds()
 	var sent: Array = BridgeClient.sent_intents.slice(intents_before)
 	_check(sent.is_empty(),
 			"A11: the Freight Bay sent nothing to the bridge (%d intents)"
@@ -484,9 +486,11 @@ func _heavy_hits() -> void:
 	_results["heavy_at"] = Shunter.HEAVY_AT
 
 
-## The owner's cap: a full Mass Driver release against the Shunter takes 30
-## (raw 60); it is heavy, so a docked Shunter's horn is 0.9 s.
-func _driver_cap() -> void:
+## No per-target cap (owner, 2026-10-17; D-20 §13.5): a full Mass Driver
+## release does its 60 here as anywhere, and that one perfect shot downs a
+## 40 HP Shunter. Then a Foundry-sized heavy hit (15, at the plough's
+## rating of 14) while it works delays the horn to 0.9 s.
+func _driver_full() -> void:
 	await _reset()
 	var p := hub_now.player
 	await _arena_pose(Vector3(6, 0, -12.2), 0.0, Vector3(6, 0, 8.5))
@@ -494,24 +498,34 @@ func _driver_cap() -> void:
 	_check(sh.state in ["work", "dock"], "the Shunter is still at work, 20 m off")
 	main.armory.select("driver")
 	await _settle(30)
-	var hp0 := sh.hp
 	_look_at(p, sh.global_position + Vector3(0, 0.6, 0))
 	Input.action_press("fire_pulse")
 	for _i in 80:
 		_look_at(p, sh.global_position + Vector3(0, 0.6, 0))
 		await get_tree().physics_frame
 	Input.action_release("fire_pulse")
-	await _await_live("the slug lands",
-			func() -> bool: return sh.hp < hp0, 3.0)
-	var taken := hp0 - sh.hp
-	_check(absf(taken - Shunter.DRIVER_CAP) < 0.01,
-			"Driver cap: a full release takes %.1f (raw 60, capped at 30)" % taken)
-	_results["driver_taken"] = taken
+	await _await_live("the slug lands", func() -> bool: return sh._dead, 3.0)
+	var raw := 0.0
+	for row: Dictionary in sh.events_log:
+		if row.get("event", "") == "hit":
+			raw = maxf(raw, float(row.get("raw", 0.0)))
+	_check(sh._dead and raw >= 59.9,
+			"no cap: a full Mass Driver release lands its %.1f and downs it" % raw)
+	_results["driver_raw"] = raw
+	main.armory.select("")
+	await _reset()
+	await _arena_pose(Vector3(6, 0, -12.2), 0.0, Vector3(6, 0, 8.5))
+	await _settle(10)
+	sh.take_damage(15.0, (sh.global_position - p.global_position).normalized(),
+			0.0)
 	var horn := await _time_in("horn")
 	_check(absf(horn - (Shunter.HORN_SECONDS + Shunter.HORN_HEAVY_EXTRA))
 			<= 2.0 * DT,
-			"A2: a heavy hit while it works delays the horn: %.3f s (0.9)" % horn)
-	main.armory.select("")
+			"A2: a heavy hit (15) while it works delays the horn: %.3f s (0.9)"
+			% horn)
+	_check(Shunter.HEAVY_AT > 12.0 and Shunter.HEAVY_AT <= 15.0,
+			"the plough's rating (%.0f): Sightline's 12 refused, Foundry's 15 "
+			% Shunter.HEAVY_AT + "accepted (D-20 §13.3)")
 
 
 ## A7: the gate closes in about 1.6 s (recorded), never on somebody,
@@ -615,6 +629,12 @@ func _down_and_restart() -> void:
 			"down: it powers down once")
 	_check(bay.booth_door.is_open() or bay.booth_door.offset > 1.0,
 			"A10: a kill reopens the booth door")
+	var f: Dictionary = sh.fight_summary
+	_check(f.has("time_to_kill") and f.has("rushes")
+			and not (f.get("weapons", {}) as Dictionary).is_empty()
+			and bay.fight_board.text.begins_with("LAST FIGHT: down in"),
+			"telemetry: time to kill, rushes and per-weapon damage on the "
+			+ "booth's board (%s)" % JSON.stringify(f))
 	# Spend a crate and close the gate, then RESTART.
 	bay.crates[1].take_damage(100.0)
 	bay._on_gate_lever(bay.gate_levers[0])
@@ -625,9 +645,73 @@ func _down_and_restart() -> void:
 	_check(sh.state in ["work", "dock"] and not sh._dead and sh.hp == Shunter.HP
 			and bay.to_local(sh.global_position).distance_to(FreightBay.DOCK) < 0.6
 			and bay.crates.size() == 2 and bay.gate.is_open()
-			and bay.booth_door.is_open(),
-			"A10: RESTART: Shunter at the dock at 40 HP, crates whole, gate and "
-			+ "booth door open")
+			and bay.booth_door.goal < 0.5 and bay.on_bay_floor,
+			"A10: RESTART: Shunter at the dock at 40 HP, crates whole, gate "
+			+ "open; the booth door shut behind the player still on the floor")
+
+
+## D-20 §13.1: the annex always has a way out. From the floor the LEAVE
+## lever opens the booth door while the Shunter is away from it; with the
+## Shunter at the door the door is shut and the lever refuses, wherever
+## the player is -- its 0.9 m body would fit the doorway.
+func _way_out() -> void:
+	await _reset()
+	await _arena_pose(FreightBay.DOCK, 0.0, Vector3(-2.0, 0.0, 12.0))
+	await _settle(40)
+	_check(bay.on_bay_floor and bay.booth_door.goal < 0.5,
+			"way out: on the floor, the booth door is shut behind you")
+	bay.exit_lever.pulled.emit(bay.exit_lever)
+	var opened := await _await_live("the way out opens", func() -> bool:
+			return bay.booth_door.is_open(), 4.0)
+	_check(opened, "way out: LEAVE THE BAY opens the booth door "
+			+ "(the Shunter %.0f m from it)" % bay.to_local(
+			sh.global_position).distance_to(FreightBay.BOOTH_DOOR_AT))
+	await _place(bay.to_global(Vector3(7.0, FreightBay.BOOTH_FLOOR + 0.1, 12.6)))
+	await _settle(20)
+	_check(not bay.on_bay_floor and bay.booth_door.goal > 0.5,
+			"way out: up the ramp into the booth, the door stays open")
+	# The Shunter at the door: shut, whether you are in the booth or not.
+	sh.global_position = bay.to_global(Vector3(-3.0, 0.0, 10.0))
+	sh.velocity = Vector3.ZERO
+	var shut := await _await_live("the door shuts on the Shunter's approach",
+			func() -> bool: return bay.booth_door.is_shut(), 5.0)
+	_check(shut, "way out: with the Shunter at the door it shuts, even with "
+			+ "you in the booth (it would fit the doorway)")
+	await _place(bay.to_global(Vector3(-1.5, 0.0, 12.6)))
+	sh.global_position = bay.to_global(Vector3(-3.0, 0.0, 9.5))
+	await _settle(4)
+	bay.exit_lever.pulled.emit(bay.exit_lever)
+	await _settle(20)
+	_check(bay.exit_lever.locked and bay.booth_door.goal < 0.5
+			and bay.shunter_at_door(),
+			"way out: the lever refuses while the Shunter is at the door")
+	await _reset()
+
+
+## Condi's Shunter set (PR #45): the seven candidates and the approved horn
+## load from her events.json, and the states play them.
+func _sounds() -> void:
+	var lib := Shunter._sfx_library()
+	_check(lib.size() == 8, "Condi's Shunter set: %d of 8 events load" % lib.size())
+	await _reset()
+	await _arena_pose(Vector3(7.5, 0, -12.2), 0.0, Vector3(7.5, 0, -0.5))
+	var heard := {}
+	for _i in 60 * 8:
+		await get_tree().physics_frame
+		for event: String in sh._sfx:
+			if (sh._sfx[event] as AudioStreamPlayer3D).playing:
+				heard[event] = true
+		if heard.has("shunter.plume_hiss"):
+			break
+	_check(heard.has("shunter.plough_scrape") and heard.has("shunter.rush")
+			and heard.has("shunter.plume_hiss"),
+			"brace, rush and recovery play her scrape, rush and plume hiss (%s)"
+			% ", ".join(heard.keys()))
+	var bus_ok := true
+	for event: String in sh._sfx:
+		bus_ok = bus_ok and (sh._sfx[event] as AudioStreamPlayer3D).bus == &"SFX"
+	_check(bus_ok, "every Shunter sound is on the SFX bus, never Music")
+	await _reset()
 
 
 # ============================================================ helpers

@@ -43,9 +43,13 @@ WHERE THINGS ARE
   The Freight Bay: turn round at the start. The doorway behind you, signed
   FREIGHT BAY, leads up a short corridor to a glazed booth over the bay.
   Watch the Shunter work from the booth; take the ramp down when you are
-  ready. The booth door shuts behind you on the bay floor and opens again
-  when the Shunter is down (or you die). The RESTART THE BAY lever is in
-  the booth. The bay has no Checks and saves nothing.
+  ready. The booth door shuts behind you on the bay floor. To leave, pull
+  the green LEAVE THE BAY lever beside it: the door opens unless the
+  Shunter is at the door (it would fit through), and it always shuts
+  while the Shunter is that close. It opens for good when the Shunter is
+  down. Die in the bay and you wake in Station 1 with the bay reset. The
+  RESTART THE BAY lever and the LAST FIGHT board are in the booth. The bay
+  has no Checks and saves nothing.
 
 THE SHUNTER (Dess's D-20 revision 2)
   It tends its lane until it notices you, then sounds its horn, closes
@@ -61,11 +65,12 @@ THE SHUNTER (Dess's D-20 revision 2)
 PROTOTYPE DECISIONS (for this playtest only, not campaign rules)
   - The Freight Bay is an optional annex off Station 1: no Checks, no
     campaign progression.
-  - A "heavy hit" is one hit of 13 or more, so the Sightline (12) stays a
-    light hit. Flagged for Dess to confirm (D-20 said 12).
-  - The Mass Driver's damage against the Shunter is capped at 30, in the
-    Freight Bay only. Everywhere else, and against objects, it is as in
-    the range.
+  - A "heavy hit" is one hit at or over the plough's rating, 14 (Dess's
+    D-20 addendum): the Sightline (12) stays light, the Foundry (15)
+    breaks a brace.
+  - No damage cap: the Mass Driver does its 14-60 against the Shunter as
+    everywhere (the earlier 30 cap was dropped on 2026-10-17). A full
+    charge downs it in one shot.
   - The Shunter keeps 40 HP and its heavy-hit brace behaviour; the gate
     is a usable tool.
   - Condi's tuned freight horn is the Shunter's horn.
@@ -77,10 +82,13 @@ PROTOTYPE DECISIONS (for this playtest only, not campaign rules)
 
 STILL MISSING OR PLACEHOLDER
   - The Shunter has no art model: a graybox blockout (body, plough, brow
-    lamps, vents). Its horn is real; its other seven sounds (the brace's
-    plough scrape, the rush, the crate crumple, the skid on a miss, the
-    clang on its armour, the vent gust in recovery, the power-down) are
-    the game's existing enemy tones, marked PLACEHOLDER in the code.
+    lamps, vents).
+  - Its horn is approved. Its other seven sounds (plough scrape, rush,
+    crumple clang, skid, vent gust, plume hiss, power-down) are Condi's
+    CANDIDATES from her draft PR #45: not approved yet, and heard in the
+    game for the first time in this build. The clang when a hit lands on
+    its frontal armour is not one of the seven and is still the game's
+    placeholder tone.
   - The Freight Bay itself is graybox (pillars, crates, gate, booth).
   - The station is graybox, as agreed.
   - No music in the Crossings, the Forge screen's own space or menus:
@@ -98,6 +106,9 @@ STILL MISSING OR PLACEHOLDER
   - Dess, to confirm: the gate closes in 2.05 s (D-20 assumed 1.6); and
     hearing (18 m) equals the notice radius (18 m), so hearing never
     fires first.
+  - The LAST FIGHT board shows time to kill, rushes, and each weapon's
+    damage, hits and the rushes it faced. It is also printed to the game's
+    console; nothing is written to disk.
 
 The developer report, with every check run, is
 docs/reports/2026-10-17-unified-integration-1.md in the repository.

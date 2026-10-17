@@ -19,11 +19,13 @@ extends Enemy
 ## **Prototype decisions** (owner, 2026-10-16; recorded in the report, not
 ## campaign rules):
 ##   * 40 HP, unchanged;
-##   * a HEAVY hit is a single damage event of 13 or more, measured before
-##     armour -- D-20 said 12, and the owner kept the Sightline (12) light;
-##     flagged for Dess to confirm;
-##   * the Mass Driver's damage against the Shunter is capped at 30 in this
-##     encounter (the range and the Crossings keep 14-60);
+##   * a HEAVY hit is a single damage event at or over the PLOUGH'S RATING,
+##     14, measured before armour: the owner's "a threshold above 12" (the
+##     Sightline's 12 stays light), at the rating Dess gave the plough in
+##     her D-20 addendum (§13, a4b58a41) -- one rating for every heavy
+##     reaction, and panels keep their 12;
+##   * NO per-target cap: the Mass Driver does its 14-60 here as anywhere
+##     (owner, 2026-10-17, dropping the earlier 30 cap; D-20 §13.5);
 ##   * Dess's recommendations accepted: heavy hits break a brace once per
 ##     cycle and never stop a rush; the freight gate is a planned tool.
 ##
@@ -41,6 +43,8 @@ signal heavy_hit(state: String, raw: float)
 signal recovery_opened(kind: String, seconds: float)
 ## It is down (the music's `victory` hook).
 signal powered_down
+## The fight's telemetry is ready (after DOWN): `fight_summary`.
+signal fight_recorded(summary: Dictionary)
 
 # -- D-20's numbers (rev 2), and the owner's prototype decisions ------------
 const HP := 40.0
@@ -74,10 +78,9 @@ const TOTE_NUDGE := 40.0                # N.s, a butt that moves a 20 kg tote
 const HIT_LATERAL := 1.0
 const HIT_ALONG := 1.35
 const HIT_FEET := 1.05
-## Owner, 2026-10-16: "a threshold above 12" -- Sightline (12) stays light.
-const HEAVY_AT := 13.0
-## Owner, 2026-10-16: the Mass Driver against the Shunter, this encounter.
-const DRIVER_CAP := 30.0
+## The plough's rating (D-20 §13.3): the owner's "above 12" -- Sightline
+## (12) refused, Foundry (15) accepted.
+const HEAVY_AT := 14.0
 const HEARING := 18.0
 
 const STATES := ["work", "dock", "horn", "close", "brace", "rush", "recover",
@@ -94,8 +97,15 @@ var dock_cable: Node3D = null
 ## Set by the arena: true while a Mass Driver charge is audible -- the
 ## position of the charging gun, or Vector3.INF when nothing charges.
 var charge_source: Callable = func() -> Vector3: return Vector3.INF
-## Set by the arena: true when the damage arriving is the Mass Driver's.
-var driver_firing: Callable = func() -> bool: return false
+## Set by the arena: the weapon the player has out ("pulse" when none), for
+## the fight telemetry only -- no weapon is treated differently.
+var weapon_out: Callable = func() -> String: return "pulse"
+## Telemetry (D-20 §13, Dess): per weapon, the damage it did and the
+## rushes the Shunter made while it was out; and the time from the horn to
+## DOWN. `fight_summary` is filled at DOWN.
+var fight := {}
+var fight_summary := {}
+var _fight_from := -1.0
 
 var _heading_to_dock := true
 var _tend := 0.0
@@ -262,6 +272,8 @@ func _physics_process(delta: float) -> void:
 			_do_rush(delta, player)
 		"recover":
 			_hold(0.25)
+			if state_time >= _recover_length - PLUME_FADE:
+				_fade("shunter.plume_hiss", PLUME_FADE)
 			if state_time >= _recover_length:
 				_enter("reaim")
 		"reaim":
@@ -294,6 +306,7 @@ func _enter(next: String) -> void:
 			_flash = 0.15
 			if _horn.stream != null:
 				_horn.play()
+			_start_fight()
 			horned.emit()
 		"brace":
 			_cooldown_left = COOLDOWN
@@ -312,12 +325,14 @@ func _enter(next: String) -> void:
 				_brace_dir = _brace_dir.normalized()
 			_show_lane()
 			_begin_telegraph("charge", BRACE_SECONDS)
-			_placeholder("windup")          # PLACEHOLDER: the plough scrape
+			_sound("shunter.plough_scrape", "windup")
 		"rush":
 			_rush_rest = global_position
-			_placeholder("melee_hit")       # PLACEHOLDER: the rush
+			_sound("shunter.rush", "melee_hit")
+			_tally("rushes", 1.0)
 		"recover":
 			window_damage = 0.0
+			_sound("shunter.plume_hiss", "")
 		"reaim":
 			if from == "recover":
 				# A full cycle has ended: the next brace may be broken again.
@@ -509,11 +524,12 @@ func _end_rush(kind: String) -> void:
 	_recover_length = float(RECOVER[kind])
 	velocity.x = 0.0
 	velocity.z = 0.0
+	_fade("shunter.rush", 0.025)
 	if kind == "steel":
 		_jolt = -_brace_dir * 0.3
-		_placeholder("slam")                # PLACEHOLDER: the crumple clang
+		_sound("shunter.crumple_clang", "slam")
 	elif kind == "miss" or kind == "crate":
-		_placeholder("default")             # PLACEHOLDER: the skid
+		_sound("shunter.skid", "default")
 	_enter("recover")
 	recovery_opened.emit(kind, _recover_length)
 	_log("recover", {"kind": kind, "seconds": _recover_length})
@@ -625,8 +641,6 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> bool:
 	if _dead:
 		return false
 	var raw := amount
-	if bool(driver_firing.call()):
-		amount = minf(amount, DRIVER_CAP)
 	# One trigger pull is one event: Bulkhead's pellets land in the same
 	# frame and are summed for the reaction only (D-20 A3).
 	_pending_raw += raw
@@ -640,12 +654,13 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> bool:
 	var hp_before := hp
 	var killed := super.take_damage(amount, direction, knockback)
 	window_damage += hp_before - maxf(hp, 0.0)
+	_tally("damage", hp_before - maxf(hp, 0.0))
 	_log("hit", {"raw": raw, "taken": hp_before - maxf(hp, 0.0),
 			"armoured": armoured})
 	# Every hit answers, including mid-wind-up (the base flinch skips it).
 	if armoured:
 		_flash = 0.08
-		_placeholder("melee_hit")           # PLACEHOLDER: plough clang
+		_placeholder("melee_hit")           # PLACEHOLDER: armour clang (not in D-20's seven)
 	elif visual != null:
 		visual.scale = Vector3.ONE * 0.94
 		create_tween().tween_property(visual, "scale", Vector3.ONE, 0.1)
@@ -684,6 +699,7 @@ func _resolve_pending_hit() -> void:
 				_brace_broken_this_cycle = true
 				_brace_locked = true
 				_end_telegraph(false)
+				_fade("shunter.plough_scrape", 0.025)
 				_jolt = -_brace_dir * 0.2
 				_log("brace_broken", {})
 				_reaim_min = REAIM_SECONDS
@@ -692,7 +708,7 @@ func _resolve_pending_hit() -> void:
 			_flash = 0.08                   # sparks and a clang; nothing else
 		"recover":
 			_jolt = (global_position - _pending_from).normalized() * 0.5
-			_placeholder("default")         # PLACEHOLDER: the vent gust
+			_sound("shunter.vent_gust", "default")
 
 
 func die() -> void:
@@ -703,9 +719,16 @@ func die() -> void:
 	_lane.visible = false
 	var was_rushing := state == "rush"
 	_enter("down")
+	for running: String in ["shunter.rush", "shunter.plume_hiss",
+			"shunter.plough_scrape"]:
+		_fade(running, 0.025)
 	if was_rushing:
 		_jolt = _brace_dir * 1.0            # skids a metre
-	_placeholder("slam")                    # PLACEHOLDER: the power-down
+		_sound("shunter.skid", "")
+	_sound("shunter.power_down", "slam")
+	# After the killing hit has been counted (it is still inside
+	# take_damage when this runs).
+	_summarise_fight.call_deferred()
 	set_collision_layer_value(1, false)
 	enemy_died.emit(self)
 	powered_down.emit()
@@ -886,6 +909,91 @@ func _show_lane() -> void:
 	_lane.global_position = start + _brace_dir * (length / 2.0)
 	_lane.global_rotation = Vector3(0, atan2(-_brace_dir.x, -_brace_dir.z), 0)
 	_lane.visible = true
+
+
+## CONDI'S SHUNTER SOUNDS (draft PR #45, b1235032): the horn is approved;
+## the other seven are CANDIDATES, not approved, wired by her `events.json`
+## (state, trigger, the 25 ms fades). One 3D player per event on the SFX
+## bus at one level, as her level contract asks. A missing file falls back
+## to the placeholder tone named beside it.
+const SFX_DIR := "res://audio/sigmaudio/shunter/"
+static var _sfx_streams := {}
+var _sfx := {}
+
+
+static func _sfx_library() -> Dictionary:
+	if _sfx_streams.is_empty() and FileAccess.file_exists(SFX_DIR + "events.json"):
+		var parsed: Variant = JSON.parse_string(
+				FileAccess.get_file_as_string(SFX_DIR + "events.json"))
+		if parsed is Dictionary:
+			for row: Dictionary in (parsed as Dictionary).get("events", []):
+				var path := SFX_DIR + String(row.get("file", ""))
+				if ResourceLoader.exists(path):
+					_sfx_streams[String(row["event"])] = load(path)
+	return _sfx_streams
+
+
+func _sound(event: String, fallback: String) -> void:
+	var stream: AudioStream = _sfx_library().get(event)
+	if stream == null:
+		if fallback != "":
+			_placeholder(fallback)
+		return
+	var player: AudioStreamPlayer3D = _sfx.get(event)
+	if player == null:
+		player = AudioStreamPlayer3D.new()
+		player.unit_size = _horn.unit_size
+		player.max_distance = _horn.max_distance
+		player.bus = _horn.bus
+		player.stream = stream
+		add_child(player)
+		_sfx[event] = player
+	player.set_meta("fading", false)
+	player.volume_db = 0.0
+	player.play()
+
+
+## Fades a running event out over `seconds` (25 ms for a cut, per Condi).
+func _fade(event: String, seconds: float) -> void:
+	var player: AudioStreamPlayer3D = _sfx.get(event)
+	if player == null or not player.playing or bool(player.get_meta("fading", false)):
+		return
+	player.set_meta("fading", true)
+	var tween := create_tween()
+	tween.tween_property(player, "volume_db", -60.0, seconds)
+	tween.tween_callback(player.stop)
+
+
+## Telemetry: what the weapon out did this fight.
+func _tally(what: String, amount: float) -> void:
+	_start_fight()
+	var w := String(weapon_out.call())
+	var row: Dictionary = fight.get(w, {"damage": 0.0, "hits": 0, "rushes": 0})
+	if what == "damage":
+		row["damage"] = float(row["damage"]) + amount
+		row["hits"] = int(row["hits"]) + 1
+	else:
+		row["rushes"] = int(row["rushes"]) + int(amount)
+	fight[w] = row
+
+
+## The fight starts at the first horn, or the first hit if that came first.
+func _start_fight() -> void:
+	if _fight_from < 0.0:
+		_fight_from = Engine.get_physics_frames() / float(
+				Engine.physics_ticks_per_second)
+
+
+func _summarise_fight() -> void:
+	var now := Engine.get_physics_frames() / float(Engine.physics_ticks_per_second)
+	var rushes := 0
+	for w: String in fight:
+		rushes += int(fight[w]["rushes"])
+	fight_summary = {"time_to_kill": now - _fight_from if _fight_from >= 0.0
+			else -1.0, "rushes": rushes, "weapons": fight.duplicate(true)}
+	print("FREIGHT BAY FIGHT: ", JSON.stringify(fight_summary))
+	_log("fight", fight_summary)
+	fight_recorded.emit(fight_summary)
 
 
 ## PLACEHOLDER SOUNDS from the game's enemy bank (owner, 2026-10-16:

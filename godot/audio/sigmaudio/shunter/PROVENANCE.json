@@ -1,0 +1,9 @@
+{
+  "what": "Condi's Shunter sound set v1: the approved horn and seven CANDIDATE sounds (plough scrape, rush, crumple clang, skid, vent gust, plume hiss, power-down). The seven are not approved and had not been heard in the game when installed.",
+  "source_branch": "claude/project-thread-ex42xo",
+  "source_commit": "b1235032",
+  "source_folder": "handoff/shunter_sfx_v1/ (wav/* and events.json)",
+  "source_pr": 45,
+  "verified": "Every file matched the handoff's CHECKSUMS.sha256 as copied; shunter_horn.wav is byte-identical to godot/audio/sfx/shunter/shunter-horn-tuned.wav.",
+  "rule": "Never re-render, normalise, trim, resample or re-encode these. Changes come from Condi's side and are re-installed from her handoff."
+}
