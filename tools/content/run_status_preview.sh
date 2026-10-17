@@ -15,9 +15,7 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 cp "$ROOT/tools/content/status_preview.gd" "$H/status.gd"
 # `class_name` is stripped for the same reason the content verifier strips
 # it: Godot does not register a global class for a script dropped into the

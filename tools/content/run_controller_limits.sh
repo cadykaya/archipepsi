@@ -9,8 +9,6 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 cp "$ROOT/tools/content/controller_limits.gd" "$H/limits.gd"
 run_godot limits _harness/limits.gd "$OUT"

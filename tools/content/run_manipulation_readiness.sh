@@ -15,9 +15,7 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 
 # `MassClass.read` takes a `StatusEffects`. Pulling the real one in drags
 # `Constants.ECHO_STATUS_*` and `BridgeClient` behind it, and this harness

@@ -10,9 +10,7 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 
 cat > "$H/refuses.gd" <<'GD'
 extends RefCounted

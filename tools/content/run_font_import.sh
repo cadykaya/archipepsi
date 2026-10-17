@@ -23,9 +23,7 @@ H="$ROOT/godot/_harness"
 
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 
 for face in ui_numerals ui_text; do
   [ -f "$FONT/$face.fnt" ] || {

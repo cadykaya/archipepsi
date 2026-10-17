@@ -20,9 +20,7 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$(dirname "$OUT")"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 
 # `RoomContract` is reached ONLY from `RailPath.violations()`, which
 # this measurement never calls -- but GDScript parses the whole file, so

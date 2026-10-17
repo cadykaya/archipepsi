@@ -16,9 +16,7 @@ H="$ROOT/godot/_harness"
 [ -x "$GODOT" ] || { echo "no godot at $GODOT" >&2; exit 2; }
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 cp "$ROOT/tools/owner_review_2026_09_28/pack_views_review.gd" "$H/packview.gd"
 sed 's/^class_name ArtBench$//' "$ROOT/tools/artpreview/artbench.gd" > "$H/artbench.gd"
 for L in "$ROOT"/tools/owner_review_2026_09_28/packs_fixed_light/*.json; do

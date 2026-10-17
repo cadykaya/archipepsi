@@ -23,9 +23,8 @@ FRAMES="${MENU_STUDY_FRAMES:-$(mktemp -d)}"
 [ -x "$GODOT" ] || { echo "no godot at $GODOT" >&2; exit 2; }
 # shellcheck source=../content/godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H" "$OUT"
+mkdir -p "$OUT"
+claim_harness "$H"
 
 cp "$UI/ui_text.fnt" "$UI/ui_text.png" "$UI/ui_numerals.fnt" \
    "$UI/ui_numerals.png" "$UI/panel_keycap.png" "$UI"/icon_*.png "$H/"

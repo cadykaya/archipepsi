@@ -86,3 +86,48 @@ run_godot() {
   rm -f "$log"
   return 0
 }
+
+# claim_harness DIR...
+#
+# THE FOLDERS A RUNNER STAGES INTO ARE CLAIMED, NEVER CLEARED. (FU-2,
+# Arty, 2026-10-17.) Every runner here used to open with
+#
+#     cleanup() { rm -rf "$H"; }; trap cleanup EXIT; cleanup; mkdir -p "$H"
+#
+# which deletes `godot/_harness` whoever owns it -- another runner halfway
+# through, or someone's hand-staged copy. The repair runners of 2026-09-28
+# claim it instead; this is that guard, once, for all of them.
+#
+# Each DIR is created with a plain `mkdir`, so one that already exists is
+# somebody else's: the runner stops with status 2 and touches nothing,
+# including the folders it had already claimed this call (it removes
+# those, and only those). Claimed folders are removed on any exit,
+# including a signal. A stale folder left by a run that was killed -9 has
+# to be removed by hand; that is the price of never removing a folder this
+# run did not make.
+_CLAIMED=()
+claim_harness() {
+  local dir
+  for dir in "$@"; do
+    if ! mkdir "$dir" 2>/dev/null; then
+      echo "$(basename "$0"): $dir already exists and is not this run's;" \
+           "nothing was touched (remove it yourself if it is a stale copy" \
+           "of yours)" >&2
+      _release_claims
+      exit 2
+    fi
+    _CLAIMED+=("$dir")
+  done
+  trap _release_claims EXIT
+  trap 'exit 129' HUP
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+}
+
+_release_claims() {
+  local dir
+  for dir in ${_CLAIMED[@]+"${_CLAIMED[@]}"}; do
+    rm -rf "$dir"
+  done
+  _CLAIMED=()
+}

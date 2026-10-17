@@ -5,14 +5,13 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 GODOT="${GODOT:-$ROOT/.tools/godot}"
 SHELL_ID="${1:-shell_junction_cross}"
 OUT="${2:-$ROOT/docs/art/review/furnished_2026-09-13}"
+MODELS="${3:-$ROOT/assets/models}"
 H="$ROOT/godot/_harness"
 [ -x "$GODOT" ] || { echo "no godot at $GODOT" >&2; exit 2; }
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 cp "$ROOT/tools/content/furnished_view.gd" "$H/furnish.gd"
 sed 's/^class_name ArtBench$//' "$ROOT/tools/artpreview/artbench.gd" > "$H/artbench.gd"
-run_godot furnish _harness/furnish.gd "$ROOT/assets/models" "$OUT" "$SHELL_ID"
+run_godot furnish _harness/furnish.gd "$MODELS" "$OUT" "$SHELL_ID"

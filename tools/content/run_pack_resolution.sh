@@ -16,9 +16,7 @@ H="$ROOT/godot/_harness"
 [ -x "$GODOT" ] || { echo "no godot at $GODOT" >&2; exit 2; }
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 
 # `Constants` is a global this project does not register, and a file
 # referencing one fails to COMPILE while `load()` still hands back a

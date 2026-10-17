@@ -56,7 +56,7 @@ with the approved authored vocabulary come first.
 | 2 | Core interactables | **done** — Batch 005/005-R the Check in four states, 006 the portal and `door_standard`, 022 the navigation language (`PASS` 2026-08-29: `nav_blade`, `nav_panel`, `nav_chevron`, `nav_hanger`, in all six themes). `objective_marker` was **struck** — no current objective type needs a world marker |
 | 3 | Common architecture | **done** — Batches 001 and 007 the Pri-A modules, 020 the structural Pri-B seven (`PASS`), 021 the services and openings (`PASS`, `arch_duct` cleared by the 021-R evidence). **Three rows were struck rather than built**, each because nothing places it: `arch_affordance_socket` (req 22 — each affordance owns its own mounting language), `arch_objective_socket` and `arch_signage_mount` (2026-08-29 — the approved navigation family owns its own mounting, and a generic mount would recreate the rejected universal socket). `arch_vista_socket` remains blocked with no contract at all. |
 
-| 4 | The enemy production family | **UNBLOCKED 2026-08-29, and the old wording here was stale.** ~~Seven of the ten roles wait on colliders (req 7) and the telegraph on a node that does not exist (req 14).~~ Both are RESOLVED in current Production: `Constants.ENEMY_ENVELOPES` publishes an agreed envelope for all ten roles, and `enemy.gd` carries `telegraph_started` / `telegraph_finished` / `telegraph_progress()` plus a `telegraph_origin` Marker3D at the collider centre. Batch 030 built all ten to those exact numbers and asserts the fit. What remains is req 31: `ENEMY_ARCHETYPES` is still `("melee", "ranged", "brute")`, so seven have a body and no way to be spawned |
+| 4 | The enemy production family | **UNBLOCKED 2026-08-29, and the old wording here was stale.** ~~Seven of the ten roles wait on colliders (req 7) and the telegraph on a node that does not exist (req 14).~~ Both are RESOLVED in current Production: `Constants.ENEMY_ENVELOPES` publishes an agreed envelope for all ten roles, and `enemy.gd` carries `telegraph_started` / `telegraph_finished` / `telegraph_progress()` plus a `telegraph_origin` Marker3D at the collider centre. Batch 030 built all ten to those exact numbers and asserts the fit. What remains is req 31: `ENEMY_ARCHETYPES` is still `("melee", "ranged", "brute")`, so seven have a body and no way to be spawned **[Superseded, dated correction 2026-10-17: req 31 is resolved in Production; all ten roles are in `ENEMY_ARCHETYPES` (the 2026-09-28 audit below; `docs/AGENT_FRONTIER.md`). The words here are kept as written.]** |
 | 5 | Movement affordances | **done** — Batch 009 built the six remaining fixtures, all in the `signal` family the approved anchors wear |
 | 6 | Universal props | **done as far as it can go** — **corrected** — §8's 22-prop library is placed by nothing. Batch 010 built the three the generator actually places whose theme family exists; three more wait on their theme kits |
 | 7 | Room-shell vocabulary | **done and `PASS`** — 19 shells across all six families (015–019), approved 2026-08-28 as legal authored vocabulary for Epsilon / Godot integration. Expansion is allowed but **not by count**: a new variant must create a meaningfully different route, combat problem, vertical relationship, sightline, traversal problem, Check-placement opportunity or optional-space opportunity |
@@ -418,7 +418,7 @@ The bodies do not fill their envelopes — the scuttler is 0.34 m tall
 inside a 0.62 m one — and the first cut put eight anchors across six
 roles outside the geometry. The containment gate refused every one.
 
-**Req 31 is unchanged and was not routed around.** `ENEMY_ARCHETYPES`
+**Req 31 is unchanged and was not routed around.** **[Superseded, dated correction 2026-10-17: req 31 is resolved in Production; all ten roles are in `ENEMY_ARCHETYPES` (the 2026-09-28 audit below; `docs/AGENT_FRONTIER.md`). The words here are kept as written.]** `ENEMY_ARCHETYPES`
 is still `("melee", "ranged", "brute")`, so seven roles are art-ready
 and not spawnable, and every frame says which.
 
@@ -1529,7 +1529,7 @@ migration, not this.
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
 | Phase | **THE AUTHORED ROOM LIBRARY IS COMPLETE THROUGH WAVE 1 AND ALL TWELVE SHELLS ARE `review: "pass"`.** The eight P2 shells passed on 2026-09-02; `shell_hall_transit`, `shell_plenum_helix`, `shell_yard_gantry` and `shell_span_basin` were promoted by the owner on **2026-09-04**, after Production's technical certification at **`7e13f44`** and an independent audit at **`f97545f`**. Nothing in the content pack is `pending` except the three projectile substitutions, which are Production's reversal and stay as they are. **Wave 1 is COMPLETE. Wave 2 has NOT started and requires its own owner brief.** **STYLE LOCK PASSED.** 001-022 and 031-037 are all `PASS`; **023-030 remain PENDING owner review**, and Batch 023 is a PROPOSAL rather than production. **The art lane is intentionally IDLE.** No Batch 038, no Echo visual parts and no diegetic interface work until the owner publishes the two design briefs named below. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **NOTHING. There is no Art-side blocker and no Art-side work queued.** The three technical questions this lane was carrying are all resolved and none of them is a current blocker: **req 40** — `ShellValidator` is kind-aware through `TraversalLaw` and no longer applies jump bounds to continuous walks or ramps, implemented before the promotion; **`launch_source.radius`** — settled at Production `833fe80` and guarded at `7e13f44`: `position` is the exact foot-contact launch origin and `radius` reserves space for the constructed pad, NOT a disc of possible ballistic origins, so all four pads are correct as authored; **the plenum collar convex-disc defect** — each collar ships as twelve convex ring sectors, the holes are physically open, and the independent audit verified the decomposition. **The one real remaining milestone is Production's, and it is intentional: the player-facing movement-package consumer.** Shell promotion does not implement rails, launches or grapples in ordinary gameplay — the twelve shells can be placed, entered and walked end to end today, and the `rail_route`, `launch_source` / `launch_target` and `grapple_point` offers they carry are reservations against a consumer that does not exist yet. Everything else the lane could reach for is still closed: no Batch 038, no Echo visual parts, no diegetic interface work until the owner publishes those two briefs; 023-030 remain PENDING review; req 31 still blocks seven enemy roles and Art has deliberately not routed around it. **Do not invent filler work. No heartbeat, no polling, no autonomous expansion.** |
+| Next action | **NOTHING. There is no Art-side blocker and no Art-side work queued.** The three technical questions this lane was carrying are all resolved and none of them is a current blocker: **req 40** — `ShellValidator` is kind-aware through `TraversalLaw` and no longer applies jump bounds to continuous walks or ramps, implemented before the promotion; **`launch_source.radius`** — settled at Production `833fe80` and guarded at `7e13f44`: `position` is the exact foot-contact launch origin and `radius` reserves space for the constructed pad, NOT a disc of possible ballistic origins, so all four pads are correct as authored; **the plenum collar convex-disc defect** — each collar ships as twelve convex ring sectors, the holes are physically open, and the independent audit verified the decomposition. **The one real remaining milestone is Production's, and it is intentional: the player-facing movement-package consumer.** Shell promotion does not implement rails, launches or grapples in ordinary gameplay — the twelve shells can be placed, entered and walked end to end today, and the `rail_route`, `launch_source` / `launch_target` and `grapple_point` offers they carry are reservations against a consumer that does not exist yet. Everything else the lane could reach for is still closed: no Batch 038, no Echo visual parts, no diegetic interface work until the owner publishes those two briefs; 023-030 remain PENDING review; req 31 still blocks seven enemy roles and Art has deliberately not routed around it. **[Superseded, dated correction 2026-10-17: req 31 is resolved in Production; all ten roles are in `ENEMY_ARCHETYPES` (the 2026-09-28 audit below; `docs/AGENT_FRONTIER.md`). The words here are kept as written.]** **Do not invent filler work. No heartbeat, no polling, no autonomous expansion.** |
 | ~~Superseded~~ | ~~**Tier 7: the room shells** (`ASSET_INVENTORY.md` §7, L3, nothing built) — started immediately, per the owner's instruction not to idle while 014 waits. Six families, all Pri A: corridor, arena, platform-path, tower, treasure room, corner. They inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, and must not be generic stretches of one another where gameplay geometry matters. The approved six material families and the Batch 014 fixture language both apply.~~ Corridors done as Batch 015. |
 | ~~Superseded~~ | ~~**Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild.~~ Done as Batch 012. |
 | Queue depth | **Pending owner review: 023-030 only.** 001-022 and 031-037 are all `PASS` as of 2026-08-29. The hourly heartbeat stays **paused** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled 2026-08-29) and the PR #5 poll is deleted; PR activity still wakes the session on its own. **Do not re-enable the routine on an idle lane** — re-enable it only when an owner brief, a verdict or a Production contract gives it something to do. |
@@ -1989,7 +1989,7 @@ them; each is a thing the art lane will need when contracts settle.
 | 28 | **Health and ammo are not things in this game yet, and the loot catalog is sealed.** Of Batch 027's five pickups, two are backed by a real Production item -- `ITEM_NAME_EPSILON_COIN` (`EPSILON_COIN_COUNT = 10`) and `ITEM_NAME_EPSILON_STATIC` (18). **Health and a generic combat resource are backed by nothing at all**: no item name, no constant, no entity, no mention. `LOW_HEALTH_FRACTION = 0.33` establishes that the player HAS health; nothing establishes that health is a thing you pick up. | And `godot/scripts/gameplay/local_reward.gd` carries a CLOSED catalog -- `epsilon_note`, `challenge_marker`, `cosmetic_grant`, `hub_decoration`, `lab_fixture`, `flavor_log` -- with the reason in its own comment: the client must not be able to invent a seventh kind. **None of the six is a container**, so a secret cache is not a kind art may add. What Production would have to decide: whether health and a combat resource exist as pickups at all, and whether the loot catalog gains a container kind. This is a design question before it is an art one; the five are built because the brief asked for five, and each records in its manifest whether a real item backs it. | `batch027/pickups/*` |
 | 29 | **The interactable contract exists, and its state vocabulary is the AP Check's.** `godot/scripts/content/interactable_contract.gd` publishes `STATES := ["locked", "available", "sending", "confirmed"]`, `IDENTITY_VISIBLE_IN = "confirmed"`, a `leak()` anti-spoiler check, and `REQUIRED_PARTS := {state_visual: MeshInstance3D, state_label: Label3D}`. That is a contract about an AP moment, not about interaction in general. | **None of Batch 028's nine primitives fits those four states** -- a weight button, a door ram, a fuse indicator and a breakable panel are not `sending`. So the nine have no runtime state vocabulary at all. **`REQUIRED_PARTS` is real, though, and the kit is authored to it**: every primitive carries one identifiable `state_visual` region and reserves a place for a `state_label`, which is why the proposed grammar is 'the plate is the state, everything else is the verb'. What Production would have to decide: whether interaction primitives get their own state vocabulary, or whether each primitive declares its own. Art is not guessing, and no mechanic is designed. | `batch028/interaction/*` |
 | 30 | **A secret has a socket and a score, but no appearance and no difficulty.** This is the batch with the MOST existing contract, not the least. `schemas/content.py` already has `"secret"` as a Socket `kind` alongside doorway / corridor_end / affordance / spawn / objective / vista / presentation, carrying a `position` and a `yaw`; `content_value.SECRET_VALUE = 8` scores each authored secret as "optional, findable, and the reason to look around"; and `secret_ping` already exists as an Echo readout. | So a shell can declare WHERE a secret is today. **What is missing is what one LOOKS like**: no cue vocabulary, no difficulty grading, and no way for a shell to say "this is a learning-tier cue" so a Zone can teach before it tests. Note the `secret_ping` finding matters to art directly -- the game can already TELL a player where a secret is, so the visual language has to be the primary channel and the ping an Echo-granted assist. A cue that only works once you hold the right Echo is not a cue. What Production would have to decide: whether a secret socket can carry a cue kind and a tier. Art is not guessing, and nothing here decides what a secret contains, how it opens or what it is worth. | `batch029/secrets/*` |
-| 31 | **Seven of the ten enemy roles have a body, a collider and a telegraph seat -- and no way to be spawned.** `Constants.ENEMY_ARCHETYPES` is still `("melee", "ranged", "brute")`, and its own neighbour comment is explicit that this is deliberate: *"THIS IS NOT THE LIST OF ENEMIES A ZONE MAY CONTAIN. It is the list of roles that have an agreed physical envelope. `ENEMY_ARCHETYPES` is the placeable set, and it is smaller."* | Batch 030 builds all ten to their published envelopes and asserts the fit, so charger, bulwark, scuttler, artillery, beacon, diver and drifter are art-complete against the contract that exists. What they lack is placement: no Zone can contain one. What Production would have to decide: which roles graduate into `ENEMY_ARCHETYPES`, and what each needs before it can (stats, behaviour, a telegraph kind). **Art is not asking for behaviour and has invented none.** | `batch030/enemies/*` |
+| 31 | **Seven of the ten enemy roles have a body, a collider and a telegraph seat -- and no way to be spawned.** **[Superseded, dated correction 2026-10-17: req 31 is resolved in Production; all ten roles are in `ENEMY_ARCHETYPES` (the 2026-09-28 audit below; `docs/AGENT_FRONTIER.md`). The words here are kept as written.]** `Constants.ENEMY_ARCHETYPES` is still `("melee", "ranged", "brute")`, and its own neighbour comment is explicit that this is deliberate: *"THIS IS NOT THE LIST OF ENEMIES A ZONE MAY CONTAIN. It is the list of roles that have an agreed physical envelope. `ENEMY_ARCHETYPES` is the placeable set, and it is smaller."* | Batch 030 builds all ten to their published envelopes and asserts the fit, so charger, bulwark, scuttler, artillery, beacon, diver and drifter are art-complete against the contract that exists. What they lack is placement: no Zone can contain one. What Production would have to decide: which roles graduate into `ENEMY_ARCHETYPES`, and what each needs before it can (stats, behaviour, a telegraph kind). **Art is not asking for behaviour and has invented none.** | `batch030/enemies/*` |
 | 32 | **The viewmodel cannot express an Echo's FAMILY, so a reforge is invisible.** `player.gd` builds `$Camera3D/Viewmodel` with named `Device`, `Tip`, `EchoPart` and `EchoTip` children, and `EchoRuntime._refresh_viewmodel_attachment()` paints `EchoPart` with `source_color()` (the world the Echo came FROM) and `EchoTip` with the slot. Both channels are correct and neither changes on a reforge -- same source item, same button. | So a player who spends scarce Epsilon Coins to reinterpret a ranged Echo into a grapple sees **an identical viewmodel**. The one operation the Forge exists to perform is invisible in the view the player looks at all game. The ask is narrow and is NOT hundreds of Echo weapons, and after the 2026-08-29 owner review it is narrower still: **the Echo family must be visible through a swappable / composable `EchoPart` seam.** That is the whole requirement. It is explicitly **not** "build exactly seven fixed `EchoPart` models" -- the owner's ruling on Batch 032 is that the three forms built there **prove the attachment seam and nothing more**, and are not approval of a seven-fixed-forms system. Colour keeps source, the tip keeps slot, and form carries family through whatever occupies the seam. **Art must not expand those three into seven production family models.** The 2026-08-29 review enumerates what proof-of-seam is explicitly *not* approval of: seven fixed family models, a final attachment grammar, a final part taxonomy, runtime composition rules, family silhouette rules, or provenance / source influence rules. All of those are specified by a future owner-authored brief for the **modular Echo visual construction / kitbash system**. **Do not begin designing or mass-producing Echo visual parts.** | `batch032/viewmodel/*` |
 | 33 | **The Zone exit has a boolean where it needs a state, and its locked colour is in the hazard channel.** `exit_portal.gd` is already the Zone exit -- a themed frame, a recoloured core and a `Label3D` -- with the hook `set_unlocked(value: bool, checks_remaining: int)`. The redesigned lifecycle wants four states (present-not-ready, ready, return-available, cleared) and a boolean cannot carry four. | **Art recommends building no new portal**: the vocabulary exists, is correctly scaled, and is contextually separated from the two Hub portals. Two things are Production's to fix in their own file: the four-state signal, and the locked core's `Color(0.4, 0.2, 0.2)` -- a dark red, in the family whose definition is *"this will hurt you. Never used decoratively, in any theme, for any reason."* A locked exit is not a hazard; it is `dead` (*"unpowered, LOCKED, spent, offline"*). One art note: the `StateLabel` is currently doing all the work, and if four states land the FRAME is where the difference should live. | `review/batch033/README.md` |
 | 34 | **The affordance language says "a capability could be used here" and cannot say "you lack it".** The 2026-08-28 owner ruling gives every optional traversal affordance one colour (`AFFORDANCE_SIGNAL_HEX`, art's own `signal` anchor) with FORM carrying which and COLOUR carrying opportunity -- and all seven contracted families (`grapple_anchor`, `breakable_wall`, `rail`, `bounce_pad`, `moving_platform`, `wind_volume`, `water_volume`) are therefore readable in all six themes and unconfusable with decoration. | Two gaps for hard gates. (1) **No "you lack this" state exists** -- `AFFORDANCE_DYNAMIC_CHANNELS` carries breakable damage and wind ring count, and neither is acquisition. (2) **Form carries family only at close range**; at the distance a gate is first seen, a grapple anchor and a rail terminus are both "a cyan thing on a structure". Batch 034 proposes solving the READ without a new channel: build the gate as finished infrastructure missing exactly one thing, because **broken is ragged and installed is neat**. Blink/teleport gets a proposal only and no production asset, since it has no mechanical contract. | `batch034/gates/*` |
@@ -3400,7 +3400,9 @@ Four follow-ups, each its own commit on the same repair branch.
 
   This is **not** a current-Production compatibility pass.
 * **Named follow-ups,** recorded and not started (details in the repair
-  handoff):
+  handoff): **[Status, dated 2026-10-17: FU-1 and FU-2 fixed; FU-3 and
+  FU-4 written up as decisions. See
+  `docs/art/reports/2026-10-17-tooling-follow-ups-fu1-fu4.md`.]**
   * **FU-1:** the theme-bind harness against pinned Production;
   * **FU-2:** the 42 remaining unsafe runners that clear `godot/_harness`;
   * **FU-3:** the plate's `pl_nose` wedge, which slopes across the
@@ -3548,6 +3550,99 @@ played G1. Support only Prod's specific fit, collision and state issues.
 * Report: `docs/art/reports/2026-10-09-shunter-pose-study.md`.
 
 **Next: STOP.** No production model until the combat is proven fun.
+
+### Delivered, 2026-10-17 — the tooling follow-ups FU-1 to FU-4 (Condi's call). FU-3 and FU-4 STOP for a decision.
+
+* **FU-2, fixed:** `claim_harness` in `tools/content/godot_run.sh`; all 41
+  runners that cleared `godot/_harness` now claim it or stop.
+  `tools/content/test_harness_claim.sh` is in the art check and fails
+  when a runner is put back to the old opening.
+* **FU-1, fixed:** `run_theme_bind.sh` binds `theme_pack.gd`'s
+  `Constants.*` to the preloaded `constants.gd`. It now PASSES at the pin
+  `c12a72f` (it used to fail and hang to the 300 s deadline) and at the
+  default ref, byte-identical to the committed evidence.
+* **FU-3, a decision:** the plate fix is one line, but it regenerates
+  `phys_plate.glb`, and the auto-placed lightened panel moves from the +X
+  end onto the top. Options (a) to (c) are in the report.
+* **FU-4, a decision:** hex values export lighter (`#4a5058` displays as
+  about `#93989f`). Option 1 changes wording only; option 2, converting,
+  is not proposed.
+* **Found on the way:** the art check had been red since 10-13/10-14 on
+  four weapon study pipelines missing from its rebuild list. They are now
+  a guarded `STUDIES` exemption. `check_art_current.sh` PASSES at this
+  head (594 s).
+
+### Delivered, 2026-10-17 — Batch 044's triad and terminus presentation pass, as variants. STOPPED for the owner's pick.
+
+* This is AF 163-168's "next Art task", done as seven single-variable
+  variants plus the control. **Nothing shipped changed.**
+  `assets/models/batch044/shells/` is byte-identical, and the variants
+  were built into scratch by `build_junctions.py --presentation=… --out=…`,
+  which refuses `assets/`.
+* Parts (`PRESENT_PARTS`), each the cross's stage-3 change refitted to the
+  corner fills:
+  * skin: `trim` plating;
+  * base: a 0.30 m bund;
+  * top: a head course, stepped back;
+  * face: desk, hatch and pipe heads;
+  * board: gauge boards;
+  * trunks: overhead lines that split in the triad and stop in the
+    terminus.
+* Checks: collision asserts pass on all 16 builds; the route walk shows
+  zero jumps on every triad and terminus route in every variant; triangles
+  rise from 672 to 924 (triad, all) and from 516 to 684 (terminus, all).
+* Readings (proposal only): top + base + trunks for both rooms, with skin
+  if its noise is acceptable; face for the triad only (in the terminus it
+  narrows the 8 m approach to 5.75 m); boards optional.
+* Report: `docs/art/reports/2026-10-17-batch044-presentation-variants.md`.
+  The sheets were sent in chat and are not committed.
+* Still open: are these rooms in the release's Crossings (Condi, Q3)?
+  When a pick comes back, build it into `assets/` with the normal build
+  and check it again.
+
+### Delivered, 2026-10-17 — the Shunter look sheet (disposable). STOPPED for the owner's pick after she plays the fight.
+
+* `tools/blender/study_shunter_looks.py` builds the looks: C0 control
+  (pose-study B), L1 V-prow, L2 lip band, L3 one lamp bar, L4 lifting
+  stack, L5 low hull, L6 reverse-knee, L7 two-tone, and R (a replica of
+  Prod's graybox). Each look is shot in four states: work, notice, brace
+  (with the lit lane) and recover.
+* `tools/shunter_looks.sh`: each pose alone in Crossing D's yard, read-only
+  checkout, Forward+, four cameras (F20 1.2 m east of 10-09's
+  column-blocked spot). Sheets SL0-SL4 and `shunter_look_numbers.json`.
+* Readings (proposal only): L2 and L4 add telegraph read at no silhouette
+  cost; L1 is an identity option; avoid L5 (it hides the horn lamps at
+  20 m) and L7 (side silhouette -25%); L3 and L6 are taste. The pale livery
+  out-telegraphs the dark graybox.
+* Unfinished-art list for Condi:
+  `docs/art-requests/2026-10-17-art-lane-open-work-for-condi.md`. Open
+  question: are Batch 044's rooms in the release's Crossings?
+* **Git space (owner, via Condi, 2026-10-17):**
+  * review renders, sheets, GIFs, PDFs and zips stay OUT of git, and go
+    to the owner in chat;
+  * commit scripts, source and the final picked asset only; small images,
+    once;
+  * one working art branch (`claude/archipepsi-art-shunter-look-2026-10-17`).
+  * The look sheets were therefore dropped from this branch before it was
+    used by anyone: they had been pushed for about ten minutes, and the
+    rewrite touched only this branch.
+
+### Ruling, 2026-10-17 — rest lifted; the Shunter look sheet; Condi co-directs
+
+* The owner confirmed in this session (2026-10-17): start the Shunter look
+  sheet and the unfinished-art list. Condi co-directs with her, and the art
+  lane's questions go to Condi's session.
+* Shunter look sheet:
+  * a variant sheet, NOT a production model (the 2026-10-09 rule stands:
+    no model until the combat is proven fun);
+  * about seven variants plus a labelled control, one variable at a time,
+    same scale and camera, gameplay distances, numbers beside each;
+  * losing options kept in the source;
+  * inside D-20 rev 2's silhouette and telegraph needs: the horn, the brace
+    with the plough down, the lit lane, the vents; with the larger plough
+    and the upward vent;
+  * the identity and pale livery approved 2026-10-08 stand.
+  * Nothing is approved until she has played the fight.
 
 ### Ruling, 2026-10-16 — the five-weapon package goes into the first unified review build
 

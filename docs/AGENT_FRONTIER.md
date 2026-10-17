@@ -194,6 +194,88 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
     shipped copy): `94f6e82` (the narrow, importable commit: `author_text.py` plus
     `assets/ui/ui_text.{fnt,png}`), and `1f9d5ae` (the proof and
     handoff).
+* **2026-10-17 (delivered): the tooling follow-ups FU-1 to FU-4**,
+  assigned by Condi. Branch `claude/archipepsi-art-shunter-look-2026-10-17`.
+  * FU-1 fixed: theme-bind passes at pinned Production `c12a72f`.
+  * FU-2 fixed: 41 runners claim `godot/_harness`; the new test is in the
+    art check.
+  * FU-3 (the plate wedge) and FU-4 (the hex convention) are written up
+    as decisions.
+  * The art check's rebuild-list guard was red on four weapon study
+    pipelines; they are now a guarded exemption. `check_art_current.sh`
+    PASSES.
+  * Report: `docs/art/reports/2026-10-17-tooling-follow-ups-fu1-fu4.md`.
+  * The req-31 lines were already marked superseded, dated 2026-10-17.
+* **2026-10-17 (delivered): Batch 044's triad and terminus presentation
+  pass, as seven variants and a control. STOP for Skyiah's pick.** Branch
+  `claude/archipepsi-art-shunter-look-2026-10-17`. The committed rooms are
+  unchanged.
+  * `build_junctions.py --presentation=<parts> --out=<scratch>` builds any
+    combination of skin, base, top, face, board and trunks into scratch,
+    and refuses `assets/`. The plain build is byte-identical to the
+    committed GLBs (checked).
+  * All 16 builds pass the collision asserts. Every triad and terminus
+    route walks with zero jumps in every variant.
+  * Findings: skin is the named fix and the loudest (28-38% of the view);
+    top costs about 4-5% and gives the masses a top; trunks draw the
+    triad's split overhead; face squeezes the terminus approach to 5.75 m;
+    the boards barely register from the door.
+  * Report: `docs/art/reports/2026-10-17-batch044-presentation-variants.md`.
+    Numbers and README: `docs/art/review/batch044_presentation_2026-10-17/`.
+    The sheets were sent in chat and are not committed. Regenerate with
+    `tools/batch044_presentation.sh`.
+  * Still open (Condi, Q3): are these rooms in the release's Crossings?
+* **2026-10-17 (delivered): the Shunter look sheet, disposable. STOP; it
+  waits for Skyiah to play the fight.** Branch
+  `claude/archipepsi-art-shunter-look-2026-10-17`.
+  * Seven looks, each one variable against C0 (pose-study B), plus R, a
+    replica of Prod's graybox. Crossing D's yard, Forward+, at the 10-09
+    cameras (F20 moved 1.2 m east past a yard column), numbers beside
+    every cell.
+  * Findings: L2 (bright lip band) gives horn +27-31% and brace +27%; L4
+    (lifting stack) gives vents +4-9% round the back and side; L1 (V-prow)
+    gives front recover +31%. L5 (low hull) hides the horn lamps at 20 m.
+    L7 (two-tone) costs 25% of the side silhouette. R, the dark graybox,
+    has a bigger silhouette but weaker telegraphs (horn -29%, vents
+    -31%).
+  * Report: `docs/art/reports/2026-10-17-shunter-look-sheet.md`. Numbers
+    and README: `docs/art/review/shunter_look_2026-10-17/`. The sheets
+    were sent in chat and are not committed.
+  * **Overnight rules** (Skyiah via Condi, 02:57Z; git space is limited):
+    * no review renders, contact sheets, GIFs, PDFs or package zips in
+      git; variant sheets go to Skyiah in chat;
+    * commit only build scripts, source and the final picked asset;
+    * an image that must live in git is small and committed once;
+    * ONE working art branch. From now on it is
+      `claude/archipepsi-art-shunter-look-2026-10-17`; no new branch per
+      batch.
+    * Questions for Skyiah go to Condi in writing, and work continues on
+      something else meanwhile. Unfinished-art list and
+    questions for Condi:
+    `docs/art-requests/2026-10-17-art-lane-open-work-for-condi.md`. It is
+    a file because this session has no tool that reaches her session.
+* **2026-10-17 (owner, confirmed in Arty's session): rest lifted. Shunter
+  look sheet first, then the unfinished-art list.** Branch
+  `claude/archipepsi-art-shunter-look-2026-10-17`.
+  * Relayed by Condi first, then confirmed by Skyiah directly in this
+    session's question. She added: "Condi is co directing with me, please
+    ask her if you have any questions"; questions go to Condi's session.
+  * Release direction (as relayed by Condi): the smallest fun, completable,
+    Crossing-focused campaign. Rooms and exploration first, then enemies,
+    then Echo gear.
+  * Shunter: a variant LOOK SHEET only, no production model.
+    * About seven variants plus the current graybox / pose-study B as a
+      labelled control.
+    * One variable at a time, at the same scale and camera, at gameplay
+      distances, with numbers beside each.
+    * Losing options stay in the source.
+    * Stay inside D-20 rev 2's silhouette and telegraph needs: the horn,
+      the brace with the plough down, the lit lane, the vents. Include the
+      larger plough and the upward vent flagged 10-08.
+    * Nothing approved: she picks after playing the fight.
+  * Also: list the unfinished, planned, unblocked art, sorted by release
+    need. Batch 023 and 024 are not to be treated as approved.
+  * Never on `integration/unified-1`. No watchers, no merges.
 * **2026-10-16 (owner): the five-weapon art package is approved as the
   starting point for Prod's first unified review build. The art lane is on
   call, not working.**

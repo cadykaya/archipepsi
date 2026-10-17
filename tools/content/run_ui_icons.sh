@@ -16,9 +16,7 @@ H="$ROOT/godot/_harness"
 [ -x "$GODOT" ] || { echo "no godot at $GODOT" >&2; exit 2; }
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 
 [ -f "$ICONS/icons.json" ] || {
   echo "no icons.json in $ICONS -- the harness reads the symbol list from

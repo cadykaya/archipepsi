@@ -19,9 +19,7 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 if [ -z "$MAP" ]; then
   MAP="$H/models.json"
   python3 - "$ROOT" "$MAP" <<'PY'

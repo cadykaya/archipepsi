@@ -16,42 +16,51 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 
 git -C "$ROOT" show "$PROD:godot/scripts/autoload/constants.gd" \
   | sed 's/^class_name .*$//' > "$H/prod_constants.gd"
 git -C "$ROOT" show "$PROD:godot/scripts/generation/textures.gd" \
   | sed 's/^class_name .*$//' > "$H/prod_textures.gd"
-git -C "$ROOT" show "$PROD:godot/scripts/generation/theme_pack.gd" \
-  | sed 's/^class_name .*$//' > "$H/prod_theme_pack.gd"
 
 # THE ONLY EDIT: the cross-references. Stripping `class_name` from a file
 # is what lets it be preloaded instead of registered globally, and it is
 # also what breaks every `ThemePack.`/`ProcTextures.`/`Constants.` call
 # in the file that uses them. Each is bound to the preloaded script, by
-# name, at the top -- nothing is retyped and no behaviour is restated.
-git -C "$ROOT" show "$PROD:godot/scripts/generation/theme_materials.gd" \
-  | python3 -c '
+# name, after `extends` -- nothing is retyped and no behaviour is restated.
+#
+# `theme_pack.gd` gets the same treatment as `theme_materials.gd` (FU-1,
+# 2026-10-17): from Production `c12a72f` its UNIVERSAL_ROLES and
+# PACK_TABLE are `Constants.*` autoload references, which a `-s` harness
+# cannot compile, so the gate failed there while passing at the older
+# default ref, where they are literals. Binding is a no-op on a file that
+# names none of them.
+bind_refs() {  # bind_refs <prod path> <class_name to strip> <out>
+  git -C "$ROOT" show "$PROD:$1" | python3 -c '
 import sys
+own = sys.argv[1]
 s = sys.stdin.read()
-s = s.replace("class_name ThemeMaterials\n", "")
-for cls, name in (("ThemePack", "_PACK"), ("ProcTextures", "_PROC"),
-                  ("Constants", "_CONST")):
+s = s.replace("class_name %s\n" % own, "")
+binds = [(cls, name, path) for cls, name, path in (
+    ("ThemePack", "_PACK", "prod_theme_pack.gd"),
+    ("ProcTextures", "_PROC", "prod_textures.gd"),
+    ("Constants", "_CONST", "prod_constants.gd")) if cls != own]
+for cls, name, _ in binds:
     s = s.replace(cls + ".", name + ".")
 # AFTER `extends`, never before it: GDScript requires `extends` to be the
 # first statement, and a preload block above it is a parse error that
 # cascades into every later call looking like a missing function.
 lines = s.split("\n")
 at = next(i for i, l in enumerate(lines) if l.startswith("extends ")) + 1
-lines[at:at] = [
-    "const _PACK := preload(\"res://_harness/prod_theme_pack.gd\")",
-    "const _PROC := preload(\"res://_harness/prod_textures.gd\")",
-    "const _CONST := preload(\"res://_harness/prod_constants.gd\")",
-]
+lines[at:at] = ["const %s := preload(\"res://_harness/%s\")" % (name, path)
+                for cls, name, path in binds if name + "." in s]
 sys.stdout.write("\n".join(lines))
-' > "$H/prod_theme_materials.gd"
+' "$2" > "$3"
+}
+bind_refs godot/scripts/generation/theme_pack.gd ThemePack \
+  "$H/prod_theme_pack.gd"
+bind_refs godot/scripts/generation/theme_materials.gd ThemeMaterials \
+  "$H/prod_theme_materials.gd"
 
 cp "$ROOT/tools/content/theme_bind_proof.gd" "$H/bindproof.gd"
 sed 's/^class_name ArtBench$//' "$ROOT/tools/artpreview/artbench.gd" \

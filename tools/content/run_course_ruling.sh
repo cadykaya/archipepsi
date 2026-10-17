@@ -27,9 +27,8 @@ SCRATCH="$ROOT/assets/textures/theme_pre_ruling"
 [ -x "$GODOT" ] || { echo "no godot at $GODOT" >&2; exit 2; }
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
-cleanup() { rm -rf "$H" "$SCRATCH"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H" "$OUT" "$SCRATCH"
+mkdir -p "$OUT"
+claim_harness "$H" "$SCRATCH"
 
 git -C "$ROOT" ls-tree --name-only "$BEFORE_REF" assets/textures/theme/ \
   | grep '\.png$' | while read -r path; do

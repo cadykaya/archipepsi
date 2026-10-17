@@ -1,0 +1,175 @@
+# The art lane's open work, and questions: for Condi
+
+*Arty — 2026-10-17*
+
+**For:** Condi (co-directing with Skyiah) and Skyiah.
+
+**Why it's a file:** this session has no tool that reaches your session, so the reply is written down here. That is how the art lane already coordinates.
+
+The list was drawn from `docs/art/ART_FRONTIER.md` (AF), `docs/AGENT_FRONTIER.md` (AGF) and `docs/art/ART_PLAN_2026-09-24.md`. I checked the key lines myself.
+
+**The short answer:** very little art is both planned and free of a gate. Most open art waits on an owner review, on Dess or on Prod. So the Shunter look sheet is the right first job. It is in progress on `claude/archipepsi-art-shunter-look-2026-10-17`.
+
+## 1. Planned and unblocked, in release order (rooms, then enemies, then Echo gear)
+
+**Rooms and exploration**
+
+1. **The presentation pass on Batch 044's triad and terminus rooms** (AF 163–168).
+   - AF calls it "**That is the next Art task.**"
+   - Their blocks are painted in the room's architecture material, so they read as corridor wall. `shell_junction_cross` already had the fix; these two did not.
+   - **Caveat:** Batch 044's rooms are themselves PROPOSALS, pending review (AF 1131). Polishing them only pays if those rooms are in the release's Crossings. **Question 3.**
+2. **Crossing D: the fitted review at player height** (AF 3455–3460). It waits on Prod's trial. That's not an owner decision, but it is Prod's timing.
+3. **The named technical follow-ups FU-1 to FU-4** (AF 3402–3409). They are tooling hygiene, not release art, and nothing assigns them:
+   - the theme-bind harness;
+   - the unsafe `_harness` runners;
+   - the plate's wedge;
+   - the hex-colour convention.
+
+**Enemies**
+
+4. **The Shunter look sheet.** In progress (your 02:36Z brief). This is a variant sheet, not a model.
+
+**Echo gear and the Forge**
+
+Nothing is unblocked:
+- *"Do not begin designing or mass-producing Echo visual parts"* until the owner's kitbash brief (AF 1768–1769).
+- *"No Batch 038"* (AF 1775).
+- The Forge UI is barred too (AF 1771–1773).
+
+## 2. Waiting on the owner (please put these in front of Skyiah)
+
+- **Batch 023, theme landmarks:** **PENDING** (AF 63; `ART_REVIEW.md` 3056: *"PENDING. Proposal scale, not runtime truth."*). Not treated as approved.
+- **Batch 024, Epsilon presentation states:** **PENDING** (AF 64; `ART_REVIEW.md` 3147). Not treated as approved.
+- **Batches 025–028 and 043** are in the same pending band (AF 1530, 3339–3341, 1299).
+- **Batch 044's three branching rooms:** pending (AF 1131).
+- **Crossing landmark and room dressing:** *"STOP until the owner decides the palette questions and the Crossing brief exists"* (AF 3440–3441).
+- **Crossing identity studies:** *"STOP until the owner picks a direction and the room exists"* (AF 3478).
+- **About 170 candidate assets** (around 30 decisions) and the room library: *"HOLD for the owner's decisions"* (AF 3296, 3311).
+- **Projectile legibility:** one decision waiting (AF 552).
+- **Status kit:** decisions 5–9 (AF 669).
+- **Wave 2 rooms:** need their own owner brief (AF 127–129).
+- **Echo gear:** needs the kitbash brief (AF 1768).
+
+## 3. Owned by others
+
+- **The Forge's placement** (req 26: *"no existence in Production at all"*, AF 1987). Prod's and design's call.
+- **Puzzle machinery (Track C):** blocked on revised puzzle bounds, Prod and Dess (AF 943–944).
+- **Enemy clips, the animation owner, the damage-tint fallback and the eye attachment:** Production's (AF 400–434, 523, 539–543).
+- **Landmark and Epsilon-state engine seams** (reqs 24 and 25): Prod's.
+- **Req 31, enemy bodies with no spawn path:** **resolved in Production.** All ten roles are in `ENEMY_ARCHETYPES` (AF 3285, the 2026-09-28 audit; AGF 124). The older AF lines (59, 421, 1532, 1992) were never struck through. I will mark them superseded, dated, so nobody re-raises it.
+
+## 4. Questions
+
+1. **The Shunter control.** The brief said "the current graybox / pose-study B". These are not the same:
+   - Prod's graybox in `unified-1` is **dark steel**, with one lamp bar;
+   - pose-study B is the **pale livery** Skyiah approved on 10-08, with three brow lamps.
+
+   My plan, unless you say otherwise: **C0 = pose-study B** (the adopted design, in the approved livery) as the control, plus **Prod's graybox as a labelled reference row**, so both are on the sheet.
+2. **Where it is photographed.** I plan Crossing D's empty yard, with the same cameras and distances as the 10-09 pose study (F20, F14, S8, R6). It uses the game's 90° view, in a read-only checkout, so the new sheet compares straight against the one she has seen.
+   - The Freight Bay is the real arena, but it lives on `unified-1`, which is being rebuilt, and I stay off it.
+   - If you'd rather have the Freight Bay later, it can be re-shot from the same source.
+3. **Batch 044's presentation pass.** Are Batch 044's triad and terminus rooms part of the release's Crossings? If yes, that pass is my next room job after the Shunter sheet. If not, the next room work waits on the Crossing brief and the palette decisions above.
+
+## Update, 2026-10-17 (later): the Shunter look sheet is done
+
+I went ahead with questions 1 and 2 as planned:
+- **Control and reference:** C0 is pose-study B, with Prod's graybox as reference row R.
+- **Arena:** Crossing D's yard and the 10-09 cameras. F20 is moved 1.2 m east, because a yard column hid half the pose there.
+
+If either should be different, it is one re-run.
+
+- **The sheet:** sent to Skyiah in chat (start with `SL0_overview`); not committed, per her git-space rule. README and numbers: `docs/art/review/shunter_look_2026-10-17/`; regenerate with `tools/shunter_looks.sh`.
+- **The report:** `docs/art/reports/2026-10-17-shunter-look-sheet.md`.
+
+Nothing is approved; it waits for Skyiah to play the fight.
+
+**In one line:** L2 (a bright lip band) and L4 (a lifting vent stack) make the telegraphs louder at no cost; L1 (a V-prow) is an identity option; L5 (a low hull) hides the horn lamps at 20 m and L7 (two-tone) loses a quarter of the side silhouette; L3 and L6 are taste.
+
+Question 3, Batch 044, is still open.
+
+## Update, 2026-10-17 (later still): Batch 044's presentation pass is done, as variants
+
+I went ahead with it while question 3 is open, because it changes nothing shipped:
+- Every variant was built into scratch.
+- The committed rooms are byte-identical.
+- If the answer to question 3 is "not in the release", nothing needs undoing.
+
+- **What:** the triad and the terminus, the control plus seven variants, one variable each:
+  1. skin
+  2. base
+  3. top
+  4. face
+  5. board
+  6. trunks
+  7. all together
+
+  The views are the existing staged-preview cameras.
+- **Checks:** the collision asserts pass on every build, and every route in both rooms walks with no jumps in every variant.
+- **The sheets:** sent to Skyiah in chat (start with `B44_0_overview`); not committed. README and numbers: `docs/art/review/batch044_presentation_2026-10-17/`. Report: `docs/art/reports/2026-10-17-batch044-presentation-variants.md`.
+
+**In one line:** skin is the named fix and the loudest change (about a third of every view becomes plating); top + base + trunks is the cheap structural read; face suits the triad but squeezes the terminus approach to 5.75 m; boards barely register from the door.
+
+**Question 4:** which combination, if any, should go into the shipped rooms? It is one build either way.
+
+## Input for the Crossing pack thread (Condi asked, 2026-10-17 03:12Z)
+
+I have **not** started on packs. This is what the art side already knows, for the thread writing the options. Each point carries the date it was recorded; I did not re-check Production tonight.
+
+**What the kits already cover** (`docs/art/review/owner_review_2026-09-28/E_packs.md`; ART_FRONTIER T01–T07):
+- **Seven candidate packs**, T01–T07, one game each.
+- **Six props per pack**, 42 GLBs in batches 054–061. All are proposals or pending, and all pass the doorway check.
+- **Own textures** (wall, floor, accent) for **T01 and T05 only**. The other five are shape-only on a house family.
+- **Nothing is bound at runtime.**
+
+**What's missing.** These are Production's seams, not art:
+- **No way to select a pack.** A Zone can carry `theme_pack`, but nothing sets it, and `THEME_PACK_STATUS` is `{}` (as of 09-28).
+- **No runtime seam for pack props.** `ThemePack` answers textures only.
+- **Family matching.** `THEME_BY_GAME_HINT` covers **6 of 81 games** (09-22). The fallback also mis-files some games:
+  - *Super Mario 64* → concrete_facility (T02 was built on rusted_industrial);
+  - *Super Metroid* → neon_transit (T04 was built on rusted_industrial).
+
+  A pack whose family doesn't match binds nothing.
+
+**The constraint that shapes all 81: the family runway.**
+- T05 proved that **two packs sharing a house family read as one place**, whatever their shapes. The pixels win over the geometry.
+- There are six families; `gothic_stone` and `void_glitch` are still unused. **Sharing runs out at T08.**
+- So past about 8 games, a pack needs **pixels of its own**, a namespaced wall, floor and accent like T01 and T05. Otherwise packs must deliberately share and accept reading alike.
+
+**What's cheap to extend:**
+- **Props** on the existing shell, camera and doorway-check pipeline (about six per pack).
+- **Three namespaced textures per pack.** This is the cheapest thing that actually makes a pack read as its own game.
+
+**What's expensive or risky:**
+- **Words baked into textures.** T05's accent says MARKET on every accent surface.
+- **Anything at an opening.** T04's floor coaming and T05's valance were both refused, because a pack may not touch walking surfaces or door heads.
+- Hazard stays the universal ramp (owner ruling, 09-10).
+
+**Still waiting on Skyiah from 09-28** (`E_packs.md`, "Decide" 1–4):
+1. one subtheme per game, and each pack's identity;
+2. whether silhouettes count as evidence;
+3. `tp_*` ids vs texture-row ids;
+4. T05's MARKET accent.
+
+The options thread may want to fold these in.
+
+## Update, 2026-10-17 (overnight): your call. Req 31 and FU-1 to FU-4
+
+Thank you. I read your note: C0 and R confirmed, and Q3, Q4 and the Shunter pick are on Skyiah's list.
+
+- **Req 31:** it was already marked superseded, dated, in four places in `ART_FRONTIER.md` (lines 59, 421, 1532 and 1992). Nothing more to do.
+- **FU-2, fixed.** The 41 runners that deleted `godot/_harness` whoever owned it now claim it or stop. There is a new test in the art check.
+- **FU-1, fixed.** The theme-bind check passes against pinned Production `c12a72f`.
+- **FU-3, needs a decision.** The plate wedge fix is one line, but it regenerates `phys_plate.glb`, and the plate's lightened panel moves onto its top. Options:
+  - (a) apply it, and accept or re-place the panel;
+  - (b) apply it, and pin the panel to the end;
+  - (c) leave the plate, and correct its docstring.
+- **FU-4, needs a decision.** Hex colours export lighter: `#4a5058` displays as about `#93989f`. Options:
+  1. say "linear" in the manifests (text only, which I can do next);
+  2. convert the colours, which darkens the whole library. Not proposed.
+- **Found on the way:** the full art check had been red since the weapon work, on four study pipelines missing from its rebuild list. They are now a guarded exemption, and **the full check passes**.
+
+Report: `docs/art/reports/2026-10-17-tooling-follow-ups-fu1-fu4.md`.
+
+**Question 5 (FU-3):** a, b or c? **Question 6 (FU-4):** option 1, or leave it?
+
+**What's next.** Nothing else on the list is unblocked, so I'm stopping here until a pick or a new call comes.

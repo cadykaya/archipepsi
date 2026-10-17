@@ -15,9 +15,7 @@ H="$ROOT/godot/_harness"
 # shellcheck source=godot_run.sh
 . "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
-cleanup() { rm -rf "$H"; }
-trap cleanup EXIT
-cleanup; mkdir -p "$H"
+claim_harness "$H"
 git -C "$ROOT" show "$PROD:godot/scripts/autoload/constants.gd" \
   | sed 's/^class_name .*$//' > "$H/prod_constants.gd"
 git -C "$ROOT" show "$PROD:godot/scripts/gameplay/status_effects.gd" \
